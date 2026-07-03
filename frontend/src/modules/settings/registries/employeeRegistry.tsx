@@ -1,0 +1,48 @@
+import React from 'react';
+import { EntityRegistry } from '../types';
+import { StatusBadge } from '../../../components/ui/StatusBadge';
+
+export const employeeRegistry: EntityRegistry = {
+  id: 'employees',
+  singularName: 'Employee',
+  pluralName: 'Employees',
+  apiEndpoint: 'master-data/employees',
+  
+  columns: [
+    { key: 'employeeCode', label: 'Emp ID' },
+    { key: 'firstName', label: 'First Name' },
+    { key: 'lastName', label: 'Last Name' },
+    { key: 'departmentId', label: 'Department' },
+    { key: 'role', label: 'System Role' },
+    { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+  ],
+
+  fields: [
+    { name: 'employeeCode', label: 'Employee ID', type: 'text', required: true },
+    { name: 'firstName', label: 'First Name', type: 'text', required: true },
+    { name: 'lastName', label: 'Last Name', type: 'text', required: true },
+    { name: 'email', label: 'Email Address', type: 'email' },
+    { name: 'phone', label: 'Phone Number', type: 'text' },
+    { name: 'companyId', label: 'Company (Parent)', type: 'select', required: true, options: [
+      { label: 'Default Company HQ', value: '11111111-1111-1111-1111-111111111111' }
+    ] },
+    { name: 'departmentId', label: 'Department', type: 'select', required: true, options: [
+      { label: 'Engineering', value: 'DEPT_ENG' },
+      { label: 'Production', value: 'DEPT_PROD' },
+      { label: 'Quality', value: 'DEPT_QUAL' },
+      { label: 'Management', value: 'DEPT_MGMT' }
+    ] },
+    { name: 'role', label: 'System Role', type: 'select', required: true, options: [
+      { label: 'Admin', value: 'ADMIN' },
+      { label: 'Manager', value: 'MANAGER' },
+      { label: 'Engineer', value: 'ENGINEER' },
+      { label: 'Operator', value: 'OPERATOR' }
+    ] },
+    { name: 'hourlyRate', label: 'Hourly Cost Rate ($)', type: 'number' },
+    { name: 'status', label: 'Status', type: 'select', options: [
+      { label: 'Active', value: 'ACTIVE' },
+      { label: 'Inactive', value: 'INACTIVE' },
+      { label: 'On Leave', value: 'ON_LEAVE' }
+    ] },
+  ]
+};
