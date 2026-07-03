@@ -14,6 +14,7 @@ import { MachinesModule } from './master-data/machines/machines.module';
 import { EmployeesModule } from './master-data/employees/employees.module';
 import { WarehousesModule } from './master-data/warehouses/warehouses.module';
 import { LocationsModule } from './master-data/locations/locations.module';
+import { OperationsModule } from './master-data/operations/operations.module';
 import { ProjectsModule } from './projects/projects.module';
 import { EngineeringModule } from './engineering/engineering.module';
 import { ProcurementModule } from './procurement/procurement.module';
@@ -50,6 +51,7 @@ import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.mo
     EmployeesModule,
     WarehousesModule,
     LocationsModule,
+    OperationsModule,
 
     // Layer 2 — Business Objects
     ProjectsModule,
