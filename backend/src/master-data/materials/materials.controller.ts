@@ -7,16 +7,22 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { MaterialsService } from './materials.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Controller('api/v1/master-data/materials')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class MaterialsController {
   constructor(private readonly materialsService: MaterialsService) {}
 
   @Post()
+  @Roles('ADMIN')
   async create(@Body() dto: CreateMaterialDto) {
     const data = await this.materialsService.create(dto);
     return {
@@ -59,6 +65,7 @@ export class MaterialsController {
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   async update(@Param('id') id: string, @Body() dto: UpdateMaterialDto) {
     const data = await this.materialsService.update(id, dto);
     return {
@@ -69,6 +76,7 @@ export class MaterialsController {
   }
 
   @Delete(':id')
+  @Roles('ADMIN')
   async remove(@Param('id') id: string) {
     const data = await this.materialsService.softDelete(id);
     return {

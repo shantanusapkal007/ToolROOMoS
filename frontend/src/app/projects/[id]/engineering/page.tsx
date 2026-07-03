@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
 import { FileText, Layers } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
+import { useToast } from "../../../../components/ui/Toast";
 
 export default function EngineeringTab({ params }: { params: Promise<{ id: string }> }) {
+  const { success, error, warning } = useToast();
   const resolvedParams = React.use(params);
   const [project, setProject] = useState<any | null>(null);
   const [showDrawingModal, setShowDrawingModal] = useState(false);
@@ -48,8 +50,9 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
         fileUrl: `s3://toolroomos/drawings/${drawingNum.toLowerCase()}.dxf`,
       });
       setShowDrawingModal(false);
+      success("Drawing Uploaded", "The drawing was successfully attached to this project.");
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Upload Failed", err.message); }
   };
 
   const handleSubmitBom = async (e: React.FormEvent) => {
@@ -60,18 +63,20 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
         items: [{ materialId: materials[0].id, requiredQty: bomQty, estimatedCost: bomEstCost }]
       });
       setShowBomModal(false);
+      success("BOM Generated", "The draft BOM has been successfully created.");
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Failed", err.message); }
   };
 
   const handleApproveBom = async () => {
     if (!project) return;
     try {
       const bomRes = await api.get(`projects/${project.id}/bom`);
-      if (!bomRes.data) return alert("No draft BOM found.");
+      if (!bomRes.data) return warning("No BOM Found", "No draft BOM found to approve.");
       await api.put(`projects/${project.id}/bom/${bomRes.data.id}/approve`);
+      success("BOM Approved", "The Bill of Materials has been approved for procurement.");
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Failed", err.message); }
   };
 
   if (!project) return null;

@@ -7,16 +7,22 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @Controller('api/v1/master-data/employees')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
   @Post()
+  @Roles('ADMIN')
   async create(@Body() dto: CreateEmployeeDto) {
     const data = await this.employeesService.create(dto);
     return {
@@ -59,6 +65,7 @@ export class EmployeesController {
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   async update(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
     const data = await this.employeesService.update(id, dto);
     return {
@@ -69,6 +76,7 @@ export class EmployeesController {
   }
 
   @Delete(':id')
+  @Roles('ADMIN')
   async remove(@Param('id') id: string) {
     const data = await this.employeesService.softDelete(id);
     return {

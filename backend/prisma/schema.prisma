@@ -60,6 +60,14 @@ enum PurchaseOrderStatus {
   CANCELLED
 }
 
+enum SubcontractOrderStatus {
+  DRAFT
+  ISSUED
+  PARTIAL_RECEIPT
+  CLOSED
+  CANCELLED
+}
+
 enum InspectionResult {
   PASS
   REWORK
@@ -250,6 +258,7 @@ model Vendor {
   updatedBy    String?
 
   purchaseOrderHeaders PurchaseOrderHeader[]
+  subcontractOrders    SubcontractOrder[]
 
   @@map("vendors")
 }
@@ -332,7 +341,8 @@ model Operation {
   createdBy     String?
   updatedBy     String?
 
-  routingOperations RoutingOperation[]
+  routingOperations    RoutingOperation[]
+  subcontractOrderItems SubcontractOrderItem[]
 
   @@map("operations")
 }
@@ -531,6 +541,8 @@ model Project {
   routingHeaders        RoutingHeader[]
   purchaseOrderHeaders  PurchaseOrderHeader[]
   goodsReceiptHeaders   GoodsReceiptHeader[]
+  subcontractOrders     SubcontractOrder[]
+  subcontractReceipts   SubcontractReceipt[]
   materialIssueHeaders  MaterialIssueHeader[]
   productionBatches     ProductionBatch[]
   machineShopReports    MachineShopDailyReport[]
@@ -1023,6 +1035,9 @@ model InventoryBatch {
 
   materialIssueItems    MaterialIssueItem[]
   inventoryTransactions InventoryTransaction[]
+  subcontractOrderItems SubcontractOrderItem[]
+  subcontractReceiptItemId String?
+  subcontractReceiptItem   SubcontractReceiptItem? @relation(fields: [subcontractReceiptItemId], references: [id])
 
   @@map("inventory_batches")
 }
@@ -1216,4 +1231,98 @@ model ProjectCostSummary {
   updatedAt               DateTime @updatedAt
 
   @@map("project_cost_summary")
+}
+
+// ============================================================================
+// LAYER 6 — SUBCONTRACTING (Outside Processing)
+// ============================================================================
+
+model SubcontractOrder {
+  id                   String                 @id @default(uuid())
+  projectId            String
+  project              Project                @relation(fields: [projectId], references: [id])
+  vendorId             String
+  vendor               Vendor                 @relation(fields: [vendorId], references: [id])
+  challanNumber        String                 @unique
+  documentNumber       String?
+  revision             Int                    @default(1)
+  totalEstimatedCost   Decimal                @default(0)
+  expectedReturnDate   DateTime?
+  status               SubcontractOrderStatus @default(DRAFT)
+  approvalStatus       ApprovalStatus         @default(PENDING)
+  remarks              String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  createdBy            String?
+  updatedBy            String?
+
+  items               SubcontractOrderItem[]
+  subcontractReceipts SubcontractReceipt[]
+
+  @@map("subcontract_orders")
+}
+
+model SubcontractOrderItem {
+  id                 String           @id @default(uuid())
+  subcontractOrderId String
+  subcontractOrder   SubcontractOrder @relation(fields: [subcontractOrderId], references: [id])
+  inventoryBatchId   String?
+  inventoryBatch     InventoryBatch?  @relation(fields: [inventoryBatchId], references: [id])
+  operationId        String
+  operation          Operation        @relation(fields: [operationId], references: [id])
+  sentQty            Decimal
+  rate               Decimal
+  lineEstimatedCost  Decimal          @default(0)
+  remarks            String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  createdBy          String?
+  updatedBy          String?
+
+  receiptItems SubcontractReceiptItem[]
+
+  @@map("subcontract_order_items")
+}
+
+model SubcontractReceipt {
+  id                 String           @id @default(uuid())
+  projectId          String
+  project            Project          @relation(fields: [projectId], references: [id])
+  subcontractOrderId String
+  subcontractOrder   SubcontractOrder @relation(fields: [subcontractOrderId], references: [id])
+  receiptNumber      String           @unique
+  documentNumber     String?
+  receiptDate        DateTime         @default(now())
+  status             String           @default("COMPLETED")
+  remarks            String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  createdBy          String?
+  updatedBy          String?
+
+  items SubcontractReceiptItem[]
+
+  @@map("subcontract_receipts")
+}
+
+model SubcontractReceiptItem {
+  id                   String             @id @default(uuid())
+  subcontractReceiptId String
+  subcontractReceipt   SubcontractReceipt @relation(fields: [subcontractReceiptId], references: [id])
+  orderItemId          String
+  orderItem            SubcontractOrderItem @relation(fields: [orderItemId], references: [id])
+  receivedQty          Decimal
+  acceptedQty          Decimal
+  rejectedQty          Decimal            @default(0)
+  actualRate           Decimal
+  actualProcessCost    Decimal            @default(0)
+  remarks              String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  createdBy            String?
+  updatedBy            String?
+
+  inventoryBatches InventoryBatch[]
+
+  @@map("subcontract_receipt_items")
 }

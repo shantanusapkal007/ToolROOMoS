@@ -6,16 +6,22 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectStatus } from '@prisma/client';
 
 @Controller('api/v1/projects')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
+  @Roles('ADMIN', 'SALES_ENGINEER')
   async create(@Body() dto: CreateProjectDto) {
     const data = await this.projectsService.create(dto);
     return {
@@ -58,6 +64,7 @@ export class ProjectsController {
   }
 
   @Put(':id/status')
+  @Roles('ADMIN', 'SALES_ENGINEER')
   async updateStatus(
     @Param('id') id: string,
     @Body('status') status: ProjectStatus,

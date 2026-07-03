@@ -7,17 +7,23 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { VendorType } from '@prisma/client';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 
 @Controller('api/v1/master-data/vendors')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class VendorsController {
   constructor(private readonly vendorsService: VendorsService) {}
 
   @Post()
+  @Roles('ADMIN')
   async create(@Body() dto: CreateVendorDto) {
     const data = await this.vendorsService.create(dto);
     return {
@@ -60,6 +66,7 @@ export class VendorsController {
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   async update(@Param('id') id: string, @Body() dto: UpdateVendorDto) {
     const data = await this.vendorsService.update(id, dto);
     return {
@@ -70,6 +77,7 @@ export class VendorsController {
   }
 
   @Delete(':id')
+  @Roles('ADMIN')
   async remove(@Param('id') id: string) {
     const data = await this.vendorsService.softDelete(id);
     return {

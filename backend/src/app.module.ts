@@ -18,6 +18,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { EngineeringModule } from './engineering/engineering.module';
 import { ProcurementModule } from './procurement/procurement.module';
 import { ProductionModule } from './production/production.module';
+import { SubcontractingModule } from './subcontracting/subcontracting.module';
 import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.module';
 
 /**
@@ -57,6 +58,7 @@ import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.mo
     EngineeringModule,
     ProcurementModule,
     ProductionModule,
+    SubcontractingModule,
     LogisticsFinanceModule,
   ],
   controllers: [AppController],

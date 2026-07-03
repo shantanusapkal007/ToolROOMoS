@@ -7,16 +7,22 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { MachinesService } from './machines.service';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
 
 @Controller('api/v1/master-data/machines')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class MachinesController {
   constructor(private readonly machinesService: MachinesService) {}
 
   @Post()
+  @Roles('ADMIN')
   async create(@Body() dto: CreateMachineDto) {
     const data = await this.machinesService.create(dto);
     return {
@@ -59,6 +65,7 @@ export class MachinesController {
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   async update(@Param('id') id: string, @Body() dto: UpdateMachineDto) {
     const data = await this.machinesService.update(id, dto);
     return {
@@ -69,6 +76,7 @@ export class MachinesController {
   }
 
   @Delete(':id')
+  @Roles('ADMIN')
   async remove(@Param('id') id: string) {
     const data = await this.machinesService.softDelete(id);
     return {

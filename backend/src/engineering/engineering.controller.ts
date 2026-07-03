@@ -5,13 +5,18 @@ import {
   Put,
   Body,
   Param,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { DrawingsService } from './drawings.service';
 import { BomsService } from './boms.service';
 import { CreateDrawingDto } from './dto/create-drawing.dto';
 import { CreateBomDto } from './dto/create-bom.dto';
 
 @Controller('api/v1/projects/:projectId')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class EngineeringController {
   constructor(
     private readonly drawingsService: DrawingsService,
@@ -20,6 +25,7 @@ export class EngineeringController {
 
   // Drawings APIs
   @Post('drawings')
+  @Roles('ADMIN', 'ENGINEERING')
   async uploadDrawing(
     @Param('projectId') projectId: string,
     @Body() dto: CreateDrawingDto,
@@ -44,6 +50,7 @@ export class EngineeringController {
 
   // BOM APIs
   @Post('bom')
+  @Roles('ADMIN', 'ENGINEERING')
   async createBom(
     @Param('projectId') projectId: string,
     @Body() dto: CreateBomDto,
@@ -57,6 +64,7 @@ export class EngineeringController {
   }
 
   @Put('bom/:bomId/approve')
+  @Roles('ADMIN', 'ENGINEERING')
   async approveBom(
     @Param('projectId') projectId: string,
     @Param('bomId') bomId: string,

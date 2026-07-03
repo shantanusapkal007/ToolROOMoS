@@ -4,7 +4,11 @@ import {
   Post,
   Body,
   Param,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { InspectionsService } from './inspections.service';
 import { DispatchesService } from './dispatches.service';
 import { InvoicesService } from './invoices.service';
@@ -13,6 +17,7 @@ import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 @Controller('api/v1/projects/:projectId')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class LogisticsFinanceController {
   constructor(
     private readonly inspectionService: InspectionsService,
@@ -22,6 +27,7 @@ export class LogisticsFinanceController {
 
   // Quality Inspection routes
   @Post('inspections')
+  @Roles('ADMIN', 'QUALITY')
   async createInspection(
     @Param('projectId') projectId: string,
     @Body() dto: CreateInspectionDto,
@@ -46,6 +52,7 @@ export class LogisticsFinanceController {
 
   // Dispatch Note routes
   @Post('dispatches')
+  @Roles('ADMIN', 'STORES')
   async createDispatch(
     @Param('projectId') projectId: string,
     @Body() dto: CreateDispatchDto,
@@ -70,6 +77,7 @@ export class LogisticsFinanceController {
 
   // Invoice routes
   @Post('invoices')
+  @Roles('ADMIN', 'FINANCE')
   async createInvoice(
     @Param('projectId') projectId: string,
     @Body() dto: CreateInvoiceDto,

@@ -76,7 +76,7 @@ export default function ProjectLayout({
                 <div className="text-sm text-slate-400 mb-2">Delivery Target</div>
                 <div className="text-h4 font-bold text-white flex items-center">
                   <Clock className="h-5 w-5 mr-2 text-blue-500" />
-                  {new Date(project.deliveryDate).toLocaleDateString()}
+                  {project.targetDeliveryDate ? new Date(project.targetDeliveryDate).toLocaleDateString() : 'Not Set'}
                 </div>
               </div>
             </div>
@@ -92,6 +92,7 @@ export default function ProjectLayout({
             <Link href={`/projects/${project.id}/purchase`} className={getTabClass('/purchase')}>Purchase</Link>
             <Link href={`/projects/${project.id}/inventory`} className={getTabClass('/inventory')}>Inventory</Link>
             <Link href={`/projects/${project.id}/production`} className={getTabClass('/production')}>Production</Link>
+            <Link href={`/projects/${project.id}/subcontract`} className={getTabClass('/subcontract')}>Subcontract</Link>
             <Link href={`/projects/${project.id}/quality`} className={getTabClass('/quality')}>Quality</Link>
             <Link href={`/projects/${project.id}/dispatch`} className={getTabClass('/dispatch')}>Dispatch</Link>
             <Link href={`/projects/${project.id}/finance`} className={getTabClass('/finance')}>Finance</Link>

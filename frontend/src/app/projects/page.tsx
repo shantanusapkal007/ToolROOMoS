@@ -5,8 +5,11 @@ import { Sidebar } from "../../components/layout/Sidebar";
 import { api } from "../../lib/api";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { useToast } from "../../components/ui/Toast";
 
 export default function ProjectsPage() {
+  const { success, error } = useToast();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -58,8 +61,9 @@ export default function ProjectsPage() {
         plantId: "PL-01", // Hardcoded fallback as per prototype
       });
       setShowNewProjectModal(false);
-      router.push(`/projects/${res.data.id}/overview`);
-    } catch (err: any) { alert(err.message); }
+      success("Project Created", `Project ${newPartName} has been generated successfully.`);
+      loadProjects();
+    } catch (err: any) { error("Failed", err.message); }
   };
 
   return (
