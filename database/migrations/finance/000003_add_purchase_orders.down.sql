@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS finance_purchase_orders;

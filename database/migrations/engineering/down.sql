@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS project_tasks;
+DROP TABLE IF EXISTS mold_projects;
+DROP TABLE IF EXISTS drawings;
+DROP TABLE IF EXISTS ecns;
+DROP TABLE IF EXISTS control_plans;
+DROP TABLE IF EXISTS pfmeas;
+DROP TABLE IF EXISTS tool_assets;

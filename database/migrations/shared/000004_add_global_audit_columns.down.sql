@@ -1,0 +1,2 @@
+-- Reversing this globally is dangerous as it drops audit data.
+-- Intentionally left empty for safety.

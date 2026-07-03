@@ -1,0 +1,173 @@
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateIssueDto } from './dto/create-issue.dto';
+import { ProjectStatus, InventoryMovementType } from '@prisma/client';
+
+@Injectable()
+export class MaterialIssuesService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async issueMaterial(projectId: string, dto: CreateIssueDto, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Validate project stage
+      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const currentStage = project.currentStage;
+      
+      if (currentStage !== ProjectStatus.MATERIAL_AVAILABLE && currentStage !== ProjectStatus.PRODUCTION) {
+        throw new BadRequestException('Materials can only be issued during Material Available or Production stages.');
+      }
+
+      // 2. Create Material Issue Header
+      const issueHeader = await tx.materialIssueHeader.create({
+        data: {
+          projectId,
+          issueNumber: dto.issueNumber,
+          documentNumber: dto.issueNumber,
+          status: 'COMPLETED',
+          createdBy: userId,
+          updatedBy: userId,
+        },
+      });
+
+      let totalConsumptionCost = 0;
+
+      // 3. Process each Issued Item
+      for (const item of dto.items) {
+        // Fetch batch to get unit cost and current qty
+        const batch = await tx.inventoryBatch.findUniqueOrThrow({
+          where: { id: item.inventoryBatchId },
+        });
+
+        if (batch.currentQty.toNumber() < item.issuedQty) {
+          throw new BadRequestException(`Insufficient stock in Batch ${batch.batchNumber}. Available: ${batch.currentQty}, Requested: ${item.issuedQty}`);
+        }
+
+        const consumptionValue = item.issuedQty * batch.unitCost.toNumber();
+        totalConsumptionCost += consumptionValue;
+
+        // Create Issue Item
+        await tx.materialIssueItem.create({
+          data: {
+            issueHeaderId: issueHeader.id,
+            inventoryBatchId: item.inventoryBatchId,
+            issuedQty: item.issuedQty,
+            materialValue: consumptionValue,
+            remarks: item.remarks,
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        // 4. Update Inventory Batch Quantity
+        await tx.inventoryBatch.update({
+          where: { id: item.inventoryBatchId },
+          data: {
+            currentQty: { decrement: item.issuedQty },
+            status: batch.currentQty.toNumber() === item.issuedQty ? 'CONSUMED' : 'AVAILABLE',
+          },
+        });
+
+        // Retrieve default warehouse UUID
+        const warehouse = await tx.warehouse.findUniqueOrThrow({
+          where: { warehouseCode: 'DEFAULT-WH' },
+        });
+
+        // 5. Update Inventory Stock (Layer 4 - Events)
+        await tx.inventoryStock.update({
+          where: {
+            materialId_warehouseId: {
+              materialId: batch.materialId,
+              warehouseId: warehouse.id,
+            },
+          },
+          data: {
+            currentQuantity: { decrement: item.issuedQty },
+            availableQuantity: { decrement: item.issuedQty },
+          },
+        });
+
+        // 6. Record Inventory Transaction
+        await tx.inventoryTransaction.create({
+          data: {
+            projectId,
+            inventoryBatchId: batch.id,
+            movementType: InventoryMovementType.MATERIAL_ISSUE,
+            quantity: item.issuedQty,
+            referenceDocType: 'MATERIAL_ISSUE',
+            referenceDocId: issueHeader.id,
+            remarks: item.remarks,
+            createdBy: userId,
+          },
+        });
+      }
+
+      // 7. Costing Integration: Rollup consumption to ProjectCostSummary (Layer 5 - Outcomes)
+      await tx.projectCostSummary.update({
+        where: { projectId },
+        data: {
+          materialConsumptionCost: { increment: totalConsumptionCost },
+          totalCost: { increment: totalConsumptionCost },
+        },
+      });
+
+      // Record detailed cost audit trail event
+      await tx.projectCostEvent.create({
+        data: {
+          projectId,
+          costType: 'MATERIAL_CONSUMPTION',
+          description: `Material consumed from inventory under Issue Slip ${dto.issueNumber}`,
+          amount: totalConsumptionCost,
+          referenceDocType: 'MATERIAL_ISSUE',
+          referenceDocId: issueHeader.id,
+          createdBy: userId,
+        },
+      });
+
+      // 8. Log project activity
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'MATERIAL_CONSUMED',
+          description: `Material Issue ${dto.issueNumber} completed. Consumption Value booked: $${totalConsumptionCost}`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      // 9. Automations: If stage was MATERIAL_AVAILABLE, transition to PRODUCTION automatically
+      if (currentStage === ProjectStatus.MATERIAL_AVAILABLE) {
+        await tx.project.update({
+          where: { id: projectId },
+          data: { currentStage: ProjectStatus.PRODUCTION, updatedBy: userId },
+        });
+
+        await tx.projectTimeline.create({
+          data: {
+            projectId,
+            fromStage: ProjectStatus.MATERIAL_AVAILABLE,
+            toStage: ProjectStatus.PRODUCTION,
+            transitionedBy: userId || 'SYSTEM',
+            remarks: 'First material issue recorded. Advanced project to PRODUCTION stage.',
+          },
+        });
+
+        await tx.projectActivity.create({
+          data: {
+            projectId,
+            action: 'STAGE_CHANGED',
+            description: 'Project advanced to PRODUCTION stage',
+            performedBy: userId || 'SYSTEM',
+          },
+        });
+      }
+
+      return issueHeader;
+    });
+  }
+
+  async getMaterialIssues(projectId: string) {
+    return this.prisma.materialIssueHeader.findMany({
+      where: { projectId },
+      include: { items: { include: { inventoryBatch: { include: { material: true } } } } },
+    });
+  }
+}
