@@ -7,10 +7,15 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 
 /**
  * CustomersController
@@ -22,10 +27,12 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
  * Route: /api/v1/master-data/customers
  */
 @Controller('api/v1/master-data/customers')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
   @Post()
+  @Roles('ADMIN', 'SALES_ENGINEER')
   async create(@Body() dto: CreateCustomerDto) {
     const data = await this.customersService.create(dto);
     return {
@@ -65,7 +72,8 @@ export class CustomersController {
     };
   }
 
-  @Put(':id')
+  @Patch(':id')
+  @Roles('ADMIN', 'SALES_ENGINEER')
   async update(@Param('id') id: string, @Body() dto: UpdateCustomerDto) {
     const data = await this.customersService.update(id, dto);
     return {
@@ -76,6 +84,7 @@ export class CustomersController {
   }
 
   @Delete(':id')
+  @Roles('ADMIN')
   async remove(@Param('id') id: string) {
     const data = await this.customersService.softDelete(id);
     return {

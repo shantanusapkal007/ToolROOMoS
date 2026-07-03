@@ -32,6 +32,14 @@ async function request<T = any>(
     headers.set('Content-Type', 'application/json');
   }
 
+  // Attach JWT Token if available
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  }
+
   // Generate a random Idempotency-Key for write operations
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || 'GET')) {
     if (!headers.has('Idempotency-Key')) {

@@ -1,4 +1,7 @@
-import React, { useEffect } from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 
@@ -13,8 +16,10 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, subtitle, children, footer, maxWidth = 'md' }) => {
+  const [mounted, setMounted] = useState(false);
   
   useEffect(() => {
+    setMounted(true);
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -22,7 +27,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, subtitle, 
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const maxWidthClasses = {
     sm: 'max-w-sm',
@@ -32,16 +37,16 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, subtitle, 
     '2xl': 'max-w-2xl',
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
         onClick={onClose} 
       />
       
-      <div className={`relative glass-panel w-full ${maxWidthClasses[maxWidth]} max-h-[90vh] flex flex-col bg-[#0B1018] shadow-2xl animate-slide-up overflow-hidden`}>
+      <div className={`relative glass-panel w-full ${maxWidthClasses[maxWidth]} max-h-[90vh] flex flex-col shadow-2xl animate-slide-up overflow-hidden`}>
         
-        <div className="flex justify-between items-start p-6 border-b border-white/10 shrink-0">
+        <div className="flex justify-between items-start p-6 border-b border-white/10 shrink-0 bg-[#0B1018]/40">
           <div>
             <h2 className="text-h4 font-bold text-white tracking-tight">{title}</h2>
             {subtitle && <p className="text-sm text-slate-400 mt-1">{subtitle}</p>}
@@ -54,7 +59,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, subtitle, 
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 hide-scrollbar">
+        <div className="p-6 overflow-y-auto flex-1 min-h-0 hide-scrollbar bg-[#0B1018]/60">
           {children}
         </div>
 
@@ -66,4 +71,6 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, subtitle, 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

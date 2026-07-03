@@ -7,12 +7,13 @@ interface SmartTableProps {
   columns: EntityColumn[];
   data: any[];
   isLoading: boolean;
+  onView?: (record: any) => void;
   onEdit?: (record: any) => void;
   onDelete?: (record: any) => void;
   onHistory?: (record: any) => void;
 }
 
-export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading, onEdit, onDelete, onHistory }) => {
+export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading, onView, onEdit, onDelete, onHistory }) => {
   
   if (isLoading) {
     return <LoadingState message="Loading data..." />;
@@ -32,7 +33,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
                 {col.label}
               </th>
             ))}
-            {(onEdit || onDelete || onHistory) && (
+            {(onView || onEdit || onDelete || onHistory) && (
               <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-widest text-right">
                 Actions
               </th>
@@ -47,8 +48,17 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
                   {col.render ? col.render(row[col.key], row) : row[col.key] || '-'}
                 </td>
               ))}
-              {(onEdit || onDelete || onHistory) && (
+              {(onView || onEdit || onDelete || onHistory) && (
                 <td className="px-6 py-4 text-sm text-right space-x-2 whitespace-nowrap">
+                  {onView && (
+                    <button 
+                      onClick={() => onView(row)}
+                      className="p-2 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-all"
+                      title="View Details"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  )}
                   {onHistory && (
                     <button 
                       onClick={() => onHistory(row)}

@@ -1,12 +1,19 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 import { CustomersModule } from './master-data/customers/customers.module';
 import { VendorsModule } from './master-data/vendors/vendors.module';
 import { MaterialsModule } from './master-data/materials/materials.module';
 import { MachinesModule } from './master-data/machines/machines.module';
 import { EmployeesModule } from './master-data/employees/employees.module';
+import { WarehousesModule } from './master-data/warehouses/warehouses.module';
+import { LocationsModule } from './master-data/locations/locations.module';
 import { ProjectsModule } from './projects/projects.module';
 import { EngineeringModule } from './engineering/engineering.module';
 import { ProcurementModule } from './procurement/procurement.module';
@@ -22,8 +29,17 @@ import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.mo
  */
 @Module({
   imports: [
+    // Rate Limiting
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
+
     // Layer 5 — Persistence (Global)
     PrismaModule,
+
+    // Layer 0 — Security
+    AuthModule,
 
     // Layer 1 — Master Data
     CustomersModule,
@@ -31,6 +47,8 @@ import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.mo
     MaterialsModule,
     MachinesModule,
     EmployeesModule,
+    WarehousesModule,
+    LocationsModule,
 
     // Layer 2 — Business Objects
     ProjectsModule,
@@ -42,6 +60,20 @@ import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.mo
     LogisticsFinanceModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}

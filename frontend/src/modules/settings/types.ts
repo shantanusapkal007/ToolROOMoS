@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'email' | 'select' | 'checkbox' | 'date';
+export type FieldType = 'text' | 'textarea' | 'number' | 'email' | 'select' | 'checkbox' | 'date' | 'radio';
 
 export interface EntityField {
   name: string;
@@ -8,6 +8,7 @@ export interface EntityField {
   options?: { label: string; value: string }[]; // For select type
   placeholder?: string;
   gridCols?: 1 | 2; // Span 1 or 2 columns in form layout
+  section?: string; // Group fields by section header
 }
 
 export interface EntityColumn {
