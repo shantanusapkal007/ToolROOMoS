@@ -10,6 +10,7 @@ import { machineRegistry } from './registries/machineRegistry';
 import { employeeRegistry } from './registries/employeeRegistry';
 import { warehouseRegistry } from './registries/warehouseRegistry';
 import { locationRegistry } from './registries/locationRegistry';
+import { operationRegistry } from './registries/operationRegistry';
 
 const registries = {
   customers: customerRegistry,
@@ -19,6 +20,7 @@ const registries = {
   employees: employeeRegistry,
   warehouses: warehouseRegistry,
   locations: locationRegistry,
+  operations: operationRegistry,
 };
 
 export const MasterDataModule: React.FC = () => {
@@ -31,6 +33,7 @@ export const MasterDataModule: React.FC = () => {
     { id: 'vendors', label: 'Vendors', desc: 'Supplier configurations', icon: <ShoppingCart /> },
     { id: 'materials', label: 'Materials', desc: 'Raw material definitions', icon: <Package /> },
     { id: 'machines', label: 'Machines', desc: 'Shop floor assets', icon: <Factory /> },
+    { id: 'operations', label: 'Operations', desc: 'Manufacturing processes', icon: <UserCog /> },
     { id: 'employees', label: 'Employees', desc: 'Workforce & operators', icon: <UserCog /> },
     { id: 'warehouses', label: 'Warehouses', desc: 'Primary storage hubs', icon: <Building2 /> },
     { id: 'locations', label: 'Locations', desc: 'Specific storage bins', icon: <Package /> },
@@ -106,8 +109,9 @@ export const MasterDataModule: React.FC = () => {
             {activeSection === 'materials' && <EntityView registry={registries.materials} />}
             {activeSection === 'machines' && <EntityView registry={registries.machines} />}
             {activeSection === 'employees' && <EntityView registry={registries.employees} />}
-            {activeSection === 'warehouses' && <EntityView registry={registries.warehouses} />}
-            {activeSection === 'locations' && <EntityView registry={registries.locations} />}
+            { activeSection === 'warehouses' && <EntityView registry={registries.warehouses} /> }
+            { activeSection === 'locations' && <EntityView registry={registries.locations} /> }
+            { activeSection === 'operations' && <EntityView registry={registries.operations} /> }
           </div>
         </div>
       </div>

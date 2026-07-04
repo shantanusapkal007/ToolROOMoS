@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Settings, Save } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
+import { useToast } from '../../../components/ui/Toast';
 
 export const SystemPreferences = () => {
+  const { success } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   
   // Mock state for toggles
@@ -21,7 +23,7 @@ export const SystemPreferences = () => {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      alert('System preferences saved successfully!');
+      success('Preferences Updated', 'System preferences saved successfully!');
     }, 1000);
   };
 

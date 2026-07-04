@@ -22,6 +22,16 @@ export class ProductionController {
     private readonly msdrService: ProductionOperationsService,
   ) {}
 
+  @Get('inventory-batches')
+  async getAvailableInventoryBatches() {
+    const data = await this.issueService.getAvailableInventoryBatches();
+    return {
+      status: 'success',
+      message: 'Available inventory batches retrieved.',
+      data,
+    };
+  }
+
   // Material Issue routes
   @Post('material-issues')
   @Roles('ADMIN', 'PRODUCTION')

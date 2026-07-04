@@ -11,42 +11,47 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="fixed left-6 top-6 bottom-6 w-[72px] hover:w-64 bg-[#0B1018]/60 hover:bg-[#0B1018]/90 backdrop-blur-xl border border-white/10 hover:border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex flex-col items-center hover:items-start group transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] z-50 overflow-hidden px-3 py-6 rounded-3xl">
+    <div className="fixed left-6 top-6 bottom-6 w-[80px] hover:w-72 bg-[#05070A]/80 hover:bg-[#05070A]/95 backdrop-blur-3xl border border-white/10 hover:border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.05)] flex flex-col items-center hover:items-start group transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] z-50 overflow-hidden px-4 py-8 rounded-[32px]">
+      
       {/* Logo Area */}
-      <Link href="/" className="flex items-center w-full mb-10 overflow-hidden cursor-pointer">
-        <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20">
-          <Layers className="h-5 w-5" />
+      <Link href="/" className="flex items-center w-full mb-12 overflow-hidden cursor-pointer px-1">
+        <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600/20 to-purple-600/20 text-blue-400 border border-white/10 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
+          <Layers className="h-6 w-6" />
         </div>
-        <span className="font-bold text-lg tracking-wider bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent ml-4 opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] whitespace-nowrap">
-          ToolRoomOS
+        <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent ml-4 opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-[400ms] whitespace-nowrap">
+          ToolRoom<span className="text-blue-400">OS</span>
         </span>
       </Link>
 
       {/* Nav Links */}
-      <div className="flex flex-col space-y-4 w-full">
+      <div className="flex flex-col space-y-3 w-full">
         <NavItem 
           href="/"
           icon={<Activity className="h-5 w-5" />} 
           label="Mission Control" 
           active={pathname === "/"} 
+          activeColor="blue"
         />
         <NavItem 
           href="/projects"
           icon={<Briefcase className="h-5 w-5" />} 
           label="Projects" 
           active={pathname.startsWith("/projects")} 
+          activeColor="purple"
         />
         <NavItem 
           href="/master-data"
           icon={<Database className="h-5 w-5" />} 
           label="Master Data" 
           active={pathname.startsWith("/master-data")} 
+          activeColor="cyan"
         />
         <NavItem 
           href="/reports"
           icon={<PieChart className="h-5 w-5" />} 
           label="Reports" 
           active={pathname.startsWith("/reports")} 
+          activeColor="emerald"
         />
       </div>
 
@@ -56,29 +61,33 @@ export function Sidebar() {
           icon={<Settings className="h-5 w-5" />} 
           label="Settings" 
           active={pathname === "/settings"} 
+          activeColor="slate"
         />
         
         {/* User Info & Logout */}
-        <div className="border-t border-white/5 pt-4">
+        <div className="border-t border-white/10 pt-6 mt-4 relative">
+          <div className="absolute top-0 left-[10%] right-[10%] h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           {user && (
-            <div className="flex items-center space-x-3 px-2 mb-4 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center p-px flex-shrink-0">
-                <div className="w-full h-full bg-[#0B1120] rounded-full flex items-center justify-center">
-                  <UserIcon className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center space-x-3 px-2 mb-6 overflow-hidden">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center p-[2px] flex-shrink-0 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                <div className="w-full h-full bg-[#05070A] rounded-[10px] flex items-center justify-center">
+                  <UserIcon className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <div className="flex-1 opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] whitespace-nowrap">
-                <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                <p className="text-xs text-slate-500 truncate">{user.role?.replace('_', ' ')}</p>
+              <div className="flex-1 opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-[400ms] whitespace-nowrap">
+                <p className="text-sm font-bold text-white tracking-wide">{user.name}</p>
+                <p className="text-xs text-blue-400 font-medium tracking-wider">{user.role?.replace('_', ' ')}</p>
               </div>
             </div>
           )}
           <button
             onClick={logout}
-            className="w-full flex items-center px-2.5 py-2.5 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors group/item"
+            className="w-full flex items-center px-3 py-3 rounded-2xl text-slate-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/30 border border-transparent transition-all duration-300 group/item"
           >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            <span className="ml-4 font-medium opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] whitespace-nowrap">Sign Out</span>
+            <div className="flex-shrink-0 flex items-center justify-center w-10">
+              <LogOut className="h-5 w-5 group-hover/item:text-red-400 transition-colors" />
+            </div>
+            <span className="ml-2 font-semibold opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-[400ms] whitespace-nowrap group-hover/item:text-red-400">Sign Out</span>
           </button>
         </div>
       </div>
@@ -86,24 +95,45 @@ export function Sidebar() {
   );
 }
 
-function NavItem({ href, icon, label, active }: { href: string, icon: React.ReactNode, label: string, active: boolean }) {
+function NavItem({ href, icon, label, active, activeColor }: { href: string, icon: React.ReactNode, label: string, active: boolean, activeColor: string }) {
+  
+  const getActiveStyles = () => {
+    switch (activeColor) {
+      case 'blue': return 'bg-blue-600/15 text-blue-400 border-blue-500/30 shadow-[0_0_20px_rgba(37,99,235,0.15)]';
+      case 'purple': return 'bg-purple-600/15 text-purple-400 border-purple-500/30 shadow-[0_0_20px_rgba(147,51,234,0.15)]';
+      case 'cyan': return 'bg-cyan-600/15 text-cyan-400 border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]';
+      case 'emerald': return 'bg-emerald-600/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]';
+      default: return 'bg-white/10 text-white border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]';
+    }
+  };
+
+  const getGlowColor = () => {
+    switch (activeColor) {
+      case 'blue': return 'bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,1)]';
+      case 'purple': return 'bg-purple-400 shadow-[0_0_12px_rgba(192,132,252,1)]';
+      case 'cyan': return 'bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,1)]';
+      case 'emerald': return 'bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,1)]';
+      default: return 'bg-white shadow-[0_0_12px_rgba(255,255,255,1)]';
+    }
+  };
+
   return (
     <Link
       href={href}
-      className={`relative flex items-center w-full p-2.5 rounded-xl transition-all duration-200 group/item overflow-hidden ${
+      className={`relative flex items-center w-full px-1 py-3 rounded-2xl transition-all duration-300 group/item overflow-hidden border ${
         active 
-          ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]" 
-          : "text-slate-400 hover:text-white hover:bg-white/5"
+          ? getActiveStyles()
+          : "border-transparent text-slate-400 hover:text-white hover:bg-white/5"
       }`}
     >
-      <div className="flex-shrink-0 flex items-center justify-center">
+      <div className="flex-shrink-0 flex items-center justify-center w-10">
         {icon}
       </div>
-      <span className="ml-4 font-medium opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] whitespace-nowrap">
+      <span className={`ml-2 font-semibold opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-[400ms] whitespace-nowrap ${active ? 'tracking-wide' : ''}`}>
         {label}
       </span>
       {active && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-blue-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>
+        <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1/2 rounded-r-full ${getGlowColor()}`}></div>
       )}
     </Link>
   );

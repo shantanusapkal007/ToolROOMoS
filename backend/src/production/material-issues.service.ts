@@ -170,4 +170,11 @@ export class MaterialIssuesService {
       include: { items: { include: { inventoryBatch: { include: { material: true } } } } },
     });
   }
+
+  async getAvailableInventoryBatches() {
+    return this.prisma.inventoryBatch.findMany({
+      where: { currentQty: { gt: 0 }, status: 'AVAILABLE' },
+      include: { material: true },
+    });
+  }
 }

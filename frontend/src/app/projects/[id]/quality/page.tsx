@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
 import { CheckSquare } from "lucide-react";
 
+import { useToast } from "../../../../components/ui/Toast";
+
 export default function QualityTab({ params }: { params: Promise<{ id: string }> }) {
+  const { error } = useToast();
   const resolvedParams = React.use(params);
   const [project, setProject] = useState<any | null>(null);
 
@@ -24,7 +27,7 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
     try {
       await api.post(`projects/${project.id}/inspections`, { inspectedQty: 1, passedQty: 1, result: "PASS" });
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Inspection Failed", err.message); }
   };
 
   if (!project) return null;

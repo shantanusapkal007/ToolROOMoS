@@ -10,6 +10,7 @@ import { HistoryTimeline } from '../../../components/ui/HistoryTimeline';
 import { ImportWizard } from '../../../components/ui/ImportWizard';
 import { api } from '../../../lib/api';
 import { exportToCsv } from '../../../lib/exportUtils';
+import { useToast } from '../../../components/ui/Toast';
 
 interface EntityViewProps {
   registry: EntityRegistry;
@@ -25,6 +26,7 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [viewingRecord, setViewingRecord] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const { success, error } = useToast();
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -67,9 +69,10 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
     if (confirm(`Are you sure you want to archive this ${registry.singularName}?`)) {
       try {
         await api.delete(`${registry.apiEndpoint}/${record.id}`);
+        success('Record Archived', `Successfully deleted ${registry.singularName}.`);
         fetchData();
       } catch (err: any) {
-        alert(err.message || 'Failed to delete record');
+        error('Deletion Failed', err.message || 'Failed to delete record');
       }
     }
   };
@@ -82,9 +85,10 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
         await api.post(registry.apiEndpoint, formData);
       }
       setIsModalOpen(false);
+      success('Success', `Successfully saved ${registry.singularName}.`);
       fetchData();
     } catch (err: any) {
-      alert(err.message || 'Validation failed. Please check your inputs.');
+      error('Validation Failed', err.message || 'Validation failed. Please check your inputs.');
     }
   };
 

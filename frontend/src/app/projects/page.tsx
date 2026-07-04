@@ -7,6 +7,8 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useToast } from "../../components/ui/Toast";
+import { LoadingState } from "../../components/ui/LoadingState";
+import { formatDate } from "../../lib/formatters";
 
 export default function ProjectsPage() {
   const { success, error } = useToast();
@@ -86,7 +88,14 @@ export default function ProjectsPage() {
           </div>
 
           {loading ? (
-             <div className="text-slate-400">Loading projects...</div>
+             <LoadingState message="Scanning Project Database..." />
+          ) : projects.length === 0 ? (
+            <EmptyState 
+              title="No Active Projects" 
+              description="Initialize a new project to start tracking production, cost, and logistics." 
+              actionLabel="Initialize Project"
+              onAction={() => setShowNewProjectModal(true)}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map(proj => (
@@ -105,7 +114,7 @@ export default function ProjectsPage() {
                       <div className="h-2 w-2 rounded-full bg-blue-500 mr-2 animate-pulse"></div>
                       {proj.currentStage}
                     </div>
-                    <span className="text-xs text-slate-500">{new Date(proj.deliveryDate).toLocaleDateString()}</span>
+                    <span className="text-xs text-slate-500">{formatDate(proj.deliveryDate)}</span>
                   </div>
                 </div>
               ))}

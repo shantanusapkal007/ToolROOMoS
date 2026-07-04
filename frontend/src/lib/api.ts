@@ -53,6 +53,14 @@ async function request<T = any>(
   });
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+
     let errorMessage = 'An unexpected error occurred.';
     try {
       const errorData = await response.json();

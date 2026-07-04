@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../components/auth/AuthProvider";
 import { ToastProvider } from "../components/ui/Toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fontOutfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fontSpaceGrotesk = Space_Grotesk({
+  variable: "--font-space",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -27,9 +29,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fontOutfit.variable} ${fontSpaceGrotesk.variable} h-full antialiased`}
     >
-      <body className="mission-control-bg min-h-screen text-[#ededed] font-sans antialiased selection:bg-blue-500/30">
+      <body className="mission-control-bg min-h-screen text-[#ededed] font-sans antialiased selection:bg-purple-500/30 overflow-hidden">
+        {/* Dynamic Glowing Background Orbs */}
+        <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-float opacity-70" />
+          <div className="absolute top-[40%] right-[-10%] w-[35%] h-[50%] rounded-full bg-purple-600/10 blur-[150px] animate-float opacity-50" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[40%] rounded-full bg-cyan-600/10 blur-[130px] animate-float opacity-60" style={{ animationDelay: '4s' }} />
+          {/* Subtle noise texture overlay */}
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
+        </div>
+        
         <AuthProvider>
           <ToastProvider>
             {children}

@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
 import { Package, Factory } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
+import { useToast } from "../../../../components/ui/Toast";
 
 export default function InventoryTab({ params }: { params: Promise<{ id: string }> }) {
+  const { success, error } = useToast();
   const resolvedParams = React.use(params);
   const [project, setProject] = useState<any | null>(null);
   
@@ -29,7 +31,7 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
     if (!project) return;
     try {
       const poRes = await api.get(`projects/${project.id}/purchase-orders`);
-      if (!poRes.data || poRes.data.length === 0) return alert("No active PO found.");
+      if (!poRes.data || poRes.data.length === 0) return error("No Active PO", "A purchase order is required before generating a GRN.");
       const activePo = poRes.data[0];
       await api.post(`projects/${project.id}/goods-receipts`, {
         poHeaderId: activePo.id,
@@ -43,21 +45,23 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
         }]
       });
       setShowGrnModal(false);
+      success("GRN Created", `Material received successfully under ${grnNum}.`);
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Failed", err.message); }
   };
 
   const handleIssueMaterial = async () => {
     if (!project) return;
     try {
       const grnRes = await api.get(`projects/${project.id}/goods-receipts`);
-      if (!grnRes.data || grnRes.data.length === 0) return alert("No received material available.");
+      if (!grnRes.data || grnRes.data.length === 0) return error("No Material", "No received material available to issue.");
       await api.post(`projects/${project.id}/material-issues`, {
         issueNumber: `ISS-${Date.now().toString().slice(-4)}`,
         items: [{ inventoryBatchId: grnRes.data[0].items[0].inventoryBatchId || "temp-batch", issuedQty: grnRes.data[0].items[0].acceptedQty }]
       });
+      success("Material Issued", "Successfully issued material to floor.");
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Issue Failed", err.message); }
   };
 
   if (!project) return null;

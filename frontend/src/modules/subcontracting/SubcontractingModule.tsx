@@ -6,6 +6,7 @@ import { Truck, Plus, CheckCircle2, Factory } from "lucide-react";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Modal } from "../../components/ui/Modal";
 import { useToast } from "../../components/ui/Toast";
+import { formatCurrency } from "../../lib/formatters";
 
 interface SubcontractingModuleProps {
   projectId: string;
@@ -175,7 +176,7 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-slate-400">Total Estimated</div>
-                    <div className="text-orange-400 font-bold">₹{Number(order.totalEstimatedCost).toLocaleString()}</div>
+                    <div className="text-orange-400 font-bold">{formatCurrency(Number(order.totalEstimatedCost))}</div>
                   </div>
                 </div>
 
@@ -188,7 +189,7 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
                           {item.operation?.operationName} - {item.sentQty} pcs
                         </div>
                         <div className="text-slate-400">
-                          @ ₹{Number(item.rate)}
+                          @ {formatCurrency(Number(item.rate))}
                         </div>
                       </div>
                     ))}

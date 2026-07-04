@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token, isLoading }}>
-      {!isLoading && children}
+      {(!isLoading && (token || pathname === '/login')) ? children : null}
     </AuthContext.Provider>
   );
 };

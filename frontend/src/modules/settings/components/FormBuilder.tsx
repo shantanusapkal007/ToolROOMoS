@@ -16,8 +16,10 @@ const initialFields: FormField[] = [
   { id: '2', type: 'select', label: 'Industry', required: false },
   { id: '3', type: 'textarea', label: 'Description', required: false },
 ];
+import { useToast } from '../../../components/ui/Toast';
 
 export const FormBuilder = () => {
+  const { success } = useToast();
   const [fields, setFields] = useState<FormField[]>(initialFields);
   const [activeForm, setActiveForm] = useState('Customers');
   const [isSaving, setIsSaving] = useState(false);
@@ -38,7 +40,7 @@ export const FormBuilder = () => {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      alert('Form schema saved successfully!');
+      success('Schema Saved', 'Form schema saved successfully!');
     }, 1000);
   };
 

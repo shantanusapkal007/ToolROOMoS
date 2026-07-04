@@ -7,6 +7,8 @@ import { WorkflowTimeline } from "../../../components/workspace/WorkflowTimeline
 import { Clock } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { LoadingState } from "../../../components/ui/LoadingState";
+import { formatDate } from "../../../lib/formatters";
 
 export default function ProjectLayout({
   children,
@@ -46,7 +48,14 @@ export default function ProjectLayout({
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen w-screen bg-[#0B1120] text-white">Loading Project...</div>;
+    return (
+      <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
+        <Sidebar />
+        <main className="flex-1 h-full flex flex-col relative z-0 pl-16">
+          <LoadingState message="Initializing Project Core..." />
+        </main>
+      </div>
+    );
   }
 
   if (!project) {
@@ -76,7 +85,7 @@ export default function ProjectLayout({
                 <div className="text-sm text-slate-400 mb-2">Delivery Target</div>
                 <div className="text-h4 font-bold text-white flex items-center">
                   <Clock className="h-5 w-5 mr-2 text-blue-500" />
-                  {project.targetDeliveryDate ? new Date(project.targetDeliveryDate).toLocaleDateString() : 'Not Set'}
+                  {project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Not Set'}
                 </div>
               </div>
             </div>

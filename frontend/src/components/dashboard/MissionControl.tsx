@@ -29,13 +29,14 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
             <span className="text-blue-400 text-xs font-bold tracking-widest uppercase">System Online • Factory Active</span>
           </div>
           <h1 className="text-7xl font-bold mb-2 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-500 drop-shadow-lg">
-            Good Morning.
+            {new Date().getHours() < 12 ? 'Good Morning.' : new Date().getHours() < 18 ? 'Good Afternoon.' : 'Good Evening.'}
           </h1>
           <h2 className="text-xl text-slate-400 font-medium tracking-wide">Live telemetry and operational intelligence.</h2>
         </div>
         <div className="text-right pb-2 backdrop-blur-md bg-white/5 border border-white/10 p-4 rounded-2xl shadow-xl">
           <p className="text-4xl font-black text-white tracking-tighter font-mono">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
           <p className="text-sm text-blue-400 font-semibold tracking-wider uppercase mt-1">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+          <CurrencyWidget />
         </div>
       </div>
 
@@ -238,6 +239,70 @@ function PremiumKpiCard({ title, value, subtext, icon, trend, color, delay }: { 
         <h3 className="text-4xl font-black text-white tracking-tighter drop-shadow-md mb-2">{value}</h3>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{title}</p>
         <p className="text-xs text-slate-500 font-medium mt-1">{subtext}</p>
+      </div>
+    </div>
+  );
+}
+
+function CurrencyWidget() {
+  const [rates, setRates] = useState<{ usd: number, eur: number, gbp: number } | null>(null);
+
+  useEffect(() => {
+    fetch('https://api.exchangerate-api.com/v4/latest/USD')
+      .then(res => res.json())
+      .then(data => {
+        const inr = data.rates.INR;
+        const eur = inr / data.rates.EUR;
+        const gbp = inr / data.rates.GBP;
+        
+        setRates({ usd: inr, eur, gbp });
+      })
+      .catch(err => console.error("Failed to fetch currency rates", err));
+  }, []);
+
+  if (!rates) {
+    return (
+      <div className="flex space-x-4 mt-3 pt-3 border-t border-white/10 animate-pulse">
+        <div className="h-8 w-12 bg-white/5 rounded"></div>
+        <div className="h-8 w-12 bg-white/5 rounded"></div>
+        <div className="h-8 w-12 bg-white/5 rounded"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex space-x-3 mt-4 pt-4 border-t border-white/10">
+      <div className="flex items-center space-x-3 bg-emerald-500/5 border border-emerald-500/20 px-4 py-2 rounded-xl group hover:bg-emerald-500/10 hover:border-emerald-500/40 transition-all cursor-default shadow-[0_0_15px_rgba(16,185,129,0.05)] hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 w-full translate-x-[-100%] group-hover:animate-[shimmer_2s_infinite]"></div>
+        <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-black text-xs group-hover:scale-110 transition-transform border border-emerald-500/30 shadow-inner">
+          $
+        </div>
+        <div className="flex flex-col text-left">
+          <span className="text-[9px] text-emerald-400/70 font-bold uppercase tracking-widest leading-none mb-1.5">USD / INR</span>
+          <span className="text-sm font-black text-emerald-400 leading-none drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">₹{rates.usd.toFixed(2)}</span>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-3 bg-blue-500/5 border border-blue-500/20 px-4 py-2 rounded-xl group hover:bg-blue-500/10 hover:border-blue-500/40 transition-all cursor-default shadow-[0_0_15px_rgba(59,130,246,0.05)] hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 w-full translate-x-[-100%] group-hover:animate-[shimmer_2s_infinite]"></div>
+        <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-black text-xs group-hover:scale-110 transition-transform border border-blue-500/30 shadow-inner">
+          €
+        </div>
+        <div className="flex flex-col text-left">
+          <span className="text-[9px] text-blue-400/70 font-bold uppercase tracking-widest leading-none mb-1.5">EUR / INR</span>
+          <span className="text-sm font-black text-blue-400 leading-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">₹{rates.eur.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-3 bg-purple-500/5 border border-purple-500/20 px-4 py-2 rounded-xl group hover:bg-purple-500/10 hover:border-purple-500/40 transition-all cursor-default shadow-[0_0_15px_rgba(168,85,247,0.05)] hover:shadow-[0_0_20px_rgba(168,85,247,0.15)] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 w-full translate-x-[-100%] group-hover:animate-[shimmer_2s_infinite]"></div>
+        <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-black text-xs group-hover:scale-110 transition-transform border border-purple-500/30 shadow-inner">
+          £
+        </div>
+        <div className="flex flex-col text-left">
+          <span className="text-[9px] text-purple-400/70 font-bold uppercase tracking-widest leading-none mb-1.5">GBP / INR</span>
+          <span className="text-sm font-black text-purple-400 leading-none drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">₹{rates.gbp.toFixed(2)}</span>
+        </div>
       </div>
     </div>
   );

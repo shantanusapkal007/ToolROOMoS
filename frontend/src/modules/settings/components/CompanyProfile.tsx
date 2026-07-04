@@ -4,7 +4,10 @@ import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Building2, Save } from 'lucide-react';
 
+import { useToast } from '../../../components/ui/Toast';
+
 export const CompanyProfile = () => {
+  const { success } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -12,7 +15,7 @@ export const CompanyProfile = () => {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      alert('Company Profile saved successfully!');
+      success('Profile Saved', 'Company Profile saved successfully!');
     }, 1000);
   };
 

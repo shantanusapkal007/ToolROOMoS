@@ -6,7 +6,10 @@ import { ShoppingCart } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
 import { Select } from "../../../../components/ui/Select";
 
+import { useToast } from "../../../../components/ui/Toast";
+
 export default function PurchaseTab({ params }: { params: Promise<{ id: string }> }) {
+  const { error, success } = useToast();
   const resolvedParams = React.use(params);
   const [project, setProject] = useState<any | null>(null);
   const [showPoModal, setShowPoModal] = useState(false);
@@ -50,8 +53,9 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
         items: [{ materialId: materials[0].id, orderedQty: poQty, agreedRate: poRate }]
       });
       setShowPoModal(false);
+      success("PO Generated", `Purchase Order ${poNum} successfully created.`);
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Failed to Create PO", err.message); }
   };
 
   if (!project) return null;

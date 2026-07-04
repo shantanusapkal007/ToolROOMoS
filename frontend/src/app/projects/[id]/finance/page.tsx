@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
 import { DollarSign } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
+import { useToast } from "../../../../components/ui/Toast";
 
 export default function FinanceTab({ params }: { params: Promise<{ id: string }> }) {
+  const { success, error } = useToast();
   const resolvedParams = React.use(params);
   const [project, setProject] = useState<any | null>(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -28,7 +30,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
     if (!project) return;
     try {
       const dispRes = await api.get(`projects/${project.id}/dispatches`);
-      if (!dispRes.data || dispRes.data.length === 0) return alert("No dispatch note found.");
+      if (!dispRes.data || dispRes.data.length === 0) return error("No Dispatch Note", "A dispatch note must be created before generating an invoice.");
       await api.post(`projects/${project.id}/invoices`, {
         dispatchNoteId: dispRes.data[0].id,
         invoiceNumber: invNum,
@@ -37,8 +39,9 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
         totalAmount: invAmount * 1.18,
       });
       setShowInvoiceModal(false);
+      success("Invoice Generated", `Tax Invoice ${invNum} created successfully.`);
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Invoice Failed", err.message); }
   };
 
   if (!project) return null;

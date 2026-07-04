@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
 import { Truck } from "lucide-react";
 
+import { useToast } from "../../../../components/ui/Toast";
+
 export default function DispatchTab({ params }: { params: Promise<{ id: string }> }) {
+  const { success, error } = useToast();
   const resolvedParams = React.use(params);
   const [project, setProject] = useState<any | null>(null);
 
@@ -26,8 +29,9 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
         dispatchNumber: `DISP-${Date.now().toString().slice(-4)}`,
         dispatchQty: 1, logisticsCost: 250,
       });
+      success("Dispatch Logged", "Logistics dispatch has been successfully registered.");
       loadProjectDetails(project.id);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { error("Dispatch Failed", err.message); }
   };
 
   if (!project) return null;
