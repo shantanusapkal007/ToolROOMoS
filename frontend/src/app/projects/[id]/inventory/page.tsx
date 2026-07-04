@@ -79,7 +79,7 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
             <button onClick={handleIssueMaterial} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium">Issue to Floor</button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white/5 border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-colors cursor-pointer">
             <Package className="h-6 w-6 text-emerald-400 mb-3" />
             <h3 className="font-semibold text-white">Goods Receipts (GRN)</h3>
@@ -89,6 +89,61 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
             <Factory className="h-6 w-6 text-purple-400 mb-3" />
             <h3 className="font-semibold text-white">Material Issues</h3>
             <p className="text-sm text-slate-500 mt-1">{project.materialIssueHeaders?.length || 0} issues to floor</p>
+          </div>
+        </div>
+
+        {/* Live Inventory Upload / Transactions */}
+        <div className="border-t border-white/10 pt-8 mt-4">
+          <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">Live Inventory Ledger</h3>
+          <div className="bg-[#050A14]/80 border border-white/5 rounded-2xl overflow-hidden shadow-inner">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-black/40">
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Date</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Material / Batch</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Quantity</th>
+                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reference Doc</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-sm">
+                {project.inventoryTransactions?.length > 0 ? (
+                  project.inventoryTransactions.map((tx: any) => (
+                    <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
+                      <td className="p-4 text-slate-300 font-medium">
+                        {new Date(tx.createdAt).toLocaleDateString()}
+                        <div className="text-xs text-slate-500">{new Date(tx.createdAt).toLocaleTimeString()}</div>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold tracking-wide ${
+                          tx.movementType === 'GRN_RECEIPT' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                          'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                        }`}>
+                          {tx.movementType.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-white font-medium">{tx.inventoryBatch?.material?.materialCode}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{tx.inventoryBatch?.batchNumber}</p>
+                      </td>
+                      <td className="p-4 font-black text-white">
+                        {tx.movementType === 'GRN_RECEIPT' ? '+' : '-'}{tx.quantity}
+                      </td>
+                      <td className="p-4">
+                        <span className="text-slate-300 font-mono text-xs">{tx.referenceDocType}</span>
+                        <div className="text-xs text-slate-500 mt-0.5">{tx.remarks || '-'}</div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-slate-500 font-medium">
+                      No inventory movements recorded yet. Generate a GRN to automatically upload material to stock.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

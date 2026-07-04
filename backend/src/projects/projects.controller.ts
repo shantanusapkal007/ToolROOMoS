@@ -63,6 +63,17 @@ export class ProjectsController {
     };
   }
 
+  @Put(':id')
+  @Roles('ADMIN', 'SALES_ENGINEER')
+  async update(@Param('id') id: string, @Body() dto: any) {
+    const data = await this.projectsService.update(id, dto);
+    return {
+      status: 'success',
+      message: 'Project updated successfully.',
+      data,
+    };
+  }
+
   @Put(':id/status')
   @Roles('ADMIN', 'SALES_ENGINEER')
   async updateStatus(
@@ -94,6 +105,51 @@ export class ProjectsController {
     return {
       status: 'success',
       message: 'Project activity history retrieved.',
+      data,
+    };
+  }
+
+  // --- Tasks (WBS) ---
+
+  @Get(':id/tasks')
+  async getTasks(@Param('id') id: string) {
+    const data = await this.projectsService.getTasks(id);
+    return {
+      status: 'success',
+      data,
+    };
+  }
+
+  @Post(':id/tasks')
+  @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
+  async createTask(@Param('id') id: string, @Body() body: any) {
+    const data = await this.projectsService.createTask(id, body, 'SYSTEM');
+    return {
+      status: 'success',
+      message: 'Task created successfully.',
+      data,
+    };
+  }
+
+  @Put(':id/tasks/:taskId')
+  @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
+  async updateTask(@Param('taskId') taskId: string, @Body() body: any) {
+    const data = await this.projectsService.updateTask(taskId, body, 'SYSTEM');
+    return {
+      status: 'success',
+      message: 'Task updated successfully.',
+      data,
+    };
+  }
+
+  // --- Quality Inspections ---
+  @Post(':id/inspections')
+  @Roles('ADMIN', 'QUALITY', 'PRODUCTION')
+  async createInspection(@Param('id') id: string, @Body() body: any) {
+    const data = await this.projectsService.createInspection(id, body, 'SYSTEM');
+    return {
+      status: 'success',
+      message: 'Inspection logged.',
       data,
     };
   }

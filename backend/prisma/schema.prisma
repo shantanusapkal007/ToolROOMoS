@@ -111,6 +111,16 @@ enum VendorType {
 
 // ============================================================================
 
+enum EmployeeType {
+  INTERNAL
+  EXTERNAL
+}
+
+enum InspectionType {
+  IN_PROCESS
+  FINAL_PDI
+}
+
 enum SystemRole {
   ADMIN
   SALES_ENGINEER
@@ -369,6 +379,7 @@ model Employee {
   employeeCode String     @unique
   name         String
   designation  String?
+  employeeType EmployeeType @default(INTERNAL)
   hourlyRate   Decimal    @default(0)
   shiftId      String?
   shift        Shift?     @relation(fields: [shiftId], references: [id])
@@ -557,6 +568,7 @@ model Project {
   approvals             Approval[]
   projectCostEvents     ProjectCostEvent[]
   projectCostSummary    ProjectCostSummary?
+  projectTasks          ProjectTask[]
 
   @@map("projects")
 }
@@ -650,6 +662,7 @@ model BillOfMaterialItem {
   bomHeader        BillOfMaterialHeader @relation(fields: [bomHeaderId], references: [id])
   materialId       String
   material         Material             @relation(fields: [materialId], references: [id])
+  isAssembly       Boolean              @default(false)
   rawSize          String?
   calculatedWeight Decimal?
   requiredQty      Decimal
@@ -857,6 +870,7 @@ model InspectionHeader {
   projectId             String
   project               Project          @relation(fields: [projectId], references: [id])
   productionOperationId String?
+  inspectionType        InspectionType   @default(IN_PROCESS)
   inspectionNumber      String           @unique
   documentNumber        String?
   inspectedQty          Decimal
@@ -1325,4 +1339,36 @@ model SubcontractReceiptItem {
   inventoryBatches InventoryBatch[]
 
   @@map("subcontract_receipt_items")
+}
+
+model CostRateHistory {
+  id             String   @id @default(uuid())
+  entityType     String   // "EMPLOYEE" or "MACHINE"
+  entityId       String
+  oldRate        Decimal
+  newRate        Decimal
+  effectiveFrom  DateTime @default(now())
+  reason         String?
+  recordedBy     String?
+
+  @@map("cost_rate_history")
+}
+
+model ProjectTask {
+  id          String    @id @default(uuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id])
+  taskName    String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String    @default("PENDING")
+  assignedTo  String?
+  dependsOn   String?   // ID of another task this task depends on
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  @@map("project_tasks")
 }

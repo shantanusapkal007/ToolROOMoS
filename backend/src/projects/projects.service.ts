@@ -138,7 +138,28 @@ export class ProjectsService {
         inspectionHeaders: true,
         dispatchNotes: true,
         invoiceHeaders: true,
+        projectTasks: { orderBy: { startDate: 'asc' } },
+        inventoryTransactions: {
+          include: {
+            inventoryBatch: {
+              include: {
+                material: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        },
       },
+    });
+  }
+
+  async update(id: string, dto: UpdateProjectDto) {
+    if (dto.targetDeliveryDate) {
+      dto.targetDeliveryDate = new Date(dto.targetDeliveryDate).toISOString() as any;
+    }
+    return this.prisma.project.update({
+      where: { id },
+      data: dto,
     });
   }
 
@@ -196,6 +217,54 @@ export class ProjectsService {
     return this.prisma.projectActivity.findMany({
       where: { projectId: id },
       orderBy: { performedAt: 'desc' },
+    });
+  }
+
+  // --- Project Tasks (WBS) ---
+  
+  async getTasks(projectId: string) {
+    return this.prisma.projectTask.findMany({
+      where: { projectId },
+      orderBy: { startDate: 'asc' },
+    });
+  }
+
+  async createTask(projectId: string, data: any, userId?: string) {
+    return this.prisma.projectTask.create({
+      data: {
+        ...data,
+        projectId,
+        createdBy: userId,
+      },
+    });
+  }
+
+  async updateTask(taskId: string, data: any, userId?: string) {
+    return this.prisma.projectTask.update({
+      where: { id: taskId },
+      data: {
+        ...data,
+        updatedBy: userId,
+      },
+    });
+  }
+
+  // --- Quality Inspections ---
+  async createInspection(projectId: string, data: any, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const inspection = await tx.inspectionHeader.create({
+        data: {
+          projectId,
+          inspectionNumber: `INS-${Date.now()}`,
+          inspectedQty: data.inspectedQty || 1,
+          passedQty: data.passedQty || 1,
+          result: data.result || 'PASS',
+          inspectionType: data.inspectionType || 'IN_PROCESS',
+          createdBy: userId,
+        },
+      });
+
+      return inspection;
     });
   }
 }

@@ -21,6 +21,7 @@ import { ProcurementModule } from './procurement/procurement.module';
 import { ProductionModule } from './production/production.module';
 import { SubcontractingModule } from './subcontracting/subcontracting.module';
 import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.module';
+import { HrModule } from './hr/hr.module';
 
 /**
  * AppModule
@@ -62,6 +63,7 @@ import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.mo
     ProductionModule,
     SubcontractingModule,
     LogisticsFinanceModule,
+    HrModule,
   ],
   controllers: [AppController],
   providers: [
