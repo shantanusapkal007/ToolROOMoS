@@ -28,7 +28,7 @@ export class ProjectsService {
           remarks: dto.remarks,
           createdBy: userId,
           updatedBy: userId,
-          currentStage: ProjectStatus.CREATED,
+          currentStage: ProjectStatus.ENGINEERING,
         },
       });
 
@@ -55,8 +55,8 @@ export class ProjectsService {
       await tx.projectTimeline.create({
         data: {
           projectId: project.id,
-          fromStage: ProjectStatus.CREATED,
-          toStage: ProjectStatus.CREATED,
+          fromStage: ProjectStatus.ENGINEERING,
+          toStage: ProjectStatus.ENGINEERING,
           transitionedBy: userId || 'SYSTEM',
           remarks: 'Project initialized via Customer PO registration',
         },
@@ -265,6 +265,12 @@ export class ProjectsService {
       });
 
       return inspection;
+    });
+  }
+  async getCostEvents(id: string) {
+    return this.prisma.projectCostEvent.findMany({
+      where: { projectId: id },
+      orderBy: { createdAt: 'asc' },
     });
   }
 }

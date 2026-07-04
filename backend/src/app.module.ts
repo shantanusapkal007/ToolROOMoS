@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -22,6 +23,7 @@ import { ProductionModule } from './production/production.module';
 import { SubcontractingModule } from './subcontracting/subcontracting.module';
 import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.module';
 import { HrModule } from './hr/hr.module';
+import { AutomationModule } from './automation/automation.module';
 
 /**
  * AppModule
@@ -37,6 +39,9 @@ import { HrModule } from './hr/hr.module';
       ttl: 60000,
       limit: 100,
     }]),
+
+    // Scheduling
+    ScheduleModule.forRoot(),
 
     // Layer 5 — Persistence (Global)
     PrismaModule,
@@ -64,6 +69,7 @@ import { HrModule } from './hr/hr.module';
     SubcontractingModule,
     LogisticsFinanceModule,
     HrModule,
+    AutomationModule,
   ],
   controllers: [AppController],
   providers: [

@@ -89,6 +89,7 @@ export class BomsService {
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
       const bom = await tx.billOfMaterialHeader.findFirstOrThrow({
         where: { id: bomId, projectId },
+        include: { items: true },
       });
 
       if (bom.approvalStatus === ApprovalStatus.APPROVED) {
@@ -151,6 +152,59 @@ export class BomsService {
           performedBy: userId || 'SYSTEM',
         },
       });
+
+      // 5. Automation: Auto-Generate Draft PO for required materials
+      try {
+        let defaultVendor = await tx.vendor.findFirst({ where: { vendorType: 'MATERIAL_SUPPLIER' } });
+        if (!defaultVendor) {
+          defaultVendor = await tx.vendor.findFirst();
+        }
+
+        if (defaultVendor && bom.items.length > 0) {
+          // Check stock vs required for each item (assuming requiredQty needs to be ordered fully for toolroom project)
+          const itemsToOrder = bom.items.filter(item => Number(item.requiredQty) > 0);
+
+          if (itemsToOrder.length > 0) {
+            const poTotal = itemsToOrder.reduce((sum, item) => sum + Number(item.estimatedCost), 0);
+            
+            const poHeader = await tx.purchaseOrderHeader.create({
+              data: {
+                projectId,
+                vendorId: defaultVendor.id,
+                poNumber: `PO-AUTO-${project.projectNumber}-${Date.now().toString().slice(-4)}`,
+                status: 'DRAFT',
+                totalAmount: poTotal,
+                createdBy: 'SYSTEM',
+                remarks: 'Auto-generated from Approved BOM'
+              }
+            });
+
+            await Promise.all(itemsToOrder.map(item => 
+              tx.purchaseOrderItem.create({
+                data: {
+                  poHeaderId: poHeader.id,
+                  materialId: item.materialId,
+                  orderedQty: item.requiredQty,
+                  agreedRate: Number(item.estimatedCost) / Number(item.requiredQty),
+                  lineTotal: item.estimatedCost,
+                  remarks: 'Auto-generated item'
+                }
+              })
+            ));
+
+            await tx.projectActivity.create({
+              data: {
+                projectId,
+                action: 'PO_AUTO_GENERATED',
+                description: `Draft PO ${poHeader.poNumber} auto-generated for ${itemsToOrder.length} BOM items.`,
+                performedBy: 'SYSTEM',
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Auto PO Generation Failed", err);
+      }
 
       return approvedBom;
     });

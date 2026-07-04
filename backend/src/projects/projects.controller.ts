@@ -109,6 +109,16 @@ export class ProjectsController {
     };
   }
 
+  @Get(':id/cost-events')
+  async getCostEvents(@Param('id') id: string) {
+    const data = await this.projectsService.getCostEvents(id);
+    return {
+      status: 'success',
+      message: 'Project financial audit trail retrieved.',
+      data,
+    };
+  }
+
   // --- Tasks (WBS) ---
 
   @Get(':id/tasks')

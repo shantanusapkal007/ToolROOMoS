@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
-import { DollarSign } from "lucide-react";
-import { Input } from "../../../../components/ui/Input";
+import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent } from "lucide-react";
 import { useToast } from "../../../../components/ui/Toast";
 
 export default function FinanceTab({ params }: { params: Promise<{ id: string }> }) {
   const { success, error } = useToast();
   const resolvedParams = React.use(params);
   const [project, setProject] = useState<any | null>(null);
+  const [costEvents, setCostEvents] = useState<any[]>([]);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invNum, setInvNum] = useState("");
   const [invAmount, setInvAmount] = useState(0);
@@ -17,12 +17,20 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
 
   useEffect(() => {
     loadProjectDetails(resolvedParams.id);
+    loadCostEvents(resolvedParams.id);
   }, [resolvedParams.id]);
 
   const loadProjectDetails = async (projectId: string) => {
     try {
       const res = await api.get(`projects/${projectId}`);
       setProject(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const loadCostEvents = async (projectId: string) => {
+    try {
+      const res = await api.get(`projects/${projectId}/cost-events`);
+      setCostEvents(res.data);
     } catch (err) { console.error(err); }
   };
 
@@ -41,6 +49,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
       setShowInvoiceModal(false);
       success("Invoice Generated", `Tax Invoice ${invNum} created successfully.`);
       loadProjectDetails(project.id);
+      loadCostEvents(project.id);
       
       // Reset form
       setInvNum("");
@@ -61,9 +70,9 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
           <div>
             <h2 className="text-h3 font-bold text-white flex items-center">
               <DollarSign className="h-6 w-6 mr-3 text-green-400" />
-              Finance & Billing
+              Finance & Costing Dashboard
             </h2>
-            <p className="text-slate-400 mt-1">Manage Invoices, Payments, and Cost Analysis.</p>
+            <p className="text-slate-400 mt-1">End-to-End Financial Tracking from BOM to Invoice.</p>
           </div>
           <button onClick={() => {
             setInvNum(`INV-${Date.now().toString().slice(-4)}`);
@@ -74,60 +83,154 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
         </div>
 
         {/* Cost Summary Dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10 pt-4 border-t border-white/10">
-          <div className="p-4 rounded-xl bg-black/20 border border-white/5">
-            <div className="text-xs font-bold text-slate-500 uppercase mb-1">Total Cost</div>
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 relative z-10 pt-4 border-t border-white/10">
+          <div className="p-4 rounded-xl bg-black/40 border border-white/5 shadow-inner">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs font-bold text-slate-500 uppercase">Total Cost</div>
+              <PieChart className="w-4 h-4 text-slate-400" />
+            </div>
             <div className="text-xl font-bold font-mono text-white">₹{cost.totalCost || 0}</div>
           </div>
-          <div className="p-4 rounded-xl bg-black/20 border border-white/5">
-            <div className="text-xs font-bold text-slate-500 uppercase mb-1">Material Cost</div>
+          <div className="p-4 rounded-xl bg-black/40 border border-white/5 shadow-inner">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs font-bold text-slate-500 uppercase">Material</div>
+              <Wrench className="w-4 h-4 text-amber-500/70" />
+            </div>
             <div className="text-xl font-bold font-mono text-amber-400">₹{cost.actualMaterialCost || 0}</div>
           </div>
-          <div className="p-4 rounded-xl bg-black/20 border border-white/5">
-            <div className="text-xs font-bold text-slate-500 uppercase mb-1">Labour Cost</div>
+          <div className="p-4 rounded-xl bg-black/40 border border-white/5 shadow-inner">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs font-bold text-slate-500 uppercase">Labour</div>
+              <HardHat className="w-4 h-4 text-blue-500/70" />
+            </div>
             <div className="text-xl font-bold font-mono text-blue-400">₹{cost.actualLabourCost || 0}</div>
           </div>
-          <div className="p-4 rounded-xl bg-black/20 border border-white/5">
-            <div className="text-xs font-bold text-slate-500 uppercase mb-1">Subcontract Cost</div>
+          <div className="p-4 rounded-xl bg-black/40 border border-white/5 shadow-inner">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs font-bold text-slate-500 uppercase">Subcontract</div>
+              <Truck className="w-4 h-4 text-orange-500/70" />
+            </div>
             <div className="text-xl font-bold font-mono text-orange-400">₹{cost.actualSubcontractCost || 0}</div>
+          </div>
+          <div className="p-4 rounded-xl bg-green-900/20 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs font-bold text-green-500 uppercase">Total Revenue</div>
+              <TrendingUp className="w-4 h-4 text-green-400" />
+            </div>
+            <div className="text-xl font-bold font-mono text-green-400">₹{cost.revenue || 0}</div>
+          </div>
+          <div className="p-4 rounded-xl bg-emerald-900/20 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs font-bold text-emerald-500 uppercase">Margin</div>
+              <Percent className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-xl font-bold font-mono text-emerald-400">
+              {cost.revenue > 0 ? ((Number(cost.profitability) / Number(cost.revenue)) * 100).toFixed(1) : 0}%
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
-        {project.invoiceHeaders && project.invoiceHeaders.length > 0 ? (
+      <div className="mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          
+          {/* Left Column: Financial Audit Trail */}
           <div className="space-y-4">
-            {project.invoiceHeaders.map((inv: any) => (
-              <div key={inv.id} className="glass-panel p-5 border border-white/5 hover:border-green-500/30 transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
-                <div className="flex justify-between items-start relative z-10">
-                  <div>
-                    <div className="flex items-center space-x-3 mb-1">
-                      <span className="text-lg font-bold text-white">{inv.invoiceNumber}</span>
-                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-green-500/20 text-green-400">
-                        {inv.status || 'ISSUED'}
-                      </span>
+            <h3 className="text-lg font-bold text-white flex items-center mb-4">
+              <Activity className="h-5 w-5 mr-2 text-blue-400" />
+              Financial Audit Trail
+            </h3>
+            
+            {costEvents && costEvents.length > 0 ? (
+              <div className="relative pl-6 border-l-2 border-white/10 space-y-6">
+                {costEvents.map((evt, idx) => {
+                  const isRevenue = evt.costType === 'REVENUE';
+                  const isEstimate = evt.costType === 'ESTIMATED_MATERIAL' || evt.costType === 'ESTIMATED_LABOUR';
+                  
+                  return (
+                    <div key={evt.id} className="relative">
+                      {/* Timeline Dot */}
+                      <div className={`absolute -left-[33px] top-4 w-4 h-4 rounded-full border-4 border-[#050A14] ${
+                        isRevenue ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]' : isEstimate ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
+                      }`} />
+                      
+                      <div className="glass-panel p-4 border border-white/5 hover:border-white/20 transition-all">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className={`text-sm font-bold ${
+                                isRevenue ? 'text-green-400' : isEstimate ? 'text-amber-400' : 'text-red-400'
+                              }`}>
+                                {evt.costType.replace(/_/g, ' ')}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                {new Date(evt.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                            <p className="text-sm text-slate-300">{evt.description}</p>
+                          </div>
+                          
+                          <div className={`text-lg font-bold font-mono flex items-center ${
+                            isRevenue ? 'text-green-400' : 'text-white'
+                          }`}>
+                            {isRevenue ? <ArrowUpRight className="h-4 w-4 mr-1 text-green-400" /> : <ArrowDownRight className="h-4 w-4 mr-1 text-red-400" />}
+                            ₹{evt.amount}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-400">
-                      Ref Dispatch: <span className="text-white font-medium">{project.dispatchNotes?.find((d: any) => d.id === inv.dispatchNoteId)?.dispatchNumber || 'N/A'}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-slate-400">Total Billed (inc. Tax)</div>
-                    <div className="text-green-400 font-bold text-lg font-mono">₹{inv.totalAmount}</div>
-                    <div className="text-xs text-slate-500 mt-1">Sub: ₹{inv.subtotal} | Tax: ₹{inv.taxAmount}</div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            ))}
+            ) : (
+              <div className="text-center py-10 glass-panel border border-dashed border-white/10 rounded-xl">
+                <Activity className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                <p className="text-slate-400 text-sm">No financial events recorded yet.</p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="text-center py-16 glass-panel border border-dashed border-white/10 rounded-2xl">
-            <DollarSign className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">No Invoices Generated</h3>
-            <p className="text-slate-400">Create an invoice against a completed dispatch note.</p>
+
+          {/* Right Column: Invoices */}
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center mb-4">
+              <FileText className="h-5 w-5 mr-2 text-green-400" />
+              Generated Invoices
+            </h3>
+            
+            {project.invoiceHeaders && project.invoiceHeaders.length > 0 ? (
+              <div className="space-y-4">
+                {project.invoiceHeaders.map((inv: any) => (
+                  <div key={inv.id} className="glass-panel p-5 border border-white/5 hover:border-green-500/30 transition-all relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none" />
+                    <div className="flex justify-between items-start relative z-10">
+                      <div>
+                        <div className="flex items-center space-x-3 mb-1">
+                          <span className="text-lg font-bold text-white">{inv.invoiceNumber}</span>
+                          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-green-500/20 text-green-400">
+                            {inv.status || 'ISSUED'}
+                          </span>
+                        </div>
+                        <div className="text-sm text-slate-400">
+                          Ref Dispatch: <span className="text-white font-medium">{project.dispatchNotes?.find((d: any) => d.id === inv.dispatchNoteId)?.dispatchNumber || 'N/A'}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-slate-400">Total Billed</div>
+                        <div className="text-green-400 font-bold text-lg font-mono">₹{inv.totalAmount}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 glass-panel border border-dashed border-white/10 rounded-xl">
+                <FileText className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                <p className="text-slate-400 text-sm">No Invoices Generated.</p>
+              </div>
+            )}
           </div>
-        )}
+          
+        </div>
       </div>
 
       {showInvoiceModal && (

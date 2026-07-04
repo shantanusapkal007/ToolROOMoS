@@ -145,20 +145,20 @@ export class GoodsReceiptsService {
         },
       });
 
-      // 9. Automations: Transition to MATERIAL_AVAILABLE
+      // 9. Automations: Transition to PRODUCTION
       // In a real flow we check if outstanding material remains. For this lifecycle demo, we auto-advance
       await tx.project.update({
         where: { id: projectId },
-        data: { currentStage: ProjectStatus.MATERIAL_AVAILABLE, updatedBy: userId },
+        data: { currentStage: ProjectStatus.PRODUCTION, updatedBy: userId },
       });
 
       await tx.projectTimeline.create({
         data: {
           projectId,
           fromStage: ProjectStatus.PROCUREMENT,
-          toStage: ProjectStatus.MATERIAL_AVAILABLE,
+          toStage: ProjectStatus.PRODUCTION,
           transitionedBy: userId || 'SYSTEM',
-          remarks: `All materials received. Project transitioned to MATERIAL_AVAILABLE.`,
+          remarks: `All materials received. Project transitioned to PRODUCTION.`,
         },
       });
 
@@ -166,7 +166,7 @@ export class GoodsReceiptsService {
         data: {
           projectId,
           action: 'STAGE_CHANGED',
-          description: 'Project advanced to MATERIAL_AVAILABLE phase',
+          description: 'Project advanced to PRODUCTION phase',
           performedBy: userId || 'SYSTEM',
         },
       });
