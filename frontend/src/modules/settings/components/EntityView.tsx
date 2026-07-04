@@ -95,38 +95,54 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
   return (
     <div className="h-full flex flex-col">
       {/* Entity Toolbar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 border-b border-white/10 shrink-0 bg-white/5 gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-white tracking-tight flex items-center">
-            <span className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center mr-3 border border-blue-500/20">
-              <Database className="w-4 h-4" />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 border-b border-white/5 shrink-0 bg-[#050A14]/80 backdrop-blur-2xl gap-4 relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h2 className="text-2xl font-black text-white tracking-tight flex items-center mb-1">
+            <span className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mr-4 border border-emerald-500/20 shadow-[inset_0_0_15px_rgba(16,185,129,0.2)]">
+              <Database className="w-5 h-5" />
             </span>
             {registry.pluralName}
           </h2>
-          <p className="text-sm text-slate-400 mt-1">Manage all {registry.pluralName.toLowerCase()} in the master database.</p>
+          <div className="flex items-center space-x-3 text-sm text-slate-400 ml-[56px]">
+            <p>Manage all {registry.pluralName.toLowerCase()} in the master database.</p>
+            <span className="text-white/20">•</span>
+            <span className="bg-white/5 px-2 py-0.5 rounded text-emerald-400 font-mono text-xs font-bold border border-white/10">
+              {data.length} Records
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-3 w-full md:w-auto">
-          <div className="w-full md:w-64">
-            <Input 
-              placeholder={`Search...`} 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={<Search className="h-4 w-4" />}
-            />
+        <div className="flex items-center space-x-3 w-full md:w-auto relative z-10">
+          <div className="w-full md:w-64 relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg blur opacity-0 group-focus-within:opacity-30 transition duration-500"></div>
+            <div className="relative">
+              <Input 
+                placeholder={`Search ${registry.pluralName}...`} 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                leftIcon={<Search className="h-4 w-4" />}
+              />
+            </div>
           </div>
-          <Button variant="ghost" onClick={fetchData} title="Refresh">
+          <Button variant="ghost" onClick={fetchData} title="Refresh" className="hover:text-emerald-400 transition-colors">
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button variant="secondary" onClick={() => exportToCsv(registry.id, data, registry.columns)} title="Export CSV">
+          <Button variant="secondary" onClick={() => exportToCsv(registry.id, data, registry.columns)} title="Export CSV" className="hover:border-emerald-500/30 transition-colors">
             <Download className="h-4 w-4" />
           </Button>
-          <Button variant="secondary" onClick={() => setIsImportOpen(true)} title="Import CSV">
+          <Button variant="secondary" onClick={() => setIsImportOpen(true)} title="Import CSV" className="hover:border-emerald-500/30 transition-colors">
             <Upload className="h-4 w-4" />
           </Button>
-          <Button variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="h-4 w-4" />}>
-            New
-          </Button>
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+            <Button variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="h-4 w-4" />} className="relative border-none bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wide">
+              New {registry.singularName}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -167,26 +183,27 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
       >
         {viewingRecord && (
           <div className="space-y-6">
-            <div className="bg-[#0B1018]/30 p-6 rounded-xl border border-white/5 space-y-4">
+            <div className="bg-[#0B1018]/60 p-6 rounded-2xl border border-white/5 space-y-4 shadow-inner hover:border-emerald-500/20 transition-colors">
+              <h4 className="text-sm font-black text-emerald-400 uppercase tracking-wider mb-4 border-b border-white/10 pb-2">Primary Details</h4>
               {registry.columns.map(col => (
-                <div key={col.key} className="grid grid-cols-3 gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0">
-                  <div className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{col.label}</div>
-                  <div className="col-span-2 text-sm text-white">
+                <div key={col.key} className="grid grid-cols-3 gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0 hover:bg-white/[0.02] p-2 -mx-2 rounded-lg transition-colors">
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">{col.label}</div>
+                  <div className="col-span-2 text-sm text-white font-medium">
                     {col.render ? col.render(viewingRecord[col.key], viewingRecord) : viewingRecord[col.key] || '-'}
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="bg-[#0B1018]/30 p-6 rounded-xl border border-white/5 space-y-4">
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-white/10 pb-2">All Data Fields</h4>
+            <div className="bg-[#0B1018]/60 p-6 rounded-2xl border border-white/5 space-y-4 shadow-inner hover:border-emerald-500/20 transition-colors">
+              <h4 className="text-sm font-black text-emerald-400 uppercase tracking-wider mb-4 border-b border-white/10 pb-2">All Data Fields</h4>
               {registry.fields.map(field => (
-                <div key={field.name} className="grid grid-cols-3 gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0">
-                  <div className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{field.label}</div>
+                <div key={field.name} className="grid grid-cols-3 gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0 hover:bg-white/[0.02] p-2 -mx-2 rounded-lg transition-colors">
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">{field.label}</div>
                   <div className="col-span-2 text-sm text-white">
                     {viewingRecord[field.name] !== undefined && viewingRecord[field.name] !== null && viewingRecord[field.name] !== '' 
                       ? (typeof viewingRecord[field.name] === 'boolean' 
-                          ? (viewingRecord[field.name] ? 'Yes' : 'No') 
+                          ? (viewingRecord[field.name] ? <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">Yes</span> : <span className="text-slate-500 bg-white/5 px-2 py-0.5 rounded font-bold">No</span>) 
                           : viewingRecord[field.name])
                       : '-'}
                   </div>

@@ -2,12 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Users, Briefcase, Plus, TrendingUp, Edit2 } from 'lucide-react';
-import api from '@/lib/api';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Users, Briefcase, Plus, TrendingUp, Edit2, X } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
+import { api } from '@/lib/api';
 
 export default function HrDashboard() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newWorker, setNewWorker] = useState({
+    employeeCode: '',
+    name: '',
+    designation: '',
+    employeeType: 'INTERNAL',
+    hourlyRate: 0,
+  });
+
+  const { success, error } = useToast();
 
   useEffect(() => {
     loadEmployees();
@@ -17,88 +30,204 @@ export default function HrDashboard() {
     try {
       setLoading(true);
       const res = await api.get('/hr/employees');
-      setEmployees(res.data);
+      setEmployees(res.data?.data || res.data || []);
     } catch (err) {
       console.error('Failed to load HR data', err);
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const internal = employees.filter(e => e.employeeType === 'INTERNAL');
-  const external = employees.filter(e => e.employeeType === 'EXTERNAL');
+  const safeEmployees = Array.isArray(employees) ? employees : [];
+  const internal = safeEmployees.filter(e => e.employeeType === 'INTERNAL');
+  const external = safeEmployees.filter(e => e.employeeType === 'EXTERNAL');
+
+  const handleAddWorker = async () => {
+    try {
+      // For demo purposes, pick the first department ID available from existing employees
+      const defaultDeptId = safeEmployees.length > 0 ? safeEmployees[0].departmentId : null;
+      if (!defaultDeptId) {
+        throw new Error("No departments available. Seed the database first.");
+      }
+      
+      await api.post('/hr/employees', {
+        ...newWorker,
+        hourlyRate: Number(newWorker.hourlyRate),
+        departmentId: defaultDeptId
+      });
+      
+      setIsAddModalOpen(false);
+      success('Success', 'Worker added successfully');
+      loadEmployees();
+    } catch (e: any) {
+      error('Error', e.message || 'Failed to add worker');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#05070A] p-8 pb-32">
-      <PageHeader
-        title="HR & Resource Management"
-        description="Manage internal staff, outside contractors, and dynamic base hourly charges."
-        icon={<Users className="h-6 w-6 text-orange-400" />}
-        actions={
-          <button className="flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-500 rounded-lg text-sm font-semibold transition-colors">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Worker
-          </button>
-        }
-      />
+    <div className="flex h-screen w-screen overflow-hidden text-white font-sans bg-[#05070A]">
+      <Sidebar />
+      <div className="flex-1 overflow-y-auto p-8 pl-32 pb-32 relative z-0 animate-fade-in">
+        <PageHeader
+          title="HR & Resource Management"
+          subtitle="Manage internal staff, outside contractors, and dynamic base hourly charges."
+          actions={
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-500 rounded-lg text-sm font-semibold transition-colors"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Worker
+            </button>
+          }
+        />
 
-      {loading ? (
-        <div className="animate-pulse flex flex-col space-y-4">
-          <div className="h-32 bg-white/5 rounded-xl"></div>
-          <div className="h-64 bg-white/5 rounded-xl"></div>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          
-          {/* Internal Staff */}
-          <div>
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center">
-              <Users className="h-5 w-5 mr-2 text-blue-400" />
-              Internal Workforce ({internal.length})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {internal.map(emp => (
-                <WorkerCard key={emp.id} worker={emp} />
-              ))}
-              {internal.length === 0 && <p className="text-slate-500">No internal staff found.</p>}
+        {loading ? (
+          <div className="animate-pulse flex flex-col space-y-4">
+            <div className="h-32 bg-white/5 rounded-xl"></div>
+            <div className="h-64 bg-white/5 rounded-xl"></div>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            
+            {/* Internal Staff */}
+            <div>
+              <h2 className="text-lg font-bold text-white mb-4 flex items-center">
+                <Users className="h-5 w-5 mr-2 text-blue-400" />
+                Internal Workforce ({internal.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {internal.map(emp => (
+                  <WorkerCard key={emp.id} worker={emp} />
+                ))}
+                {internal.length === 0 && <p className="text-slate-500">No internal staff found.</p>}
+              </div>
+            </div>
+
+            {/* Outside Subcontractors / Temporary */}
+            <div>
+              <h2 className="text-lg font-bold text-white mb-4 flex items-center">
+                <Briefcase className="h-5 w-5 mr-2 text-purple-400" />
+                Outside / Contract Workers ({external.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {external.map(emp => (
+                  <WorkerCard key={emp.id} worker={emp} isExternal />
+                ))}
+                {external.length === 0 && <p className="text-slate-500">No external workers found.</p>}
+              </div>
+            </div>
+
+          </div>
+        )}
+      </div>
+
+      {/* Add Worker Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#0A0F1C] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-white/5">
+              <h3 className="text-lg font-bold text-white">Add New Worker</h3>
+              <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Employee Code</label>
+                <input 
+                  type="text" 
+                  value={newWorker.employeeCode}
+                  onChange={e => setNewWorker({...newWorker, employeeCode: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  placeholder="e.g. EMP-001"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Full Name</label>
+                <input 
+                  type="text" 
+                  value={newWorker.name}
+                  onChange={e => setNewWorker({...newWorker, name: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  placeholder="e.g. John Doe"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                  <select 
+                    value={newWorker.employeeType}
+                    onChange={e => setNewWorker({...newWorker, employeeType: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 appearance-none"
+                  >
+                    <option value="INTERNAL">Internal</option>
+                    <option value="EXTERNAL">External / Contract</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Hourly Rate (₹)</label>
+                  <input 
+                    type="number" 
+                    value={newWorker.hourlyRate}
+                    onChange={e => setNewWorker({...newWorker, hourlyRate: Number(e.target.value)})}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Designation</label>
+                <input 
+                  type="text" 
+                  value={newWorker.designation}
+                  onChange={e => setNewWorker({...newWorker, designation: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  placeholder="e.g. CNC Operator"
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-white/5 flex justify-end space-x-3 bg-white/[0.02]">
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleAddWorker}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-lg shadow-emerald-500/20"
+              >
+                Add Worker
+              </button>
             </div>
           </div>
-
-          {/* Outside Subcontractors / Temporary */}
-          <div>
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center">
-              <Briefcase className="h-5 w-5 mr-2 text-purple-400" />
-              Outside / Contract Workers ({external.length})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {external.map(emp => (
-                <WorkerCard key={emp.id} worker={emp} isExternal />
-              ))}
-              {external.length === 0 && <p className="text-slate-500">No external workers found.</p>}
-            </div>
-          </div>
-
         </div>
       )}
+
     </div>
   );
 }
 
-import { useToast } from '@/components/ui/Toast';
-
+// Ensure useToast isn't redefined at the bottom if already imported
 function WorkerCard({ worker, isExternal = false }: { worker: any, isExternal?: boolean }) {
   const [editingRate, setEditingRate] = useState(false);
   const [newRate, setNewRate] = useState(worker.hourlyRate);
-  const { addToast } = useToast();
+  const { success, error } = useToast();
 
   const handleUpdateRate = async () => {
     try {
       await api.patch(`/hr/employees/${worker.id}/rate`, { newRate: Number(newRate), reason: 'Updated via HR Dashboard' });
       setEditingRate(false);
-      addToast({ title: 'Success', message: 'Rate updated successfully.', type: 'success' });
+      success('Success', 'Rate updated successfully.');
       setTimeout(() => window.location.reload(), 1000);
     } catch (e: any) {
-      addToast({ title: 'Error', message: e.response?.data?.message || 'Failed to update rate.', type: 'error' });
+      error('Error', e.message || 'Failed to update rate.');
     }
   };
 

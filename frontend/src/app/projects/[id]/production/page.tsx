@@ -79,7 +79,7 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
 
   const loadAvailableBatches = async () => {
     try {
-      const res = await api.get(`inventory-batches`);
+      const res = await api.get(`projects/${resolvedParams.id}/inventory-batches`);
       setAvailableBatches(res.data || []);
       if (res.data?.length > 0) setSelectedBatchId(res.data[0].id);
     } catch (err) { console.error("Could not load batches", err); }

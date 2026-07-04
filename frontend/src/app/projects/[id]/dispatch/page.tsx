@@ -9,6 +9,7 @@ import { useToast } from "../../../../components/ui/Toast";
 export default function DispatchTab({ params }: { params: Promise<{ id: string }> }) {
   const { success, error } = useToast();
   const resolvedParams = React.use(params);
+  const [project, setProject] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     dispatchNumber: `DISP-${Date.now().toString().slice(-4)}`,
