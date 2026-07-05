@@ -137,54 +137,54 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
 
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-12">
         {project.purchaseOrderHeaders && project.purchaseOrderHeaders.length > 0 ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
             {project.purchaseOrderHeaders.map((po: any, i: number) => (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 key={po.id} 
-                className="group relative rounded-3xl bg-white/[0.02] border border-white/5 p-6 backdrop-blur-xl flex flex-col overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-1"
+                className="group relative rounded-2xl bg-white/[0.01] border border-white/5 p-4 backdrop-blur-xl flex flex-col overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-0.5"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:bg-amber-500/20 transition-all duration-500" />
                 
-                <div className="flex justify-between items-start mb-6 relative z-10">
+                <div className="flex justify-between items-start mb-4 relative z-10">
                   <div>
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-xl font-bold text-white tracking-tight">{po.poNumber}</h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                    <div className="flex items-center space-x-3 mb-1.5">
+                      <h3 className="text-sm font-bold text-white tracking-tight">{po.poNumber}</h3>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-widest ${
                         po.status === 'CLOSED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       }`}>
                         {po.status === 'CLOSED' ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
                         {po.status}
                       </span>
                     </div>
-                    <p className="text-slate-400 text-sm flex items-center">
-                      <Package className="w-4 h-4 mr-2 opacity-50" />
+                    <p className="text-slate-400 text-xs flex items-center">
+                      <Package className="w-3 h-3 mr-1.5 opacity-50" />
                       {po.vendor?.vendorName || 'Unknown Vendor'}
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Total Value</div>
-                    <div className="text-xl text-amber-400 font-bold tracking-tight">&#8377;{Number(po.totalAmount).toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Value</div>
+                    <div className="text-lg text-amber-400 font-bold tracking-tight font-mono">&#8377;{Number(po.totalAmount).toLocaleString()}</div>
                   </div>
                 </div>
 
-                <div className="flex-1 bg-black/40 rounded-2xl p-4 border border-white/5 mb-6 relative z-10">
-                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center">
-                    <FileText className="w-3 h-3 mr-2" />
+                <div className="flex-1 bg-black/40 rounded-xl p-3 border border-white/5 mb-4 relative z-10">
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center">
+                    <FileText className="w-3 h-3 mr-1.5" />
                     Order Items
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {po.items?.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center group/item">
+                      <div key={item.id} className="flex justify-between items-center group/item bg-white/[0.01] p-2 rounded-lg border border-white/[0.02]">
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-slate-200">{item.material?.materialName}</span>
-                          <span className="text-xs text-slate-500 mt-0.5">{item.orderedQty} units ordered</span>
+                          <span className="text-xs font-medium text-slate-200">{item.material?.materialName}</span>
+                          <span className="text-[10px] text-slate-500 mt-0.5 font-bold">{item.orderedQty} units ordered</span>
                         </div>
                         <div className="text-right flex flex-col">
-                          <span className="text-sm text-slate-300 font-mono">&#8377;{Number(item.lineTotal).toLocaleString()}</span>
-                          <span className="text-xs text-slate-500 mt-0.5 font-mono">@ &#8377;{item.agreedRate}</span>
+                          <span className="text-xs text-slate-300 font-mono font-bold">&#8377;{Number(item.lineTotal).toLocaleString()}</span>
+                          <span className="text-[10px] text-slate-500 mt-0.5 font-mono">@ &#8377;{item.agreedRate}</span>
                         </div>
                       </div>
                     ))}

@@ -10,6 +10,7 @@ export interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
   icon?: React.ReactNode;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  isLoading?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
@@ -21,6 +22,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   icon,
   leftIcon,
   rightIcon,
+  isLoading,
   ...props
 }, ref) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -85,9 +87,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
       <div className="absolute inset-0 bg-gradient-to-t from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       
       <span className="relative z-10 flex items-center gap-2">
-        {(icon || leftIcon) && <span className="flex-shrink-0">{icon || leftIcon}</span>}
+        {isLoading ? (
+          <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+        ) : (icon || leftIcon) ? (
+          <span className="flex-shrink-0">{icon || leftIcon}</span>
+        ) : null}
         {children as React.ReactNode}
-        {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+        {rightIcon && !isLoading && <span className="flex-shrink-0">{rightIcon}</span>}
       </span>
     </motion.button>
   );

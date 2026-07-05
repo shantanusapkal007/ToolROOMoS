@@ -293,32 +293,47 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
             </div>
           </div>
 
-          {/* Activity Feed */}
-          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 relative">
-            <h3 className="text-base font-bold text-white flex items-center mb-4">
-              <Activity className="w-4 h-4 mr-2 text-emerald-400" />
+          {/* Premium Activity Feed */}
+          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4 relative overflow-hidden group/feed transition-all duration-500 hover:border-white/10 hover:shadow-[0_0_30px_rgba(16,185,129,0.05)]">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-[50px] -mr-24 -mt-24 pointer-events-none opacity-50 group-hover/feed:opacity-100 group-hover/feed:bg-emerald-500/10 transition-all duration-700" />
+            
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center mb-5 relative z-10">
+              <Activity className="w-3.5 h-3.5 mr-2 text-emerald-400 animate-pulse" />
               Live Activity Feed
             </h3>
             
-            <div className="space-y-4 max-h-[300px] overflow-y-auto hide-scrollbar pr-2 relative">
-              {/* Vertical line timeline */}
-              <div className="absolute left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-emerald-500/50 via-blue-500/20 to-transparent"></div>
+            <div className="space-y-4 max-h-[300px] overflow-y-auto hide-scrollbar pl-2 pr-2 relative z-10">
+              {/* Dynamic glowing vertical timeline */}
+              <div className="absolute left-[15px] top-3 bottom-4 w-px bg-gradient-to-b from-emerald-500/40 via-blue-500/10 to-transparent">
+                <div className="absolute top-0 left-0 w-full h-1/3 bg-emerald-400/80 blur-[2px] animate-pulse"></div>
+              </div>
 
               {(project.projectActivities && project.projectActivities.length > 0) ? project.projectActivities.map((act: any, idx: number) => (
-                <div key={act.id} className="relative pl-10 group" style={{ animation: `slideUp 0.3s ease-out ${idx * 0.1}s forwards`, opacity: mounted ? 1 : 0 }}>
-                  <div className="absolute left-[-2px] top-1 h-6 w-6 rounded-full bg-[#0B1018] border-2 border-emerald-500/50 flex items-center justify-center group-hover:border-emerald-400 group-hover:shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                <div key={act.id} className="relative pl-10 group cursor-default" style={{ animation: `slideUp 0.3s ease-out ${idx * 0.05}s forwards`, opacity: mounted ? 1 : 0 }}>
+                  
+                  {/* Glowing Node */}
+                  <div className="absolute left-[9px] top-2 h-3 w-3 rounded-full bg-[#050A14] border-2 border-emerald-500/40 flex items-center justify-center group-hover:border-emerald-400 group-hover:bg-emerald-500/20 group-hover:shadow-[0_0_12px_rgba(52,211,153,0.6)] transition-all duration-300">
+                    <div className="w-1 h-1 bg-emerald-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
-                  <div className="bg-white/5 border border-white/5 p-4 rounded-xl group-hover:bg-white/10 transition-colors">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="font-bold text-white">{act.action}</span>
-                      <span className="text-xs font-semibold text-slate-500 bg-black/30 px-2 py-1 rounded">{new Date(act.performedAt).toLocaleTimeString()}</span>
+                  
+                  {/* Glassmorphic Activity Card */}
+                  <div className="bg-white/[0.01] border border-white/5 p-3.5 rounded-xl group-hover:bg-white/[0.03] group-hover:border-emerald-500/20 transition-all duration-300 shadow-sm group-hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)] group-hover:-translate-y-0.5 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-transparent group-hover:via-emerald-500/5 transition-all duration-500 translate-x-[-100%] group-hover:translate-x-[100%]"></div>
+                    
+                    <div className="flex justify-between items-start mb-1.5 relative z-10">
+                      <span className="font-bold text-white text-xs tracking-wide">{act.action}</span>
+                      <span className="text-[9px] font-bold text-slate-500 font-mono uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded shadow-inner border border-white/5 group-hover:text-emerald-400/80 transition-colors">
+                        {new Date(act.performedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <p className="text-sm text-slate-400 leading-relaxed">{act.description}</p>
+                    <p className="text-[11px] text-slate-400 leading-relaxed font-medium relative z-10 group-hover:text-slate-300 transition-colors">{act.description}</p>
                   </div>
                 </div>
               )) : (
-                <p className="text-slate-500 pl-10 italic">No activity recorded for this project.</p>
+                <div className="pl-8 py-4 flex items-center space-x-3 text-slate-500">
+                  <div className="w-2 h-2 rounded-full bg-white/10 animate-pulse"></div>
+                  <p className="text-xs italic tracking-wide">Awaiting project activity...</p>
+                </div>
               )}
             </div>
           </div>

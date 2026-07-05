@@ -7,6 +7,7 @@ import {
   Param,
   Query,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -186,6 +187,18 @@ export class ProjectsController {
     return {
       status: 'success',
       message: 'Project closed successfully.',
+      data,
+    };
+  }
+
+  // --- Deletion Engine ---
+  @Delete(':id')
+  @Roles('ADMIN')
+  async removeProject(@Param('id') id: string) {
+    const data = await this.projectsService.remove(id, 'SYSTEM');
+    return {
+      status: 'success',
+      message: 'Project deleted successfully.',
       data,
     };
   }

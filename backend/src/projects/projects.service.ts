@@ -93,7 +93,7 @@ export class ProjectsService {
     const limit = query.limit || 20;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = { status: { not: 'DELETED' } };
     if (query.status) where.currentStage = query.status as ProjectStatus;
     if (query.customerId) where.customerId = query.customerId;
     if (query.search) {
@@ -441,6 +441,42 @@ export class ProjectsService {
     return this.prisma.projectCostEvent.findMany({
       where: { projectId: id },
       orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  // --- Deletion Engine ---
+  async remove(id: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.findUniqueOrThrow({ where: { id } });
+      
+      const deletedProject = await tx.project.update({
+        where: { id },
+        data: {
+          status: 'DELETED',
+          updatedBy: userId
+        }
+      });
+
+      await tx.projectTimeline.create({
+        data: {
+          projectId: id,
+          fromStage: project.currentStage,
+          toStage: 'CANCELLED',
+          transitionedBy: userId || 'SYSTEM',
+          remarks: 'Project permanently deleted by user.',
+        },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId: id,
+          action: 'PROJECT_DELETED',
+          description: `Project soft-deleted and removed from active views.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return deletedProject;
     });
   }
 }

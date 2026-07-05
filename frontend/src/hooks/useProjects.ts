@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../lib/api';
 import { ProjectsService, Project } from '../services/projects.service';
 import { useToast } from '../components/ui/Toast';
 
@@ -90,6 +91,23 @@ export function useCloseProject(id: string) {
     },
     onError: (err: any) => {
       error('Close Failed', err.message || 'Failed to close project');
+    },
+  });
+}
+
+export function useDeleteProject(id: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: () => 
+      api.delete(`projects/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      success('Project Deleted', 'The project has been permanently deleted.');
+    },
+    onError: (err: any) => {
+      error('Delete Failed', err.message || 'Failed to delete project');
     },
   });
 }

@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "../components/auth/AuthProvider";
 import { ToastProvider } from "../components/ui/Toast";
 import QueryProvider from "../providers/QueryProvider";
+import { CommandPalette } from "../components/ui/CommandPalette";
 
 const fontOutfit = Outfit({
   variable: "--font-outfit",
@@ -46,6 +47,7 @@ export default function RootLayout({
           <QueryProvider>
             <ToastProvider>
               {children}
+              <CommandPalette />
             </ToastProvider>
           </QueryProvider>
         </AuthProvider>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Clock, Factory, Package, ArrowRight, Activity, TrendingUp, DollarSign, CheckCircle2, AlertCircle, Zap } from "lucide-react";
+import { useMasterData } from '../../hooks/useMasterData';
 
 interface MissionControlProps {
   projects: any[];
@@ -9,6 +10,7 @@ interface MissionControlProps {
 }
 
 export function MissionControl({ projects, onSelectProject }: MissionControlProps) {
+  const { data: machines = [] } = useMasterData('machines');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -188,6 +190,7 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
         </div>
       </div>
       
+      
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes shimmer {
           100% { transform: skewX(-20deg) translateX(200%); }
@@ -226,7 +229,7 @@ function PremiumKpiCard({ title, value, subtext, icon, trend, color, delay }: { 
       
       <div className="flex justify-between items-start mb-6 relative z-10">
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border bg-gradient-to-br ${colorMap[color]} shadow-inner`}>
-          {React.cloneElement(icon as React.ReactElement, { className: 'w-6 h-6' })}
+          {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-6 h-6' })}
         </div>
         {trend !== 'neutral' && (
           <div className={`px-3 py-1.5 rounded-lg text-xs font-black tracking-wider shadow-sm border ${trend === 'up' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}`}>

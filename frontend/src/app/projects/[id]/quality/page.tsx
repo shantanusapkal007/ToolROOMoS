@@ -55,8 +55,7 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
     } catch (err: any) {}
   };
 
-
-
+  return (
     <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col h-full min-h-0">
       <div className="flex justify-between items-center shrink-0 mb-4 bg-white/[0.01] border border-white/5 rounded-xl p-3">
         <div className="flex items-center">

@@ -21,8 +21,10 @@ export function Sidebar() {
       onMouseLeave={() => setIsHovered(false)}
       animate={{ width: isHovered ? 240 : 64 }}
       transition={springConfig}
-      className="fixed left-3 top-3 bottom-3 z-50 rounded-2xl glass-sidebar overflow-hidden flex flex-col"
+      className="fixed left-3 top-3 bottom-3 z-50 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] bg-[#050A14]/70 backdrop-blur-3xl overflow-hidden flex flex-col group/sidebar transition-colors hover:border-white/20 hover:bg-[#050A14]/80"
     >
+      {/* Ambient Inner Glow */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-purple-500/5 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-screen" />
       <div className="flex-1 flex flex-col h-full w-full py-5 px-3 overflow-y-auto hide-scrollbar relative z-10">
         
         {/* Logo Area */}
@@ -161,13 +163,13 @@ function NavItem({
         </motion.div>
       )}
       
-      <div className={`relative z-10 flex items-center h-12 px-3 rounded-xl transition-all duration-300 ${
+      <div className={`relative z-10 flex items-center h-12 px-3 rounded-xl transition-all duration-300 group-hover:scale-[1.02] ${
         active 
           ? 'text-white drop-shadow-md' 
           : 'text-zinc-400 hover:text-white hover:bg-white/5'
       }`}>
-        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-          {icon}
+        <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${active ? 'bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30 shadow-inner' : 'group-hover:bg-white/5'}`}>
+          {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
         </div>
         
         <AnimatePresence>

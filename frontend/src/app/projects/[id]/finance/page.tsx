@@ -60,16 +60,16 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4 }}
-      className={`relative p-5 rounded-2xl border ${highlight ? 'bg-green-900/20 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.1)]' : 'bg-white/[0.02] border-white/5'} backdrop-blur-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300`}
+      className={`relative p-4 rounded-xl border ${highlight ? 'bg-green-900/20 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.15)]' : 'bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.03]'} backdrop-blur-xl overflow-hidden group transition-all duration-300`}
     >
       {highlight && <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/20 rounded-full blur-2xl -mr-10 -mt-10" />}
       {!highlight && <div className="absolute top-0 right-0 w-20 h-20 bg-white/5 rounded-full blur-xl -mr-10 -mt-10 opacity-0 group-hover:opacity-100 transition-opacity" />}
       
-      <div className="flex justify-between items-start mb-3 relative z-10">
-        <div className={`text-xs font-bold ${highlight ? 'text-green-400' : 'text-slate-500'} uppercase tracking-wider`}>{title}</div>
-        <Icon className={`w-4 h-4 ${colorClass}`} />
+      <div className="flex justify-between items-start mb-2 relative z-10">
+        <div className={`text-[10px] font-bold ${highlight ? 'text-green-400' : 'text-slate-400'} uppercase tracking-widest`}>{title}</div>
+        <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
       </div>
-      <div className={`text-2xl font-bold font-mono tracking-tight relative z-10 ${highlight ? 'text-green-400' : 'text-white'}`}>
+      <div className={`text-xl font-bold font-mono tracking-tight relative z-10 ${highlight ? 'text-green-400' : 'text-white'}`}>
         {value}
       </div>
     </motion.div>
@@ -114,7 +114,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 shrink-0 mb-6 relative z-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 shrink-0 mb-4 relative z-10">
         <KPICard title="Total Cost" value={`₹${Number(cost.totalCost || 0).toLocaleString()}`} icon={PieChart} colorClass="text-slate-400" delay={0.0} />
         <KPICard title="Material" value={`₹${Number(cost.actualMaterialCost || 0).toLocaleString()}`} icon={Wrench} colorClass="text-amber-500" delay={0.05} />
         <KPICard title="Labour" value={`₹${Number(cost.actualLabourCost || 0).toLocaleString()}`} icon={HardHat} colorClass="text-blue-500" delay={0.1} />
@@ -124,12 +124,12 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-12 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
           
           {/* Left Column: Financial Audit Trail */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-bold text-white flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-blue-400" />
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center">
+              <Activity className="h-4 w-4 mr-2 text-blue-400" />
               Financial Audit Trail
             </h3>
             
@@ -151,26 +151,26 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                         isRevenue ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : isEstimate ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]'
                       }`} />
                       
-                      <div className="group bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-300">
+                      <div className="group bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-white/10 rounded-xl p-4 transition-all duration-300">
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="flex items-center space-x-2 mb-1.5">
-                              <span className={`text-xs font-bold tracking-wider uppercase px-2 py-0.5 rounded ${
-                                isRevenue ? 'bg-green-500/10 text-green-400' : isEstimate ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'
+                              <span className={`text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded ${
+                                isRevenue ? 'bg-green-500/10 text-green-400 border border-green-500/20' : isEstimate ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
                               }`}>
                                 {evt.costType.replace(/_/g, ' ')}
                               </span>
-                              <span className="text-xs text-slate-500 font-medium">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                                 {new Date(evt.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                               </span>
                             </div>
-                            <p className="text-sm text-slate-300">{evt.description}</p>
+                            <p className="text-xs text-slate-300">{evt.description}</p>
                           </div>
                           
-                          <div className={`text-lg font-bold font-mono flex items-center ${
+                          <div className={`text-base font-bold font-mono flex items-center ${
                             isRevenue ? 'text-green-400' : 'text-slate-200'
                           }`}>
-                            {isRevenue ? <ArrowUpRight className="h-4 w-4 mr-1 text-green-400" /> : <ArrowDownRight className="h-4 w-4 mr-1 text-red-400" />}
+                            {isRevenue ? <ArrowUpRight className="h-3.5 w-3.5 mr-1 text-green-400" /> : <ArrowDownRight className="h-3.5 w-3.5 mr-1 text-red-400" />}
                             &#8377;{Number(evt.amount).toLocaleString()}
                           </div>
                         </div>
@@ -188,42 +188,42 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
           </div>
 
           {/* Right Column: Invoices */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-bold text-white flex items-center">
-              <FileText className="h-5 w-5 mr-2 text-green-400" />
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center">
+              <FileText className="h-4 w-4 mr-2 text-green-400" />
               Generated Invoices
             </h3>
             
             {project.invoiceHeaders && project.invoiceHeaders.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {project.invoiceHeaders.map((inv: any, idx: number) => (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.1 + 0.2 }}
                     key={inv.id} 
-                    className="group relative bg-white/[0.02] border border-white/5 hover:border-green-500/30 rounded-2xl p-6 transition-all duration-300 overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] hover:-translate-y-1"
+                    className="group relative bg-white/[0.01] border border-white/5 hover:border-green-500/30 rounded-xl p-4 transition-all duration-300 overflow-hidden shadow-lg hover:shadow-[0_0_20px_rgba(34,197,94,0.1)] hover:-translate-y-0.5"
                   >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:bg-green-500/20 transition-all duration-500" />
                     
                     <div className="flex justify-between items-start relative z-10">
                       <div>
-                        <div className="flex items-center space-x-3 mb-2">
-                          <span className="text-xl font-bold text-white tracking-tight">{inv.invoiceNumber}</span>
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/20">
+                        <div className="flex items-center space-x-3 mb-1.5">
+                          <span className="text-sm font-bold text-white tracking-tight">{inv.invoiceNumber}</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest">
                             {inv.status || 'ISSUED'}
                           </span>
                         </div>
-                        <div className="text-sm text-slate-400 flex items-center">
-                          <Truck className="w-3.5 h-3.5 mr-2 opacity-50" />
-                          Ref Dispatch: <span className="text-white font-medium ml-1">{project.dispatchNotes?.find((d: any) => d.id === inv.dispatchNoteId)?.dispatchNumber || 'N/A'}</span>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                          <Truck className="w-3 h-3 mr-1.5 opacity-50" />
+                          Ref Dispatch: <span className="text-slate-300 ml-1">{project.dispatchNotes?.find((d: any) => d.id === inv.dispatchNoteId)?.dispatchNumber || 'N/A'}</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Total Billed</div>
-                        <div className="text-green-400 font-bold text-xl font-mono tracking-tight">&#8377;{Number(inv.totalAmount).toLocaleString()}</div>
+                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Billed</div>
+                        <div className="text-green-400 font-bold text-lg font-mono tracking-tight">&#8377;{Number(inv.totalAmount).toLocaleString()}</div>
                         {inv.profit && (
-                          <div className="text-xs font-bold text-emerald-500/80 mt-1">Profit: &#8377;{Number(inv.profit).toLocaleString()}</div>
+                          <div className="text-[10px] font-bold text-emerald-500 mt-0.5">Profit: &#8377;{Number(inv.profit).toLocaleString()}</div>
                         )}
                       </div>
                     </div>

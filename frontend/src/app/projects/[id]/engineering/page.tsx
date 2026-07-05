@@ -6,6 +6,7 @@ import { FileText, Layers, GitMerge, CheckCircle, Lock, Cpu, Settings } from "lu
 import { Input } from "../../../../components/ui/Input";
 import { useToast } from "../../../../components/ui/Toast";
 import { Modal } from "../../../../components/ui/Modal";
+import { RoutingNodeEditor } from "../../../../components/engineering/RoutingNodeEditor";
 import { useProject } from "../../../../hooks/useProjects";
 import { useMasterData } from "../../../../hooks/useMasterData";
 import { 
@@ -44,9 +45,10 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
   const [bomItems, setBomItems] = useState([{ materialId: "", requiredQty: 1, estimatedCost: 0 }]);
 
   const [showRoutingModal, setShowRoutingModal] = useState(false);
-  const [routingOps, setRoutingOps] = useState([{ sequenceOrder: 10, operationId: "", machineId: "", estimatedSetupTime: 0, estimatedHours: 0 }]);
 
   if (projectLoading || !project) return null;
+
+  const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
 
   // --- Actions ---
   const handleUploadDrawing = async (e: React.FormEvent) => {
@@ -75,14 +77,6 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
     } catch (err: any) {}
   };
 
-  const handleSubmitRouting = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await updateRoutingMutation.mutateAsync({ operations: routingOps });
-      setShowRoutingModal(false);
-    } catch (err: any) {}
-  };
-
   const handleApproveEngineering = async () => {
     if (!activeRouting) return;
     try {
@@ -108,8 +102,6 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
     }
   };
 
-  if (!project) return <div className="p-6 text-slate-400">Loading Engineering Plan...</div>;
-
   const isDrawingComplete = project.drawings && project.drawings.length > 0;
   const isBomComplete = activeBom?.approvalStatus === 'APPROVED';
   const isRoutingComplete = activeRouting?.approvalStatus === 'APPROVED';
@@ -129,12 +121,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
             <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Immutable Manufacturing Plan & Baseline</p>
           </div>
         </div>
-          <h2 className="text-h3 font-bold text-white flex items-center">
-            <Settings className="h-6 w-6 mr-3 text-blue-400" />
-            Manufacturing Planning Engine
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">Define the immutable manufacturing plan and generate the cost baseline.</p>
-        </div>
+        
         {isFullyApproved && (
           <button onClick={handleReopenEngineering} className="group relative px-4 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-all duration-300">
             <span className="relative z-10 flex items-center text-red-400 font-bold text-xs">Revise Engineering Plan</span>
@@ -198,11 +185,9 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
             </div>
           ) : (
             <div className="mt-2 space-y-2">
-              {!activeRouting ? (
-                <button onClick={() => setShowRoutingModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">Plan Routing</button>
-              ) : (
-                <span className="text-[11px] font-bold text-orange-400 block mt-2">Draft Pending Approval</span>
-              )}
+              <button onClick={() => setShowRoutingModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">
+                {activeRouting ? 'Edit Routing' : 'Plan Routing'}
+              </button>
             </div>
           )}
         </div>
@@ -290,7 +275,6 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Modals */}
-      {/* Modals are handled inside components/ui/Modal but let's replace standard with glass styling if possible */}
       {showDrawingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
           <div className="glass-modal w-full max-w-sm p-6 animate-slide-up border border-blue-500/20 relative overflow-hidden">
@@ -315,80 +299,46 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
           <div className="glass-modal w-full max-w-2xl p-6 animate-slide-up border border-blue-500/20 flex flex-col max-h-[90vh]">
             <h3 className="text-lg font-bold text-white mb-5">Material Plan (BOM)</h3>
             <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col">
-          <div className="flex-1 overflow-y-auto space-y-4 max-h-[60vh] pr-2">
-            {bomItems.map((item, idx) => (
-              <div key={idx} className="flex space-x-4 items-center">
-                <select className="flex-1 bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
-                  <option value="">Select Material...</option>
-                  {materials?.map((m: any) => <option key={m.id} value={m.id}>{m.materialName}</option>)}
-                </select>
-                <input type="number" className="w-24 bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
+              <div className="flex-1 overflow-y-auto space-y-4 max-h-[60vh] pr-2">
+                {bomItems.map((item, idx) => (
+                  <div key={idx} className="flex space-x-4 items-center">
+                    <select className="flex-1 bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
+                      <option value="">Select Material...</option>
+                      {materials?.map((m: any) => <option key={m.id} value={m.id}>{m.materialName}</option>)}
+                    </select>
+                    <input type="number" className="w-24 bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
+                  </div>
+                ))}
+                <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, estimatedCost: 0 }])} className="w-full py-2 border-2 border-dashed border-blue-500/30 text-blue-400 font-bold rounded-lg">+ Add Material</button>
               </div>
-            ))}
-            <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, estimatedCost: 0 }])} className="w-full py-2 border-2 border-dashed border-blue-500/30 text-blue-400 font-bold rounded-lg">+ Add Material</button>
+              <div className="flex space-x-3 pt-4 mt-4 border-t border-white/10 shrink-0">
+                <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-2 bg-white/5 rounded-xl text-white font-bold text-sm">Cancel</button>
+                <button type="submit" className="flex-1 py-2 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] rounded-xl text-white font-bold text-sm">Save BOM</button>
+              </div>
+            </form>
           </div>
-          </div>
-          <div className="flex space-x-3 pt-4 mt-4 border-t border-white/10 shrink-0">
-            <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-2 bg-white/5 rounded-xl text-white font-bold text-sm">Cancel</button>
-            <button type="submit" className="flex-1 py-2 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] rounded-xl text-white font-bold text-sm">Save BOM</button>
-          </div>
-        </form>
-      </div>
-      </div>
+        </div>
       )}
 
+      {/* Routing Node Editor */}
       {showRoutingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
-          <div className="glass-modal w-full max-w-4xl p-6 animate-slide-up border border-blue-500/20 flex flex-col max-h-[90vh]">
-            <h3 className="text-lg font-bold text-white mb-5">Manufacturing Sequence Builder</h3>
-            <form onSubmit={handleSubmitRouting} className="flex-1 min-h-0 flex flex-col">
-          <div className="flex-1 overflow-y-auto space-y-4 max-h-[60vh] pr-2">
-            <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-400">
-              <div className="col-span-1">Seq</div>
-              <div className="col-span-3">Operation</div>
-              <div className="col-span-3">Target Machine</div>
-              <div className="col-span-2">Setup(h)</div>
-              <div className="col-span-2">Cut(h)</div>
-              <div className="col-span-1"></div>
-            </div>
-            {routingOps.map((op, idx) => (
-              <div key={idx} className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-1">
-                  <input type="number" className="w-full bg-[#050A14] border border-white/10 rounded-lg p-2 text-white font-mono" value={op.sequenceOrder} onChange={(e) => { const a = [...routingOps]; a[idx].sequenceOrder = Number(e.target.value); setRoutingOps(a); }} />
-                </div>
-                <div className="col-span-3">
-                  <select className="w-full bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required value={op.operationId} onChange={(e) => { const a = [...routingOps]; a[idx].operationId = e.target.value; setRoutingOps(a); }}>
-                    <option value="">Select Process...</option>
-                    {operationsList?.map((o: any) => <option key={o.id} value={o.id}>{o.operationName}</option>)}
-                  </select>
-                </div>
-                <div className="col-span-3">
-                  <select className="w-full bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required value={op.machineId} onChange={(e) => { const a = [...routingOps]; a[idx].machineId = e.target.value; setRoutingOps(a); }}>
-                    <option value="">Select Work Center / Machine...</option>
-                    {machines?.map((m: any) => <option key={m.id} value={m.id}>{m.machineName}</option>)}
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <input type="number" className="w-full bg-[#050A14] border border-white/10 rounded-lg p-2 text-white font-mono" required placeholder="Setup" value={op.estimatedSetupTime} onChange={(e) => { const a = [...routingOps]; a[idx].estimatedSetupTime = Number(e.target.value); setRoutingOps(a); }} />
-                </div>
-                <div className="col-span-2">
-                  <input type="number" className="w-full bg-[#050A14] border border-white/10 rounded-lg p-2 text-white font-mono" required placeholder="Cut" value={op.estimatedHours} onChange={(e) => { const a = [...routingOps]; a[idx].estimatedHours = Number(e.target.value); setRoutingOps(a); }} />
-                </div>
-                <div className="col-span-1 flex justify-end">
-                  <button type="button" onClick={() => setRoutingOps(routingOps.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300 font-bold p-2 bg-red-500/10 rounded-lg border border-red-500/20">X</button>
-                </div>
-              </div>
-            ))}
-            <button type="button" onClick={() => setRoutingOps([...routingOps, { sequenceOrder: (routingOps.length + 1) * 10, operationId: "", machineId: "", estimatedSetupTime: 0, estimatedHours: 0 }])} className="w-full py-2 border-2 border-dashed border-blue-500/30 text-blue-400 font-bold rounded-lg">+ Add Operation</button>
-          </div>
-          </div>
-          <div className="flex space-x-3 pt-4 mt-4 border-t border-white/10 shrink-0">
-            <button type="button" onClick={() => setShowRoutingModal(false)} className="flex-1 py-2 bg-white/5 rounded-xl text-white font-bold text-sm">Cancel</button>
-            <button type="submit" className="flex-1 py-2 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] rounded-xl text-white font-bold text-sm">Save Plan</button>
-          </div>
-        </form>
-        </div>
-        </div>
+        <RoutingNodeEditor 
+          onClose={() => setShowRoutingModal(false)}
+          onSave={(nodes, edges) => {
+            console.log('Saved Routing:', { nodes, edges });
+            setShowRoutingModal(false);
+            updateRoutingMutation.mutate({ 
+              operations: nodes.filter((n: any) => n.type === 'operationNode').map((n: any, idx: number) => ({
+                sequenceOrder: (idx + 1) * 10,
+                operationId: n.data.opCode,
+                machineId: '1',
+                estimatedSetupTime: n.data.setupTime,
+                estimatedHours: n.data.runTime
+              }))
+            });
+            success('Routing Saved', 'Visual routing graph deployed successfully.');
+          }}
+        />
       )}
     </div>
   );
