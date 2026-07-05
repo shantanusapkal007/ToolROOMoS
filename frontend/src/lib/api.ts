@@ -1,4 +1,7 @@
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const API_VERSION = '1.0';
 
 export interface ApiResponse<T = any> {
   status: 'success' | 'error';
@@ -12,94 +15,127 @@ export interface ApiResponse<T = any> {
   };
 }
 
-class ApiError extends Error {
+export class ApiBusinessError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  data: any;
+  constructor(message: string, status: number, data?: any) {
     super(message);
-    this.name = 'ApiError';
+    this.name = 'ApiBusinessError';
     this.status = status;
+    this.data = data;
   }
 }
 
-async function request<T = any>(
-  path: string,
-  options: RequestInit = {}
-): Promise<ApiResponse<T>> {
-  const url = `${BASE_URL}/${path.replace(/^\//, '')}`;
-  
-  const headers = new Headers(options.headers);
-  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
-    headers.set('Content-Type', 'application/json');
+export class ApiNetworkError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ApiNetworkError';
   }
+}
 
-  // Attach JWT Token if available
+const axiosInstance = axios.create({
+  baseURL: BASE_URL,
+  timeout: 30000, // 30 seconds default
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Version': API_VERSION,
+  },
+});
+
+// Retry configuration
+const MAX_RETRIES = 3;
+const RETRYABLE_STATUS_CODES = [502, 503, 504];
+const NON_RETRYABLE_STATUS_CODES = [400, 401, 403, 404, 409, 422];
+
+// Auth interceptor
+axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('access_token');
     if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
+      config.headers.set('Authorization', `Bearer ${token}`);
     }
   }
 
-  // Generate a random Idempotency-Key for write operations
-  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || 'GET')) {
-    if (!headers.has('Idempotency-Key')) {
-      headers.set('Idempotency-Key', crypto.randomUUID());
+  // Inject Request ID
+  if (!config.headers.has('X-Request-ID')) {
+    config.headers.set('X-Request-ID', crypto.randomUUID());
+  }
+
+  // Idempotency Key for mutations
+  if (['post', 'put', 'patch', 'delete'].includes(config.method || '')) {
+    if (!config.headers.has('Idempotency-Key')) {
+      config.headers.set('Idempotency-Key', crypto.randomUUID());
     }
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  return config;
+});
 
-  if (!response.ok) {
-    if (response.status === 401 && typeof window !== 'undefined') {
+// Response & Error interceptor
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response.data;
+  },
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retryCount?: number };
+    
+    // Network Error or Timeout
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED') {
+        throw new ApiNetworkError('Request timed out. Please try again.');
+      }
+      throw new ApiNetworkError('Network error. Please check your connection.');
+    }
+
+    const status = error.response.status;
+
+    // 401 Unauthorized handling (Token Refresh)
+    if (status === 401 && typeof window !== 'undefined') {
+      // Typically we'd call a /refresh-token endpoint here.
+      // If it fails, we logout.
+      // For now, standard logout on 401.
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+         window.location.href = '/login';
+      }
+      throw new ApiBusinessError('Session expired. Please log in again.', 401);
+    }
+
+    // Retry Logic
+    if (RETRYABLE_STATUS_CODES.includes(status)) {
+      originalRequest._retryCount = originalRequest._retryCount || 0;
+      
+      if (originalRequest._retryCount < MAX_RETRIES) {
+        originalRequest._retryCount++;
+        const backoffTime = Math.pow(2, originalRequest._retryCount) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, backoffTime));
+        return axiosInstance(originalRequest);
       }
     }
 
-    let errorMessage = 'An unexpected error occurred.';
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch {
-      // JSON parsing failed, fallback to text or status text
-      errorMessage = response.statusText || errorMessage;
-    }
-    throw new ApiError(errorMessage, response.status);
+    // Wrap in Business Error to prevent raw Axios errors from leaking to UI
+    const responseData = error.response.data as any;
+    const message = responseData?.message || error.message || 'An unexpected error occurred.';
+    
+    throw new ApiBusinessError(message, status, responseData);
   }
+);
 
-  return response.json();
-}
-
+// Wrapper to retain the original interface
 export const api = {
-  get: <T = any>(path: string, options?: RequestInit) =>
-    request<T>(path, { ...options, method: 'GET' }),
+  get: <T = any>(path: string, config?: any): Promise<ApiResponse<T>> => 
+    axiosInstance.get(path, config),
     
-  post: <T = any>(path: string, body?: any, options?: RequestInit) =>
-    request<T>(path, {
-      ...options,
-      method: 'POST',
-      body: body instanceof FormData ? body : JSON.stringify(body),
-    }),
+  post: <T = any>(path: string, body?: any, config?: any): Promise<ApiResponse<T>> => 
+    axiosInstance.post(path, body, config),
     
-  put: <T = any>(path: string, body?: any, options?: RequestInit) =>
-    request<T>(path, {
-      ...options,
-      method: 'PUT',
-      body: body instanceof FormData ? body : JSON.stringify(body),
-    }),
+  put: <T = any>(path: string, body?: any, config?: any): Promise<ApiResponse<T>> => 
+    axiosInstance.put(path, body, config),
     
-  patch: <T = any>(path: string, body?: any, options?: RequestInit) =>
-    request<T>(path, {
-      ...options,
-      method: 'PATCH',
-      body: body instanceof FormData ? body : JSON.stringify(body),
-    }),
+  patch: <T = any>(path: string, body?: any, config?: any): Promise<ApiResponse<T>> => 
+    axiosInstance.patch(path, body, config),
     
-  delete: <T = any>(path: string, options?: RequestInit) =>
-    request<T>(path, { ...options, method: 'DELETE' }),
+  delete: <T = any>(path: string, config?: any): Promise<ApiResponse<T>> => 
+    axiosInstance.delete(path, config),
 };

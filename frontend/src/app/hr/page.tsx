@@ -170,7 +170,7 @@ export default function HrDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Hourly Rate (₹)</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Hourly Rate (&#8377;)</label>
                   <input 
                     type="number" 
                     value={newWorker.hourlyRate}
@@ -254,7 +254,7 @@ function WorkerCard({ worker, isExternal = false }: { worker: any, isExternal?: 
           <p className="text-xs text-slate-500 mb-1">Base Hourly Charge</p>
           {editingRate ? (
             <div className="flex items-center space-x-2">
-              <span className="text-white">₹</span>
+              <span className="text-white">&#8377;</span>
               <input 
                 type="number" 
                 value={newRate}
@@ -266,7 +266,7 @@ function WorkerCard({ worker, isExternal = false }: { worker: any, isExternal?: 
             </div>
           ) : (
             <div className="flex items-center space-x-2">
-              <p className="font-bold text-white">₹{worker.hourlyRate} <span className="text-slate-500 font-normal text-sm">/ hr</span></p>
+              <p className="font-bold text-white">&#8377;{worker.hourlyRate} <span className="text-slate-500 font-normal text-sm">/ hr</span></p>
               <button onClick={() => setEditingRate(true)} className="p-1 hover:bg-white/10 rounded-md transition-colors">
                 <Edit2 className="w-3 h-3 text-slate-400" />
               </button>

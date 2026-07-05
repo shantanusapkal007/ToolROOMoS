@@ -1,0 +1,8 @@
+import { api } from '../lib/api';
+
+export const QualityService = {
+  logInspection: async (projectId: string, data: any): Promise<any> => {
+    const res = await api.post(`projects/${projectId}/inspections`, data);
+    return res.data;
+  },
+};

@@ -23,6 +23,14 @@ export class CreateInspectionDto {
   result: InspectionResult;
 
   @IsString()
+  @IsNotEmpty()
+  inspectionType: any; // InspectionType enum
+
+  @IsString()
+  @IsOptional()
+  routingOperationId?: string;
+
+  @IsString()
   @IsOptional()
   remarks?: string;
 }

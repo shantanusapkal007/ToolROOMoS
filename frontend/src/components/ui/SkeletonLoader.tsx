@@ -12,9 +12,10 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className = '' }) => {
 
 interface SkeletonLoaderProps {
   type?: 'card' | 'table' | 'profile' | 'page';
+  message?: string;
 }
 
-export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ type = 'page' }) => {
+export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ type = 'page', message }) => {
   switch (type) {
     case 'card':
       return (
@@ -56,7 +57,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ type = 'page' })
               <div className="w-8 h-8 rounded-full bg-white/20 animate-ping" />
             </div>
           </div>
-          <p className="text-slate-400 font-medium tracking-widest uppercase text-sm animate-pulse">Initializing Data Core...</p>
+          <p className="text-slate-400 font-medium tracking-widest uppercase text-sm animate-pulse">{message || 'Initializing Data Core...'}</p>
         </div>
       );
   }

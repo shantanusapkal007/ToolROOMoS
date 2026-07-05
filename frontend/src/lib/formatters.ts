@@ -3,7 +3,7 @@
  * Defaults to INR as per the base requirement.
  */
 export const formatCurrency = (amount: number, currency: string = 'INR'): string => {
-  if (amount === undefined || amount === null || isNaN(amount)) return '₹0.00';
+  if (amount === undefined || amount === null || isNaN(amount)) return '&#8377;0.00';
 
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',

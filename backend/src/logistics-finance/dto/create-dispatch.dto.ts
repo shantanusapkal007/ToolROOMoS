@@ -23,5 +23,13 @@ export class CreateDispatchDto {
 
   @IsString()
   @IsOptional()
+  driverDetails?: string;
+
+  @IsString()
+  @IsOptional()
+  trackingReference?: string;
+
+  @IsString()
+  @IsOptional()
   remarks?: string;
 }

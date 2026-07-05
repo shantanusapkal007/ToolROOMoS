@@ -2,14 +2,15 @@ import { EntityRegistry } from '../types';
 
 export const locationRegistry: EntityRegistry = {
   id: 'locations',
-  name: 'Storage Location',
+  singularName: 'Storage Location',
   pluralName: 'Storage Locations',
   apiEndpoint: '/master-data/locations',
   
   permissions: {
-    canCreate: ['ADMIN', 'STORES'],
-    canUpdate: ['ADMIN', 'STORES'],
-    canDelete: ['ADMIN'],
+    view: ['ADMIN', 'STORES'],
+    create: ['ADMIN', 'STORES'],
+    update: ['ADMIN', 'STORES'],
+    archive: ['ADMIN'],
   },
 
   columns: [
@@ -24,7 +25,7 @@ export const locationRegistry: EntityRegistry = {
   fields: [
     { name: 'code', label: 'Location Code', type: 'text', required: true, placeholder: 'e.g., WH1-R1-S2-B3' },
     { name: 'name', label: 'Name', type: 'text' },
-    { name: 'warehouseId', label: 'Warehouse', type: 'select', apiEndpoint: '/master-data/warehouses', required: true },
+    { name: 'warehouseId', label: 'Warehouse', type: 'select', optionsEndpoint: '/master-data/warehouses', required: true },
     { name: 'rack', label: 'Rack', type: 'text' },
     { name: 'shelf', label: 'Shelf', type: 'text' },
     { name: 'bin', label: 'Bin', type: 'text' },

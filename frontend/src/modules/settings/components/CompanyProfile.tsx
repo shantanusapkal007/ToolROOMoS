@@ -63,9 +63,9 @@ export const CompanyProfile = () => {
                 label="Base Currency" 
                 options={[
                   { label: 'USD ($)', value: 'USD' },
-                  { label: 'EUR (€)', value: 'EUR' },
-                  { label: 'GBP (£)', value: 'GBP' },
-                  { label: 'INR (₹)', value: 'INR' },
+                  { label: 'EUR (&#8364;)', value: 'EUR' },
+                  { label: 'GBP (&#163;)', value: 'GBP' },
+                  { label: 'INR (&#8377;)', value: 'INR' },
                 ]} 
                 defaultValue="USD"
               />

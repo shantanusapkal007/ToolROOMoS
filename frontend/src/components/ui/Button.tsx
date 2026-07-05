@@ -1,49 +1,96 @@
-import React from 'react';
-import { Loader2 } from 'lucide-react';
+"use client";
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'glass';
+import React, { useRef, useState, useEffect } from 'react';
+import { motion, useMotionValue, useSpring, useTransform, HTMLMotionProps } from 'framer-motion';
+
+export interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
+  variant?: 'primary' | 'secondary' | 'glass' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
+  magnetic?: boolean;
+  icon?: React.ReactNode;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className = '', variant = 'primary', size = 'md', isLoading, leftIcon, rightIcon, children, disabled, ...props }, ref) => {
-    
-    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0B1018] rounded-xl';
-    
-    const variants = {
-      primary: 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)] focus:ring-blue-500',
-      secondary: 'bg-white/10 hover:bg-white/20 text-white border border-white/10 focus:ring-slate-500',
-      danger: 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)] focus:ring-red-500',
-      ghost: 'hover:bg-white/10 text-slate-300 hover:text-white focus:ring-slate-500',
-      glass: 'glass-panel hover:bg-white/10 text-white focus:ring-slate-500',
-    };
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
+  children,
+  className = '',
+  variant = 'primary',
+  size = 'md',
+  magnetic = true,
+  icon,
+  leftIcon,
+  rightIcon,
+  ...props
+}, ref) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  
+  // Combine forwarded ref and local ref
+  React.useImperativeHandle(ref, () => buttonRef.current as HTMLButtonElement);
 
-    const sizes = {
-      sm: 'text-xs px-3 py-1.5',
-      md: 'text-sm px-5 py-2.5',
-      lg: 'text-base px-6 py-3',
-    };
+  // Magnetic Effect State
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
 
-    const isDisabled = disabled || isLoading;
+  // Apple-like Spring Config
+  const springConfig = { damping: 15, stiffness: 150, mass: 0.1 };
+  const springX = useSpring(x, springConfig);
+  const springY = useSpring(y, springConfig);
 
-    return (
-      <button
-        ref={ref}
-        disabled={isDisabled}
-        className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
-        {...props}
-      >
-        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {!isLoading && leftIcon && <span className="mr-2">{leftIcon}</span>}
-        {children}
-        {!isLoading && rightIcon && <span className="ml-2">{rightIcon}</span>}
-      </button>
-    );
-  }
-);
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!magnetic || !buttonRef.current) return;
+    const { clientX, clientY } = e;
+    const { height, width, left, top } = buttonRef.current.getBoundingClientRect();
+    const centerX = left + width / 2;
+    const centerY = top + height / 2;
+    x.set((clientX - centerX) * 0.2);
+    y.set((clientY - centerY) * 0.2);
+  };
+
+  const handleMouseLeave = () => {
+    if (!magnetic) return;
+    x.set(0);
+    y.set(0);
+  };
+
+  // Base Class Mapping
+  const baseClasses = "relative inline-flex items-center justify-center font-medium transition-all outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 disabled:pointer-events-none group overflow-hidden cursor-pointer";
+  
+  const sizeClasses = {
+    sm: "px-4 py-2 text-micro rounded-lg",
+    md: "px-6 py-3 text-caption rounded-xl",
+    lg: "px-8 py-4 text-body rounded-2xl",
+  };
+
+  const variantClasses = {
+    primary: "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] border border-blue-500/50",
+    secondary: "bg-zinc-800 text-white border border-white/10 hover:bg-zinc-700 shadow-elevation",
+    glass: "glass-button text-white",
+    danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
+    ghost: "bg-transparent text-zinc-400 hover:text-white hover:bg-white/5",
+  };
+
+  return (
+    <motion.button
+      ref={buttonRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ x: springX, y: springY }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.96 }}
+      className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+      {...props}
+    >
+      {/* Interactive Hover Glow (Apple Style) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      
+      <span className="relative z-10 flex items-center gap-2">
+        {(icon || leftIcon) && <span className="flex-shrink-0">{icon || leftIcon}</span>}
+        {children as React.ReactNode}
+        {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+      </span>
+    </motion.button>
+  );
+});
 
 Button.displayName = 'Button';

@@ -24,6 +24,8 @@ import { SubcontractingModule } from './subcontracting/subcontracting.module';
 import { LogisticsFinanceModule } from './logistics-finance/logistics-finance.module';
 import { HrModule } from './hr/hr.module';
 import { AutomationModule } from './automation/automation.module';
+import { HealthModule } from './modules/health/health.module';
+import { LoggerModule } from './modules/logger/logger.module';
 
 /**
  * AppModule
@@ -70,6 +72,8 @@ import { AutomationModule } from './automation/automation.module';
     LogisticsFinanceModule,
     HrModule,
     AutomationModule,
+    HealthModule,
+    LoggerModule,
   ],
   controllers: [AppController],
   providers: [

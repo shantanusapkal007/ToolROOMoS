@@ -15,10 +15,15 @@ import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectStatus } from '@prisma/client';
 
+import { WorkflowOrchestratorService } from './workflow-orchestrator.service';
+
 @Controller('api/v1/projects')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly orchestratorService: WorkflowOrchestratorService,
+  ) {}
 
   @Post()
   @Roles('ADMIN', 'SALES_ENGINEER')
@@ -63,6 +68,16 @@ export class ProjectsController {
     };
   }
 
+  @Get(':id/inventory-batches')
+  async getInventoryBatches(@Param('id') id: string) {
+    const data = await this.projectsService.getInventoryBatches(id);
+    return {
+      status: 'success',
+      message: 'Available inventory batches retrieved.',
+      data,
+    };
+  }
+
   @Put(':id')
   @Roles('ADMIN', 'SALES_ENGINEER')
   async update(@Param('id') id: string, @Body() dto: any) {
@@ -84,8 +99,19 @@ export class ProjectsController {
     const data = await this.projectsService.updateTimeline(id, status, remarks);
     return {
       status: 'success',
-      message: 'Project timeline stage advanced successfully.',
+      message: 'Project timeline stage forced successfully.',
       data,
+    };
+  }
+
+  @Post(':id/advance-stage')
+  @Roles('ADMIN', 'SALES_ENGINEER', 'PRODUCTION')
+  async advanceStage(@Param('id') id: string) {
+    const result = await this.orchestratorService.evaluateProjectStage(id);
+    return {
+      status: 'success',
+      message: 'Project stage evaluated against business rules.',
+      data: result,
     };
   }
 
@@ -152,14 +178,14 @@ export class ProjectsController {
     };
   }
 
-  // --- Quality Inspections ---
-  @Post(':id/inspections')
-  @Roles('ADMIN', 'QUALITY', 'PRODUCTION')
-  async createInspection(@Param('id') id: string, @Body() body: any) {
-    const data = await this.projectsService.createInspection(id, body, 'SYSTEM');
+  // --- Closing Engine ---
+  @Post(':id/close')
+  @Roles('ADMIN', 'FINANCE')
+  async closeProject(@Param('id') id: string) {
+    const data = await this.projectsService.closeProject(id, 'SYSTEM');
     return {
       status: 'success',
-      message: 'Inspection logged.',
+      message: 'Project closed successfully.',
       data,
     };
   }

@@ -5,8 +5,10 @@ import 'dotenv/config';
 
 // Import services directly to run backend logic
 import { ProjectsService } from '../src/projects/projects.service';
+import { WorkflowOrchestratorService } from '../src/projects/workflow-orchestrator.service';
 import { DrawingsService } from '../src/engineering/drawings.service';
 import { BomsService } from '../src/engineering/boms.service';
+import { RoutingService } from '../src/engineering/routing.service';
 import { PurchaseOrdersService } from '../src/procurement/purchase-orders.service';
 import { GoodsReceiptsService } from '../src/procurement/goods-receipts.service';
 import { MaterialIssuesService } from '../src/production/material-issues.service';
@@ -21,9 +23,11 @@ const prisma = new PrismaClient({ adapter });
 
 // Instantiate Services
 const prismaService = prisma as any; // Mock PrismaService inject compatibility
+const orchestrator = new WorkflowOrchestratorService(prismaService);
 const projectsService = new ProjectsService(prismaService);
 const drawingsService = new DrawingsService(prismaService);
 const bomsService = new BomsService(prismaService);
+const routingService = new RoutingService(prismaService, {} as any); // mock cost baseline service
 const poService = new PurchaseOrdersService(prismaService);
 const grnService = new GoodsReceiptsService(prismaService);
 const issueService = new MaterialIssuesService(prismaService);
@@ -40,21 +44,28 @@ async function runWorkflowTest() {
   await prisma.projectActivity.deleteMany({});
   await prisma.projectCostEvent.deleteMany({});
   await prisma.projectCostSummary.deleteMany({});
-  await prisma.billOfMaterialItem.deleteMany({});
-  await prisma.billOfMaterialHeader.deleteMany({});
-  await prisma.drawing.deleteMany({});
-  await prisma.purchaseOrderItem.deleteMany({});
-  await prisma.purchaseOrderHeader.deleteMany({});
-  await prisma.goodsReceiptItem.deleteMany({});
-  await prisma.goodsReceiptHeader.deleteMany({});
   await prisma.inventoryTransaction.deleteMany({});
-  await prisma.inventoryBatch.deleteMany({});
   await prisma.materialIssueItem.deleteMany({});
   await prisma.materialIssueHeader.deleteMany({});
+  await prisma.subcontractReceiptItem.deleteMany({});
+  await prisma.subcontractReceipt.deleteMany({});
+  await prisma.subcontractOrderItem.deleteMany({});
+  await prisma.subcontractOrder.deleteMany({});
+  await prisma.inventoryBatch.deleteMany({});
+  await prisma.goodsReceiptItem.deleteMany({});
+  await prisma.goodsReceiptHeader.deleteMany({});
+  await prisma.purchaseOrderItem.deleteMany({});
+  await prisma.purchaseOrderHeader.deleteMany({});
+  await prisma.billOfMaterialItem.deleteMany({});
+  await prisma.billOfMaterialHeader.deleteMany({});
+  await prisma.jobCard.deleteMany({});
+  await prisma.routingOperation.deleteMany({});
+  await prisma.drawing.deleteMany({});
   await prisma.machineShopDailyReport.deleteMany({});
   await prisma.inspectionHeader.deleteMany({});
-  await prisma.dispatchNote.deleteMany({});
   await prisma.invoiceHeader.deleteMany({});
+  await prisma.dispatchNote.deleteMany({});
+  await prisma.projectTask.deleteMany({});
   await prisma.project.deleteMany({});
 
   // Fetch Master entities seeded
@@ -64,6 +75,7 @@ async function runWorkflowTest() {
   const material = await prisma.material.findFirstOrThrow();
   const machine = await prisma.machine.findFirstOrThrow();
   const employee = await prisma.employee.findFirstOrThrow();
+  const operation = await prisma.operation.findFirstOrThrow();
 
   console.log('\n--- 1. PROJECT CREATION ---');
   const project = await projectsService.create({
@@ -101,8 +113,31 @@ async function runWorkflowTest() {
   console.log(`BOM submitted. Est Cost: $${bom.totalEstimatedCost}`);
   
   await bomsService.approveBom(project.id, bom.id);
+  await orchestrator.evaluateProjectStage(project.id);
   updatedProject = await prisma.project.findUniqueOrThrow({ where: { id: project.id } });
   console.log(`BOM approved. Project current stage advanced to: ${updatedProject.currentStage}`);
+
+  console.log('\n--- 3b. ROUTING CREATION & APPROVAL ---');
+  const routing = await routingService.submitEngineeringPlan(project.id, {
+    documentNumber: 'RTG-TEST-99',
+    operations: [
+      {
+        sequenceOrder: 10,
+        operationId: operation.id,
+        machineId: machine.id,
+        estimatedHours: 4,
+        estimatedSetupTime: 1,
+        remarks: 'Milling block'
+      }
+    ]
+  });
+  console.log(`Routing submitted. Doc: ${routing.documentNumber}`);
+  
+  // mock approve
+  await prisma.routingHeader.update({ where: { id: routing.id }, data: { approvalStatus: 'APPROVED' } });
+  await orchestrator.evaluateProjectStage(project.id);
+  updatedProject = await prisma.project.findUniqueOrThrow({ where: { id: project.id } });
+  console.log(`Routing approved. Project current stage advanced to: ${updatedProject.currentStage}`);
 
   console.log('\n--- 4. PURCHASE ORDER ---');
   const po = await poService.createPo(project.id, {
@@ -162,15 +197,19 @@ async function runWorkflowTest() {
     cuttingTime: 10,
     producedQty: 1,
   });
-  console.log(`MSDR logged. VMC Milling time registered by Alex Mercer.`);
+  await orchestrator.evaluateProjectStage(project.id);
+  updatedProject = await prisma.project.findUniqueOrThrow({ where: { id: project.id } });
+  console.log(`MSDR logged. VMC Milling time registered by Alex Mercer. Project stage: ${updatedProject.currentStage}`);
 
   console.log('\n--- 8. QUALITY INSPECTION ---');
   await inspectionService.createInspection(project.id, {
     inspectedQty: 1,
     passedQty: 1,
-    result: InspectionResult.PASS,
+    result: 'PASS',
+    inspectionType: 'FINAL_PDI',
     remarks: 'Dimensions match drawing tolerances.',
   });
+  await orchestrator.evaluateProjectStage(project.id);
   updatedProject = await prisma.project.findUniqueOrThrow({ where: { id: project.id } });
   console.log(`Quality inspection completed. Project current stage advanced to: ${updatedProject.currentStage}`);
 
@@ -181,6 +220,7 @@ async function runWorkflowTest() {
     logisticsCost: 250,
     remarks: 'Dispatched via AirFreight Pune',
   });
+  await orchestrator.evaluateProjectStage(project.id);
   updatedProject = await prisma.project.findUniqueOrThrow({ where: { id: project.id } });
   console.log(`Parts dispatched. Project current stage advanced to: ${updatedProject.currentStage}`);
 
@@ -193,6 +233,7 @@ async function runWorkflowTest() {
     taxAmount: 8100,
     totalAmount: 53100,
   });
+  await orchestrator.evaluateProjectStage(project.id);
   updatedProject = await prisma.project.findUniqueOrThrow({ where: { id: project.id } });
   console.log(`Tax Invoice generated. Final stage reached: ${updatedProject.currentStage}`);
 

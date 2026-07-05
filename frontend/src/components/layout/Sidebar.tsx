@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Users, ChevronRight, Menu } from "lucide-react";
+import { motion, AnimatePresence } from 'framer-motion';
+import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth } from '../auth/AuthProvider';
 
 export function Sidebar() {
@@ -11,35 +12,54 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
 
+  // Apple Spring Physics
+  const springConfig = { type: "spring", stiffness: 300, damping: 30 } as const;
+
   return (
-    <div 
+    <motion.div 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed left-4 top-4 bottom-4 flex flex-col z-50 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] rounded-[32px] overflow-hidden ${
-        isHovered ? 'w-72 bg-[#0A0F1C]/95' : 'w-[80px] bg-[#0A0F1C]/80'
-      } backdrop-blur-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]`}
+      animate={{ width: isHovered ? 240 : 64 }}
+      transition={springConfig}
+      className="fixed left-3 top-3 bottom-3 z-50 rounded-2xl glass-sidebar overflow-hidden flex flex-col"
     >
-      <div className="flex-1 flex flex-col h-full w-full py-8 px-4 overflow-y-auto hide-scrollbar">
+      <div className="flex-1 flex flex-col h-full w-full py-5 px-3 overflow-y-auto hide-scrollbar relative z-10">
+        
         {/* Logo Area */}
-        <Link href="/" className="flex items-center w-full mb-10 overflow-hidden cursor-pointer px-1 shrink-0">
-          <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600/30 to-purple-600/30 text-blue-400 border border-white/10 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
-            <Layers className="h-6 w-6" />
-          </div>
-          <div className={`ml-4 flex items-center transition-all duration-300 whitespace-nowrap ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-              ToolRoom<span className="text-blue-400">OS</span>
-            </span>
-          </div>
+        <Link href="/" className="flex items-center w-full mb-10 cursor-pointer shrink-0 group">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 text-blue-400 border border-white/10 shadow-[0_0_20px_rgba(37,99,235,0.3)] group-hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-shadow duration-300 relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-blue-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Layers className="h-5 w-5 relative z-10" />
+          </motion.div>
+
+          <AnimatePresence>
+            {isHovered && (
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="ml-4 whitespace-nowrap overflow-hidden"
+              >
+                <span className="text-title tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+                  ToolRoom<span className="text-blue-400">OS</span>
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Link>
 
         {/* Nav Links */}
-        <div className="flex flex-col space-y-2 w-full flex-1">
+        <div className="flex flex-col gap-2 w-full flex-1">
           <NavItem 
             href="/"
-            icon={<Activity className="h-5 w-5" />} 
+            icon={<Command className="h-5 w-5 text-blue-400" />} 
             label="Mission Control" 
             active={pathname === "/"} 
-            activeColor="blue"
             isExpanded={isHovered}
           />
           <NavItem 
@@ -47,7 +67,6 @@ export function Sidebar() {
             icon={<Briefcase className="h-5 w-5" />} 
             label="Projects" 
             active={pathname.startsWith("/projects")} 
-            activeColor="purple"
             isExpanded={isHovered}
           />
           <NavItem 
@@ -55,15 +74,6 @@ export function Sidebar() {
             icon={<Database className="h-5 w-5" />} 
             label="Master Data" 
             active={pathname.startsWith("/master-data")} 
-            activeColor="cyan"
-            isExpanded={isHovered}
-          />
-          <NavItem 
-            href="/hr"
-            icon={<Users className="h-5 w-5" />} 
-            label="HR & Resources" 
-            active={pathname.startsWith("/hr")} 
-            activeColor="orange"
             isExpanded={isHovered}
           />
           <NavItem 
@@ -71,108 +81,114 @@ export function Sidebar() {
             icon={<PieChart className="h-5 w-5" />} 
             label="Reports" 
             active={pathname.startsWith("/reports")} 
-            activeColor="emerald"
-            isExpanded={isHovered}
-          />
-        </div>
-
-        {/* Bottom Actions */}
-        <div className="mt-auto w-full pt-4 shrink-0">
-          <NavItem 
-            href="/settings"
-            icon={<Settings className="h-5 w-5" />} 
-            label="Settings" 
-            active={pathname === "/settings"} 
-            activeColor="slate"
             isExpanded={isHovered}
           />
           
-          <div className="border-t border-white/10 pt-4 mt-4 w-full">
-            {user && (
-              <div className={`flex items-center space-x-3 px-2 mb-4 overflow-hidden transition-all duration-300 ${isHovered ? 'opacity-100 h-auto' : 'opacity-0 h-0'}`}>
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center p-[2px] flex-shrink-0 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                  <div className="w-full h-full bg-[#05070A] rounded-[10px] flex items-center justify-center">
-                    <UserIcon className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-                <div className="flex-1 whitespace-nowrap">
-                  <p className="text-sm font-bold text-white tracking-wide truncate">{user.name}</p>
-                  <p className="text-xs text-blue-400 font-medium tracking-wider truncate">{user.role?.replace('_', ' ')}</p>
-                </div>
-              </div>
-            )}
-            
-            <button
-              onClick={logout}
-              className={`w-full flex items-center p-3 rounded-2xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-all duration-300 group ${!isHovered && 'justify-center'}`}
-              title="Sign Out"
-            >
-              <LogOut className="h-5 w-5 shrink-0" />
-              <span className={`ml-3 font-semibold whitespace-nowrap transition-all duration-300 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>
-                Sign Out
-              </span>
-            </button>
+          <div className="mt-auto mb-2 pt-6 border-t border-white/5">
+            <NavItem 
+              href="/settings"
+              icon={<Settings className="h-5 w-5" />} 
+              label="Settings" 
+              active={pathname.startsWith("/settings")} 
+              isExpanded={isHovered}
+            />
           </div>
         </div>
+
+        {/* User Profile Area */}
+        {user && (
+          <div className="mt-4 pt-4 border-t border-white/5 w-full flex items-center shrink-0">
+            <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-zinc-800/50 border border-white/10 flex items-center justify-center overflow-hidden">
+              <UserIcon className="h-5 w-5 text-zinc-400" />
+            </div>
+            
+            <AnimatePresence>
+              {isHovered && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="ml-3 flex-1 flex items-center justify-between overflow-hidden"
+                >
+                  <div className="flex flex-col whitespace-nowrap">
+                    <span className="text-body font-medium text-white truncate">{user.name}</span>
+                    <span className="text-micro text-zinc-500 truncate">{user.role}</span>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1, color: '#ef4444' }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={logout}
+                    className="p-2 text-zinc-400 hover:bg-white/5 rounded-lg transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-function NavItem({ href, icon, label, active, activeColor, isExpanded }: { href: string, icon: React.ReactNode, label: string, active: boolean, activeColor: string, isExpanded: boolean }) {
-  const getActiveStyles = () => {
-    switch (activeColor) {
-      case 'blue': return 'bg-blue-600/15 text-blue-400 border-blue-500/30 shadow-[0_0_20px_rgba(37,99,235,0.15)]';
-      case 'purple': return 'bg-purple-600/15 text-purple-400 border-purple-500/30 shadow-[0_0_20px_rgba(147,51,234,0.15)]';
-      case 'cyan': return 'bg-cyan-600/15 text-cyan-400 border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]';
-      case 'emerald': return 'bg-emerald-600/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]';
-      case 'orange': return 'bg-orange-600/15 text-orange-400 border-orange-500/30 shadow-[0_0_20px_rgba(249,115,22,0.15)]';
-      default: return 'bg-white/10 text-white border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]';
-    }
-  };
+// --- NavItem Component ---
 
-  const getGlowColor = () => {
-    switch (activeColor) {
-      case 'blue': return 'bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,1)]';
-      case 'purple': return 'bg-purple-400 shadow-[0_0_12px_rgba(192,132,252,1)]';
-      case 'cyan': return 'bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,1)]';
-      case 'emerald': return 'bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,1)]';
-      case 'orange': return 'bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,1)]';
-      default: return 'bg-white shadow-[0_0_12px_rgba(255,255,255,1)]';
-    }
-  };
-
+function NavItem({ 
+  href, 
+  icon, 
+  label, 
+  active, 
+  isExpanded 
+}: { 
+  href: string, 
+  icon: React.ReactNode, 
+  label: string, 
+  active: boolean, 
+  isExpanded: boolean 
+}) {
   return (
-    <Link
-      href={href}
-      title={!isExpanded ? label : undefined}
-      className={`relative flex items-center w-full p-3 rounded-2xl transition-all duration-300 group overflow-hidden border ${
+    <Link href={href} className="w-full relative group block">
+      {/* Active Indicator Glow */}
+      {active && (
+        <motion.div 
+          layoutId="activeNav"
+          className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-transparent border-l-2 border-blue-400 rounded-r-xl pointer-events-none shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]"
+          initial={false}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
+          <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-blue-500/10 to-transparent opacity-50 blur-lg"></div>
+        </motion.div>
+      )}
+      
+      <div className={`relative z-10 flex items-center h-12 px-3 rounded-xl transition-all duration-300 ${
         active 
-          ? getActiveStyles()
-          : "border-transparent text-slate-400 hover:text-white hover:bg-white/5"
-      } ${!isExpanded ? 'justify-center' : ''}`}
-    >
-      <div className={`flex-shrink-0 flex items-center justify-center z-10 transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
-        {icon}
-      </div>
-      <div className={`ml-3 flex-1 flex items-center justify-between whitespace-nowrap transition-all duration-300 z-10 ${isExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>
-        <span className={`font-semibold ${active ? 'tracking-wide' : ''}`}>
-          {label}
-        </span>
-        {active && (
-          <ChevronRight className="h-4 w-4 opacity-70" />
+          ? 'text-white drop-shadow-md' 
+          : 'text-zinc-400 hover:text-white hover:bg-white/5'
+      }`}>
+        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+          {icon}
+        </div>
+        
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              className="ml-4 whitespace-nowrap flex-1 text-body font-medium"
+            >
+              {label}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Subtle Indicator dot for collapsed active state */}
+        {!isExpanded && active && (
+          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-4 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
         )}
       </div>
-      
-      {/* Active Indicator Line */}
-      {active && (
-        <div className={`absolute left-0 top-1/4 bottom-1/4 w-1 rounded-r-full transition-all duration-300 ${getGlowColor()}`}></div>
-      )}
-
-      {/* Hover Background Glow */}
-      {!active && (
-        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-700 ease-in-out z-0"></div>
-      )}
     </Link>
   );
 }

@@ -19,9 +19,10 @@ export default function LoginPage() {
     setError('');
     
     try {
-      const response = await api.post('/auth/login', { email, password });
-      if (response && response.access_token) {
-        login(response.access_token, response.user);
+      const response = await api.post<any>('/auth/login', { email, password });
+      const data = response as any;
+      if (data && data.access_token) {
+        login(data.access_token, data.user);
       } else {
         setError('Invalid response from server.');
       }
@@ -81,7 +82,7 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="········"
             required
             leftIcon={<Lock className="h-5 w-5" />}
           />

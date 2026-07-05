@@ -1,7 +1,10 @@
+"use client";
+
 import { EntityColumn } from '../../modules/settings/types';
-import { Edit2, Trash2, History } from 'lucide-react';
+import { Edit2, Trash2, History, Eye, ChevronRight } from 'lucide-react';
 import { EmptyState } from './EmptyState';
 import { LoadingState } from './LoadingState';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SmartTableProps {
   columns: EntityColumn[];
@@ -16,80 +19,105 @@ interface SmartTableProps {
 export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading, onView, onEdit, onDelete, onHistory }) => {
   
   if (isLoading) {
-    return <LoadingState message="Loading data..." />;
+    return <LoadingState message="Scanning Database..." />;
   }
 
   if (!data || data.length === 0) {
-    return <EmptyState title="No Records Found" description="There is no data available for this view." />;
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <EmptyState title="No Records Found" description="There is no data available for this view." />
+      </motion.div>
+    );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/[0.02]">
-      <table className="w-full text-left border-collapse">
+    <div className="glass-panel w-full overflow-x-auto overflow-y-hidden pb-4 hide-scrollbar">
+      <table className="w-full text-left border-collapse min-w-max">
         <thead>
-          <tr className="bg-white/5 border-b border-white/10">
+          <tr className="border-b border-white/10 relative bg-gradient-to-r from-white/5 to-transparent">
             {columns.map((col) => (
-              <th key={col.key} className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+              <th key={col.key} className="px-6 py-5 text-micro text-zinc-400 whitespace-nowrap relative z-10">
                 {col.label}
               </th>
             ))}
             {(onView || onEdit || onDelete || onHistory) && (
-              <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-widest text-right">
+              <th className="px-6 py-5 text-micro text-zinc-400 text-right whitespace-nowrap relative z-10">
                 Actions
               </th>
             )}
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/5">
-          {data.map((row, idx) => (
-            <tr key={row.id || idx} className="hover:bg-white/[0.04] transition-colors">
-              {columns.map((col) => (
-                <td key={col.key} className="px-6 py-4 text-sm text-slate-200">
-                  {col.render ? col.render(row[col.key], row) : row[col.key] || '-'}
-                </td>
-              ))}
-              {(onView || onEdit || onDelete || onHistory) && (
-                <td className="px-6 py-4 text-sm text-right space-x-2 whitespace-nowrap">
-                  {onView && (
-                    <button 
-                      onClick={() => onView(row)}
-                      className="p-2 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-all"
-                      title="View Details"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </button>
-                  )}
-                  {onHistory && (
-                    <button 
-                      onClick={() => onHistory(row)}
-                      className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                      title="View Audit History"
-                    >
-                      <History className="h-4 w-4" />
-                    </button>
-                  )}
-                  {onEdit && (
-                    <button 
-                      onClick={() => onEdit(row)}
-                      className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
-                      title="Edit Record"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button 
-                      onClick={() => onDelete(row)}
-                      className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                      title="Archive/Delete Record"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </td>
-              )}
-            </tr>
-          ))}
+        <tbody className="divide-y divide-white/5 relative z-10">
+          <AnimatePresence>
+            {data.map((row, idx) => (
+              <motion.tr 
+                key={row.id || idx} 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: Math.min(idx * 0.05, 0.5), duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="group hover:bg-blue-500/10 transition-colors relative cursor-default"
+              >
+                
+                {columns.map((col) => (
+                  <td key={col.key} className="px-6 py-4 text-body text-zinc-200 relative z-10">
+                    {col.render ? col.render(row[col.key], row) : row[col.key] || <span className="text-zinc-600">-</span>}
+                  </td>
+                ))}
+                
+                {(onView || onEdit || onDelete || onHistory) && (
+                  <td className="px-6 py-3 text-right whitespace-nowrap relative z-10">
+                    <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                      {onView && (
+                        <motion.button 
+                          whileHover={{ scale: 1.1, backgroundColor: 'rgba(59,130,246,0.1)' }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => onView(row)}
+                          className="p-2 text-zinc-400 hover:text-blue-400 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </motion.button>
+                      )}
+                      {onHistory && (
+                        <motion.button 
+                          whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => onHistory(row)}
+                          className="p-2 text-zinc-400 hover:text-white rounded-lg transition-colors"
+                          title="View Audit History"
+                        >
+                          <History className="h-4 w-4" />
+                        </motion.button>
+                      )}
+                      {onEdit && (
+                        <motion.button 
+                          whileHover={{ scale: 1.1, backgroundColor: 'rgba(16,185,129,0.1)' }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => onEdit(row)}
+                          className="p-2 text-zinc-400 hover:text-emerald-400 rounded-lg transition-colors"
+                          title="Edit Record"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </motion.button>
+                      )}
+                      {onDelete && (
+                        <motion.button 
+                          whileHover={{ scale: 1.1, backgroundColor: 'rgba(239,68,68,0.1)' }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => onDelete(row)}
+                          className="p-2 text-zinc-400 hover:text-red-400 rounded-lg transition-colors"
+                          title="Archive/Delete Record"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </motion.button>
+                      )}
+                    </div>
+                  </td>
+                )}
+              </motion.tr>
+            ))}
+          </AnimatePresence>
         </tbody>
       </table>
     </div>

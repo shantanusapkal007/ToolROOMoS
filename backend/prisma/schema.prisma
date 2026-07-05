@@ -58,6 +58,7 @@ enum PurchaseOrderStatus {
   PARTIAL_RECEIPT
   CLOSED
   CANCELLED
+  ON_HOLD
 }
 
 enum SubcontractOrderStatus {
@@ -336,7 +337,7 @@ model Machine {
   routingOperations    RoutingOperation[]
   productionOperations ProductionOperation[]
   machineShopReports   MachineShopDailyReport[]
-
+  jobCards             JobCard[]
   @@map("machines")
 }
 
@@ -395,6 +396,7 @@ model Employee {
   user                 User?
   productionOperations ProductionOperation[]
   machineShopReports   MachineShopDailyReport[]
+  jobCards             JobCard[]
 
   @@map("employees")
 }
@@ -557,6 +559,7 @@ model Project {
   materialIssueHeaders  MaterialIssueHeader[]
   productionBatches     ProductionBatch[]
   machineShopReports    MachineShopDailyReport[]
+  jobCards              JobCard[]
   inspectionHeaders     InspectionHeader[]
   ncrReports            NcrReport[]
   dispatchNotes         DispatchNote[]
@@ -569,6 +572,7 @@ model Project {
   projectCostEvents     ProjectCostEvent[]
   projectCostSummary    ProjectCostSummary?
   projectTasks          ProjectTask[]
+  closedAt              DateTime?
 
   @@map("projects")
 }
@@ -703,9 +707,13 @@ model RoutingOperation {
   sequenceOrder   Int
   operationId     String
   operation       Operation     @relation(fields: [operationId], references: [id])
-  machineId       String?
-  machine         Machine?      @relation(fields: [machineId], references: [id])
+  plannedMachineId String?
+  plannedMachine   Machine?      @relation(fields: [plannedMachineId], references: [id])
   estimatedHours  Decimal       @default(0)
+  estimatedSetupTime Decimal    @default(0)
+  completedQuantity Decimal     @default(0)
+  remainingQuantity Decimal     @default(0)
+  status          String        @default("PENDING")
   remarks         String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -713,6 +721,10 @@ model RoutingOperation {
   updatedBy       String?
 
   productionOperations ProductionOperation[]
+  machineShopDailyReports MachineShopDailyReport[]
+  jobCards JobCard[]
+  inspections InspectionHeader[]
+
 
   @@map("routing_operations")
 }
@@ -769,6 +781,8 @@ model PurchaseOrderItem {
   materialId String
   material   Material            @relation(fields: [materialId], references: [id])
   orderedQty Decimal
+  receivedQty Decimal            @default(0)
+  status     String              @default("PENDING")
   agreedRate Decimal
   lineTotal  Decimal             @default(0)
   remarks    String?
@@ -843,6 +857,7 @@ model MaterialIssueHeader {
   updatedBy      String?
 
   items MaterialIssueItem[]
+  machineShopDailyReports MachineShopDailyReport[]
 
   @@map("material_issue_headers")
 }
@@ -870,6 +885,8 @@ model InspectionHeader {
   projectId             String
   project               Project          @relation(fields: [projectId], references: [id])
   productionOperationId String?
+  routingOperationId    String?
+  routingOperation      RoutingOperation? @relation(fields: [routingOperationId], references: [id])
   inspectionType        InspectionType   @default(IN_PROCESS)
   inspectionNumber      String           @unique
   documentNumber        String?
@@ -941,6 +958,8 @@ model DispatchNote {
   transporterName    String?
   transporterDetails String?
   vehicleNumber      String?
+  driverDetails      String?
+  trackingReference  String?
   logisticsCost      Decimal  @default(0)
   status             String   @default("COMPLETED")
   remarks            String?
@@ -981,6 +1000,7 @@ model InvoiceHeader {
   subtotal       Decimal      @default(0)
   taxAmount      Decimal      @default(0)
   totalAmount    Decimal      @default(0)
+  profit         Decimal      @default(0)
   status         String       @default("GENERATED")
   remarks        String?
   createdAt      DateTime     @default(now())
@@ -1041,6 +1061,9 @@ model InventoryBatch {
   location    StorageLocation? @relation(fields: [locationId], references: [id])
   receivedQty Decimal
   currentQty  Decimal
+  availableQty Decimal         @default(0)
+  reservedQty Decimal          @default(0)
+  issuedQty   Decimal          @default(0)
   unitCost    Decimal          @default(0)
   status      String           @default("AVAILABLE")
   createdAt   DateTime         @default(now())
@@ -1052,6 +1075,7 @@ model InventoryBatch {
   subcontractOrderItems SubcontractOrderItem[]
   subcontractReceiptItemId String?
   subcontractReceiptItem   SubcontractReceiptItem? @relation(fields: [subcontractReceiptItemId], references: [id])
+  machineShopDailyReports MachineShopDailyReport[]
 
   @@map("inventory_batches")
 }
@@ -1144,6 +1168,12 @@ model MachineShopDailyReport {
   machine     Machine  @relation(fields: [machineId], references: [id])
   employeeId  String
   employee    Employee @relation(fields: [employeeId], references: [id])
+  routingOperationId String?
+  routingOperation   RoutingOperation? @relation(fields: [routingOperationId], references: [id])
+  materialIssueId    String?
+  materialIssue      MaterialIssueHeader? @relation(fields: [materialIssueId], references: [id])
+  inventoryBatchId   String?
+  inventoryBatch     InventoryBatch? @relation(fields: [inventoryBatchId], references: [id])
   reportDate  DateTime
   startTime   DateTime
   endTime     DateTime
@@ -1153,6 +1183,9 @@ model MachineShopDailyReport {
   producedQty Decimal  @default(0)
   scrapQty    Decimal  @default(0)
   reworkQty   Decimal  @default(0)
+  actualMachineHours Decimal @default(0)
+  actualLabourHours  Decimal @default(0)
+  variance           Decimal @default(0)
   remarks     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1160,6 +1193,27 @@ model MachineShopDailyReport {
   updatedBy   String?
 
   @@map("machine_shop_daily_reports")
+}
+
+// -- Production: Job Cards --
+model JobCard {
+  id                 String           @id @default(uuid())
+  projectId          String
+  project            Project          @relation(fields: [projectId], references: [id])
+  routingOperationId String
+  routingOperation   RoutingOperation @relation(fields: [routingOperationId], references: [id])
+  machineId          String
+  machine            Machine          @relation(fields: [machineId], references: [id])
+  status             String           @default("READY")
+  priority           String           @default("NORMAL")
+  operatorId         String?
+  operator           Employee?        @relation(fields: [operatorId], references: [id])
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  createdBy          String?
+  updatedBy          String?
+
+  @@map("job_cards")
 }
 
 // -- Project Events: Timeline, Activities, Approvals --
@@ -1227,22 +1281,27 @@ model ProjectCostEvent {
 }
 
 model ProjectCostSummary {
-  id                      String   @id @default(uuid())
-  projectId               String   @unique
-  project                 Project  @relation(fields: [projectId], references: [id])
-  estimatedMaterialCost   Decimal  @default(0)
-  actualMaterialCost      Decimal  @default(0)
-  materialConsumptionCost Decimal  @default(0)
-  machineCost             Decimal  @default(0)
-  labourCost              Decimal  @default(0)
-  outsideProcessCost      Decimal  @default(0)
-  inspectionCost          Decimal  @default(0)
-  packingCost             Decimal  @default(0)
-  dispatchCost            Decimal  @default(0)
-  totalCost               Decimal  @default(0)
-  revenue                 Decimal  @default(0)
-  profitability           Decimal  @default(0)
-  updatedAt               DateTime @updatedAt
+  id                            String   @id @default(uuid())
+  projectId                     String   @unique
+  project                       Project  @relation(fields: [projectId], references: [id])
+  estimatedMaterialCost         Decimal  @default(0)
+  estimatedMachineCost          Decimal  @default(0)
+  estimatedLabourCost           Decimal  @default(0)
+  estimatedOutsideProcessCost   Decimal  @default(0)
+  estimatedManufacturingCost    Decimal  @default(0)
+  estimatedProjectCost          Decimal  @default(0)
+  actualMaterialCost            Decimal  @default(0)
+  materialConsumptionCost       Decimal  @default(0)
+  machineCost                   Decimal  @default(0)
+  labourCost                    Decimal  @default(0)
+  outsideProcessCost            Decimal  @default(0)
+  inspectionCost                Decimal  @default(0)
+  packingCost                   Decimal  @default(0)
+  dispatchCost                  Decimal  @default(0)
+  totalCost                     Decimal  @default(0)
+  revenue                       Decimal  @default(0)
+  profitability                 Decimal  @default(0)
+  updatedAt                     DateTime @updatedAt
 
   @@map("project_cost_summary")
 }

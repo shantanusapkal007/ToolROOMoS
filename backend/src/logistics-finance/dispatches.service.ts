@@ -15,6 +15,22 @@ export class DispatchesService {
         throw new BadRequestException('Dispatches can only be registered during the Dispatch Ready stage.');
       }
 
+      // 2. Business Rule: Cannot dispatch without Passed PDI
+      const pdi = await tx.inspectionHeader.findFirst({
+        where: { projectId, inspectionType: 'FINAL_PDI', result: 'PASS' }
+      });
+      if (!pdi) {
+        throw new BadRequestException('Business Rule Violation: Cannot dispatch material without a passed Pre-Dispatch Inspection (PDI).');
+      }
+
+      // 3. Business Rule: Cannot dispatch with Open NCR
+      const openNcr = await tx.ncrReport.findFirst({
+        where: { projectId, status: 'OPEN' }
+      });
+      if (openNcr) {
+        throw new BadRequestException(`Business Rule Violation: Cannot dispatch project with Open NCR (${openNcr.ncrNumber}).`);
+      }
+
       // 2. Create Dispatch Note
       const dispatch = await tx.dispatchNote.create({
         data: {
@@ -25,6 +41,8 @@ export class DispatchesService {
           dispatchQty: dto.dispatchQty,
           transporterName: dto.transporterName,
           vehicleNumber: dto.vehicleNumber,
+          driverDetails: dto.driverDetails,
+          trackingReference: dto.trackingReference,
           logisticsCost: dto.logisticsCost,
           status: 'COMPLETED',
           remarks: dto.remarks,

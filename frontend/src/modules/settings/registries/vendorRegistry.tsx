@@ -19,9 +19,7 @@ export const vendorRegistry: EntityRegistry = {
   fields: [
     { name: 'vendorCode', label: 'Vendor Code', type: 'text', required: true },
     { name: 'vendorName', label: 'Vendor Name', type: 'text', required: true },
-    { name: 'companyId', label: 'Company (Parent)', type: 'select', required: true, options: [
-      { label: 'Default Company HQ', value: '11111111-1111-1111-1111-111111111111' }
-    ] },
+    { name: 'companyId', label: 'Company (Parent)', type: 'select', required: true, optionsEndpoint: 'master-data/companies', optionsLabelKey: 'companyName', optionsValueKey: 'id' },
     { name: 'vendorType', label: 'Vendor Type', type: 'select', required: true, options: [
       { label: 'Material Supplier', value: 'MATERIAL_SUPPLIER' },
       { label: 'Heat Treatment', value: 'HEAT_TREATMENT' },

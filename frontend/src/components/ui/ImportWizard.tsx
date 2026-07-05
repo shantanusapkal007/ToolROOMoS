@@ -256,7 +256,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
                       onClick={() => setStep(2)}
                       className="text-sm font-medium text-red-400 hover:text-red-300"
                     >
-                      ← Upload a corrected file
+                      <- Upload a corrected file
                     </button>
                   </div>
                 </div>

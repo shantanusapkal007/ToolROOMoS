@@ -128,21 +128,9 @@ export class BomsService {
         },
       });
 
-      // 4. Workflow Integration: Advance project to PROCUREMENT stage
-      await tx.project.update({
-        where: { id: projectId },
-        data: { currentStage: ProjectStatus.PROCUREMENT, updatedBy: userId },
-      });
+      // Note: BOM Approval no longer advances the project to PROCUREMENT.
+      // The project only advances once the full Manufacturing Routing Plan is approved.
 
-      await tx.projectTimeline.create({
-        data: {
-          projectId,
-          fromStage: ProjectStatus.ENGINEERING,
-          toStage: ProjectStatus.PROCUREMENT,
-          transitionedBy: userId || 'SYSTEM',
-          remarks: `BOM Approved. Target material cost baseline set to $${bom.totalEstimatedCost}`,
-        },
-      });
 
       await tx.projectActivity.create({
         data: {

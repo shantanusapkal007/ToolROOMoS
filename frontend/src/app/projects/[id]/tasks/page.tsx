@@ -4,11 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { api } from "@/lib/api";
 import { Plus, CheckSquare, Clock, AlignLeft, Target, CalendarDays, Activity } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
+import { useProjectTasks, useCreateTask, useUpdateTaskStatus } from '@/hooks/useTasks';
 
 export default function TasksTab({ params }: { params: Promise<{ id: string }> }) {
+  const { success, error } = useToast();
   const resolvedParams = React.use(params);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  const { data: tasks = [], isLoading: loading } = useProjectTasks(resolvedParams.id);
+  const createTaskMutation = useCreateTask(resolvedParams.id);
+  const updateTaskStatusMutation = useUpdateTaskStatus(resolvedParams.id);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskData, setTaskData] = useState({
     taskName: '',
@@ -19,21 +23,7 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
     status: 'PENDING'
   });
 
-  useEffect(() => {
-    loadTasks();
-  }, [resolvedParams.id]);
-
-  const loadTasks = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get(`projects/${resolvedParams.id}/tasks`);
-      setTasks(res.data.data || []);
-    } catch (err) {
-      addToast({ title: 'Error', message: 'Failed to load tasks', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Handled by React Query hooks
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +36,7 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
         endDate: taskData.endDate ? new Date(taskData.endDate).toISOString() : undefined,
       };
 
-      await api.post(`projects/${resolvedParams.id}/tasks`, payload);
+      await createTaskMutation.mutateAsync(payload);
       setTaskData({
         taskName: '',
         description: '',
@@ -56,26 +46,23 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
         status: 'PENDING'
       });
       setIsModalOpen(false);
-      loadTasks();
-      addToast({ title: 'Success', message: 'Task added', type: 'success' });
-    } catch (err) {
-      addToast({ title: 'Error', message: 'Failed to create task', type: 'error' });
+      success('Success', 'Task added');
+    } catch (err: any) {
+      error('Error', 'Failed to create task');
     }
   };
 
-  const toggleTaskStatus = async (task: any) => {
+  const handleUpdateStatus = async (taskId: string, status: string) => {
     try {
-      const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
-      await api.put(`projects/${resolvedParams.id}/tasks/${task.id}`, { status: newStatus });
-      loadTasks();
-    } catch (err) {
-      addToast({ title: 'Error', message: 'Failed to update task', type: 'error' });
+      await updateTaskStatusMutation.mutateAsync({ taskId, status });
+    } catch (err: any) {
+      error('Error', 'Failed to update task');
     }
   };
 
   const calculateProgress = () => {
     if (tasks.length === 0) return 0;
-    const completed = tasks.filter(t => t.status === 'COMPLETED').length;
+    const completed = tasks.filter((t: any) => t.status === 'COMPLETED').length;
     return Math.round((completed / tasks.length) * 100);
   };
 
@@ -126,12 +113,12 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
           </div>
 
           <div className="space-y-3 relative z-10">
-            {tasks.length > 0 ? tasks.map(task => (
+            {tasks.length > 0 ? tasks.map((task: any) => (
               <div key={task.id} className={`p-4 rounded-xl border flex items-center justify-between group transition-all ${
                 task.status === 'COMPLETED' ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/5 border-white/10 hover:border-orange-500/30 hover:bg-white/10'
               }`}>
                 <div className="flex items-center space-x-4">
-                  <button onClick={() => toggleTaskStatus(task)}>
+                  <button onClick={() => handleUpdateStatus(task.id, task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED')}>
                     <div className={`w-6 h-6 rounded flex items-center justify-center border transition-all ${
                       task.status === 'COMPLETED' ? 'bg-emerald-500 border-emerald-400 text-black' : 'border-slate-500 text-transparent group-hover:border-orange-400'
                     }`}>
@@ -194,11 +181,11 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
                </li>
                <li className="flex justify-between">
                  <span>Completed</span>
-                 <span className="font-bold text-emerald-400">{tasks.filter(t => t.status === 'COMPLETED').length}</span>
+                 <span className="font-bold text-emerald-400">{tasks.filter((t: any) => t.status === 'COMPLETED').length}</span>
                </li>
                <li className="flex justify-between">
                  <span>Pending</span>
-                 <span className="font-bold text-orange-400">{tasks.filter(t => t.status === 'PENDING').length}</span>
+                 <span className="font-bold text-orange-400">{tasks.filter((t: any) => t.status === 'PENDING').length}</span>
                </li>
              </ul>
           </div>

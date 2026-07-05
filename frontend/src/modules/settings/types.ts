@@ -6,6 +6,9 @@ export interface EntityField {
   type: FieldType;
   required?: boolean;
   options?: { label: string; value: string }[]; // For select type
+  optionsEndpoint?: string; // e.g. 'master-data/departments'
+  optionsLabelKey?: string; // e.g. 'departmentName'
+  optionsValueKey?: string; // e.g. 'id'
   placeholder?: string;
   gridCols?: 1 | 2; // Span 1 or 2 columns in form layout
   section?: string; // Group fields by section header

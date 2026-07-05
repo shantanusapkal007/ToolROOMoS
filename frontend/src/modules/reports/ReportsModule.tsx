@@ -14,7 +14,7 @@ const StatCard = ({ title, value, change, icon, trend }: { title: string, value:
           trend === 'down' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
           'bg-slate-500/10 text-slate-400 border border-slate-500/20'
         }`}>
-          {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'} {change}
+          {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '->'} {change}
         </div>
       </div>
       <div>

@@ -26,7 +26,7 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
             </div>
-            <span className="text-blue-400 text-xs font-bold tracking-widest uppercase">System Online • Factory Active</span>
+            <span className="text-blue-400 text-xs font-bold tracking-widest uppercase">System Online · Factory Active</span>
           </div>
           <h1 className="text-7xl font-bold mb-2 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-500 drop-shadow-lg">
             {new Date().getHours() < 12 ? 'Good Morning.' : new Date().getHours() < 18 ? 'Good Afternoon.' : 'Good Evening.'}
@@ -230,7 +230,7 @@ function PremiumKpiCard({ title, value, subtext, icon, trend, color, delay }: { 
         </div>
         {trend !== 'neutral' && (
           <div className={`px-3 py-1.5 rounded-lg text-xs font-black tracking-wider shadow-sm border ${trend === 'up' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}`}>
-            {trend === 'up' ? '↗' : '↘'} {trend === 'up' ? '+2.4%' : '-1.2%'}
+            {trend === 'up' ? '↑' : '↓'} {trend === 'up' ? '+2.4%' : '-1.2%'}
           </div>
         )}
       </div>
@@ -279,29 +279,29 @@ function CurrencyWidget() {
         </div>
         <div className="flex flex-col text-left">
           <span className="text-[9px] text-emerald-400/70 font-bold uppercase tracking-widest leading-none mb-1.5">USD / INR</span>
-          <span className="text-sm font-black text-emerald-400 leading-none drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">₹{rates.usd.toFixed(2)}</span>
+          <span className="text-sm font-black text-emerald-400 leading-none drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">&#8377;{rates.usd.toFixed(2)}</span>
         </div>
       </div>
       
       <div className="flex items-center space-x-3 bg-blue-500/5 border border-blue-500/20 px-4 py-2 rounded-xl group hover:bg-blue-500/10 hover:border-blue-500/40 transition-all cursor-default shadow-[0_0_15px_rgba(59,130,246,0.05)] hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 w-full translate-x-[-100%] group-hover:animate-[shimmer_2s_infinite]"></div>
         <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-black text-xs group-hover:scale-110 transition-transform border border-blue-500/30 shadow-inner">
-          €
+          &#8364;
         </div>
         <div className="flex flex-col text-left">
           <span className="text-[9px] text-blue-400/70 font-bold uppercase tracking-widest leading-none mb-1.5">EUR / INR</span>
-          <span className="text-sm font-black text-blue-400 leading-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">₹{rates.eur.toFixed(2)}</span>
+          <span className="text-sm font-black text-blue-400 leading-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">&#8377;{rates.eur.toFixed(2)}</span>
         </div>
       </div>
 
       <div className="flex items-center space-x-3 bg-purple-500/5 border border-purple-500/20 px-4 py-2 rounded-xl group hover:bg-purple-500/10 hover:border-purple-500/40 transition-all cursor-default shadow-[0_0_15px_rgba(168,85,247,0.05)] hover:shadow-[0_0_20px_rgba(168,85,247,0.15)] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 w-full translate-x-[-100%] group-hover:animate-[shimmer_2s_infinite]"></div>
         <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-black text-xs group-hover:scale-110 transition-transform border border-purple-500/30 shadow-inner">
-          £
+          &#163;
         </div>
         <div className="flex flex-col text-left">
           <span className="text-[9px] text-purple-400/70 font-bold uppercase tracking-widest leading-none mb-1.5">GBP / INR</span>
-          <span className="text-sm font-black text-purple-400 leading-none drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">₹{rates.gbp.toFixed(2)}</span>
+          <span className="text-sm font-black text-purple-400 leading-none drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">&#8377;{rates.gbp.toFixed(2)}</span>
         </div>
       </div>
     </div>

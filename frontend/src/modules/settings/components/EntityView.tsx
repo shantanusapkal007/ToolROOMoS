@@ -109,7 +109,7 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
           </h2>
           <div className="flex items-center space-x-3 text-sm text-slate-400 ml-[56px]">
             <p>Manage all {registry.pluralName.toLowerCase()} in the master database.</p>
-            <span className="text-white/20">•</span>
+            <span className="text-white/20">·</span>
             <span className="bg-white/5 px-2 py-0.5 rounded text-emerald-400 font-mono text-xs font-bold border border-white/10">
               {data.length} Records
             </span>

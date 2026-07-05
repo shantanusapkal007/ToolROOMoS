@@ -3,46 +3,41 @@
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
 import { Truck } from "lucide-react";
-
 import { useToast } from "../../../../components/ui/Toast";
+import { useProject } from "../../../../hooks/useProjects";
+import { useCreateDispatch } from "../../../../hooks/useDispatch";
 
 export default function DispatchTab({ params }: { params: Promise<{ id: string }> }) {
   const { success, error } = useToast();
   const resolvedParams = React.use(params);
-  const [project, setProject] = useState<any | null>(null);
+  const { data: project, isLoading: projectLoading } = useProject(resolvedParams.id);
+  const createDispatchMutation = useCreateDispatch(resolvedParams.id);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     dispatchNumber: `DISP-${Date.now().toString().slice(-4)}`,
     dispatchQty: 1,
     transporterName: "",
     vehicleNumber: "",
+    driverDetails: "",
+    trackingReference: "",
     logisticsCost: 0,
     remarks: ""
   });
 
-  useEffect(() => {
-    loadProjectDetails(resolvedParams.id);
-  }, [resolvedParams.id]);
+  // React Query handles fetching
 
-  const loadProjectDetails = async (projectId: string) => {
-    try {
-      const res = await api.get(`projects/${projectId}`);
-      setProject(res.data);
-    } catch (err) { console.error(err); }
-  };
+  if (projectLoading || !project) return null;
 
   const handleCreateDispatch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project) return;
     try {
-      await api.post(`projects/${project.id}/dispatches`, formData);
+      await createDispatchMutation.mutateAsync(formData);
       setShowModal(false);
-      success("Dispatch Logged", "Logistics dispatch has been successfully registered.");
-      loadProjectDetails(project.id);
-    } catch (err: any) { error("Dispatch Failed", err.message); }
+    } catch (err: any) {}
   };
 
-  if (!project) return null;
+
 
   return (
     <div className="flex-1 overflow-y-auto pb-32 animate-fade-in flex flex-col h-full">
@@ -59,7 +54,7 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
           <button onClick={() => {
             setFormData({
               dispatchNumber: `DISP-${Date.now().toString().slice(-4)}`,
-              dispatchQty: 1, transporterName: "", vehicleNumber: "", logisticsCost: 0, remarks: ""
+              dispatchQty: 1, transporterName: "", vehicleNumber: "", driverDetails: "", trackingReference: "", logisticsCost: 0, remarks: ""
             });
             setShowModal(true);
           }} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(79,70,229,0.3)] transition-all">
@@ -90,12 +85,18 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
                       {disp.vehicleNumber && (
                         <span>Vehicle: <strong className="text-white">{disp.vehicleNumber}</strong></span>
                       )}
+                      {disp.driverDetails && (
+                        <span>Driver: <strong className="text-white">{disp.driverDetails}</strong></span>
+                      )}
+                      {disp.trackingReference && (
+                        <span>Tracking: <strong className="text-white">{disp.trackingReference}</strong></span>
+                      )}
                     </div>
                     {disp.remarks && <div className="text-xs text-slate-500 mt-2">"{disp.remarks}"</div>}
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-slate-400">Logistics Cost</div>
-                    <div className="text-indigo-400 font-bold font-mono">₹{disp.logisticsCost}</div>
+                    <div className="text-indigo-400 font-bold font-mono">&#8377;{disp.logisticsCost}</div>
                     <div className="text-xs text-slate-500 mt-1">{new Date(disp.dispatchDate).toLocaleDateString()}</div>
                   </div>
                 </div>
@@ -161,8 +162,29 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Driver Details</label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500/50"
+                    value={formData.driverDetails}
+                    onChange={(e) => setFormData({...formData, driverDetails: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Tracking Reference</label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500/50"
+                    value={formData.trackingReference}
+                    onChange={(e) => setFormData({...formData, trackingReference: e.target.value})}
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Logistics Cost (₹)</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Logistics Cost (&#8377;)</label>
                 <input
                   type="number"
                   min="0"

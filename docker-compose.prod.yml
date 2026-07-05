@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # -----------------------------------------------------
+  # 1. DATABASE LAYER
+  # -----------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: toolroomos-postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      POSTGRES_DB: toolroomos
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d toolroomos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: toolroomos-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  minio:
+    image: minio/minio
+    container_name: toolroomos-minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-adminpassword}
+    ports:
+      - "9000:9000" # API Port
+      - "9001:9001" # Console Port
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  # -----------------------------------------------------
+  # 2. APPLICATION LAYER (PRODUCTION MODE)
+  # -----------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: toolroomos-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=postgresql://root:${DB_PASSWORD:-rootpassword}@postgres:5432/toolroomos?schema=public
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=${MINIO_PASSWORD:-adminpassword}
+      - JWT_SECRET=${JWT_SECRET:-production-secret}
+      - PORT=4000
+      - NODE_ENV=production
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      target: runner
+    container_name: toolroomos-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
+      - NODE_ENV=production
+    restart: always
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

@@ -2,7 +2,13 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { ProjectStatus } from '@prisma/client';
+import { ProjectStatus, ApprovalStatus } from '@prisma/client';
+
+const STAGE_ORDER: ProjectStatus[] = [
+  'CREATED', 'ENGINEERING', 'PROCUREMENT', 'MATERIAL_AVAILABLE', 
+  'PRODUCTION', 'INSPECTION', 'DISPATCH_READY', 'DISPATCHED', 
+  'INVOICED', 'PAYMENT_PENDING', 'CLOSED'
+];
 
 @Injectable()
 export class ProjectsService {
@@ -153,6 +159,24 @@ export class ProjectsService {
     });
   }
 
+  async getInventoryBatches(projectId: string) {
+    return this.prisma.inventoryBatch.findMany({
+      where: {
+        grnItem: {
+          grnHeader: {
+            projectId
+          }
+        },
+        status: 'AVAILABLE',
+        availableQty: { gt: 0 }
+      },
+      include: {
+        material: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
   async update(id: string, dto: UpdateProjectDto) {
     if (dto.targetDeliveryDate) {
       dto.targetDeliveryDate = new Date(dto.targetDeliveryDate).toISOString() as any;
@@ -170,6 +194,76 @@ export class ProjectsService {
 
       if (fromStage === toStage) {
         throw new BadRequestException('Project is already in this stage.');
+      }
+
+      if (toStage !== 'CANCELLED') {
+        const fromIndex = STAGE_ORDER.indexOf(fromStage);
+        const toIndex = STAGE_ORDER.indexOf(toStage);
+
+        // Prevent skipping stages forward
+        if (toIndex > fromIndex + 1) {
+          throw new BadRequestException(`Cannot skip stages. Next valid stage is ${STAGE_ORDER[fromIndex + 1]}`);
+        }
+
+        // Hard Business Validations for advancing forward
+        if (toIndex > fromIndex) {
+          if (toStage === 'PROCUREMENT') {
+            const boms = await tx.billOfMaterialHeader.count({
+              where: { projectId: id, status: 'APPROVED' }
+            });
+            if (boms === 0) {
+              throw new BadRequestException('Cannot enter Procurement: No Approved BOM exists.');
+            }
+            const routings = await tx.routingHeader.count({
+              where: { projectId: id, approvalStatus: 'APPROVED' }
+            });
+            if (routings === 0) {
+              throw new BadRequestException('Cannot enter Procurement: No Approved Routing exists. Manufacturing Plan is incomplete.');
+            }
+          }
+          else if (toStage === 'MATERIAL_AVAILABLE') {
+            const grns = await tx.goodsReceiptHeader.count({ where: { projectId: id } });
+            if (grns === 0) {
+              throw new BadRequestException('Cannot mark Material Available: No Goods Receipts (GRN) found.');
+            }
+          }
+          else if (toStage === 'PRODUCTION') {
+            const issues = await tx.materialIssueHeader.count({ where: { projectId: id } });
+            if (issues === 0) {
+              throw new BadRequestException('Cannot start Production: No material has been issued to the floor.');
+            }
+            const jobCards = await tx.jobCard.count({ where: { projectId: id } });
+            if (jobCards === 0) {
+              throw new BadRequestException('Cannot start Production: Job Cards have not been generated from Routing.');
+            }
+          }
+          else if (toStage === 'INSPECTION') {
+            const msdr = await tx.machineShopDailyReport.count({ where: { projectId: id } });
+            if (msdr === 0) {
+              throw new BadRequestException('Cannot enter Inspection: No production operations (MSDR) logged.');
+            }
+          }
+          else if (toStage === 'DISPATCH_READY') {
+            const pdi = await tx.inspectionHeader.findFirst({
+              where: { projectId: id, inspectionType: 'FINAL_PDI', result: 'PASS' }
+            });
+            if (!pdi) {
+              throw new BadRequestException('Cannot mark Dispatch Ready: Final Pre-Dispatch Inspection (PDI) has not passed.');
+            }
+          }
+          else if (toStage === 'DISPATCHED') {
+            const dispatch = await tx.dispatchNote.count({ where: { projectId: id } });
+            if (dispatch === 0) {
+              throw new BadRequestException('Cannot mark Dispatched: No Dispatch Note logged.');
+            }
+          }
+          else if (toStage === 'INVOICED') {
+            const invoice = await tx.invoiceHeader.count({ where: { projectId: id } });
+            if (invoice === 0) {
+              throw new BadRequestException('Cannot mark Invoiced: No Invoice generated.');
+            }
+          }
+        }
       }
 
       // Update project stage
@@ -220,12 +314,56 @@ export class ProjectsService {
     });
   }
 
-  // --- Project Tasks (WBS) ---
-  
   async getTasks(projectId: string) {
     return this.prisma.projectTask.findMany({
       where: { projectId },
       orderBy: { startDate: 'asc' },
+    });
+  }
+
+  // --- Revision Engine ---
+  
+  async reopenEngineering(id: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Reopen Project Stage
+      const project = await tx.project.update({
+        where: { id },
+        data: { currentStage: 'ENGINEERING', updatedBy: userId },
+      });
+
+      // 2. Put POs on Hold
+      await tx.purchaseOrderHeader.updateMany({
+        where: { projectId: id, status: { in: ['DRAFT', 'ISSUED'] } },
+        data: { status: 'ON_HOLD', remarks: 'Engineering Reopened - Verify Revision' },
+      });
+
+      // 3. Obsolete current Routing (forcing a new plan)
+      await tx.routingHeader.updateMany({
+        where: { projectId: id, status: 'APPROVED' },
+        data: { status: 'OBSOLETE', remarks: 'Engineering Reopened' },
+      });
+
+      // 4. Log Activity
+      await tx.projectTimeline.create({
+        data: {
+          projectId: id,
+          fromStage: 'PROCUREMENT', // or wherever it was
+          toStage: 'ENGINEERING',
+          transitionedBy: userId || 'SYSTEM',
+          remarks: 'Engineering Reopened via Revision Engine.',
+        },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId: id,
+          action: 'ENGINEERING_REOPENED',
+          description: `Engineering Reopened. POs placed ON_HOLD. Routing obsoleted.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return project;
     });
   }
 
@@ -249,22 +387,54 @@ export class ProjectsService {
     });
   }
 
-  // --- Quality Inspections ---
-  async createInspection(projectId: string, data: any, userId?: string) {
+  // --- Closing Engine ---
+  async closeProject(projectId: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      const inspection = await tx.inspectionHeader.create({
+      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      
+      // 1. Validate Stage (must be INVOICED)
+      if (project.currentStage !== 'INVOICED') {
+        throw new BadRequestException('Project can only be closed after Invoicing is complete.');
+      }
+
+      // 2. Validate No Open NCRs
+      const openNcr = await tx.ncrReport.findFirst({
+        where: { projectId, status: 'OPEN' }
+      });
+      if (openNcr) {
+        throw new BadRequestException('Cannot close project with an OPEN NCR.');
+      }
+
+      // 3. Finalize and Close
+      const closedProject = await tx.project.update({
+        where: { id: projectId },
+        data: {
+          currentStage: 'CLOSED',
+          closedAt: new Date(),
+          updatedBy: userId
+        }
+      });
+
+      await tx.projectTimeline.create({
         data: {
           projectId,
-          inspectionNumber: `INS-${Date.now()}`,
-          inspectedQty: data.inspectedQty || 1,
-          passedQty: data.passedQty || 1,
-          result: data.result || 'PASS',
-          inspectionType: data.inspectionType || 'IN_PROCESS',
-          createdBy: userId,
+          fromStage: 'INVOICED',
+          toStage: 'CLOSED',
+          transitionedBy: userId || 'SYSTEM',
+          remarks: 'Project financially and operationally closed.',
         },
       });
 
-      return inspection;
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'PROJECT_CLOSED',
+          description: `Project fully closed. Final Cost and Profit locked.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return closedProject;
     });
   }
   async getCostEvents(id: string) {

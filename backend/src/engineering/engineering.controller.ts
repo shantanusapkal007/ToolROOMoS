@@ -12,8 +12,10 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { DrawingsService } from './drawings.service';
 import { BomsService } from './boms.service';
+import { RoutingService } from './routing.service';
 import { CreateDrawingDto } from './dto/create-drawing.dto';
 import { CreateBomDto } from './dto/create-bom.dto';
+import { CreateRoutingDto } from './dto/create-routing.dto';
 
 @Controller('api/v1/projects/:projectId')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -21,6 +23,7 @@ export class EngineeringController {
   constructor(
     private readonly drawingsService: DrawingsService,
     private readonly bomsService: BomsService,
+    private readonly routingService: RoutingService,
   ) {}
 
   // Drawings APIs
@@ -83,6 +86,58 @@ export class EngineeringController {
     return {
       status: 'success',
       message: 'Active BOM retrieved successfully.',
+      data,
+    };
+  }
+
+  // Routing APIs
+  @Post('routing')
+  @Roles('ADMIN', 'ENGINEERING')
+  async submitEngineeringPlan(
+    @Param('projectId') projectId: string,
+    @Body() dto: CreateRoutingDto,
+  ) {
+    const data = await this.routingService.submitEngineeringPlan(projectId, dto);
+    return {
+      status: 'success',
+      message: 'Manufacturing Routing Plan submitted successfully.',
+      data,
+    };
+  }
+
+  @Post('routing/:routingId/validate')
+  async validateManufacturingPlan(
+    @Param('projectId') projectId: string,
+    @Param('routingId') routingId: string,
+  ) {
+    const data = await this.routingService.validateManufacturingPlan(projectId, routingId);
+    return {
+      status: 'success',
+      message: 'Manufacturing Plan validation complete.',
+      data,
+    };
+  }
+
+  @Put('routing/:routingId/approve')
+  @Roles('ADMIN', 'ENGINEERING')
+  async approveManufacturingPlan(
+    @Param('projectId') projectId: string,
+    @Param('routingId') routingId: string,
+  ) {
+    const data = await this.routingService.approveManufacturingPlan(projectId, routingId);
+    return {
+      status: 'success',
+      message: 'Manufacturing Plan approved. Cost Baseline frozen. Project transitioned to Procurement.',
+      data,
+    };
+  }
+
+  @Get('routing')
+  async getActiveRouting(@Param('projectId') projectId: string) {
+    const data = await this.routingService.getActiveRouting(projectId);
+    return {
+      status: 'success',
+      message: 'Active Routing Plan retrieved successfully.',
       data,
     };
   }

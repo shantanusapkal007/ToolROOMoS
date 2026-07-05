@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sidebar } from "../../components/layout/Sidebar";
-import { api } from "../../lib/api";
-import { Plus } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useToast } from "../../components/ui/Toast";
 import { LoadingState } from "../../components/ui/LoadingState";
 import { formatDate } from "../../lib/formatters";
+import { useProjects, useCreateProject } from "../../hooks/useProjects";
+import { useMasterData } from "../../hooks/useMasterData";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProjectsPage() {
   const { success, error } = useToast();
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: projects, isLoading: projectsLoading } = useProjects();
+  const { data: customers } = useMasterData('customers');
+  const createProjectMutation = useCreateProject();
   const router = useRouter();
 
   // New Project Form State
@@ -21,132 +24,202 @@ export default function ProjectsPage() {
   const [newProjectNumber, setNewProjectNumber] = useState("");
   const [newPartName, setNewPartName] = useState("");
   const [newCustomerPo, setNewCustomerPo] = useState("");
-  
-  const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
-  useEffect(() => {
-    loadProjects();
-    loadCustomers();
-  }, []);
-
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("projects");
-      setProjects(res.data || []);
-    } catch (err) {
-      console.error("Failed to load projects", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadCustomers = async () => {
-    try {
-      const res = await api.get("master-data/customers");
-      setCustomers(res.data || []);
-      if (res.data?.length > 0) setSelectedCustomerId(res.data[0].id);
-    } catch (err) {
-      console.error("Failed to load customers", err);
-    }
-  };
+  if (customers && customers.length > 0 && !selectedCustomerId) {
+    setSelectedCustomerId(customers[0].id);
+  }
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await api.post("projects", {
+      await createProjectMutation.mutateAsync({
         projectNumber: newProjectNumber,
-        partName: newPartName,
+        partName: newPartName, 
         customerPoNumber: newCustomerPo,
         customerId: selectedCustomerId,
-        plantId: "PL-01", // Hardcoded fallback as per prototype
-      });
+        plantId: "PL-01",
+      } as any);
       setShowNewProjectModal(false);
-      success("Project Created", `Project ${newPartName} has been generated successfully.`);
-      loadProjects();
-    } catch (err: any) { error("Failed", err.message); }
+    } catch (err: any) { 
+      // Error handled by mutation hook
+    }
   };
+
+  // Apple Spring Configuration
+  const spring = { type: "spring", stiffness: 400, damping: 30 };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative z-0 pl-16">
-        <div className="flex-1 p-12 overflow-y-auto pl-32 animate-fade-in">
-          <div className="flex justify-between items-end mb-12">
+      <main className="flex-1 h-full flex flex-col relative z-0 pl-24 pt-4 pr-4 pb-4">
+        <div className="flex-1 p-12 overflow-y-auto hide-scrollbar relative">
+          
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="flex justify-between items-end mb-16 relative z-10"
+          >
             <div>
-              <h1 className="text-h1 tracking-tight mb-2">Projects</h1>
-              <p className="text-h5 text-slate-400">All active factory orders.</p>
+              <h1 className="text-display font-bold tracking-tight mb-2 bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">Active Projects</h1>
+              <p className="text-body-large text-zinc-400">All manufacturing missions currently in progress.</p>
             </div>
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setShowNewProjectModal(true)}
-              className="glass-panel px-6 py-3 font-semibold hover:bg-white/10 flex items-center shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all"
+              className="glass-button px-6 py-4 font-semibold flex items-center shadow-elevation"
             >
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="h-5 w-5 mr-3 text-blue-400" />
               Initialize Project
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
-          {loading ? (
-             <LoadingState message="Scanning Project Database..." />
-          ) : projects.length === 0 ? (
-            <EmptyState 
-              title="No Active Projects" 
-              description="Initialize a new project to start tracking production, cost, and logistics." 
-              actionLabel="Initialize Project"
-              onAction={() => setShowNewProjectModal(true)}
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map(proj => (
-                <div 
-                  key={proj.id} 
-                  onClick={() => router.push(`/projects/${proj.id}/overview`)}
-                  className="glass-panel p-6 cursor-pointer group hover:border-blue-500/50 hover:shadow-[0_8px_30px_rgba(59,130,246,0.15)] flex flex-col justify-between"
-                >
-                  <div className="mb-8">
-                    <p className="text-xs font-bold text-slate-500 tracking-widest mb-1">{proj.projectNumber}</p>
-                    <h3 className="text-h4 font-semibold text-white group-hover:text-blue-400 transition-colors">{proj.partName}</h3>
-                    <p className="text-sm text-slate-400 mt-2">{proj.customer?.name || "Customer Pending"}</p>
-                  </div>
-                  <div className="flex justify-between items-center border-t border-white/10 pt-4">
-                    <div className="flex items-center text-xs font-medium text-slate-300">
-                      <div className="h-2 w-2 rounded-full bg-blue-500 mr-2 animate-pulse"></div>
-                      {proj.currentStage}
+          <AnimatePresence mode="wait">
+            {projectsLoading ? (
+              <motion.div 
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <LoadingState message="Scanning Project Database..." />
+              </motion.div>
+            ) : !projects || projects.length === 0 ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+              >
+                <EmptyState 
+                  title="No Active Projects" 
+                  description="Initialize a new project to start tracking production, cost, and logistics." 
+                  actionLabel="Initialize Project"
+                  onAction={() => setShowNewProjectModal(true)}
+                />
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="grid"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8 pb-12"
+              >
+                {projects.map((proj, idx) => (
+                  <motion.div 
+                    key={proj.id}
+                    initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{ delay: idx * 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    whileHover={{ 
+                      y: -8, 
+                      scale: 1.02, 
+                      boxShadow: "0 20px 40px -10px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)" 
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => router.push(`/projects/${proj.id}/overview`)}
+                    className="glass-panel p-8 cursor-pointer group flex flex-col h-[280px] relative overflow-hidden"
+                  >
+                    {/* Hover Glow Light */}
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-full" />
+                    
+                    <div className="flex-1 z-10 flex flex-col">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-micro text-zinc-300">
+                          {proj.projectNumber}
+                        </div>
+                        <ArrowRight className="h-5 w-5 text-zinc-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all duration-300" />
+                      </div>
+                      <h3 className="text-heading font-bold text-white mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-blue-200 transition-all">
+                        {proj.partName}
+                      </h3>
+                      <p className="text-body text-zinc-400">{proj.customer?.companyName || "Customer Pending"}</p>
                     </div>
-                    <span className="text-xs text-slate-500">{formatDate(proj.deliveryDate)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+
+                    <div className="mt-auto pt-6 border-t border-white/10 z-10 flex justify-between items-center">
+                      <div className="flex items-center text-caption text-zinc-300">
+                        <div className="h-2 w-2 rounded-full bg-emerald-400 mr-3 shadow-[0_0_12px_rgba(16,185,129,0.8)] animate-pulse"></div>
+                        {proj.currentStage}
+                      </div>
+                      <span className="text-micro text-zinc-500">{formatDate(proj.targetDeliveryDate)}</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </main>
 
-      {/* New Project Modal */}
-      {showNewProjectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
-          <div className="glass-panel w-full max-w-lg p-8 animate-slide-up">
-            <h2 className="text-h3 font-bold mb-6 text-white tracking-tight">Initialize Mission</h2>
-            <form onSubmit={handleCreateProject} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase">Project No.</label>
-                  <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 transition-all outline-none" value={newProjectNumber} onChange={e => setNewProjectNumber(e.target.value)} required />
+      {/* New Project Modal (Using Glass Modal) */}
+      <AnimatePresence>
+        {showNewProjectModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xl"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={spring}
+              className="glass-modal w-full max-w-2xl p-10 relative overflow-hidden"
+            >
+              <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/20 blur-[100px] pointer-events-none rounded-full" />
+              
+              <h2 className="text-heading-xl font-bold mb-8 text-white tracking-tight relative z-10">Initialize Mission</h2>
+              
+              <form onSubmit={handleCreateProject} className="space-y-6 relative z-10">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-micro text-zinc-400 mb-3">PROJECT NUMBER</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-body text-white focus:border-blue-500 focus:bg-black/40 focus:ring-1 focus:ring-blue-500 transition-all outline-none" 
+                      value={newProjectNumber} 
+                      onChange={e => setNewProjectNumber(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-micro text-zinc-400 mb-3">PART NAME</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-body text-white focus:border-blue-500 focus:bg-black/40 focus:ring-1 focus:ring-blue-500 transition-all outline-none" 
+                      value={newPartName} 
+                      onChange={e => setNewPartName(e.target.value)} 
+                      required 
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase">Part Name</label>
-                  <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 transition-all outline-none" value={newPartName} onChange={e => setNewPartName(e.target.value)} required />
+                <div className="flex justify-end pt-8 gap-4 border-t border-white/10">
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button" 
+                    onClick={() => setShowNewProjectModal(false)} 
+                    className="glass-button px-6 py-3 text-white font-medium"
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit" 
+                    className="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-colors"
+                  >
+                    Launch Project
+                  </motion.button>
                 </div>
-              </div>
-              <div className="flex justify-end pt-4">
-                <button type="button" onClick={() => setShowNewProjectModal(false)} className="px-6 py-3 mr-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-all">Cancel</button>
-                <button type="submit" className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all">Launch Project</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

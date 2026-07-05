@@ -2,44 +2,34 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
-import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent } from "lucide-react";
+import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent, Lock } from "lucide-react";
 import { useToast } from "../../../../components/ui/Toast";
+import { useProject, useCloseProject } from "../../../../hooks/useProjects";
+import { useCostEvents, useCreateInvoice } from "../../../../hooks/useFinance";
 
 export default function FinanceTab({ params }: { params: Promise<{ id: string }> }) {
   const { success, error } = useToast();
   const resolvedParams = React.use(params);
-  const [project, setProject] = useState<any | null>(null);
-  const [costEvents, setCostEvents] = useState<any[]>([]);
+  
+  const { data: project, isLoading: projectLoading } = useProject(resolvedParams.id);
+  const { data: costEvents } = useCostEvents(resolvedParams.id);
+  const createInvoiceMutation = useCreateInvoice(resolvedParams.id);
+  const closeProjectMutation = useCloseProject(resolvedParams.id);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invNum, setInvNum] = useState("");
   const [invAmount, setInvAmount] = useState(0);
   const [selectedDispatchId, setSelectedDispatchId] = useState("");
 
-  useEffect(() => {
-    loadProjectDetails(resolvedParams.id);
-    loadCostEvents(resolvedParams.id);
-  }, [resolvedParams.id]);
+  // Hooks handle fetching
 
-  const loadProjectDetails = async (projectId: string) => {
-    try {
-      const res = await api.get(`projects/${projectId}`);
-      setProject(res.data);
-    } catch (err) { console.error(err); }
-  };
-
-  const loadCostEvents = async (projectId: string) => {
-    try {
-      const res = await api.get(`projects/${projectId}/cost-events`);
-      setCostEvents(res.data);
-    } catch (err) { console.error(err); }
-  };
+  if (projectLoading || !project) return null;
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project || !selectedDispatchId) return;
     
     try {
-      await api.post(`projects/${project.id}/invoices`, {
+      await createInvoiceMutation.mutateAsync({
         dispatchNoteId: selectedDispatchId,
         invoiceNumber: invNum,
         subtotal: invAmount,
@@ -47,18 +37,21 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
         totalAmount: invAmount * 1.18,
       });
       setShowInvoiceModal(false);
-      success("Invoice Generated", `Tax Invoice ${invNum} created successfully.`);
-      loadProjectDetails(project.id);
-      loadCostEvents(project.id);
       
       // Reset form
       setInvNum("");
       setInvAmount(0);
       setSelectedDispatchId("");
-    } catch (err: any) { error("Invoice Failed", err.message); }
+    } catch (err: any) {}
   };
 
-  if (!project) return null;
+  const handleCloseProject = async () => {
+    try {
+      await closeProjectMutation.mutateAsync();
+    } catch (err: any) {}
+  };
+
+
 
   const cost = project.projectCostSummary || {};
 
@@ -74,12 +67,22 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
             </h2>
             <p className="text-slate-400 mt-1">End-to-End Financial Tracking from BOM to Invoice.</p>
           </div>
-          <button onClick={() => {
-            setInvNum(`INV-${Date.now().toString().slice(-4)}`);
-            setShowInvoiceModal(true);
-          }} className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(22,163,74,0.3)] transition-all">
-            Generate Tax Invoice
-          </button>
+          <div className="flex space-x-3">
+            {project.currentStage === 'INVOICED' && (
+              <button onClick={handleCloseProject} className="px-4 py-2 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white border border-red-500/30 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(220,38,38,0.2)] transition-all flex items-center">
+                <Lock className="w-4 h-4 mr-2" />
+                Close Project
+              </button>
+            )}
+            {project.currentStage === 'DISPATCHED' && (
+              <button onClick={() => {
+                setInvNum(`INV-${Date.now().toString().slice(-4)}`);
+                setShowInvoiceModal(true);
+              }} className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(22,163,74,0.3)] transition-all">
+                Generate Tax Invoice
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Cost Summary Dashboard */}
@@ -89,35 +92,35 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
               <div className="text-xs font-bold text-slate-500 uppercase">Total Cost</div>
               <PieChart className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="text-xl font-bold font-mono text-white">₹{cost.totalCost || 0}</div>
+            <div className="text-xl font-bold font-mono text-white">&#8377;{cost.totalCost || 0}</div>
           </div>
           <div className="p-4 rounded-xl bg-black/40 border border-white/5 shadow-inner">
             <div className="flex justify-between items-start mb-2">
               <div className="text-xs font-bold text-slate-500 uppercase">Material</div>
               <Wrench className="w-4 h-4 text-amber-500/70" />
             </div>
-            <div className="text-xl font-bold font-mono text-amber-400">₹{cost.actualMaterialCost || 0}</div>
+            <div className="text-xl font-bold font-mono text-amber-400">&#8377;{cost.actualMaterialCost || 0}</div>
           </div>
           <div className="p-4 rounded-xl bg-black/40 border border-white/5 shadow-inner">
             <div className="flex justify-between items-start mb-2">
               <div className="text-xs font-bold text-slate-500 uppercase">Labour</div>
               <HardHat className="w-4 h-4 text-blue-500/70" />
             </div>
-            <div className="text-xl font-bold font-mono text-blue-400">₹{cost.actualLabourCost || 0}</div>
+            <div className="text-xl font-bold font-mono text-blue-400">&#8377;{cost.actualLabourCost || 0}</div>
           </div>
           <div className="p-4 rounded-xl bg-black/40 border border-white/5 shadow-inner">
             <div className="flex justify-between items-start mb-2">
               <div className="text-xs font-bold text-slate-500 uppercase">Subcontract</div>
               <Truck className="w-4 h-4 text-orange-500/70" />
             </div>
-            <div className="text-xl font-bold font-mono text-orange-400">₹{cost.actualSubcontractCost || 0}</div>
+            <div className="text-xl font-bold font-mono text-orange-400">&#8377;{cost.actualSubcontractCost || 0}</div>
           </div>
           <div className="p-4 rounded-xl bg-green-900/20 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]">
             <div className="flex justify-between items-start mb-2">
               <div className="text-xs font-bold text-green-500 uppercase">Total Revenue</div>
               <TrendingUp className="w-4 h-4 text-green-400" />
             </div>
-            <div className="text-xl font-bold font-mono text-green-400">₹{cost.revenue || 0}</div>
+            <div className="text-xl font-bold font-mono text-green-400">&#8377;{cost.revenue || 0}</div>
           </div>
           <div className="p-4 rounded-xl bg-emerald-900/20 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
             <div className="flex justify-between items-start mb-2">
@@ -143,7 +146,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
             
             {costEvents && costEvents.length > 0 ? (
               <div className="relative pl-6 border-l-2 border-white/10 space-y-6">
-                {costEvents.map((evt, idx) => {
+                {costEvents.map((evt: any, idx: number) => {
                   const isRevenue = evt.costType === 'REVENUE';
                   const isEstimate = evt.costType === 'ESTIMATED_MATERIAL' || evt.costType === 'ESTIMATED_LABOUR';
                   
@@ -174,7 +177,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                             isRevenue ? 'text-green-400' : 'text-white'
                           }`}>
                             {isRevenue ? <ArrowUpRight className="h-4 w-4 mr-1 text-green-400" /> : <ArrowDownRight className="h-4 w-4 mr-1 text-red-400" />}
-                            ₹{evt.amount}
+                            &#8377;{evt.amount}
                           </div>
                         </div>
                       </div>
@@ -216,7 +219,10 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                       </div>
                       <div className="text-right">
                         <div className="text-sm text-slate-400">Total Billed</div>
-                        <div className="text-green-400 font-bold text-lg font-mono">₹{inv.totalAmount}</div>
+                        <div className="text-green-400 font-bold text-lg font-mono">&#8377;{inv.totalAmount}</div>
+                        {inv.profit && (
+                          <div className="text-xs font-bold text-emerald-500 mt-1">Profit: &#8377;{inv.profit}</div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -269,7 +275,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Subtotal Amount (₹)</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Subtotal Amount (&#8377;)</label>
                 <input
                   type="number"
                   min="0"
@@ -284,15 +290,15 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
               <div className="bg-black/20 p-4 rounded-lg border border-white/5 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Subtotal</span>
-                  <span className="text-white font-mono">₹{invAmount.toFixed(2)}</span>
+                  <span className="text-white font-mono">&#8377;{invAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Tax (18% GST)</span>
-                  <span className="text-white font-mono">₹{(invAmount * 0.18).toFixed(2)}</span>
+                  <span className="text-white font-mono">&#8377;{(invAmount * 0.18).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-base font-bold pt-2 border-t border-white/10 mt-2">
                   <span className="text-white">Total Amount</span>
-                  <span className="text-green-400 font-mono">₹{(invAmount * 1.18).toFixed(2)}</span>
+                  <span className="text-green-400 font-mono">&#8377;{(invAmount * 1.18).toFixed(2)}</span>
                 </div>
               </div>
 

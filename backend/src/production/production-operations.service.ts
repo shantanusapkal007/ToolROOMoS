@@ -15,37 +15,92 @@ export class ProductionOperationsService {
         throw new BadRequestException('Machine Shop Daily Reports can only be logged during the Production stage.');
       }
 
+      // 2. Business Rule: Cannot start operation without issued material
+      const issues = await tx.materialIssueHeader.count({ where: { projectId } });
+      if (issues === 0) {
+        throw new BadRequestException('Business Rule Violation: Cannot log production hours without material issued to the shop floor.');
+      }
+
+      // Validate Job Card if provided
+      let routingOperation = null;
+      if (dto.jobCardId) {
+          const jobCard = await tx.jobCard.findUnique({ where: { id: dto.jobCardId }, include: { routingOperation: true } });
+          if (!jobCard) throw new BadRequestException('Job Card not found.');
+          routingOperation = jobCard.routingOperation;
+          
+          if (!dto.routingOperationId) {
+             dto.routingOperationId = routingOperation.id;
+          }
+      }
+
       // Fetch machine and employee rate details
       const machine = await tx.machine.findUniqueOrThrow({ where: { id: dto.machineId } });
       const employee = await tx.employee.findUniqueOrThrow({ where: { id: dto.employeeId } });
 
-      // 2. Create the MSDR record
+      const cuttingHrs = dto.cuttingTime || 0;
+      const setupHrs = dto.setupTime || 0;
+      const totalMachineHrs = cuttingHrs + setupHrs;
+      const totalLabourHrs = totalMachineHrs; // Assuming operator is present for both
+      
+      let variance = 0;
+      if (routingOperation) {
+          variance = totalMachineHrs - routingOperation.estimatedHours.toNumber();
+      }
+
+      // 3. Create the MSDR record
       const msdr = await tx.machineShopDailyReport.create({
         data: {
           projectId,
           machineId: dto.machineId,
           employeeId: dto.employeeId,
+          routingOperationId: dto.routingOperationId,
+          materialIssueId: dto.materialIssueId,
+          inventoryBatchId: dto.inventoryBatchId,
           reportDate: new Date(dto.reportDate),
           startTime: new Date(dto.startTime),
           endTime: new Date(dto.endTime),
-          setupTime: dto.setupTime || 0,
-          cuttingTime: dto.cuttingTime || 0,
+          setupTime: setupHrs,
+          cuttingTime: cuttingHrs,
           idleTime: dto.idleTime || 0,
           producedQty: dto.producedQty || 0,
           scrapQty: dto.scrapQty || 0,
           reworkQty: dto.reworkQty || 0,
+          actualMachineHours: totalMachineHrs,
+          actualLabourHours: totalLabourHrs,
+          variance: variance,
           remarks: dto.remarks,
           createdBy: userId,
           updatedBy: userId,
         },
       });
 
-      // 3. Cost Calculations
-      const cuttingHrs = dto.cuttingTime || 0;
-      const setupHrs = dto.setupTime || 0;
-      const totalMachineHrs = cuttingHrs + setupHrs; // Machine is engaged during setup & cutting
+      // Update RoutingOperation Progress if applicable
+      if (routingOperation) {
+          const produced = dto.producedQty || 0;
+          const completedQty = routingOperation.completedQuantity.toNumber() + produced;
+          const targetQty = 1; // Or pull from Project/BOM? (Assuming routing is for the project batch)
+          
+          await tx.routingOperation.update({
+              where: { id: routingOperation.id },
+              data: {
+                  completedQuantity: completedQty,
+                  // If we don't know the exact target qty, just track completed.
+              }
+          });
+
+          // Mark job card as completed if requested
+          if (dto.jobCardId) {
+              await tx.jobCard.update({
+                  where: { id: dto.jobCardId },
+                  data: { status: 'COMPLETED' } // Simplified
+              });
+          }
+      }
+
+      // 4. Cost Calculations (Variables already declared above)
+      const totalMachineHrsForCost = totalMachineHrs;
       
-      const machineCost = totalMachineHrs * machine.hourlyRate.toNumber();
+      const machineCost = totalMachineHrsForCost * machine.hourlyRate.toNumber();
       const labourCost = totalMachineHrs * employee.hourlyRate.toNumber();
       const totalOperationCost = machineCost + labourCost;
 

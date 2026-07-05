@@ -29,17 +29,34 @@ export class MaterialIssuesService {
         },
       });
 
+      // 3. BOM Validation Gate (Precompute)
+      const activeBom = await tx.billOfMaterialHeader.findFirst({
+        where: { projectId, status: 'APPROVED' },
+        include: { items: true },
+        orderBy: { revision: 'desc' }
+      });
+      
+      if (!activeBom) {
+        throw new BadRequestException('Material Issue Gate Failed: Project has no approved Engineering BOM.');
+      }
+      
+      const bomMaterials = new Set(activeBom.items.map(i => i.materialId));
+
       let totalConsumptionCost = 0;
 
-      // 3. Process each Issued Item
+      // 4. Process each Issued Item
       for (const item of dto.items) {
         // Fetch batch to get unit cost and current qty
         const batch = await tx.inventoryBatch.findUniqueOrThrow({
           where: { id: item.inventoryBatchId },
         });
 
-        if (batch.currentQty.toNumber() < item.issuedQty) {
-          throw new BadRequestException(`Insufficient stock in Batch ${batch.batchNumber}. Available: ${batch.currentQty}, Requested: ${item.issuedQty}`);
+        if (!bomMaterials.has(batch.materialId)) {
+          throw new BadRequestException(`Material Issue Gate Failed: Material ID ${batch.materialId} (Batch ${batch.batchNumber}) is not in the approved BOM for this project.`);
+        }
+
+        if (batch.availableQty.toNumber() < item.issuedQty) {
+          throw new BadRequestException(`Insufficient available stock in Batch ${batch.batchNumber}. Available: ${batch.availableQty}, Requested: ${item.issuedQty}`);
         }
 
         const consumptionValue = item.issuedQty * batch.unitCost.toNumber();
@@ -58,12 +75,14 @@ export class MaterialIssuesService {
           },
         });
 
-        // 4. Update Inventory Batch Quantity
+        // 5. Update Inventory Batch Quantity
         await tx.inventoryBatch.update({
           where: { id: item.inventoryBatchId },
           data: {
             currentQty: { decrement: item.issuedQty },
-            status: batch.currentQty.toNumber() === item.issuedQty ? 'CONSUMED' : 'AVAILABLE',
+            availableQty: { decrement: item.issuedQty },
+            issuedQty: { increment: item.issuedQty },
+            status: batch.availableQty.toNumber() === item.issuedQty ? 'CONSUMED' : 'AVAILABLE',
           },
         });
 
@@ -72,7 +91,7 @@ export class MaterialIssuesService {
           where: { warehouseCode: 'DEFAULT-WH' },
         });
 
-        // 5. Update Inventory Stock (Layer 4 - Events)
+        // 6. Update Inventory Stock (Layer 4 - Events)
         await tx.inventoryStock.update({
           where: {
             materialId_warehouseId: {
@@ -86,7 +105,7 @@ export class MaterialIssuesService {
           },
         });
 
-        // 6. Record Inventory Transaction
+        // 7. Record Inventory Transaction
         await tx.inventoryTransaction.create({
           data: {
             projectId,

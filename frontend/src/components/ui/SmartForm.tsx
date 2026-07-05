@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { EntityField } from '../../modules/settings/types';
+import { api } from '../../lib/api';
 import { Input } from './Input';
 import { Select } from './Select';
 import { Button } from './Button';
@@ -14,6 +15,7 @@ interface SmartFormProps {
 
 export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState<any>({});
+  const [dynamicOptions, setDynamicOptions] = useState<Record<string, {label: string, value: string}[]>>({});
 
   useEffect(() => {
     if (initialData) {
@@ -24,6 +26,23 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
       fields.forEach(f => init[f.name] = '');
       setFormData(init);
     }
+
+    // Load dynamic options
+    fields.forEach(async (f) => {
+      if (f.optionsEndpoint) {
+        try {
+          const res = await api.get(f.optionsEndpoint);
+          const data = res.data?.data || res.data || [];
+          const opts = data.map((item: any) => ({
+            label: String(item[f.optionsLabelKey || 'name'] || item.id),
+            value: String(item[f.optionsValueKey || 'id'])
+          }));
+          setDynamicOptions(prev => ({ ...prev, [f.name]: opts }));
+        } catch(err) {
+          console.error("Failed to load options for", f.name);
+        }
+      }
+    });
   }, [initialData, fields]);
 
   const handleChange = (name: string, value: any) => {
@@ -38,7 +57,8 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
   const renderField = (field: EntityField) => {
     const gridClass = field.gridCols === 2 ? 'md:col-span-2' : 'col-span-1';
     
-    if (field.type === 'select' && field.options) {
+    if (field.type === 'select') {
+      const opts = field.optionsEndpoint ? (dynamicOptions[field.name] || []) : (field.options || []);
       return (
         <div key={field.name} className={gridClass}>
           <Select
@@ -46,7 +66,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
             required={field.required}
             value={formData[field.name] || ''}
             onChange={(e) => handleChange(field.name, e.target.value)}
-            options={field.options}
+            options={opts}
           />
         </div>
       );

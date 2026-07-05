@@ -2,6 +2,22 @@ import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString } from 'class-
 
 export class CreateMsdrDto {
   @IsString()
+  @IsOptional()
+  jobCardId?: string;
+
+  @IsString()
+  @IsOptional()
+  routingOperationId?: string;
+
+  @IsString()
+  @IsOptional()
+  materialIssueId?: string;
+
+  @IsString()
+  @IsOptional()
+  inventoryBatchId?: string;
+
+  @IsString()
   @IsNotEmpty()
   machineId: string;
 

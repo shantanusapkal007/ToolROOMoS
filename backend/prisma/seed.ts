@@ -180,6 +180,19 @@ async function main() {
   });
   console.log(`✅ Seeded Employee: ${employee.name}`);
 
+  // 11. Seed Operation
+  const operation = await prisma.operation.upsert({
+    where: { operationCode: 'OP-01' },
+    update: {},
+    create: {
+      operationCode: 'OP-01',
+      operationName: 'CNC Milling',
+      remarks: 'Standard 3-axis CNC milling operation',
+      status: 'ACTIVE',
+    },
+  });
+  console.log(`✅ Seeded Operation: ${operation.operationName}`);
+
   console.log('🌱 Database seeding completed successfully.');
 }
 

@@ -5,13 +5,23 @@ import { api } from "../../../../lib/api";
 import { ShoppingCart } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
 import { Select } from "../../../../components/ui/Select";
-
 import { useToast } from "../../../../components/ui/Toast";
+import { useProject } from "../../../../hooks/useProjects";
+import { useMasterData } from "../../../../hooks/useMasterData";
+import { usePurchaseOrders, useCreatePurchaseOrder, useProcessGRN } from "../../../../hooks/useProcurement";
 
 export default function PurchaseTab({ params }: { params: Promise<{ id: string }> }) {
   const { error, success } = useToast();
   const resolvedParams = React.use(params);
-  const [project, setProject] = useState<any | null>(null);
+  
+  const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(resolvedParams.id);
+  const { data: vendors } = useMasterData('vendors');
+  const { data: materials } = useMasterData('materials');
+  const { data: purchaseOrders } = usePurchaseOrders(resolvedParams.id);
+
+  const createPOMutation = useCreatePurchaseOrder(resolvedParams.id);
+  const processGRNMutation = useProcessGRN(resolvedParams.id);
+
   const [showPoModal, setShowPoModal] = useState(false);
   const [showGrnModal, setShowGrnModal] = useState(false);
   
@@ -23,39 +33,15 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
   const [selectedPo, setSelectedPo] = useState<any>(null);
   const [grnData, setGrnData] = useState({
     grnNumber: "",
+    supplierChallan: "",
+    warehouseId: "",
     remarks: "",
-    items: [{ poItemId: "", receivedQty: 1, acceptedQty: 1, rejectedQty: 0, actualRate: 0, remarks: "" }]
+    items: [{ poItemId: "", receivedQty: 1, acceptedQty: 1, rejectedQty: 0, actualRate: 0, heatNumber: "", remarks: "" }]
   });
 
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [materials, setMaterials] = useState<any[]>([]);
+  const filteredVendors = (vendors || []).filter((v: any) => v.vendorType === 'MATERIAL_SUPPLIER');
 
-  useEffect(() => {
-    loadProjectDetails(resolvedParams.id);
-    loadVendors();
-    loadMaterials();
-  }, [resolvedParams.id]);
-
-  const loadProjectDetails = async (projectId: string) => {
-    try {
-      const res = await api.get(`projects/${projectId}`);
-      setProject(res.data);
-    } catch (err) { console.error(err); }
-  };
-
-  const loadVendors = async () => {
-    try {
-      const res = await api.get("master-data/vendors");
-      setVendors((res.data || []).filter((v: any) => v.vendorType === 'MATERIAL_SUPPLIER'));
-    } catch (err) { console.error(err); }
-  };
-
-  const loadMaterials = async () => {
-    try {
-      const res = await api.get("master-data/materials");
-      setMaterials(res.data || []);
-    } catch (err) { console.error(err); }
-  };
+  if (projectLoading || !project) return null;
 
   const handleCreatePo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,33 +52,35 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
     }
 
     try {
-      await api.post(`projects/${project.id}/purchase-orders`, {
+      await createPOMutation.mutateAsync({
         vendorId: selectedVendorId,
         poNumber: poNum,
         expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate).toISOString() : undefined,
         items: poItems
       });
       setShowPoModal(false);
-      success("PO Generated", `Purchase Order ${poNum} successfully created.`);
-      loadProjectDetails(project.id);
+      refetchProject();
       
       // Reset form
       setPoNum("");
       setSelectedVendorId("");
       setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
-    } catch (err: any) { error("Failed to Create PO", err.message); }
+    } catch (err: any) {}
   };
 
   const openGrnModal = (po: any) => {
     setSelectedPo(po);
     setGrnData({
       grnNumber: `GRN-${Date.now().toString().slice(-6)}`,
+      supplierChallan: "",
+      warehouseId: "DEFAULT-WH", // Hardcoded default for now
       remarks: "",
       items: po.items.map((i: any) => ({
         poItemId: i.id,
-        receivedQty: i.orderedQty, // default to fully receiving
-        acceptedQty: i.orderedQty,
+        receivedQty: i.orderedQty - (i.receivedQty || 0),
+        acceptedQty: i.orderedQty - (i.receivedQty || 0),
         rejectedQty: 0,
+        heatNumber: "",
         actualRate: i.agreedRate,
         remarks: ""
       }))
@@ -105,16 +93,17 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
     if (!project || !selectedPo) return;
     
     try {
-      await api.post(`projects/${project.id}/goods-receipts`, {
+      await processGRNMutation.mutateAsync({
         poHeaderId: selectedPo.id,
         grnNumber: grnData.grnNumber,
+        supplierChallan: grnData.supplierChallan,
+        warehouseId: grnData.warehouseId,
         remarks: grnData.remarks,
         items: grnData.items
       });
       setShowGrnModal(false);
-      success("GRN Processed", "Goods Receipt Note successfully processed. Inventory updated.");
-      loadProjectDetails(project.id);
-    } catch (err: any) { error("Failed to Process GRN", err.message); }
+      refetchProject();
+    } catch (err: any) {}
   };
 
   const addPoItemRow = () => {
@@ -176,7 +165,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-slate-400">Total Value</div>
-                    <div className="text-amber-400 font-bold">₹{po.totalAmount}</div>
+                    <div className="text-amber-400 font-bold">&#8377;{po.totalAmount}</div>
                   </div>
                 </div>
 
@@ -189,7 +178,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                           {item.material?.materialName} <span className="text-slate-500 text-xs ml-2">({item.orderedQty} units)</span>
                         </div>
                         <div className="text-slate-400 font-mono">
-                          @ ₹{item.agreedRate} = ₹{item.lineTotal}
+                          @ &#8377;{item.agreedRate} = &#8377;{item.lineTotal}
                         </div>
                       </div>
                     ))}
@@ -234,17 +223,11 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 />
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1">Vendor</label>
-                  <select
-                    required
-                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500/50 transition-colors"
+                  <Select
                     value={selectedVendorId}
                     onChange={(e) => setSelectedVendorId(e.target.value)}
-                  >
-                    <option value="">Select Vendor...</option>
-                    {vendors.map(v => (
-                      <option key={v.id} value={v.id}>{v.vendorName}</option>
-                    ))}
-                  </select>
+                    options={filteredVendors.map((v: any) => ({ value: v.id, label: v.vendorName }))}
+                  />
                 </div>
                 <Input
                   label="Expected Delivery Date"
@@ -258,24 +241,18 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 <div className="grid grid-cols-12 gap-4 mb-2">
                   <div className="col-span-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Material</div>
                   <div className="col-span-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Qty</div>
-                  <div className="col-span-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Rate (₹)</div>
+                  <div className="col-span-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Rate (&#8377;)</div>
                   <div className="col-span-1"></div>
                 </div>
                 
                 {poItems.map((item, index) => (
                   <div key={index} className="grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-5">
-                      <select
-                        required
-                        className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500/50 transition-colors"
+                      <Select
                         value={item.materialId}
                         onChange={(e) => updatePoItem(index, 'materialId', e.target.value)}
-                      >
-                        <option value="">Select Material...</option>
-                        {materials.map(m => (
-                          <option key={m.id} value={m.id}>{m.materialName} ({m.materialGrade})</option>
-                        ))}
-                      </select>
+                        options={(materials || []).map((m: any) => ({ value: m.id, label: `${m.materialName} (${m.materialGrade})` }))}
+                      />
                     </div>
                     <div className="col-span-3">
                       <input
@@ -346,6 +323,12 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   required
                 />
                 <Input
+                  label="Supplier Challan"
+                  value={grnData.supplierChallan}
+                  onChange={(e) => setGrnData({...grnData, supplierChallan: e.target.value})}
+                  required
+                />
+                <Input
                   label="Remarks (Optional)"
                   value={grnData.remarks}
                   onChange={(e) => setGrnData({...grnData, remarks: e.target.value})}
@@ -361,11 +344,26 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                         <div className="col-span-6 border-b border-white/10 pb-2 mb-2">
                           <span className="font-bold text-emerald-400 text-sm">Item {index + 1}:</span>
                           <span className="ml-2 text-white text-sm">{poItem?.material?.materialName}</span>
-                          <span className="ml-4 text-xs text-slate-500">Ordered: {poItem?.orderedQty} @ ₹{poItem?.agreedRate}</span>
+                          <span className="ml-4 text-xs text-slate-500">Ordered: {poItem?.orderedQty} @ &#8377;{poItem?.agreedRate}</span>
                         </div>
                         
                         <div className="col-span-2">
-                          <label className="block text-xs text-slate-400 mb-1">Rcvd Qty</label>
+                          <label className="block text-xs text-slate-400 mb-1">Heat Number <span className="text-red-400">*</span></label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="MTC / Batch No."
+                            className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500/50"
+                            value={item.heatNumber}
+                            onChange={(e) => {
+                              const newItems = [...grnData.items];
+                              newItems[index].heatNumber = e.target.value;
+                              setGrnData({ ...grnData, items: newItems });
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <label className="block text-xs text-slate-400 mb-1">Incoming</label>
                           <input
                             type="number"
                             min="0"
@@ -380,8 +378,8 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                             }}
                           />
                         </div>
-                        <div className="col-span-2">
-                          <label className="block text-xs text-slate-400 mb-1">Accepted Qty</label>
+                        <div className="col-span-1">
+                          <label className="block text-xs text-slate-400 mb-1">Accepted</label>
                           <input
                             type="number"
                             min="0"

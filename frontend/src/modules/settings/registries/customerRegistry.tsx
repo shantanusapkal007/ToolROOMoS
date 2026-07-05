@@ -19,9 +19,7 @@ export const customerRegistry: EntityRegistry = {
   fields: [
     { name: 'customerCode', label: 'Customer Code', type: 'text', required: true, section: 'General Information' },
     { name: 'companyName', label: 'Company Name', type: 'text', required: true, section: 'General Information' },
-    { name: 'companyId', label: 'Company (Parent)', type: 'select', required: true, section: 'General Information', options: [
-      { label: 'Default Company HQ', value: '11111111-1111-1111-1111-111111111111' }
-    ] },
+    { name: 'companyId', label: 'Company (Parent)', type: 'select', required: true, section: 'General Information', optionsEndpoint: 'master-data/companies', optionsLabelKey: 'companyName', optionsValueKey: 'id' },
     { name: 'gstNumber', label: 'GST Number', type: 'text', section: 'General Information' },
     { name: 'status', label: 'Status', type: 'select', section: 'General Information', options: [
       { label: 'Active', value: 'ACTIVE' },

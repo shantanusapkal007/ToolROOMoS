@@ -2,14 +2,15 @@ import { EntityRegistry } from '../types';
 
 export const warehouseRegistry: EntityRegistry = {
   id: 'warehouses',
-  name: 'Warehouse',
+  singularName: 'Warehouse',
   pluralName: 'Warehouses',
   apiEndpoint: '/master-data/warehouses',
   
   permissions: {
-    canCreate: ['ADMIN', 'STORES'],
-    canUpdate: ['ADMIN', 'STORES'],
-    canDelete: ['ADMIN'],
+    view: ['ADMIN', 'STORES'],
+    create: ['ADMIN', 'STORES'],
+    update: ['ADMIN', 'STORES'],
+    archive: ['ADMIN'],
   },
 
   columns: [

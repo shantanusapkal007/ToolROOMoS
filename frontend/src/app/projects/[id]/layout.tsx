@@ -12,6 +12,7 @@ import { formatDate } from "../../../lib/formatters";
 import { Modal } from "../../../components/ui/Modal";
 import { useToast } from "../../../components/ui/Toast";
 import { Input } from "../../../components/ui/Input";
+import { useProject, useUpdateProject } from "../../../hooks/useProjects";
 
 export default function ProjectLayout({
   children,
@@ -21,8 +22,8 @@ export default function ProjectLayout({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = React.use(params);
-  const [project, setProject] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: project, isLoading: loading } = useProject(resolvedParams.id);
+  const updateProjectMutation = useUpdateProject(resolvedParams.id);
   const pathname = usePathname();
   const { success, error } = useToast();
 
@@ -30,36 +31,21 @@ export default function ProjectLayout({
   const [targetDate, setTargetDate] = useState("");
 
   useEffect(() => {
-    loadProjectDetails(resolvedParams.id);
-  }, [resolvedParams.id]);
-
-  const loadProjectDetails = async (projectId: string) => {
-    try {
-      setLoading(true);
-      const res = await api.get(`projects/${projectId}`);
-      setProject(res.data);
-      if (res.data.targetDeliveryDate) {
-        setTargetDate(new Date(res.data.targetDeliveryDate).toISOString().split('T')[0]);
-      }
-    } catch (err) {
-      console.error("Failed to load project details", err);
-    } finally {
-      setLoading(false);
+    if (project?.targetDeliveryDate && !targetDate) {
+      setTargetDate(new Date(project.targetDeliveryDate).toISOString().split('T')[0]);
     }
-  };
+  }, [project]);
 
   const handleUpdateDeliveryDate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project) return;
     try {
-      await api.put(`projects/${project.id}`, {
+      await updateProjectMutation.mutateAsync({
         targetDeliveryDate: targetDate
       });
-      success("Updated", "Delivery Target Date has been updated.");
       setShowDeliveryModal(false);
-      loadProjectDetails(project.id);
     } catch (err: any) {
-      error("Update Failed", err.message);
+      // Error handled by mutation hook
     }
   };
 
@@ -76,7 +62,7 @@ export default function ProjectLayout({
     return (
       <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
         <Sidebar />
-        <main className="flex-1 h-full flex flex-col relative z-0 pl-16">
+        <main className="flex-1 h-full flex flex-col relative z-0" style={{ paddingLeft: '76px' }}>
           <LoadingState message="Initializing Project Core..." />
         </main>
       </div>
@@ -90,11 +76,11 @@ export default function ProjectLayout({
   return (
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative z-0 pl-16">
-        <div className="flex-1 h-full flex flex-col pl-32 pr-12 animate-slide-up">
+      <main className="flex-1 h-full flex flex-col relative z-0" style={{ paddingLeft: '76px' }}>
+        <div className="flex-1 h-full flex flex-col px-8 pt-6 pb-4 animate-slide-up min-h-0">
             
           {/* Linear Style Context Header */}
-          <header className="pt-12 pb-8 flex flex-col justify-between shrink-0">
+          <header className="pb-4 flex flex-col justify-between shrink-0">
             <div className="flex items-center text-sm font-semibold text-slate-500 mb-6 uppercase tracking-widest">
               <Link href="/projects" className="hover:text-white cursor-pointer transition-colors">Projects</Link>
               <span className="mx-2">/</span>
@@ -123,10 +109,12 @@ export default function ProjectLayout({
           </header>
 
           {/* Visual Timeline Navigation */}
-          <WorkflowTimeline currentStage={project.currentStage} />
+          <div className="shrink-0 mb-4 scale-95 origin-left">
+            <WorkflowTimeline currentStage={project.currentStage} />
+          </div>
 
           {/* Project Navigation Tabs */}
-          <div className="flex space-x-8 border-b border-white/10 mb-8 mt-4 px-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar">
+          <div className="flex space-x-8 border-b border-white/10 mb-6 px-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar">
             <Link href={`/projects/${project.id}/overview`} className={getTabClass('/overview')}>Overview</Link>
             <Link href={`/projects/${project.id}/tasks`} className={getTabClass('/tasks')}>Tasks & WBS</Link>
             <Link href={`/projects/${project.id}/engineering`} className={getTabClass('/engineering')}>Engineering</Link>

@@ -13,6 +13,14 @@ export class CreateGrnDto {
 
   @IsString()
   @IsOptional()
+  supplierChallan?: string;
+
+  @IsString()
+  @IsOptional()
+  warehouseId?: string;
+
+  @IsString()
+  @IsOptional()
   remarks?: string;
 
   @IsArray()

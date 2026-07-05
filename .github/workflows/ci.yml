@@ -1,0 +1,58 @@
+name: ToolRoomOS Enterprise CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Monorepo Dependencies
+      run: npm ci
+
+    - name: Frontend Linter
+      run: npm run lint --prefix frontend
+
+    - name: Backend Linter
+      run: npm run lint --prefix backend
+
+    - name: Build Backend (NestJS)
+      run: npm run build --prefix backend
+
+    - name: Build Frontend (Next.js)
+      run: npm run build --prefix frontend
+
+    - name: Validate Docker Production Compose
+      run: docker-compose -f docker-compose.prod.yml config
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run Backend Unit Tests
+      run: npm run test --prefix backend
+
+    # Frontend tests can be added here once Jest/RTL are configured for the frontend

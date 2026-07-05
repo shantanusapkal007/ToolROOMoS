@@ -15,6 +15,14 @@ export class InvoicesService {
         throw new BadRequestException('Invoices can only be generated during the Dispatched stage.');
       }
 
+      // 2. Business Rule: Cannot invoice undispatched goods
+      const dispatch = await tx.dispatchNote.findUnique({
+        where: { id: dto.dispatchNoteId }
+      });
+      if (!dispatch || dispatch.projectId !== projectId) {
+        throw new BadRequestException('Business Rule Violation: Cannot generate invoice without a valid Dispatch Note.');
+      }
+
       // 2. Create Invoice Header
       const invoice = await tx.invoiceHeader.create({
         data: {
@@ -46,6 +54,12 @@ export class InvoicesService {
           revenue: newRevenue,
           profitability: newProfitability,
         },
+      });
+      
+      // Update the invoice with its profit
+      await tx.invoiceHeader.update({
+        where: { id: invoice.id },
+        data: { profit: newProfitability }
       });
 
       // 4. Log project activity

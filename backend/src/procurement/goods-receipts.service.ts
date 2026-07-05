@@ -15,7 +15,13 @@ export class GoodsReceiptsService {
         throw new BadRequestException('GRNs can only be processed during the Procurement stage.');
       }
 
-      // 2. Create GRN Header
+      // 2. Business Rule: Cannot create GRN without a valid, issued PO
+      const po = await tx.purchaseOrderHeader.findUnique({ where: { id: dto.poHeaderId } });
+      if (!po || (po.status !== 'ISSUED' && po.status !== 'PARTIAL_RECEIPT')) {
+        throw new BadRequestException('Business Rule Violation: Cannot create GRN without a valid, issued Purchase Order.');
+      }
+
+      // 3. Create GRN Header
       const grnHeader = await tx.goodsReceiptHeader.create({
         data: {
           projectId,
@@ -32,6 +38,22 @@ export class GoodsReceiptsService {
 
       // 3. Process each GRN Item
       for (const item of dto.items) {
+        if (!item.heatNumber || item.heatNumber.trim() === '') {
+          throw new BadRequestException(`GRN Gate Failed: Heat Number (Mill Test Certificate) is strictly required for material traceability.`);
+        }
+
+        const poItem = await tx.purchaseOrderItem.findUniqueOrThrow({
+          where: { id: item.poItemId },
+        });
+
+        // Strict Quantity Validation
+        const remainingQty = Number(poItem.orderedQty) - Number(poItem.receivedQty);
+        const incomingQty = Number(item.acceptedQty) + Number(item.rejectedQty || 0);
+
+        if (incomingQty > remainingQty) {
+          throw new BadRequestException(`GRN Gate Failed: Incoming quantity (${incomingQty}) exceeds the remaining PO quantity (${remainingQty}) for PO Item ${poItem.id}.`);
+        }
+
         const itemCost = item.acceptedQty * item.actualRate;
         totalGrnValue += itemCost;
 
@@ -40,7 +62,7 @@ export class GoodsReceiptsService {
           data: {
             grnHeaderId: grnHeader.id,
             poItemId: item.poItemId,
-            receivedQty: item.receivedQty,
+            receivedQty: incomingQty,
             acceptedQty: item.acceptedQty,
             rejectedQty: item.rejectedQty || 0,
             heatNumber: item.heatNumber,
@@ -52,10 +74,16 @@ export class GoodsReceiptsService {
           },
         });
 
-        // Fetch PO Item to know the Material ID
-        const poItem = await tx.purchaseOrderItem.findUniqueOrThrow({
+        // Update PO Item receivedQty
+        await tx.purchaseOrderItem.update({
           where: { id: item.poItemId },
+          data: {
+            receivedQty: { increment: incomingQty },
+            status: Number(poItem.receivedQty) + incomingQty >= Number(poItem.orderedQty) ? 'FULFILLED' : 'PARTIAL'
+          }
         });
+
+        // (poItem was fetched above)
 
         // Retrieve the default warehouse UUID
         const warehouse = await tx.warehouse.findUniqueOrThrow({
@@ -92,6 +120,9 @@ export class GoodsReceiptsService {
             heatNumber: item.heatNumber,
             receivedQty: item.acceptedQty,
             currentQty: item.acceptedQty,
+            availableQty: item.acceptedQty, // V2.0
+            reservedQty: 0,
+            issuedQty: 0,
             unitCost: item.actualRate,
             status: 'AVAILABLE',
             createdBy: userId,
