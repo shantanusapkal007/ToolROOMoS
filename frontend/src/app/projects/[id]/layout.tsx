@@ -77,44 +77,55 @@ export default function ProjectLayout({
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
       <main className="flex-1 h-full flex flex-col relative z-0" style={{ paddingLeft: '76px' }}>
-        <div className="flex-1 h-full flex flex-col px-8 pt-6 pb-4 animate-slide-up min-h-0">
+        <div className="flex-1 h-full flex flex-col animate-slide-up min-h-0 overflow-hidden">
             
-          {/* Linear Style Context Header */}
-          <header className="pb-4 flex flex-col justify-between shrink-0">
-            <div className="flex items-center text-sm font-semibold text-slate-500 mb-6 uppercase tracking-widest">
-              <Link href="/projects" className="hover:text-white cursor-pointer transition-colors">Projects</Link>
-              <span className="mx-2">/</span>
-              <span className="text-blue-400">{project.projectNumber}</span>
+          {/* Premium Ultra-Dense Context Header */}
+          <header className="relative flex items-center justify-between shrink-0 px-6 py-3 bg-white/[0.02] backdrop-blur-2xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] z-20">
+            {/* Ambient Top Glow */}
+            <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent blur-[1px]" />
+            
+            <div className="flex items-center space-x-4 relative z-10">
+              <div className="flex items-center text-xs font-bold text-slate-400 uppercase tracking-widest bg-black/40 shadow-inner px-3 py-1.5 rounded-lg border border-white/5">
+                <Link href="/projects" className="hover:text-white transition-colors">Projects</Link>
+                <span className="mx-2 opacity-40">/</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">{project.projectNumber}</span>
+              </div>
+              
+              <h1 className="text-xl font-bold text-white tracking-tight truncate max-w-sm flex items-center">
+                {project.partName}
+              </h1>
+              
+              <div className="flex items-center space-x-2">
+                <span className="flex items-center text-xs text-slate-300 font-mono bg-white/[0.03] border border-white/10 px-2.5 py-1 rounded-md shadow-sm">
+                  <span className="text-slate-500 mr-1.5">PO:</span> {project.customerPoNumber}
+                </span>
+                
+                <span className={`flex items-center text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border shadow-[0_0_10px_rgba(0,0,0,0.2)] ${
+                  project.currentStage === 'INVOICED' 
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                }`}>
+                  <div className={`w-1.5 h-1.5 rounded-full mr-2 ${project.currentStage === 'INVOICED' ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]' : 'bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.8)]'}`} />
+                  {project.currentStage}
+                </span>
+              </div>
             </div>
 
-            <div className="flex justify-between items-end">
-              <div>
-                <h1 className="text-h1 tracking-tight text-white mb-2">{project.partName}</h1>
-                <p className="text-h6 text-slate-400 font-normal">Customer PO: {project.customerPoNumber}</p>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-slate-400 mb-2">Delivery Target</div>
-                <button 
-                  onClick={() => setShowDeliveryModal(true)}
-                  className="group flex items-center bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/50 rounded-xl px-4 py-2 transition-all"
-                >
-                  <Clock className="h-5 w-5 mr-3 text-blue-500 group-hover:text-blue-400" />
-                  <span className={`text-lg font-bold ${project.targetDeliveryDate ? 'text-white' : 'text-slate-400 italic'}`}>
-                    {project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Not Set'}
-                  </span>
-                  <Edit2 className="h-4 w-4 ml-4 text-slate-500 group-hover:text-blue-400 transition-colors" />
-                </button>
-              </div>
-            </div>
+            <button 
+              onClick={() => setShowDeliveryModal(true)}
+              className="group relative flex items-center bg-black/40 hover:bg-black/60 border border-white/10 hover:border-blue-500/50 shadow-inner rounded-xl px-4 py-2 transition-all duration-300 z-10"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+              <Clock className="h-4 w-4 mr-2.5 text-blue-500 group-hover:text-blue-400 relative z-10" />
+              <span className={`relative z-10 text-xs font-bold ${project.targetDeliveryDate ? 'text-slate-200' : 'text-slate-500 italic'}`}>
+                {project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Delivery: Not Set'}
+              </span>
+              <Edit2 className="h-3.5 w-3.5 ml-3 text-slate-500 group-hover:text-blue-400 transition-colors relative z-10" />
+            </button>
           </header>
 
-          {/* Visual Timeline Navigation */}
-          <div className="shrink-0 mb-4 scale-95 origin-left">
-            <WorkflowTimeline currentStage={project.currentStage} />
-          </div>
-
           {/* Project Navigation Tabs */}
-          <div className="flex space-x-8 border-b border-white/10 mb-6 px-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar">
+          <div className="flex space-x-6 border-b border-white/5 px-6 pt-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar">
             <Link href={`/projects/${project.id}/overview`} className={getTabClass('/overview')}>Overview</Link>
             <Link href={`/projects/${project.id}/tasks`} className={getTabClass('/tasks')}>Tasks & WBS</Link>
             <Link href={`/projects/${project.id}/engineering`} className={getTabClass('/engineering')}>Engineering</Link>
@@ -127,8 +138,10 @@ export default function ProjectLayout({
             <Link href={`/projects/${project.id}/finance`} className={getTabClass('/finance')}>Finance</Link>
           </div>
 
-          {/* Tab Content injected here by Next.js router */}
-          {children}
+          {/* Tab Content */}
+          <div className="flex-1 min-h-0 relative z-0 px-6 pt-4 pb-2 overflow-hidden flex flex-col">
+            {children}
+          </div>
 
         </div>
       </main>
