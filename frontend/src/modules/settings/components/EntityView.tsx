@@ -94,60 +94,57 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Entity Toolbar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 border-b border-white/5 shrink-0 bg-[#050A14]/80 backdrop-blur-2xl gap-4 relative overflow-hidden">
+      {/* Dense Entity Toolbar */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b border-white/5 shrink-0 bg-white/[0.01] backdrop-blur-2xl gap-4 relative overflow-hidden">
         {/* Subtle background glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
         
-        <div className="relative z-10">
-          <h2 className="text-2xl font-black text-white tracking-tight flex items-center mb-1">
-            <span className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mr-4 border border-emerald-500/20 shadow-[inset_0_0_15px_rgba(16,185,129,0.2)]">
-              <Database className="w-5 h-5" />
-            </span>
-            {registry.pluralName}
-          </h2>
-          <div className="flex items-center space-x-3 text-sm text-slate-400 ml-[56px]">
-            <p>Manage all {registry.pluralName.toLowerCase()} in the master database.</p>
-            <span className="text-white/20">·</span>
-            <span className="bg-white/5 px-2 py-0.5 rounded text-emerald-400 font-mono text-xs font-bold border border-white/10">
-              {data.length} Records
-            </span>
+        <div className="relative z-10 flex items-center">
+          <span className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mr-3 border border-emerald-500/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.2)]">
+            <Database className="w-4 h-4" />
+          </span>
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight leading-tight">{registry.pluralName}</h2>
+            <div className="flex items-center space-x-2 text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">
+              <span>{data.length} Records</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3 w-full md:w-auto relative z-10">
-          <div className="w-full md:w-64 relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg blur opacity-0 group-focus-within:opacity-30 transition duration-500"></div>
+        <div className="flex items-center space-x-2 w-full md:w-auto relative z-10">
+          <div className="w-full md:w-56 relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg blur opacity-0 group-focus-within:opacity-20 transition duration-500"></div>
             <div className="relative">
               <Input 
-                placeholder={`Search ${registry.pluralName}...`} 
+                placeholder={`Search...`} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                leftIcon={<Search className="h-4 w-4" />}
+                leftIcon={<Search className="h-3.5 w-3.5" />}
+                className="py-1.5 text-xs"
               />
             </div>
           </div>
-          <Button variant="ghost" onClick={fetchData} title="Refresh" className="hover:text-emerald-400 transition-colors">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button variant="secondary" onClick={() => exportToCsv(registry.id, data, registry.columns)} title="Export CSV" className="hover:border-emerald-500/30 transition-colors">
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button variant="secondary" onClick={() => setIsImportOpen(true)} title="Import CSV" className="hover:border-emerald-500/30 transition-colors">
-            <Upload className="h-4 w-4" />
-          </Button>
+          <button onClick={fetchData} title="Refresh" className="p-1.5 text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 transition-colors">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={() => exportToCsv(registry.id, data, registry.columns)} title="Export CSV" className="p-1.5 text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 transition-colors">
+            <Download className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={() => setIsImportOpen(true)} title="Import CSV" className="p-1.5 text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 transition-colors">
+            <Upload className="h-3.5 w-3.5" />
+          </button>
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
-            <Button variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="h-4 w-4" />} className="relative border-none bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wide">
-              New {registry.singularName}
-            </Button>
+            <button onClick={handleCreateNew} className="relative bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all">
+              <Plus className="h-3.5 w-3.5 mr-1" /> New
+            </button>
           </div>
         </div>
       </div>
 
       {/* Entity Table */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 hide-scrollbar">
         <SmartTable 
           columns={registry.columns} 
           data={data} 
@@ -182,28 +179,28 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
         maxWidth="2xl"
       >
         {viewingRecord && (
-          <div className="space-y-6">
-            <div className="bg-[#0B1018]/60 p-6 rounded-2xl border border-white/5 space-y-4 shadow-inner hover:border-emerald-500/20 transition-colors">
-              <h4 className="text-sm font-black text-emerald-400 uppercase tracking-wider mb-4 border-b border-white/10 pb-2">Primary Details</h4>
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto hide-scrollbar pr-2">
+            <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3">
+              <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-2 border-b border-white/10 pb-1.5">Primary Details</h4>
               {registry.columns.map(col => (
-                <div key={col.key} className="grid grid-cols-3 gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0 hover:bg-white/[0.02] p-2 -mx-2 rounded-lg transition-colors">
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">{col.label}</div>
-                  <div className="col-span-2 text-sm text-white font-medium">
+                <div key={col.key} className="grid grid-cols-3 gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0 hover:bg-white/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center">{col.label}</div>
+                  <div className="col-span-2 text-xs text-white font-medium">
                     {col.render ? col.render(viewingRecord[col.key], viewingRecord) : viewingRecord[col.key] || '-'}
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="bg-[#0B1018]/60 p-6 rounded-2xl border border-white/5 space-y-4 shadow-inner hover:border-emerald-500/20 transition-colors">
-              <h4 className="text-sm font-black text-emerald-400 uppercase tracking-wider mb-4 border-b border-white/10 pb-2">All Data Fields</h4>
+            <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3">
+              <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-2 border-b border-white/10 pb-1.5">All Data Fields</h4>
               {registry.fields.map(field => (
-                <div key={field.name} className="grid grid-cols-3 gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0 hover:bg-white/[0.02] p-2 -mx-2 rounded-lg transition-colors">
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">{field.label}</div>
-                  <div className="col-span-2 text-sm text-white">
+                <div key={field.name} className="grid grid-cols-3 gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0 hover:bg-white/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center">{field.label}</div>
+                  <div className="col-span-2 text-xs text-white font-medium">
                     {viewingRecord[field.name] !== undefined && viewingRecord[field.name] !== null && viewingRecord[field.name] !== '' 
                       ? (typeof viewingRecord[field.name] === 'boolean' 
-                          ? (viewingRecord[field.name] ? <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">Yes</span> : <span className="text-slate-500 bg-white/5 px-2 py-0.5 rounded font-bold">No</span>) 
+                          ? (viewingRecord[field.name] ? <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">Yes</span> : <span className="text-slate-500 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">No</span>) 
                           : viewingRecord[field.name])
                       : '-'}
                   </div>
@@ -211,8 +208,8 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
               ))}
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button onClick={() => setIsViewOpen(false)} variant="secondary">Close</Button>
+            <div className="flex justify-end pt-2 border-t border-white/10">
+              <button onClick={() => setIsViewOpen(false)} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold text-white transition-colors">Close</button>
             </div>
           </div>
         )}

@@ -23,23 +23,23 @@ export default function MasterDataLayout({ children }: { children: React.ReactNo
   return (
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
-      <div className="flex-1 h-full flex flex-col relative z-0 pl-32 pr-12 animate-fade-in py-12">
-        <div className="mb-10 flex items-end justify-between">
+      <div className="flex-1 h-full flex flex-col relative z-0 pl-24 pr-6 animate-fade-in py-6 max-h-screen">
+        <div className="mb-4 flex items-end justify-between shrink-0">
           <div>
-            <div className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full mb-6">
-              <Database className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase">Factory Knowledge Base</span>
+            <div className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full mb-2">
+              <Database className="w-3 h-3 text-emerald-400" />
+              <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Factory Knowledge Base</span>
             </div>
-            <h1 className="text-6xl font-bold mb-2 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-500 drop-shadow-lg">
-              Master Data.
+            <h1 className="text-3xl font-bold mb-1 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-500 drop-shadow-lg">
+              Master Data
             </h1>
-            <h2 className="text-xl text-slate-400 font-medium tracking-wide">Manage foundational entities and resources.</h2>
+            <h2 className="text-sm text-slate-400 font-medium tracking-wide">Manage foundational entities and resources.</h2>
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden mt-4 gap-8">
+        <div className="flex flex-1 min-h-0 overflow-hidden mt-2 gap-6">
           {/* Sub Navigation Sidebar */}
-          <div className="w-80 shrink-0 flex flex-col space-y-4 overflow-y-auto pr-4 hide-scrollbar pb-20 relative z-10">
+          <div className="w-64 shrink-0 flex flex-col space-y-2 overflow-y-auto pr-2 hide-scrollbar pb-10 relative z-10">
             <div className="absolute -left-10 top-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
             
             {navigation.map((item) => {
@@ -50,10 +50,10 @@ export default function MasterDataLayout({ children }: { children: React.ReactNo
                 <Link
                   key={item.id}
                   href={href}
-                  className={`relative group flex items-center w-full p-4 rounded-2xl transition-all duration-500 text-left overflow-hidden border backdrop-blur-xl ${
+                  className={`relative group flex items-center w-full p-2.5 rounded-xl transition-all duration-300 text-left overflow-hidden border backdrop-blur-xl ${
                     isActive 
-                      ? 'bg-[#050A14]/90 border-emerald-500/30 shadow-[0_8px_32px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20' 
-                      : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.06] hover:border-white/10 hover:shadow-xl'
+                      ? 'bg-[#050A14]/90 border-emerald-500/30 shadow-[0_4px_16px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20' 
+                      : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.06] hover:border-white/10 hover:shadow-lg'
                   }`}
                 >
                   {isActive && (
@@ -63,19 +63,19 @@ export default function MasterDataLayout({ children }: { children: React.ReactNo
                     </>
                   )}
                   
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 relative z-10 ${
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 relative z-10 ${
                     isActive 
-                      ? 'bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_15px_rgba(16,185,129,0.4)]' 
+                      ? 'bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_10px_rgba(16,185,129,0.4)]' 
                       : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-emerald-300'
                   }`}>
-                    {React.cloneElement(item.icon as React.ReactElement<{className?: string}>, { className: 'w-6 h-6' })}
+                    {React.cloneElement(item.icon as React.ReactElement<{className?: string}>, { className: 'w-4 h-4' })}
                   </div>
                   
-                  <div className="ml-4 flex-1 relative z-10">
-                    <h3 className={`font-bold tracking-wide transition-colors ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
+                  <div className="ml-3 flex-1 relative z-10">
+                    <h3 className={`text-xs font-bold tracking-wide transition-colors ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
                       {item.label}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1 font-medium group-hover:text-slate-400 transition-colors">{item.desc}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium group-hover:text-slate-400 transition-colors uppercase tracking-wider">{item.desc}</p>
                   </div>
                 </Link>
               );
@@ -83,7 +83,7 @@ export default function MasterDataLayout({ children }: { children: React.ReactNo
           </div>
 
           {/* Page Content */}
-          <div className="flex-1 relative bg-[#050A14]/40 border border-white/5 rounded-3xl backdrop-blur-md overflow-hidden">
+          <div className="flex-1 relative bg-white/[0.01] border border-white/5 rounded-2xl backdrop-blur-md overflow-hidden flex flex-col">
              {children}
           </div>
         </div>

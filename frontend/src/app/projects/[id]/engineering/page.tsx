@@ -116,9 +116,19 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
   const isFullyApproved = isDrawingComplete && isBomComplete && isRoutingComplete;
 
   return (
-    <div className="flex-1 overflow-y-auto pb-32 animate-fade-in flex flex-col px-6">
-      <div className="flex justify-between items-center my-6">
-        <div>
+    <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col h-full min-h-0">
+      
+      {/* Dense Toolbar Header */}
+      <div className="flex justify-between items-center shrink-0 mb-4 bg-white/[0.01] border border-white/5 rounded-xl p-3">
+        <div className="flex items-center">
+          <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 mr-3 text-blue-400">
+            <Settings className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight">Manufacturing Planning Engine</h2>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Immutable Manufacturing Plan & Baseline</p>
+          </div>
+        </div>
           <h2 className="text-h3 font-bold text-white flex items-center">
             <Settings className="h-6 w-6 mr-3 text-blue-400" />
             Manufacturing Planning Engine
@@ -126,91 +136,91 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
           <p className="text-sm text-slate-400 mt-1">Define the immutable manufacturing plan and generate the cost baseline.</p>
         </div>
         {isFullyApproved && (
-          <button onClick={handleReopenEngineering} className="px-4 py-2 bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded-lg text-sm font-bold border border-red-500/30 transition-all">
-            Revise Engineering Plan
+          <button onClick={handleReopenEngineering} className="group relative px-4 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-all duration-300">
+            <span className="relative z-10 flex items-center text-red-400 font-bold text-xs">Revise Engineering Plan</span>
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
         {/* Step 1: Drawing */}
-        <div className={`p-6 rounded-xl border ${isDrawingComplete ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-blue-500/30 bg-blue-950/10'} relative`}>
-          <h3 className="font-bold text-white mb-2 flex items-center">
-            <span className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center text-xs mr-2">1</span>
+        <div className={`p-4 rounded-xl border ${isDrawingComplete ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-blue-500/30 bg-blue-950/10'} relative flex flex-col justify-between`}>
+          <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
+            <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">1</span>
             Customer Drawing
           </h3>
           {isDrawingComplete ? (
-            <div className="text-sm text-emerald-400 flex items-center mt-4">
-              <CheckCircle className="w-4 h-4 mr-2" />
+            <div className="text-[11px] font-bold text-emerald-400 flex items-center mt-2">
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
               Rev {project.drawings?.[0]?.revision} Approved
             </div>
           ) : (
-            <button onClick={() => setShowDrawingModal(true)} className="mt-4 w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-bold transition-all">
+            <button onClick={() => setShowDrawingModal(true)} className="mt-2 w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">
               Upload Drawing
             </button>
           )}
         </div>
 
         {/* Step 2: BOM */}
-        <div className={`p-6 rounded-xl border ${isBomComplete ? 'border-emerald-500/30 bg-emerald-950/10' : (!isDrawingComplete ? 'border-white/5 bg-white/5 opacity-50' : 'border-blue-500/30 bg-blue-950/10')} relative`}>
-          {!isDrawingComplete && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px] rounded-xl"><Lock className="text-white/30" /></div>}
-          <h3 className="font-bold text-white mb-2 flex items-center">
-            <span className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center text-xs mr-2">2</span>
+        <div className={`p-4 rounded-xl border ${isBomComplete ? 'border-emerald-500/30 bg-emerald-950/10' : (!isDrawingComplete ? 'border-white/5 bg-white/5 opacity-50' : 'border-blue-500/30 bg-blue-950/10')} relative flex flex-col justify-between`}>
+          {!isDrawingComplete && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] rounded-xl"><Lock className="text-white/30 w-4 h-4" /></div>}
+          <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
+            <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">2</span>
             Material Plan
           </h3>
           {isBomComplete ? (
-            <div className="text-sm text-emerald-400 flex items-center mt-4">
-              <CheckCircle className="w-4 h-4 mr-2" />
+            <div className="text-[11px] font-bold text-emerald-400 flex items-center mt-2">
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
               BOM Locked
             </div>
           ) : (
-            <div className="mt-4 space-y-2">
+            <div className="mt-2 space-y-2">
               {!activeBom ? (
-                <button onClick={() => setShowBomModal(true)} className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-bold transition-all">Create BOM</button>
+                <button onClick={() => setShowBomModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">Create BOM</button>
               ) : (
-                <button onClick={handleApproveBom} className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold transition-all">Approve BOM</button>
+                <button onClick={handleApproveBom} className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-[0_0_10px_rgba(5,150,105,0.3)]">Approve BOM</button>
               )}
             </div>
           )}
         </div>
 
         {/* Step 3: Routing */}
-        <div className={`p-6 rounded-xl border ${isRoutingComplete ? 'border-emerald-500/30 bg-emerald-950/10' : (!isBomComplete ? 'border-white/5 bg-white/5 opacity-50' : 'border-blue-500/30 bg-blue-950/10')} relative`}>
-          {!isBomComplete && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px] rounded-xl"><Lock className="text-white/30" /></div>}
-          <h3 className="font-bold text-white mb-2 flex items-center">
-            <span className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center text-xs mr-2">3</span>
+        <div className={`p-4 rounded-xl border ${isRoutingComplete ? 'border-emerald-500/30 bg-emerald-950/10' : (!isBomComplete ? 'border-white/5 bg-white/5 opacity-50' : 'border-blue-500/30 bg-blue-950/10')} relative flex flex-col justify-between`}>
+          {!isBomComplete && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] rounded-xl"><Lock className="text-white/30 w-4 h-4" /></div>}
+          <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
+            <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">3</span>
             Machine Routing
           </h3>
           {isRoutingComplete ? (
-            <div className="text-sm text-emerald-400 flex items-center mt-4">
-              <CheckCircle className="w-4 h-4 mr-2" />
+            <div className="text-[11px] font-bold text-emerald-400 flex items-center mt-2">
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
               Routing Locked
             </div>
           ) : (
-            <div className="mt-4 space-y-2">
+            <div className="mt-2 space-y-2">
               {!activeRouting ? (
-                <button onClick={() => setShowRoutingModal(true)} className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-bold transition-all">Plan Routing</button>
+                <button onClick={() => setShowRoutingModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">Plan Routing</button>
               ) : (
-                <span className="text-sm text-orange-400">Draft Pending Approval</span>
+                <span className="text-[11px] font-bold text-orange-400 block mt-2">Draft Pending Approval</span>
               )}
             </div>
           )}
         </div>
 
         {/* Step 4: Approval */}
-        <div className={`p-6 rounded-xl border ${isFullyApproved ? 'border-emerald-500/30 bg-emerald-950/10' : (!activeRouting ? 'border-white/5 bg-white/5 opacity-50' : 'border-orange-500/30 bg-orange-950/10')} relative`}>
-          {!activeRouting && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px] rounded-xl"><Lock className="text-white/30" /></div>}
-          <h3 className="font-bold text-white mb-2 flex items-center">
-            <span className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center text-xs mr-2">4</span>
+        <div className={`p-4 rounded-xl border ${isFullyApproved ? 'border-emerald-500/30 bg-emerald-950/10' : (!activeRouting ? 'border-white/5 bg-white/5 opacity-50' : 'border-orange-500/30 bg-orange-950/10')} relative flex flex-col justify-between`}>
+          {!activeRouting && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] rounded-xl"><Lock className="text-white/30 w-4 h-4" /></div>}
+          <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
+            <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">4</span>
             Cost Baseline
           </h3>
           {isFullyApproved ? (
-            <div className="text-sm text-emerald-400 flex items-center mt-4 font-bold">
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Project Ready for Floor
+            <div className="text-[11px] text-emerald-400 flex items-center mt-2 font-bold">
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+              Ready for Floor
             </div>
           ) : (
-            <button onClick={handleApproveEngineering} className="mt-4 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)] rounded-lg text-sm font-bold transition-all animate-pulse">
+            <button onClick={handleApproveEngineering} className="mt-2 w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)] rounded-lg text-xs font-bold transition-all animate-pulse">
               Freeze Plan & Baseline
             </button>
           )}
@@ -218,75 +228,93 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Details Section */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+        <div className="lg:col-span-2 space-y-4 h-full flex flex-col min-h-0">
           {/* Active Routing View */}
-          <div className="glass-panel p-6 border border-white/5">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center"><Cpu className="mr-2 text-slate-400" /> Manufacturing Sequence</h3>
+          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4 flex-1 flex flex-col min-h-0">
+            <h3 className="text-sm font-bold text-white mb-4 flex items-center tracking-widest uppercase"><Cpu className="mr-2 text-blue-400 w-4 h-4" /> Manufacturing Sequence</h3>
             {activeRouting ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase pb-2 border-b border-white/10">
+              <div className="space-y-2 overflow-y-auto hide-scrollbar pr-2 flex-1">
+                <div className="grid grid-cols-12 gap-4 text-[10px] font-bold text-slate-500 uppercase pb-2 border-b border-white/10 sticky top-0 bg-[#0B1018]/90 backdrop-blur z-10">
                   <div className="col-span-2">Seq</div>
                   <div className="col-span-4">Operation</div>
                   <div className="col-span-4">Allocated Machine</div>
                   <div className="col-span-2 text-right">Est. Hrs</div>
                 </div>
                 {activeRouting.operations?.map((op: any) => (
-                  <div key={op.id} className="grid grid-cols-12 gap-4 text-sm text-slate-300 py-2 border-b border-white/5 last:border-0">
-                    <div className="col-span-2 font-mono text-blue-400">{op.sequenceOrder}</div>
-                    <div className="col-span-4">{op.operation?.operationName}</div>
-                    <div className="col-span-4">{op.machine?.machineName || <span className="text-red-400">Unassigned</span>}</div>
-                    <div className="col-span-2 text-right font-mono">{op.estimatedHours}h</div>
+                  <div key={op.id} className="grid grid-cols-12 gap-4 text-xs font-semibold text-slate-300 py-2 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors px-1 rounded">
+                    <div className="col-span-2 font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded w-fit">{op.sequenceOrder}</div>
+                    <div className="col-span-4 flex items-center">{op.operation?.operationName}</div>
+                    <div className="col-span-4 flex items-center">{op.machine?.machineName || <span className="text-red-400 px-2 py-0.5 bg-red-500/10 rounded">Unassigned</span>}</div>
+                    <div className="col-span-2 text-right font-mono flex items-center justify-end">{op.estimatedHours}h</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 italic text-sm">No sequence defined.</p>
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-500 italic text-xs">
+                 <Cpu className="w-8 h-8 mb-2 opacity-20" />
+                 No sequence defined.
+              </div>
             )}
           </div>
         </div>
 
         {/* Cost Baseline View */}
-        <div className="glass-panel p-6 border border-white/5 h-fit">
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center"><GitMerge className="mr-2 text-slate-400" /> Cost Baseline</h3>
+        <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4 h-fit">
+          <h3 className="text-sm font-bold text-white mb-4 flex items-center tracking-widest uppercase"><GitMerge className="mr-2 text-emerald-400 w-4 h-4" /> Cost Baseline</h3>
           {costSummary ? (
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
+            <div className="space-y-3">
+              <div className="flex justify-between text-xs font-semibold">
                 <span className="text-slate-400">Est. Material</span>
-                <span className="text-white font-mono">&#8377;{costSummary.estimatedMaterialCost}</span>
+                <span className="text-white font-mono">{formatCurrency(costSummary.estimatedMaterialCost)}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs font-semibold">
                 <span className="text-slate-400">Est. Machine</span>
-                <span className="text-white font-mono">&#8377;{costSummary.estimatedMachineCost}</span>
+                <span className="text-white font-mono">{formatCurrency(costSummary.estimatedMachineCost)}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs font-semibold">
                 <span className="text-slate-400">Est. Labour</span>
-                <span className="text-white font-mono">&#8377;{costSummary.estimatedLabourCost}</span>
+                <span className="text-white font-mono">{formatCurrency(costSummary.estimatedLabourCost)}</span>
               </div>
-              <div className="pt-4 border-t border-white/10 flex justify-between font-bold text-emerald-400">
-                <span>Total Mfg Cost</span>
-                <span className="font-mono">&#8377;{costSummary.estimatedManufacturingCost}</span>
+              <div className="pt-3 border-t border-white/10 flex justify-between font-bold text-emerald-400 text-sm">
+                <span className="uppercase tracking-widest text-[10px]">Total Mfg Cost</span>
+                <span className="font-mono">{formatCurrency(costSummary.estimatedManufacturingCost)}</span>
               </div>
             </div>
           ) : (
-            <p className="text-slate-500 italic text-sm">Baseline will generate upon approval.</p>
+            <div className="text-center text-slate-500 italic text-xs py-8">
+               Baseline will generate upon approval.
+            </div>
           )}
         </div>
       </div>
 
       {/* Modals */}
-      <Modal isOpen={showDrawingModal} onClose={() => setShowDrawingModal(false)} title="Import CAD Drawing">
-        <form onSubmit={handleUploadDrawing} className="space-y-4">
-          <Input label="Drawing Reference" value={drawingNum} onChange={(e) => setDrawingNum(e.target.value)} required />
-          <div className="flex space-x-3 pt-4">
-            <button type="button" onClick={() => setShowDrawingModal(false)} className="flex-1 px-4 py-3 bg-white/5 text-white rounded-xl">Cancel</button>
-            <button type="submit" className="flex-1 px-4 py-3 bg-blue-600 font-bold text-white rounded-xl">Upload</button>
+      {/* Modals are handled inside components/ui/Modal but let's replace standard with glass styling if possible */}
+      {showDrawingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-sm p-6 animate-slide-up border border-blue-500/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
+            <h3 className="text-lg font-bold text-white mb-5 relative z-10">Import CAD Drawing</h3>
+            <form onSubmit={handleUploadDrawing} className="space-y-4 relative z-10">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Drawing Reference</label>
+                <input type="text" value={drawingNum} onChange={(e) => setDrawingNum(e.target.value)} required className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50" />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button type="button" onClick={() => setShowDrawingModal(false)} className="flex-1 px-4 py-2 bg-white/5 text-white rounded-xl text-sm font-bold">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] font-bold text-white rounded-xl text-sm">Upload</button>
+              </div>
+            </form>
           </div>
-        </form>
-      </Modal>
+        </div>
+      )}
 
-      <Modal isOpen={showBomModal} onClose={() => setShowBomModal(false)} title="Material Plan (BOM)" maxWidth="lg">
-        <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col">
+      {showBomModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-2xl p-6 animate-slide-up border border-blue-500/20 flex flex-col max-h-[90vh]">
+            <h3 className="text-lg font-bold text-white mb-5">Material Plan (BOM)</h3>
+            <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col">
           <div className="flex-1 overflow-y-auto space-y-4 max-h-[60vh] pr-2">
             {bomItems.map((item, idx) => (
               <div key={idx} className="flex space-x-4 items-center">
@@ -299,15 +327,21 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
             ))}
             <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, estimatedCost: 0 }])} className="w-full py-2 border-2 border-dashed border-blue-500/30 text-blue-400 font-bold rounded-lg">+ Add Material</button>
           </div>
-          <div className="flex space-x-3 pt-6 mt-6 border-t border-white/10">
-            <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-3 bg-white/5 rounded-xl text-white">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-blue-600 rounded-xl text-white font-bold">Save BOM</button>
+          </div>
+          <div className="flex space-x-3 pt-4 mt-4 border-t border-white/10 shrink-0">
+            <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-2 bg-white/5 rounded-xl text-white font-bold text-sm">Cancel</button>
+            <button type="submit" className="flex-1 py-2 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] rounded-xl text-white font-bold text-sm">Save BOM</button>
           </div>
         </form>
-      </Modal>
+      </div>
+      </div>
+      )}
 
-      <Modal isOpen={showRoutingModal} onClose={() => setShowRoutingModal(false)} title="Manufacturing Sequence Builder" maxWidth="2xl">
-        <form onSubmit={handleSubmitRouting} className="flex-1 min-h-0 flex flex-col">
+      {showRoutingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-4xl p-6 animate-slide-up border border-blue-500/20 flex flex-col max-h-[90vh]">
+            <h3 className="text-lg font-bold text-white mb-5">Manufacturing Sequence Builder</h3>
+            <form onSubmit={handleSubmitRouting} className="flex-1 min-h-0 flex flex-col">
           <div className="flex-1 overflow-y-auto space-y-4 max-h-[60vh] pr-2">
             <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-400">
               <div className="col-span-1">Seq</div>
@@ -347,12 +381,15 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
             ))}
             <button type="button" onClick={() => setRoutingOps([...routingOps, { sequenceOrder: (routingOps.length + 1) * 10, operationId: "", machineId: "", estimatedSetupTime: 0, estimatedHours: 0 }])} className="w-full py-2 border-2 border-dashed border-blue-500/30 text-blue-400 font-bold rounded-lg">+ Add Operation</button>
           </div>
-          <div className="flex space-x-3 pt-6 mt-6 border-t border-white/10">
-            <button type="button" onClick={() => setShowRoutingModal(false)} className="flex-1 py-3 bg-white/5 rounded-xl text-white">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-blue-600 rounded-xl text-white font-bold">Save Plan</button>
+          </div>
+          <div className="flex space-x-3 pt-4 mt-4 border-t border-white/10 shrink-0">
+            <button type="button" onClick={() => setShowRoutingModal(false)} className="flex-1 py-2 bg-white/5 rounded-xl text-white font-bold text-sm">Cancel</button>
+            <button type="submit" className="flex-1 py-2 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] rounded-xl text-white font-bold text-sm">Save Plan</button>
           </div>
         </form>
-      </Modal>
+        </div>
+        </div>
+      )}
     </div>
   );
 }

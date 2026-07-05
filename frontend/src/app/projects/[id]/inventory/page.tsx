@@ -68,35 +68,36 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
 
 
   return (
-    <div className="flex-1 overflow-y-auto pb-32 animate-fade-in flex flex-col h-full">
-      <div className="glass-panel p-6 mb-6 shrink-0 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
-        <div className="flex justify-between items-center relative z-10">
-          <div>
-            <h2 className="text-h3 font-bold text-white flex items-center">
-              <Package className="h-6 w-6 mr-3 text-purple-400" />
-              Inventory & Material Control
-            </h2>
-            <p className="text-slate-400 mt-1">Manage Material Issues and Track Inventory Ledger.</p>
+    <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col h-full min-h-0">
+      <div className="flex justify-between items-center shrink-0 mb-4 bg-white/[0.01] border border-white/5 rounded-xl p-3">
+        <div className="flex items-center">
+          <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 mr-3 text-purple-400">
+            <Package className="w-4 h-4" />
           </div>
-          <button onClick={loadAvailableBatches} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all">
-            Issue Material to Floor
-          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight">Inventory & Material Control</h2>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Material Issues & Ledger</p>
+          </div>
         </div>
+        <button onClick={loadAvailableBatches} className="group relative px-4 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
+          <span className="relative z-10 flex items-center text-purple-400 font-bold text-xs">
+            Issue Material
+          </span>
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 shrink-0">
-        <div className="bg-white/5 border border-white/10 p-6 rounded-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-5 -mt-5 pointer-events-none" />
-          <h3 className="font-semibold text-white mb-1">Goods Receipts (GRN)</h3>
-          <p className="text-3xl font-black text-emerald-400">{project.goodsReceiptHeaders?.length || 0}</p>
-          <p className="text-sm text-slate-500 mt-2">Total inbound material shipments</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 shrink-0">
+        <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl -mr-5 -mt-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <h3 className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-1">Goods Receipts (GRN)</h3>
+          <p className="text-xl font-black text-emerald-400 font-mono">{project.goodsReceiptHeaders?.length || 0}</p>
+          <p className="text-[10px] text-slate-400 mt-1">Total inbound material shipments</p>
         </div>
-        <div className="bg-white/5 border border-white/10 p-6 rounded-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -mr-5 -mt-5 pointer-events-none" />
-          <h3 className="font-semibold text-white mb-1">Material Issues</h3>
-          <p className="text-3xl font-black text-purple-400">{project.materialIssueHeaders?.length || 0}</p>
-          <p className="text-sm text-slate-500 mt-2">Total shop-floor consumptions</p>
+        <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-xl -mr-5 -mt-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <h3 className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-1">Material Issues</h3>
+          <p className="text-xl font-black text-purple-400 font-mono">{project.materialIssueHeaders?.length || 0}</p>
+          <p className="text-[10px] text-slate-400 mt-1">Total shop-floor consumptions</p>
         </div>
       </div>
 
@@ -106,13 +107,13 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
           Live Inventory Ledger
         </h3>
         
-        <div className="flex-1 overflow-y-auto hide-scrollbar space-y-3 pb-20">
+        <div className="flex-1 overflow-y-auto hide-scrollbar space-y-2 pb-12 pr-2">
           {(project.inventoryTransactions && project.inventoryTransactions.length > 0) ? (
             project.inventoryTransactions.map((tx: any, idx: number) => (
               <div 
                 key={tx.id} 
-                className="glass-panel p-4 rounded-2xl flex items-center justify-between border border-white/5 hover:border-white/20 transition-all duration-300 group hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative overflow-hidden"
-                style={{ animation: `slideUp 0.4s ease-out ${idx * 0.05}s forwards`, opacity: 0 }}
+                className="bg-white/[0.01] p-3 rounded-xl flex items-center justify-between border border-white/5 hover:border-white/10 transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                style={{ animation: `slideUp 0.3s ease-out ${idx * 0.05}s forwards`, opacity: 0 }}
               >
                 {/* Background glow on hover */}
                 <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 ${tx.movementType === 'GRN_RECEIPT' ? 'bg-emerald-500' : 'bg-purple-500'}`} />
@@ -177,19 +178,24 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
 
       {/* Material Issue Modal */}
       {showIssueModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in p-4">
-          <div className="glass-panel w-full max-w-4xl p-8 animate-slide-up border border-purple-500/20 max-h-[90vh] flex flex-col">
-            <h2 className="text-h4 font-bold mb-2 text-white shrink-0">Issue Material to Shop Floor</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-4xl p-6 animate-slide-up border border-purple-500/20 relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
+            <h3 className="text-xl font-bold text-white mb-2 relative z-10 shrink-0">Issue Material to Shop Floor</h3>
             <p className="text-sm text-slate-400 mb-6">Select available inventory batches and specify issue quantities based on BOM requirements.</p>
             
             <form onSubmit={handleIssueMaterial} className="flex-1 min-h-0 flex flex-col space-y-4">
               <div className="grid grid-cols-2 gap-4 shrink-0 mb-4">
-                <Input
-                  label="Issue Slip Number"
-                  value={issueNum}
-                  onChange={(e) => setIssueNum(e.target.value)}
-                  required
-                />
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Issue Slip Number</label>
+                  <input
+                    type="text"
+                    value={issueNum}
+                    onChange={(e) => setIssueNum(e.target.value)}
+                    required
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                  />
+                </div>
               </div>
               
               <div className="flex-1 overflow-y-auto hide-scrollbar space-y-4 bg-white/5 p-4 rounded-xl border border-white/10">
@@ -270,9 +276,9 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
                 </button>
               </div>
 
-              <div className="flex space-x-3 pt-4 shrink-0 border-t border-white/10">
-                <button type="button" onClick={() => setShowIssueModal(false)} className="flex-1 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-medium text-white transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all">Approve Issue Slip</button>
+              <div className="flex space-x-3 pt-4 shrink-0 border-t border-white/10 mt-4">
+                <button type="button" onClick={() => setShowIssueModal(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-sm text-white transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 font-bold text-sm text-white shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all">Approve Issue Slip</button>
               </div>
             </form>
           </div>

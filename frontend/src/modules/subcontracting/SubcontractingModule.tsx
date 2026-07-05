@@ -121,23 +121,24 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
 
   return (
     <div className="h-full flex flex-col relative z-0">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6 shrink-0">
-        <div>
-          <h2 className="text-h3 font-bold text-white flex items-center">
-            <Truck className="h-6 w-6 mr-3 text-orange-400" />
-            Subcontracting Operations
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Manage outside processing challans and material receipts
-          </p>
+      {/* Dense Toolbar Header */}
+      <div className="flex justify-between items-center shrink-0 mb-4 bg-white/[0.01] border border-white/5 rounded-xl p-3">
+        <div className="flex items-center">
+          <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 mr-3 text-orange-400">
+            <Truck className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight">Subcontracting Operations</h2>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Outside Processing & Receipts</p>
+          </div>
         </div>
         <button
           onClick={() => setIsOrderModalOpen(true)}
-          className="btn-primary bg-orange-500 hover:bg-orange-400 text-white border-none shadow-[0_0_15px_rgba(249,115,22,0.3)] flex items-center"
+          className="group relative px-4 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(249,115,22,0.1)]"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Challan
+          <span className="relative z-10 flex items-center text-orange-400 font-bold text-xs">
+            <Plus className="h-3.5 w-3.5 mr-1" /> Create Challan
+          </span>
         </button>
       </div>
 
@@ -154,59 +155,60 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
             onAction={() => setIsOrderModalOpen(true)}
           />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2 pr-2">
             {orders.map((order) => (
-              <div key={order.id} className="glass-panel p-5 border border-white/5 hover:border-orange-500/30 transition-all group relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:bg-orange-500/20 transition-all" />
+              <div key={order.id} className="bg-white/[0.01] p-4 rounded-xl flex flex-col border border-white/5 hover:border-white/10 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:bg-orange-500/20 transition-all opacity-0 group-hover:opacity-100" />
                 
-                <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className="flex justify-between items-start mb-2 relative z-10">
                   <div>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-lg font-bold text-white">{order.challanNumber}</span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                        order.status === 'CLOSED' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'
+                    <div className="flex items-center space-x-3 mb-1">
+                      <span className="text-sm font-bold text-white">{order.challanNumber}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        order.status === 'CLOSED' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
                       }`}>
                         {order.status}
                       </span>
                     </div>
-                    <div className="text-sm text-slate-400 mt-1 flex items-center">
-                      <Factory className="h-4 w-4 mr-1 text-slate-500" />
+                    <div className="text-xs text-slate-400 flex items-center font-bold tracking-wider uppercase">
+                      <Factory className="h-3.5 w-3.5 mr-1 text-slate-500" />
                       {order.vendor?.vendorName}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-slate-400">Total Estimated</div>
-                    <div className="text-orange-400 font-bold">{formatCurrency(Number(order.totalEstimatedCost))}</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Estimated</div>
+                    <div className="text-orange-400 font-mono font-bold text-sm">{formatCurrency(Number(order.totalEstimatedCost))}</div>
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 pt-4 relative z-10">
-                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Items Sent</h4>
-                  <div className="space-y-2">
-                    {order.items.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center text-sm p-2 rounded bg-white/5">
-                        <div className="text-slate-300">
-                          {item.operation?.operationName} - {item.sentQty} pcs
-                        </div>
-                        <div className="text-slate-400">
-                          @ {formatCurrency(Number(item.rate))}
-                        </div>
+                <div className="border-t border-white/10 pt-2 mt-2 relative z-10 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                      <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Items Sent:</h4>
+                      <div className="flex space-x-2">
+                        {order.items.map((item: any) => (
+                          <div key={item.id} className="flex items-center text-xs bg-black/20 border border-white/5 px-2 py-1 rounded">
+                            <span className="text-slate-300 font-semibold mr-2">
+                              {item.operation?.operationName}
+                            </span>
+                            <span className="text-orange-400 font-mono font-bold mr-2">{item.sentQty} pcs</span>
+                            <span className="text-slate-500 font-mono text-[10px]">@{formatCurrency(Number(item.rate))}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
                   </div>
-                </div>
 
-                {order.status !== 'CLOSED' && order.status !== 'CANCELLED' && (
-                  <div className="mt-4 flex justify-end relative z-10">
-                    <button
-                      onClick={() => openReceiptModal(order)}
-                      className="text-sm font-medium text-orange-400 hover:text-orange-300 flex items-center bg-orange-400/10 px-3 py-1.5 rounded transition-colors"
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Process Receipt
-                    </button>
-                  </div>
-                )}
+                  {order.status !== 'CLOSED' && order.status !== 'CANCELLED' && (
+                    <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openReceiptModal(order)}
+                        className="text-[10px] font-bold uppercase tracking-wider text-orange-400 hover:text-orange-300 flex items-center bg-orange-500/10 border border-orange-500/20 px-2 py-1.5 rounded transition-colors"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        Process Receipt
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -214,14 +216,18 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
       </div>
 
       {/* Order Modal */}
-      <Modal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} title="Create Subcontract Challan">
-        <form onSubmit={handleCreateOrder} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
+      {isOrderModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-2xl p-6 animate-slide-up border border-orange-500/20 relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
+            <h3 className="text-lg font-bold text-white mb-5 relative z-10">Create Subcontract Challan</h3>
+        <form onSubmit={handleCreateOrder} className="space-y-4 relative z-10 flex-1 min-h-0 flex flex-col">
+          <div className="grid grid-cols-2 gap-4 shrink-0">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Vendor</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Vendor</label>
               <select
                 required
-                className="input-field w-full"
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500/50"
                 value={formData.vendorId}
                 onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
               >
@@ -232,34 +238,34 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Expected Return Date</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Expected Return Date</label>
               <input
                 type="date"
-                className="input-field w-full"
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500/50"
                 value={formData.expectedReturnDate}
                 onChange={(e) => setFormData({ ...formData, expectedReturnDate: e.target.value })}
               />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Document/Ref Number</label>
+          <div className="shrink-0">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Document/Ref Number</label>
             <input
               type="text"
-              className="input-field w-full"
+              className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500/50"
               value={formData.documentNumber}
               onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
             />
           </div>
           
-          <div className="border border-white/10 rounded-lg p-4 bg-white/5 space-y-4">
-            <h4 className="text-sm font-bold text-white">Challan Items</h4>
+          <div className="border border-white/10 rounded-xl p-4 bg-white/[0.02] flex-1 overflow-y-auto hide-scrollbar space-y-4">
+            <h4 className="text-[10px] font-bold text-white uppercase tracking-wider">Challan Items</h4>
             {formData.items.map((item, idx) => (
               <div key={idx} className="grid grid-cols-3 gap-3 items-end">
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Operation</label>
+                  <label className="block text-[10px] text-slate-400 mb-1">Operation</label>
                   <select
                     required
-                    className="input-field w-full"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/50"
                     value={item.operationId}
                     onChange={(e) => {
                       const newItems = [...formData.items];
@@ -274,12 +280,12 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Qty</label>
+                  <label className="block text-[10px] text-slate-400 mb-1">Qty</label>
                   <input
                     type="number"
                     min="1"
                     required
-                    className="input-field w-full"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/50 font-mono"
                     value={item.sentQty}
                     onChange={(e) => {
                       const newItems = [...formData.items];
@@ -289,13 +295,13 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Agreed Rate</label>
+                  <label className="block text-[10px] text-slate-400 mb-1">Agreed Rate</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     required
-                    className="input-field w-full"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/50 font-mono"
                     value={item.rate}
                     onChange={(e) => {
                       const newItems = [...formData.items];
@@ -308,26 +314,32 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
             ))}
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-white/10">
-            <button type="button" onClick={() => setIsOrderModalOpen(false)} className="btn-ghost">Cancel</button>
-            <button type="submit" className="btn-primary bg-orange-500 hover:bg-orange-400 border-none text-white">Generate Challan</button>
+          <div className="flex space-x-3 pt-4 border-t border-white/10 shrink-0 mt-4">
+            <button type="button" onClick={() => setIsOrderModalOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-sm text-white transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(249,115,22,0.3)] transition-all">Generate Challan</button>
           </div>
         </form>
-      </Modal>
+        </div>
+        </div>
+      )}
 
       {/* Receipt Modal */}
-      <Modal isOpen={isReceiptModalOpen} onClose={() => setIsReceiptModalOpen(false)} title={`Process Receipt - ${selectedOrder?.challanNumber}`}>
-        <form onSubmit={handleCreateReceipt} className="space-y-5">
-           <div className="border border-white/10 rounded-lg p-4 bg-white/5 space-y-4">
+      {isReceiptModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-3xl p-6 animate-slide-up border border-orange-500/20 relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
+            <h3 className="text-lg font-bold text-white mb-5 relative z-10">Process Receipt - {selectedOrder?.challanNumber}</h3>
+        <form onSubmit={handleCreateReceipt} className="space-y-4 relative z-10 flex-1 min-h-0 flex flex-col">
+           <div className="border border-white/10 rounded-xl p-4 bg-white/[0.02] flex-1 overflow-y-auto hide-scrollbar space-y-4">
             {receiptData.items.map((item, idx) => (
               <div key={idx} className="grid grid-cols-4 gap-3 items-end">
-                <div className="col-span-4 text-xs font-bold text-orange-400 mb-2">Item {idx + 1}</div>
+                <div className="col-span-4 text-[10px] font-bold text-orange-400 uppercase tracking-wider mb-1 border-b border-white/10 pb-1">Item {idx + 1}</div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Rcvd Qty</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Rcvd Qty</label>
                   <input
                     type="number"
                     required
-                    className="input-field w-full"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/50 font-mono"
                     value={item.receivedQty}
                     onChange={(e) => {
                       const newItems = [...receiptData.items];
@@ -337,11 +349,11 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Accpt Qty</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Accpt Qty</label>
                   <input
                     type="number"
                     required
-                    className="input-field w-full"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/50 font-mono text-green-400"
                     value={item.acceptedQty}
                     onChange={(e) => {
                       const newItems = [...receiptData.items];
@@ -351,11 +363,11 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Rej Qty</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Rej Qty</label>
                   <input
                     type="number"
                     required
-                    className="input-field w-full"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/50 font-mono text-red-400"
                     value={item.rejectedQty}
                     onChange={(e) => {
                       const newItems = [...receiptData.items];
@@ -365,12 +377,12 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Actual Rate</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Actual Rate</label>
                   <input
                     type="number"
                     step="0.01"
                     required
-                    className="input-field w-full"
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/50 font-mono"
                     value={item.actualRate}
                     onChange={(e) => {
                       const newItems = [...receiptData.items];
@@ -383,12 +395,14 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
             ))}
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-white/10">
-            <button type="button" onClick={() => setIsReceiptModalOpen(false)} className="btn-ghost">Cancel</button>
-            <button type="submit" className="btn-primary bg-orange-500 hover:bg-orange-400 border-none text-white">Process Receipt & Costing</button>
+          <div className="flex space-x-3 pt-4 border-t border-white/10 shrink-0 mt-4">
+            <button type="button" onClick={() => setIsReceiptModalOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-sm text-white transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(249,115,22,0.3)] transition-all">Process Receipt & Costing</button>
           </div>
         </form>
-      </Modal>
+        </div>
+        </div>
+      )}
     </div>
   );
 }

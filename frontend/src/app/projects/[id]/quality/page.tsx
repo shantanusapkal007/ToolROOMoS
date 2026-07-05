@@ -57,93 +57,110 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
 
 
 
-  return (
-    <div className="flex-1 overflow-y-auto pb-32 animate-fade-in relative">
-      <div className="glass-panel p-8 mb-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-h4 font-semibold text-white">Quality Assurance</h2>
-            <p className="text-slate-400 mt-1">Manage Quality Inspections and NCRs.</p>
+    <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col h-full min-h-0">
+      <div className="flex justify-between items-center shrink-0 mb-4 bg-white/[0.01] border border-white/5 rounded-xl p-3">
+        <div className="flex items-center">
+          <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mr-3 text-emerald-400">
+            <CheckSquare className="w-4 h-4" />
           </div>
-          <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium">Log Inspection</button>
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight">Quality Assurance</h2>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Inspections & NCRs</p>
+          </div>
+        </div>
+        <button onClick={() => setShowModal(true)} className="group relative px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+            <span className="relative z-10 flex items-center text-emerald-400 font-bold text-xs">Log Inspection</span>
+        </button>
+      </div>
+        
+      <div className="grid grid-cols-2 gap-4 mb-4 shrink-0">
+        <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl relative overflow-hidden flex items-center">
+           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none"></div>
+          <ClipboardList className="h-8 w-8 text-emerald-400 mr-4 opacity-80" />
+          <div>
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">In-Process Inspections</h3>
+            <p className="text-[10px] text-slate-500 font-bold mt-0.5">{project.inspectionHeaders?.filter((i:any) => i.inspectionType === 'IN_PROCESS').length || 0} LOGGED</p>
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white/5 border border-white/10 p-6 rounded-xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-            <ClipboardList className="h-6 w-6 text-emerald-400 mb-3" />
-            <h3 className="font-semibold text-white">In-Process Inspections</h3>
-            <p className="text-sm text-slate-500 mt-1">{project.inspectionHeaders?.filter((i:any) => i.inspectionType === 'IN_PROCESS').length || 0} inspections logged</p>
-          </div>
-          
-          <div className="bg-[#050A14] border border-blue-500/20 p-6 rounded-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-            <CheckSquare className="h-6 w-6 text-blue-400 mb-3" />
-            <h3 className="font-semibold text-white">Pre-Dispatch Inspections</h3>
-            <p className="text-sm text-slate-500 mt-1">{project.inspectionHeaders?.filter((i:any) => i.inspectionType === 'FINAL_PDI').length || 0} final PDIs</p>
+        <div className="bg-white/[0.02] border border-blue-500/10 p-4 rounded-xl relative overflow-hidden flex items-center">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none"></div>
+          <CheckSquare className="h-8 w-8 text-blue-400 mr-4 opacity-80" />
+          <div>
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Pre-Dispatch Inspections</h3>
+            <p className="text-[10px] text-slate-500 font-bold mt-0.5">{project.inspectionHeaders?.filter((i:any) => i.inspectionType === 'FINAL_PDI').length || 0} FINAL PDIS</p>
           </div>
         </div>
+      </div>
 
-        {/* Inspection History */}
-        <div className="mt-12">
-          <h3 className="text-lg font-bold text-white mb-6">Inspection History</h3>
-          <div className="bg-black/20 border border-white/5 rounded-2xl overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-black/40 border-b border-white/5">
-                <tr>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Date</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Qty Inspected</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Result</th>
-                  <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Rework / Scrap</th>
+      {/* Inspection History */}
+      <div className="bg-white/[0.01] border border-white/5 rounded-2xl relative overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
+        <div className="p-4 border-b border-white/5 flex justify-between items-center relative z-10 shrink-0">
+          <h3 className="text-sm font-bold text-white uppercase tracking-widest">Inspection History</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto hide-scrollbar relative z-10">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-white/[0.02] sticky top-0 backdrop-blur-md z-20">
+              <tr>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5">Date</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5">Type</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5 text-center">Qty Inspected</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5">Result</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5 text-right">Rework / Scrap</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {project.inspectionHeaders?.map((ins: any) => (
+                <tr key={ins.id} className="hover:bg-white/[0.02] transition-colors group">
+                  <td className="p-3 text-xs text-slate-300 font-mono">{new Date(ins.createdAt).toLocaleDateString()}</td>
+                  <td className="p-3">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border ${ins.inspectionType === 'FINAL_PDI' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                      {ins.inspectionType?.replace('_', ' ') || 'IN PROCESS'}
+                    </span>
+                  </td>
+                  <td className="p-3 text-sm font-bold text-white font-mono text-center">{ins.inspectedQty}</td>
+                  <td className="p-3">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border ${ins.result === 'PASS' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : ins.result === 'REWORK' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                      {ins.result}
+                    </span>
+                  </td>
+                  <td className="p-3 text-xs text-slate-400 text-right font-mono flex items-center justify-end space-x-2">
+                    <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded text-[10px] font-bold">R: {ins.reworkQty}</span>
+                    <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded text-[10px] font-bold">S: {ins.scrapQty}</span>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {project.inspectionHeaders?.map((ins: any) => (
-                  <tr key={ins.id} className="hover:bg-white/5">
-                    <td className="p-4 text-sm text-slate-300">{new Date(ins.createdAt).toLocaleDateString()}</td>
-                    <td className="p-4">
-                      <span className={`text-xs font-bold px-2 py-1 rounded ${ins.inspectionType === 'FINAL_PDI' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                        {ins.inspectionType?.replace('_', ' ') || 'IN PROCESS'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm font-medium text-white">{ins.inspectedQty}</td>
-                    <td className="p-4">
-                      <span className={`text-xs font-bold px-2 py-1 rounded ${ins.result === 'PASS' ? 'bg-emerald-500/20 text-emerald-400' : ins.result === 'REWORK' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}`}>
-                        {ins.result}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-slate-400">
-                      R: {ins.reworkQty} | S: {ins.scrapQty}
-                    </td>
-                  </tr>
-                ))}
-                {(!project.inspectionHeaders || project.inspectionHeaders.length === 0) && (
-                  <tr><td colSpan={5} className="p-8 text-center text-slate-500">No inspections logged yet.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+              ))}
+              {(!project.inspectionHeaders || project.inspectionHeaders.length === 0) && (
+                <tr>
+                  <td colSpan={5} className="p-8">
+                    <div className="flex flex-col items-center justify-center text-slate-500 opacity-50">
+                       <CheckSquare className="h-8 w-8 mb-3" />
+                       <span className="text-[11px] font-bold uppercase tracking-wider">No inspections logged</span>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-              <h3 className="text-xl font-bold text-white flex items-center">
-                <CheckSquare className="w-5 h-5 mr-2 text-emerald-400" />
-                Log Quality Inspection
-              </h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">&times;</button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-lg p-6 animate-slide-up border border-emerald-500/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
             
-            <form onSubmit={handleLogInspection} className="p-6 space-y-4">
+            <h3 className="text-lg font-bold text-white mb-5 relative z-10 flex items-center">
+              <CheckSquare className="w-5 h-5 mr-2 text-emerald-400" />
+              Log Quality Inspection
+            </h3>
+            
+            <form onSubmit={handleLogInspection} className="space-y-4 relative z-10">
               
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Inspection Type</label>
-                <select className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Inspection Type</label>
+                <select className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   value={inspectionType} onChange={e => setInspectionType(e.target.value)} required>
                   <option value="IN_PROCESS">In-Process Inspection</option>
                   <option value="FINAL_PDI">Final Pre-Dispatch Inspection (PDI)</option>
@@ -152,8 +169,8 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
 
               {inspectionType === 'IN_PROCESS' && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Routing Operation</label>
-                  <select className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Routing Operation</label>
+                  <select className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                     value={selectedOperation} onChange={e => setSelectedOperation(e.target.value)} required>
                     <option value="">-- Select Operation --</option>
                     {routingOperations.map(op => (
@@ -165,36 +182,36 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Inspected Qty</label>
-                  <input type="number" min="1" className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Inspected Qty</label>
+                  <input type="number" min="1" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 font-mono"
                     value={qty.inspected} onChange={e => setQty({...qty, inspected: parseInt(e.target.value) || 0})} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-emerald-500 mb-1">Passed Qty</label>
-                  <input type="number" min="0" className="w-full bg-emerald-900/20 border border-emerald-500/30 rounded-lg px-4 py-2 text-emerald-400 font-bold"
+                  <label className="block text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1.5">Passed Qty</label>
+                  <input type="number" min="0" className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500"
                     value={qty.passed} onChange={e => setQty({...qty, passed: parseInt(e.target.value) || 0})} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-amber-500 mb-1">Rework Qty</label>
-                  <input type="number" min="0" className="w-full bg-amber-900/20 border border-amber-500/30 rounded-lg px-4 py-2 text-amber-400"
+                  <label className="block text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1.5">Rework Qty</label>
+                  <input type="number" min="0" className="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-2.5 text-sm text-amber-400 font-mono focus:outline-none focus:border-amber-500"
                     value={qty.rework} onChange={e => setQty({...qty, rework: parseInt(e.target.value) || 0})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-red-500 mb-1">Scrap Qty</label>
-                  <input type="number" min="0" className="w-full bg-red-900/20 border border-red-500/30 rounded-lg px-4 py-2 text-red-400"
+                  <label className="block text-[10px] font-bold text-red-500 uppercase tracking-wider mb-1.5">Scrap Qty</label>
+                  <input type="number" min="0" className="w-full bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-2.5 text-sm text-red-400 font-mono focus:outline-none focus:border-red-500"
                     value={qty.scrap} onChange={e => setQty({...qty, scrap: parseInt(e.target.value) || 0})} />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Remarks</label>
-                <textarea className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white h-24"
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Remarks</label>
+                <textarea className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 min-h-[80px]"
                   value={remarks} onChange={e => setRemarks(e.target.value)} placeholder="Measurements, deviations, or NCR details..."></textarea>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-white/5">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-300 hover:text-white">Cancel</button>
-                <button type="submit" className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg">Save Inspection</button>
+              <div className="pt-4 flex space-x-3 border-t border-white/10">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-sm text-white transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all">Save Inspection</button>
               </div>
             </form>
           </div>

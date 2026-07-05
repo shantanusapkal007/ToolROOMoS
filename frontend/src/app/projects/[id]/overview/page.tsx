@@ -49,19 +49,19 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
   const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
   return (
-    <div className="flex-1 overflow-y-auto pb-32 px-4 animate-fade-in">
+    <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col min-h-0">
       
       {/* Project Workflow Controller */}
-      <div className="glass-panel mb-6 relative overflow-hidden group" style={{ padding: '0' }}>
+      <div className="bg-white/[0.01] border border-white/5 rounded-2xl mb-4 relative overflow-hidden group shrink-0" style={{ padding: '0' }}>
         {/* Ambient glow */}
         <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500/8 rounded-full blur-[80px] -mr-16 -mt-16 pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-blue-500/5 rounded-full blur-[60px] pointer-events-none" />
         
         {/* Header bar */}
-        <div className="flex items-center justify-between px-6 pt-4 pb-4 border-b border-white/5 relative z-10">
+        <div className="flex items-center justify-between px-5 pt-3 pb-3 border-b border-white/5 relative z-10 bg-black/20">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500/30 to-blue-500/20 border border-purple-500/40 flex items-center justify-center shadow-[0_0_12px_rgba(168,85,247,0.2)]">
-              <Target className="w-3.5 h-3.5 text-purple-400" />
+            <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500/30 to-blue-500/20 border border-purple-500/40 flex items-center justify-center shadow-[0_0_12px_rgba(168,85,247,0.2)]">
+              <Target className="w-3 h-3 text-purple-400" />
             </div>
             <div>
               <h3 className="text-xs font-black text-white tracking-widest uppercase">Project Workflow Controller</h3>
@@ -81,9 +81,9 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* Stage Rail */}
-        <div className="relative px-6 pt-5 pb-6 overflow-x-auto hide-scrollbar">
+        <div className="relative px-5 pt-3 pb-4 overflow-x-auto hide-scrollbar">
           {/* Background track */}
-          <div className="absolute left-6 right-6 top-[calc(1.25rem+14px)] h-0.5 bg-white/5 rounded-full" />
+          <div className="absolute left-5 right-5 top-[calc(0.75rem+10px)] h-0.5 bg-white/5 rounded-full" />
           
           <div className="relative flex items-start justify-between min-w-[800px]">
             {PROJECT_STAGES.map((stage, idx) => {
@@ -147,17 +147,17 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                    
                    {/* Node circle */}
                    <motion.div
-                     whileHover={{ scale: 1.2 }}
+                     whileHover={{ scale: 1.1 }}
                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                     className="relative z-10 flex items-center justify-center mb-3 cursor-default"
+                     className="relative z-10 flex items-center justify-center mb-2 cursor-default"
                      style={{
-                       width: 28,
-                       height: 28,
+                       width: 20,
+                       height: 20,
                        borderRadius: '50%',
                        border: `2px solid ${isCurrent || isPast ? color?.border : 'rgba(255,255,255,0.1)'}`,
                        background: isCurrent || isPast ? color?.bg : 'rgba(255,255,255,0.02)',
                        color: isCurrent || isPast ? color?.text : 'rgba(100,116,139,1)',
-                       boxShadow: isCurrent ? `0 0 18px ${color?.glow}, inset 0 0 8px rgba(255,255,255,0.05)` : 'none',
+                       boxShadow: isCurrent ? `0 0 14px ${color?.glow}, inset 0 0 6px rgba(255,255,255,0.05)` : 'none',
                        transform: isCurrent ? 'scale(1.2)' : 'scale(1)',
                      }}
                    >
@@ -177,7 +177,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                    <div
                      className="text-center leading-tight px-0.5"
                      style={{
-                       fontSize: '9px',
+                       fontSize: '8px',
                        fontWeight: isCurrent ? 800 : 600,
                        letterSpacing: '0.04em',
                        color: isCurrent ? color?.text : isPast ? 'rgba(148,163,184,0.8)' : 'rgba(71,85,105,1)',
@@ -196,80 +196,77 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
       </div>
 
       {/* Top KPI Row */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-3 gap-4 mb-4 shrink-0">
         
-        <div className="glass-panel p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-emerald-500/20 transition-all duration-700"></div>
-          <div className="flex justify-between items-start relative z-10">
+        <div className="bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.05)] hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:bg-emerald-500/20 transition-all duration-500"></div>
+          <div className="flex justify-between items-start relative z-10 mb-2">
             <div>
-              <p className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-1">Net Profit</p>
-              <h3 className="text-3xl font-bold text-white tracking-tight">{formatCurrency(profit)}</h3>
+              <p className="text-[10px] font-bold text-emerald-500 tracking-wider uppercase mb-0.5">Net Profit</p>
+              <h3 className="text-xl font-bold text-emerald-400 tracking-tight font-mono">{formatCurrency(profit)}</h3>
             </div>
-            <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
-              <TrendingUp className="h-5 w-5" />
+            <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-emerald-400">
+              <TrendingUp className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-4 relative z-10">
-            <span className={`text-sm font-semibold ${profitMargin >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+          <div className="relative z-10">
+            <span className={`text-xs font-bold ${profitMargin >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {profitMargin.toFixed(1)}% Margin
             </span>
           </div>
         </div>
 
-        <div className="glass-panel p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all duration-500">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/20 transition-all duration-700"></div>
-          <div className="flex justify-between items-start relative z-10">
+        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-xl -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="flex justify-between items-start relative z-10 mb-2">
             <div>
-              <p className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-1">Total Cost</p>
-              <h3 className="text-3xl font-bold text-white tracking-tight">{formatCurrency(totalCost)}</h3>
+              <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-0.5">Total Cost</p>
+              <h3 className="text-xl font-bold text-white tracking-tight font-mono">{formatCurrency(totalCost)}</h3>
             </div>
-            <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 text-blue-400">
-              <DollarSign className="h-5 w-5" />
+            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400">
+              <DollarSign className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-4 relative z-10">
-             <span className="text-sm text-slate-400 font-medium">Accumulated Expenses</span>
+          <div className="relative z-10">
+             <span className="text-xs text-slate-400 font-medium">Accumulated Expenses</span>
           </div>
         </div>
 
-
-
-        <div className="glass-panel p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all duration-500">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-orange-500/20 transition-all duration-700"></div>
-          <div className="flex justify-between items-start relative z-10">
+        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-orange-500/10 rounded-full blur-xl -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="flex justify-between items-start relative z-10 mb-2">
             <div>
-              <p className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-1">Delivery Date</p>
-              <h3 className="text-xl font-bold text-white tracking-tight mt-1">
+              <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-0.5">Delivery Date</p>
+              <h3 className="text-lg font-bold text-white tracking-tight mt-0.5">
                 {formatDate(project.deliveryDate)}
               </h3>
             </div>
-            <div className="p-3 bg-orange-500/10 rounded-xl border border-orange-500/20 text-orange-400">
-              <CalendarDays className="h-5 w-5" />
+            <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20 text-orange-400">
+              <CalendarDays className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-4 relative z-10">
-             <span className="text-sm text-slate-400 font-medium">Target Deadline</span>
+          <div className="relative z-10">
+             <span className="text-xs text-slate-400 font-medium">Target Deadline</span>
           </div>
         </div>
 
       </div>
 
-      <div className="grid grid-cols-3 gap-8">
+      <div className="grid grid-cols-3 gap-4">
         
         {/* Main Left Area */}
-        <div className="col-span-2 space-y-8">
+        <div className="col-span-2 space-y-4">
           
           {/* Engineering & Documents */}
-          <div className="glass-panel p-8 relative overflow-hidden">
+          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 relative overflow-hidden">
              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-3xl blur-2xl pointer-events-none"></div>
              
-             <div className="flex justify-between items-end mb-6 relative z-10">
+             <div className="flex justify-between items-end mb-4 relative z-10">
                <div>
-                  <h3 className="text-lg font-bold text-white flex items-center">
-                    <FileText className="w-5 h-5 mr-3 text-blue-400" />
+                  <h3 className="text-base font-bold text-white flex items-center">
+                    <FileText className="w-4 h-4 mr-2 text-blue-400" />
                     Engineering Documents
                   </h3>
-                  <p className="text-sm text-slate-400 mt-1">Drawings and technical specifications attached to this project.</p>
                </div>
              </div>
 
@@ -297,13 +294,13 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
           </div>
 
           {/* Activity Feed */}
-          <div className="glass-panel p-8 relative">
-            <h3 className="text-lg font-bold text-white flex items-center mb-6">
-              <Activity className="w-5 h-5 mr-3 text-emerald-400" />
+          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 relative">
+            <h3 className="text-base font-bold text-white flex items-center mb-4">
+              <Activity className="w-4 h-4 mr-2 text-emerald-400" />
               Live Activity Feed
             </h3>
             
-            <div className="space-y-6 max-h-80 overflow-y-auto hide-scrollbar pr-4 relative">
+            <div className="space-y-4 max-h-[300px] overflow-y-auto hide-scrollbar pr-2 relative">
               {/* Vertical line timeline */}
               <div className="absolute left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-emerald-500/50 via-blue-500/20 to-transparent"></div>
 
@@ -330,21 +327,21 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
 
         {/* Right Sidebar - Cost Ledger Pipeline */}
         <div className="col-span-1">
-          <div className="glass-panel p-8 sticky top-6">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-lg font-bold text-white flex items-center">
-                <BarChart2 className="w-5 h-5 mr-3 text-purple-400" />
+          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 sticky top-4">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-base font-bold text-white flex items-center">
+                <BarChart2 className="w-4 h-4 mr-2 text-purple-400" />
                 Cost Ledger
               </h3>
               <button 
                 onClick={() => router.push(`/projects/${project.id}/finance`)}
-                className="text-xs font-bold text-purple-400 hover:text-purple-300 uppercase tracking-widest flex items-center transition-colors"
+                className="text-[10px] font-bold text-purple-400 hover:text-purple-300 uppercase tracking-widest flex items-center transition-colors bg-purple-500/10 px-2 py-1 rounded"
               >
-                Full Ledger <ChevronRight className="w-4 h-4 ml-1" />
+                Full Ledger <ChevronRight className="w-3 h-3 ml-1" />
               </button>
             </div>
             
-            <div className="relative space-y-8 before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
+            <div className="relative space-y-5 before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
               
               {/* Pipeline Nodes */}
               {[
@@ -365,11 +362,11 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               
             </div>
 
-            <div className="mt-8 pt-6 border-t border-white/10">
-               <div className="bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-2xl relative overflow-hidden">
-                 <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
-                 <p className="text-xs font-bold text-emerald-400 tracking-widest uppercase mb-1">Total Actual Cost</p>
-                 <p className="text-3xl font-bold text-white tracking-tight drop-shadow-md">
+            <div className="mt-6 pt-5 border-t border-white/5">
+               <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl relative overflow-hidden shadow-inner">
+                 <div className="absolute -right-4 -top-4 w-16 h-16 bg-emerald-500/20 rounded-full blur-xl pointer-events-none"></div>
+                 <p className="text-[10px] font-bold text-emerald-500 tracking-widest uppercase mb-0.5">Total Actual Cost</p>
+                 <p className="text-2xl font-bold text-emerald-400 tracking-tight font-mono">
                    {formatCurrency(totalCost)}
                  </p>
                </div>
