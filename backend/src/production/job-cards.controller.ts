@@ -12,28 +12,42 @@ export class JobCardsController {
   constructor(private readonly jobCardsService: JobCardsService) {}
 
   @Get()
-  getJobCardsForProject(@Param('projectId') projectId: string) {
-    return this.jobCardsService.getJobCardsForProject(projectId);
+  async getJobCardsForProject(@Param('projectId') projectId: string) {
+    const data = await this.jobCardsService.getJobCardsForProject(projectId);
+    return {
+      status: 'success',
+      message: 'Job cards retrieved successfully.',
+      data,
+    };
   }
 
   @Post('generate')
   @Roles('ADMIN', 'PRODUCTION')
-  generateJobCards(
+  async generateJobCards(
     @Param('projectId') projectId: string,
     @CurrentUser() user: any
   ) {
-    return this.jobCardsService.generateJobCardsFromRouting(projectId);
+    const data = await this.jobCardsService.generateJobCardsFromRouting(projectId);
+    return {
+      status: 'success',
+      message: 'Job cards generated successfully.',
+      data,
+    };
   }
 
   @Patch(':id/status')
   @Roles('ADMIN', 'PRODUCTION')
-  updateJobCardStatus(
+  async updateJobCardStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('status') status: string,
     @Body('operatorId') operatorId?: string,
     @CurrentUser() user?: any
   ) {
-    // In job cards service, we don't have updatedBy currently in job_cards table, but I'll pass it if needed, or just let service handle it
-    return this.jobCardsService.updateJobCardStatus(id, status, operatorId);
+    const data = await this.jobCardsService.updateJobCardStatus(id, status, operatorId);
+    return {
+      status: 'success',
+      message: 'Job card status updated successfully.',
+      data,
+    };
   }
 }

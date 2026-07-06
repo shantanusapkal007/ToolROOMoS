@@ -353,6 +353,24 @@ export class ProjectsService {
               throw new BadRequestException('Cannot mark Invoiced: No Invoice generated.');
             }
           }
+          else if (toStage === 'PAYMENT_PENDING') {
+            const invoice = await tx.invoiceHeader.count({ where: { projectId: id } });
+            if (invoice === 0) {
+              throw new BadRequestException('Cannot enter Payment Pending: No Invoice generated.');
+            }
+          }
+          else if (toStage === 'CLOSED') {
+            const invoice = await tx.invoiceHeader.count({ where: { projectId: id } });
+            if (invoice === 0) {
+              throw new BadRequestException('Cannot close project: No invoices have been generated.');
+            }
+            const unpaidInvoices = await tx.invoiceHeader.count({
+              where: { projectId: id, status: { not: 'PAID' } }
+            });
+            if (unpaidInvoices > 0) {
+              throw new BadRequestException('Cannot close project: Settlement required. Unpaid invoices remain.');
+            }
+          }
         }
       }
 

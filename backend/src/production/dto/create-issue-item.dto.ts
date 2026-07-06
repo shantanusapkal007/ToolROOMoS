@@ -1,7 +1,7 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateIssueItemDto {
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
   inventoryBatchId: string;
 

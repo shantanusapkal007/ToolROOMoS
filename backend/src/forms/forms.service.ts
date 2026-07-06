@@ -11,11 +11,14 @@ export class FormsService {
       update: {
         name,
         schema,
+        updatedAt: new Date(),
       },
       create: {
+        id: formId,
         formId,
         name,
         schema,
+        updatedAt: new Date(),
       },
     });
   }

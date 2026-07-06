@@ -12,12 +12,20 @@ export class InventoryService {
       },
       include: {
         material: true,
-        warehouse: true,
+        location: {
+          include: {
+            warehouse: true,
+          },
+        },
         grnItem: {
           include: {
             grnHeader: {
               include: {
-                supplier: true
+                poHeader: {
+                  include: {
+                    vendor: true
+                  }
+                }
               }
             }
           }

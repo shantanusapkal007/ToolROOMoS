@@ -17,6 +17,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectStatus } from '@prisma/client';
 
 import { WorkflowOrchestratorService } from './workflow-orchestrator.service';
@@ -98,7 +99,7 @@ export class ProjectsController {
   @Roles('ADMIN', 'SALES_ENGINEER')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: any,
+    @Body() dto: UpdateProjectDto,
     @CurrentUser() user: any,
   ) {
     const data = await this.projectsService.update(id, dto, user.userId);
@@ -237,6 +238,21 @@ export class ProjectsController {
     return {
       status: 'success',
       message: 'Task updated successfully.',
+      data,
+    };
+  }
+
+  @Patch(':id/tasks/:taskId/status')
+  @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
+  async updateTaskStatus(
+    @Param('taskId') taskId: string,
+    @Body('status') status: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.projectsService.updateTask(taskId, { status }, user.userId);
+    return {
+      status: 'success',
+      message: 'Task status updated successfully.',
       data,
     };
   }

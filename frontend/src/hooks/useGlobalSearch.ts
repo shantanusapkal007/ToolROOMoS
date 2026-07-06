@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '../lib/api';
 
 export interface SearchResult {
   id: string;
@@ -13,9 +14,8 @@ export const useGlobalSearch = (query: string) => {
     queryKey: ['globalSearch', query],
     queryFn: async () => {
       if (!query || query.length < 2) return [];
-      const res = await fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(query)}`);
-      if (!res.ok) throw new Error('Failed to fetch search results');
-      return (await res.json()) as SearchResult[];
+      const res = await api.get(`/search?q=${encodeURIComponent(query)}`);
+      return res.data as SearchResult[];
     },
     enabled: query.length >= 2,
     staleTime: 60000,

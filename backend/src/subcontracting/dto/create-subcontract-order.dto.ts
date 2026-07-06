@@ -1,12 +1,12 @@
-import { IsString, IsNumber, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsArray, ValidateNested, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class SubcontractOrderItemDto {
-  @IsString()
+  @IsUUID()
   @IsOptional()
   inventoryBatchId?: string;
 
-  @IsString()
+  @IsUUID()
   operationId: string;
 
   @IsNumber()
@@ -21,7 +21,7 @@ class SubcontractOrderItemDto {
 }
 
 export class CreateSubcontractOrderDto {
-  @IsString()
+  @IsUUID()
   vendorId: string;
 
   @IsString()

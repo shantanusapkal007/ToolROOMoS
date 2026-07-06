@@ -121,7 +121,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
       
       const promises = chunk.map(async (record, index) => {
         try {
-          await api.post(`/api/v1${registry.apiEndpoint}`, record);
+          await api.post(registry.apiEndpoint, record);
           successCount++;
           setProgress(p => ({ ...p, current: successCount }));
         } catch (err: any) {

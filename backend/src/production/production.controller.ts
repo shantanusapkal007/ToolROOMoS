@@ -5,31 +5,34 @@ import {
   Body,
   Param,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { MaterialIssuesService } from './material-issues.service';
+import { MaterialReturnsService } from './material-returns.service';
 import { ProductionOperationsService } from './production-operations.service';
 
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { CreateMsdrDto } from './dto/create-msdr.dto';
+import { CreateReturnDto } from './dto/create-return.dto';
 
 @Controller('api/v1/projects/:projectId')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductionController {
   constructor(
     private readonly issueService: MaterialIssuesService,
+    private readonly returnService: MaterialReturnsService,
     private readonly msdrService: ProductionOperationsService,
-    
   ) {}
 
   // Material Issue routes
   @Post('material-issues')
   @Roles('ADMIN', 'PRODUCTION')
   async issueMaterial(
-    @Param('projectId') projectId: string,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: CreateIssueDto,
     @CurrentUser() user: any,
   ) {
@@ -42,7 +45,7 @@ export class ProductionController {
   }
 
   @Get('material-issues')
-  async getMaterialIssues(@Param('projectId') projectId: string) {
+  async getMaterialIssues(@Param('projectId', ParseUUIDPipe) projectId: string) {
     const data = await this.issueService.getMaterialIssues(projectId);
     return {
       status: 'success',
@@ -54,11 +57,11 @@ export class ProductionController {
   @Post('material-returns')
   @Roles('ADMIN', 'PRODUCTION')
   async returnMaterial(
-    @Param('projectId') projectId: string,
-    @Body() dto: { issueId: string; returnQty: number; remarks: string },
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Body() dto: CreateReturnDto,
     @CurrentUser() user: any,
   ) {
-    const data = await this.returnService.returnMaterial(projectId, dto.issueId, dto.returnQty, dto.remarks, user.userId);
+    const data = await this.returnService.returnMaterial(projectId, dto.issueId, dto.returnQty, dto.remarks || '', user.userId);
     return {
       status: 'success',
       message: 'Material returned successfully.',
@@ -70,7 +73,7 @@ export class ProductionController {
   @Post('machine-shop-reports')
   @Roles('ADMIN', 'PRODUCTION')
   async logMachineShopReport(
-    @Param('projectId') projectId: string,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: CreateMsdrDto,
     @CurrentUser() user: any,
   ) {
@@ -83,7 +86,7 @@ export class ProductionController {
   }
 
   @Get('machine-shop-reports')
-  async getMachineShopReports(@Param('projectId') projectId: string) {
+  async getMachineShopReports(@Param('projectId', ParseUUIDPipe) projectId: string) {
     const data = await this.msdrService.getMachineShopReports(projectId);
     return {
       status: 'success',

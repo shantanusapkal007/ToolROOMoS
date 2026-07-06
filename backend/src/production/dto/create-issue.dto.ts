@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateIssueItemDto } from './create-issue-item.dto';
 
@@ -11,7 +11,7 @@ export class CreateIssueDto {
   @IsOptional()
   remarks?: string;
 
-  @IsString()
+  @IsUUID()
   @IsOptional()
   warehouseId?: string;
 

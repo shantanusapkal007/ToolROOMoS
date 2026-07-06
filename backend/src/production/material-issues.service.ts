@@ -84,9 +84,12 @@ export class MaterialIssuesService {
           },
         });
 
-        // 5. Update Inventory Batch Quantity
-        await tx.inventoryBatch.update({
-          where: { id: item.inventoryBatchId },
+        // 5. Update Inventory Batch Quantity with atomic concurrency check
+        const updateBatchCount = await tx.inventoryBatch.updateMany({
+          where: {
+            id: item.inventoryBatchId,
+            availableQty: { gte: item.issuedQty },
+          },
           data: {
             currentQty: { decrement: item.issuedQty },
             availableQty: { decrement: item.issuedQty },
@@ -95,8 +98,12 @@ export class MaterialIssuesService {
           },
         });
 
+        if (updateBatchCount.count === 0) {
+          throw new BadRequestException(`Insufficient stock or concurrent modification in Batch ${batch.batchNumber}. Available: ${batch.availableQty}, Requested: ${item.issuedQty}`);
+        }
 
-        // 6. Update Inventory Stock (Layer 4 - Events)
+
+        // 6. Update Inventory Stock (Layer 4 - Events) with atomic concurrency check
         const currentStock = await tx.inventoryStock.findUnique({
           where: {
             materialId_warehouseId: {
@@ -110,18 +117,21 @@ export class MaterialIssuesService {
           throw new BadRequestException(`Insufficient stock in warehouse ${warehouse.warehouseCode} for material ${batch.materialId}. Available: ${currentStock?.availableQuantity || 0}, Requested: ${item.issuedQty}`);
         }
 
-        await tx.inventoryStock.update({
+        const updateStockCount = await tx.inventoryStock.updateMany({
           where: {
-            materialId_warehouseId: {
-              materialId: batch.materialId,
-              warehouseId: warehouse.id,
-            },
+            materialId: batch.materialId,
+            warehouseId: warehouse.id,
+            availableQuantity: { gte: item.issuedQty },
           },
           data: {
             currentQuantity: { decrement: item.issuedQty },
             availableQuantity: { decrement: item.issuedQty },
           },
         });
+
+        if (updateStockCount.count === 0) {
+          throw new BadRequestException(`Insufficient stock in warehouse ${warehouse.warehouseCode} for material ${batch.materialId}. Requested: ${item.issuedQty}`);
+        }
 
         // 7. Record Inventory Transaction
         await tx.inventoryTransaction.create({

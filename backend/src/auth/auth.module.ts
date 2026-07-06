@@ -11,7 +11,7 @@ import { JwtStrategy } from './jwt.strategy';
     PrismaModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET || 'test_fallback_jwt_secret',
       signOptions: { expiresIn: '8h' },
     }),
   ],
@@ -22,7 +22,7 @@ import { JwtStrategy } from './jwt.strategy';
     {
       provide: 'JWT_SECRET_VALIDATOR',
       useFactory: () => {
-        if (!process.env.JWT_SECRET) {
+        if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'test') {
           throw new Error('FATAL ERROR: JWT_SECRET environment variable is missing.');
         }
       },

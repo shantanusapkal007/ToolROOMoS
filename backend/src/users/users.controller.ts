@@ -14,6 +14,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('api/v1/users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,7 +24,7 @@ export class UsersController {
 
   @Post()
   @Roles('ADMIN')
-  async create(@Body() dto: any) {
+  async create(@Body() dto: CreateUserDto) {
     const data = await this.usersService.create(dto);
     return {
       status: 'success',
@@ -56,7 +58,7 @@ export class UsersController {
 
   @Put(':id')
   @Roles('ADMIN')
-  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: any) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateUserDto) {
     const data = await this.usersService.update(id, dto);
     return {
       status: 'success',
