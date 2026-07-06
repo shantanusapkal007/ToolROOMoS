@@ -85,22 +85,19 @@ export class RoutingService {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: {
-        drawings: { where: { status: 'APPROVED' } },
         billOfMaterialHeaders: { where: { status: 'APPROVED' } },
         routingHeaders: { where: { id: routingId } }
       }
     });
 
-    const isDrawingApproved = (project?.drawings?.length ?? 0) > 0;
     const isBomComplete = (project?.billOfMaterialHeaders?.length ?? 0) > 0;
     const routing = project?.routingHeaders[0];
 
     const isRoutingValid = !!routing && routing.status !== 'OBSOLETE';
 
     return {
-      isValid: isDrawingApproved && isBomComplete && isRoutingValid,
+      isValid: isBomComplete && isRoutingValid,
       gates: {
-        drawingApproved: isDrawingApproved,
         bomComplete: isBomComplete,
         routingComplete: isRoutingValid
       }

@@ -11,10 +11,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
-import { DrawingsService } from './drawings.service';
 import { BomsService } from './boms.service';
 import { RoutingService } from './routing.service';
-import { CreateDrawingDto } from './dto/create-drawing.dto';
 import { CreateBomDto } from './dto/create-bom.dto';
 import { CreateRoutingDto } from './dto/create-routing.dto';
 
@@ -22,51 +20,9 @@ import { CreateRoutingDto } from './dto/create-routing.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class EngineeringController {
   constructor(
-    private readonly drawingsService: DrawingsService,
     private readonly bomsService: BomsService,
     private readonly routingService: RoutingService,
   ) {}
-
-  // Drawings APIs
-  @Post('drawings')
-  @Roles('ADMIN', 'ENGINEERING')
-  async uploadDrawing(
-    @Param('projectId') projectId: string,
-    @Body() dto: CreateDrawingDto,
-    @CurrentUser() user: any,
-  ) {
-    const data = await this.drawingsService.uploadDrawing(projectId, dto, user.userId);
-    return {
-      status: 'success',
-      message: 'Drawing uploaded successfully.',
-      data,
-    };
-  }
-
-  @Get('drawings')
-  async getDrawings(@Param('projectId') projectId: string) {
-    const data = await this.drawingsService.getDrawings(projectId);
-    return {
-      status: 'success',
-      message: 'Drawings retrieved successfully.',
-      data,
-    };
-  }
-
-  @Put('drawings/:drawingId/approve')
-  @Roles('ADMIN', 'ENGINEERING')
-  async approveDrawing(
-    @Param('projectId') projectId: string,
-    @Param('drawingId') drawingId: string,
-    @CurrentUser() user: any,
-  ) {
-    const data = await this.drawingsService.approveDrawing(projectId, drawingId, user.userId);
-    return {
-      status: 'success',
-      message: 'Drawing approved successfully.',
-      data,
-    };
-  }
 
   // BOM APIs
   @Post('bom')

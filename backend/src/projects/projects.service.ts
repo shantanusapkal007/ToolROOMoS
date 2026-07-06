@@ -214,7 +214,6 @@ export class ProjectsService {
         projectCostSummary: true,
         projectTimeline: { orderBy: { transitionedAt: 'desc' } },
         projectActivities: { orderBy: { performedAt: 'desc' }, take: 10 },
-        drawings: true,
         billOfMaterialHeaders: true,
         purchaseOrderHeaders: true,
         goodsReceiptHeaders: true,
@@ -223,6 +222,7 @@ export class ProjectsService {
         inspectionHeaders: true,
         dispatchNotes: true,
         invoiceHeaders: true,
+        routingHeaders: true,
         projectTasks: { orderBy: { startDate: 'asc' } },
         inventoryTransactions: {
           include: {

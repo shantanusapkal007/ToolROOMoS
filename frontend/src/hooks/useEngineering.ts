@@ -88,19 +88,4 @@ export function useApproveRouting(projectId: string) {
   });
 }
 
-export function useUploadDrawing(projectId: string) {
-  const queryClient = useQueryClient();
-  const { success, error } = useToast();
 
-  return useMutation({
-    mutationFn: (data: any) => EngineeringService.uploadDrawing(projectId, data),
-    onSuccess: () => {
-      // Invalidate project to fetch new drawing list
-      // In a real app we'd have a drawing query key, but we rely on project details here
-      success('Drawing Uploaded', 'Successfully attached drawing.');
-    },
-    onError: (err: any) => {
-      error('Upload Failed', err.message || 'An error occurred');
-    },
-  });
-}

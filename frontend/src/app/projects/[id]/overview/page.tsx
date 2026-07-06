@@ -270,24 +270,37 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                </div>
              </div>
 
-             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
-              {(project.drawings && project.drawings.length > 0) ? project.drawings.map((drw: any) => (
-                <div key={drw.id} className="p-5 rounded-2xl bg-[#0B1018]/60 border border-white/10 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-pointer group">
-                  <div className="bg-blue-500/10 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-300">
-                    <FileText className="h-6 w-6 text-blue-400" />
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+              {project.billOfMaterialHeaders && project.billOfMaterialHeaders.length > 0 && (
+                <div className="p-4 rounded-xl bg-[#0B1018]/60 border border-white/10 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-pointer group">
+                  <div className="bg-blue-500/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                    <FileText className="h-5 w-5 text-blue-400" />
                   </div>
-                  <p className="font-semibold text-white tracking-wide">{drw.drawingNumber}</p>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs font-bold text-slate-500 uppercase">Rev {drw.revision}</span>
-                    <span className="text-xs text-blue-400 font-medium flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      View <ChevronRight className="w-3 h-3 ml-1" />
-                    </span>
+                  <p className="font-semibold text-white text-xs tracking-wide">{project.billOfMaterialHeaders[0].documentNumber || 'Bill of Materials'}</p>
+                  <div className="flex justify-between items-center mt-2 text-[10px]">
+                    <span className="font-bold text-slate-500 uppercase">Rev {project.billOfMaterialHeaders[0].revision}</span>
+                    <span className="text-blue-400 font-bold uppercase">{project.billOfMaterialHeaders[0].status}</span>
                   </div>
                 </div>
-              )) : (
-                <div className="col-span-3 text-center py-8 bg-white/5 rounded-2xl border border-white/5 border-dashed">
-                  <FileText className="h-8 w-8 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400">No engineering documents uploaded yet.</p>
+              )}
+
+              {project.routingHeaders && project.routingHeaders.length > 0 && (
+                <div className="p-4 rounded-xl bg-[#0B1018]/60 border border-white/10 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-pointer group">
+                  <div className="bg-blue-500/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                    <FileText className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <p className="font-semibold text-white text-xs tracking-wide">{project.routingHeaders[0].documentNumber || 'Routing Operations'}</p>
+                  <div className="flex justify-between items-center mt-2 text-[10px]">
+                    <span className="font-bold text-slate-500 uppercase">Rev {project.routingHeaders[0].revision}</span>
+                    <span className="text-blue-400 font-bold uppercase">{project.routingHeaders[0].status}</span>
+                  </div>
+                </div>
+              )}
+
+              {(!project.billOfMaterialHeaders?.length && !project.routingHeaders?.length) && (
+                <div className="col-span-2 text-center py-6 bg-white/5 rounded-xl border border-white/5 border-dashed">
+                  <FileText className="h-7 w-7 text-slate-600 mx-auto mb-2" />
+                  <p className="text-slate-400 text-xs">No planning documents initialized yet.</p>
                 </div>
               )}
             </div>

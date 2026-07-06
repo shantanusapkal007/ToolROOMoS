@@ -12,7 +12,7 @@ import { useProject } from "../../../../hooks/useProjects";
 import { useMasterData } from "../../../../hooks/useMasterData";
 import { 
   useProjectBOM, useProjectRouting, useUpdateBOM, useUpdateRouting, 
-  useApproveBOM, useApproveRouting, useUploadDrawing 
+  useApproveBOM, useApproveRouting 
 } from "../../../../hooks/useEngineering";
 
 export default function EngineeringTab({ params }: { params: Promise<{ id: string }> }) {
@@ -36,12 +36,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
   const updateRoutingMutation = useUpdateRouting(resolvedParams.id);
   const approveBOMMutation = useApproveBOM(resolvedParams.id);
   const approveRoutingMutation = useApproveRouting(resolvedParams.id);
-  const uploadDrawingMutation = useUploadDrawing(resolvedParams.id);
-
   // Modals & States
-  const [showDrawingModal, setShowDrawingModal] = useState(false);
-  const [drawingNum, setDrawingNum] = useState("");
-
   const [showBomModal, setShowBomModal] = useState(false);
   const [bomItems, setBomItems] = useState([{ materialId: "", requiredQty: 1, estimatedCost: 0 }]);
 
@@ -52,18 +47,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
 
-  // --- Actions ---
-  const handleUploadDrawing = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await uploadDrawingMutation.mutateAsync({
-        drawingNumber: drawingNum,
-        fileUrl: `s3://toolroomos/drawings/${drawingNum.toLowerCase()}.dxf`,
-      });
-      setShowDrawingModal(false);
-      refetchProject();
-    } catch (err: any) {}
-  };
+
 
   const handleSubmitBom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,10 +88,9 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const isDrawingComplete = project.drawings && project.drawings.length > 0;
   const isBomComplete = activeBom?.approvalStatus === 'APPROVED';
   const isRoutingComplete = activeRouting?.approvalStatus === 'APPROVED';
-  const isFullyApproved = isDrawingComplete && isBomComplete && isRoutingComplete;
+  const isFullyApproved = isBomComplete && isRoutingComplete;
 
   return (
     <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col h-full min-h-0">
@@ -157,30 +140,11 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
 
       {activeTab === 'sequence' ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
-            {/* Step 1: Drawing */}
-            <div className={`p-4 rounded-xl border ${isDrawingComplete ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-blue-500/30 bg-blue-950/10'} relative flex flex-col justify-between`}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+            {/* Step 1: BOM */}
+            <div className={`p-4 rounded-xl border ${isBomComplete ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-blue-500/30 bg-blue-950/10'} relative flex flex-col justify-between`}>
               <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
                 <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">1</span>
-                Customer Drawing
-              </h3>
-              {isDrawingComplete ? (
-                <div className="text-[11px] font-bold text-emerald-400 flex items-center mt-2">
-                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                  Rev {project.drawings?.[0]?.revision} Approved
-                </div>
-              ) : (
-                <button onClick={() => setShowDrawingModal(true)} className="mt-2 w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">
-                  Upload Drawing
-                </button>
-              )}
-            </div>
-
-            {/* Step 2: BOM */}
-            <div className={`p-4 rounded-xl border ${isBomComplete ? 'border-emerald-500/30 bg-emerald-950/10' : (!isDrawingComplete ? 'border-white/5 bg-white/5 opacity-50' : 'border-blue-500/30 bg-blue-950/10')} relative flex flex-col justify-between`}>
-              {!isDrawingComplete && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] rounded-xl"><Lock className="text-white/30 w-4 h-4" /></div>}
-              <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
-                <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">2</span>
                 Material Plan
               </h3>
               {isBomComplete ? (
@@ -199,11 +163,11 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
               )}
             </div>
 
-            {/* Step 3: Routing */}
+            {/* Step 2: Routing */}
             <div className={`p-4 rounded-xl border ${isRoutingComplete ? 'border-emerald-500/30 bg-emerald-950/10' : (!isBomComplete ? 'border-white/5 bg-white/5 opacity-50' : 'border-blue-500/30 bg-blue-950/10')} relative flex flex-col justify-between`}>
               {!isBomComplete && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] rounded-xl"><Lock className="text-white/30 w-4 h-4" /></div>}
               <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
-                <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">3</span>
+                <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">2</span>
                 Machine Routing
               </h3>
               {isRoutingComplete ? (
@@ -220,11 +184,11 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
               )}
             </div>
 
-            {/* Step 4: Approval */}
+            {/* Step 3: Approval */}
             <div className={`p-4 rounded-xl border ${isFullyApproved ? 'border-emerald-500/30 bg-emerald-950/10' : (!activeRouting ? 'border-white/5 bg-white/5 opacity-50' : 'border-orange-500/30 bg-orange-950/10')} relative flex flex-col justify-between`}>
               {!activeRouting && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] rounded-xl"><Lock className="text-white/30 w-4 h-4" /></div>}
               <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
-                <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">4</span>
+                <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">3</span>
                 Cost Baseline
               </h3>
               {isFullyApproved ? (
@@ -310,25 +274,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
         />
       )}
 
-      {/* Modals */}
-      {showDrawingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
-          <div className="glass-modal w-full max-w-sm p-6 animate-slide-up border border-blue-500/20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
-            <h3 className="text-lg font-bold text-white mb-5 relative z-10">Import CAD Drawing</h3>
-            <form onSubmit={handleUploadDrawing} className="space-y-4 relative z-10">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Drawing Reference</label>
-                <input type="text" value={drawingNum} onChange={(e) => setDrawingNum(e.target.value)} required className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50" />
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button type="button" onClick={() => setShowDrawingModal(false)} className="flex-1 px-4 py-2 bg-white/5 text-white rounded-xl text-sm font-bold">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] font-bold text-white rounded-xl text-sm">Upload</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
 
       {showBomModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">

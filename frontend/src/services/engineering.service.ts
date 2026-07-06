@@ -29,10 +29,5 @@ export const EngineeringService = {
   approveRouting: async (projectId: string, routingId: string): Promise<any> => {
     const res = await api.put(`projects/${projectId}/routing/${routingId}/approve`, {});
     return res.data;
-  },
-  
-  uploadDrawing: async (projectId: string, data: any): Promise<any> => {
-    const res = await api.post(`projects/${projectId}/drawings`, data);
-    return res.data;
   }
 };

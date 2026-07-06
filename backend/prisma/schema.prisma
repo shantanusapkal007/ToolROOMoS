@@ -394,7 +394,6 @@ model Project {
   approvals             Approval[]
   billOfMaterialHeaders BillOfMaterialHeader[]
   dispatchNotes         DispatchNote[]
-  drawings              Drawing[]
   goodsReceiptHeaders   GoodsReceiptHeader[]
   inspectionHeaders     InspectionHeader[]
   inventoryReservations InventoryReservation[]
@@ -457,23 +456,7 @@ model DocumentRevision {
   @@map("document_revisions")
 }
 
-model Drawing {
-  id             String         @id @default(uuid())
-  projectId      String
-  drawingNumber  String
-  revision       Int            @default(1)
-  fileUrl        String
-  status         DocumentStatus @default(DRAFT)
-  approvalStatus ApprovalStatus @default(PENDING)
-  remarks        String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  createdBy      String?
-  updatedBy      String?
-  project        Project        @relation(fields: [projectId], references: [id])
 
-  @@map("drawings")
-}
 
 model BillOfMaterialHeader {
   id                 String               @id @default(uuid())

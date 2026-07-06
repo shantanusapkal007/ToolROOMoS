@@ -792,7 +792,6 @@ async function main() {
   await prisma.routingHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
   await prisma.billOfMaterialItem.deleteMany({ where: { bomHeader: { project: { projectNumber: { in: projectNumbers } } } } });
   await prisma.billOfMaterialHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.drawing.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
   await prisma.inspectionMeasurement.deleteMany({ where: { inspectionHeader: { project: { projectNumber: { in: projectNumbers } } } } });
   await prisma.inspectionHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
   await prisma.ncrReport.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
@@ -902,21 +901,6 @@ async function main() {
     }
 
     // --- TRANSACTIONAL SECTIONS ---
-
-    // 1. Drawing Section
-    const drawing = await prisma.drawing.create({
-      data: {
-        projectId: project.id,
-        drawingNumber: `DRW-${project.projectNumber}-01`,
-        revision: 1,
-        fileUrl: `http://localhost:4000/drawings/drw-${project.projectNumber.toLowerCase()}-01.pdf`,
-        status: 'APPROVED',
-        approvalStatus: 'APPROVED',
-        remarks: 'Initial drawing package released',
-        createdBy: 'SEED',
-        updatedBy: 'SEED',
-      },
-    });
 
     // 2. BOM Section
     const bomHeader = await prisma.billOfMaterialHeader.create({
