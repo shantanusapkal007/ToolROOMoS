@@ -11,14 +11,17 @@ export const UserManagement = () => {
   const users = result?.data || [];
 
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', role: 'PRODUCTION', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', role: 'PRODUCTION', password: '', hourlyRate: 0 });
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createUserMutation.mutateAsync(formData);
+      await createUserMutation.mutateAsync({
+        ...formData,
+        hourlyRate: Number(formData.hourlyRate || 0)
+      });
       setShowInviteModal(false);
-      setFormData({ name: '', email: '', role: 'PRODUCTION', password: '' });
+      setFormData({ name: '', email: '', role: 'PRODUCTION', password: '', hourlyRate: 0 });
     } catch (err) {}
   };
 
@@ -46,6 +49,7 @@ export const UserManagement = () => {
               <tr>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">User</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Role</th>
+                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Hourly Rate (₹)</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Status</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs text-right">Actions</th>
               </tr>
@@ -82,6 +86,9 @@ export const UserManagement = () => {
                       <Shield className="w-3 h-3 mr-1" />
                       {user.role || 'N/A'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 font-mono font-bold text-white text-xs">
+                    ₹{Number(user.hourlyRate || 0).toFixed(2)}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
@@ -122,6 +129,13 @@ export const UserManagement = () => {
                 ]}
                 value={formData.role} 
                 onChange={(e) => setFormData({...formData, role: e.target.value})}
+              />
+              <Input 
+                label="Hourly Cost Rate (₹)" 
+                type="number" 
+                required 
+                value={formData.hourlyRate} 
+                onChange={(e) => setFormData({...formData, hourlyRate: Number(e.target.value)})} 
               />
               <div className="flex space-x-3 pt-4 border-t border-white/10">
                 <Button type="button" variant="ghost" onClick={() => setShowInviteModal(false)} className="flex-1">Cancel</Button>

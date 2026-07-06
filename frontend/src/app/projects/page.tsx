@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "../../components/layout/Sidebar";
 import { Plus, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { LoadingState } from "../../components/ui/LoadingState";
 import { formatDate } from "../../lib/formatters";
 import { useProjects, useCreateProject } from "../../hooks/useProjects";
 import { useMasterData } from "../../hooks/useMasterData";
+import { useUsers } from "../../hooks/useUsers";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProjectsPage() {
@@ -19,16 +20,26 @@ export default function ProjectsPage() {
   const createProjectMutation = useCreateProject();
   const router = useRouter();
 
+  const { data: usersResult } = useUsers();
+  const users = usersResult?.data || [];
+
   // New Project Form State
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [newProjectNumber, setNewProjectNumber] = useState("");
   const [newPartName, setNewPartName] = useState("");
   const [newCustomerPo, setNewCustomerPo] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [selectedProjectOwner, setSelectedProjectOwner] = useState("");
 
   if (customers && customers.length > 0 && !selectedCustomerId) {
     setSelectedCustomerId(customers[0].id);
   }
+
+  useEffect(() => {
+    if (users.length > 0 && !selectedProjectOwner) {
+      setSelectedProjectOwner(users[0].name);
+    }
+  }, [users, selectedProjectOwner]);
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +49,7 @@ export default function ProjectsPage() {
         partName: newPartName, 
         customerPoNumber: newCustomerPo,
         customerId: selectedCustomerId,
+        projectOwner: selectedProjectOwner,
         plantId: "PL-01",
       } as any);
       setShowNewProjectModal(false);
@@ -194,6 +206,38 @@ export default function ProjectsPage() {
                       onChange={e => setNewPartName(e.target.value)} 
                       required 
                     />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-micro text-zinc-400 mb-3">CUSTOMER</label>
+                    <select 
+                      className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-body text-white focus:border-blue-500 focus:bg-black/40 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none" 
+                      value={selectedCustomerId}
+                      onChange={e => setSelectedCustomerId(e.target.value)}
+                      required
+                    >
+                      {customers?.map((cust: any) => (
+                        <option key={cust.id} value={cust.id} className="bg-[#0B1018] text-white">
+                          {cust.companyName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-micro text-zinc-400 mb-3">MISSION OWNER</label>
+                    <select 
+                      className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-body text-white focus:border-blue-500 focus:bg-black/40 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none" 
+                      value={selectedProjectOwner}
+                      onChange={e => setSelectedProjectOwner(e.target.value)}
+                      required
+                    >
+                      {users?.map((user: any) => (
+                        <option key={user.id} value={user.name} className="bg-[#0B1018] text-white">
+                          {user.name} ({user.role})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 <div className="flex justify-end pt-8 gap-4 border-t border-white/10">

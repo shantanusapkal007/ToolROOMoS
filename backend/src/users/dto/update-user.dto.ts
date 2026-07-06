@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsEnum, IsUUID, IsIn } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsEnum, IsUUID, IsIn, IsNumber } from 'class-validator';
 import { SystemRole } from '@prisma/client';
 
 export class UpdateUserDto {
@@ -21,6 +21,10 @@ export class UpdateUserDto {
   @IsUUID()
   @IsOptional()
   plantId?: string;
+
+  @IsNumber()
+  @IsOptional()
+  hourlyRate?: number;
 
   @IsString()
   @IsOptional()

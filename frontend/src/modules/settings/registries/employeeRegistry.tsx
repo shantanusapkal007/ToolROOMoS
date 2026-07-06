@@ -14,6 +14,7 @@ export const employeeRegistry: EntityRegistry = {
     { key: 'lastName', label: 'Last Name' },
     { key: 'departmentId', label: 'Department' },
     { key: 'role', label: 'System Role' },
+    { key: 'hourlyRate', label: 'Hourly Rate (₹)' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
   ],
 

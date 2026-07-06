@@ -17,6 +17,13 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
   const [formData, setFormData] = useState<any>({});
   const [dynamicOptions, setDynamicOptions] = useState<Record<string, {label: string, value: string}[]>>({});
 
+  const normalizeList = (response: any) => {
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.data?.data)) return response.data.data;
+    if (Array.isArray(response)) return response;
+    return [];
+  };
+
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
@@ -31,8 +38,8 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
     fields.forEach(async (f) => {
       if (f.optionsEndpoint) {
         try {
-          const res = await api.get(f.optionsEndpoint);
-          const data = res.data?.data || res.data || [];
+          const res = await api.get(f.optionsEndpoint.replace(/^\/+/, ''));
+          const data = normalizeList(res);
           const opts = data.map((item: any) => ({
             label: String(item[f.optionsLabelKey || 'name'] || item.id),
             value: String(item[f.optionsValueKey || 'id'])

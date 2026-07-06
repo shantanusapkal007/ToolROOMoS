@@ -13,6 +13,7 @@ model User {
   name         String
   role         SystemRole @default(PRODUCTION)
   employeeId   String?    @unique
+  hourlyRate   Decimal    @default(0)
   status       String     @default("ACTIVE")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt

@@ -45,15 +45,39 @@ export class CostBaselineService {
       let estimatedOutsideProcessCost = 0; // TODO: Fetch from subcontracting if applicable in future
 
       if (activeRouting) {
-        // Assume standard shop labour rate of 250/hr if employee rate isn't mapped per operation
-        const standardLabourRate = 250; 
-        
         for (const op of activeRouting.operations) {
           const hours = op.estimatedHours.toNumber();
           const machineRate = op.plannedMachine?.hourlyRate?.toNumber() || 0;
           
           estimatedMachineCost += hours * machineRate;
-          estimatedLabourCost += hours * standardLabourRate;
+          
+          // Automation A: Dynamic labour rate lookup based on department average or project owner rate
+          let opLabourRate = 0;
+          if (op.plannedMachine?.departmentId) {
+            const deptEmployees = await tx.employee.findMany({
+              where: { departmentId: op.plannedMachine.departmentId, status: 'ACTIVE' },
+            });
+            const validRates = deptEmployees.map(e => e.hourlyRate.toNumber()).filter(r => r > 0);
+            if (validRates.length > 0) {
+              const sum = validRates.reduce((a, b) => a + b, 0);
+              opLabourRate = sum / validRates.length;
+            }
+          }
+
+          if (opLabourRate === 0 && project.projectOwner) {
+            const ownerUser = await tx.user.findFirst({
+              where: { name: { contains: project.projectOwner, mode: 'insensitive' } },
+            });
+            if (ownerUser && ownerUser.hourlyRate) {
+              opLabourRate = ownerUser.hourlyRate.toNumber();
+            }
+          }
+
+          if (opLabourRate === 0) {
+            opLabourRate = 250; // Standard fallback
+          }
+
+          estimatedLabourCost += hours * opLabourRate;
         }
       }
 

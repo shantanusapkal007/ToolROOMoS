@@ -28,14 +28,38 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const { success, error } = useToast();
 
+  const buildEndpoint = (suffix = '') => {
+    const base = registry.apiEndpoint.replace(/^\/+/, '');
+    return suffix ? `${base}${suffix}` : base;
+  };
+
+  const normalizeList = (response: any) => {
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.data?.data)) return response.data.data;
+    if (Array.isArray(response)) return response;
+    return [];
+  };
+
+  const preparePayload = (raw: any) => {
+    const payload: any = {};
+    registry.fields.forEach((field) => {
+      const value = raw[field.name];
+      if (value === '' || value === undefined || value === null) return;
+      payload[field.name] = field.type === 'number' ? Number(value) : value;
+    });
+    return payload;
+  };
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
       // Assuming all our master data APIs return { data: any[] } or an array directly
-      const res = await api.get(`${registry.apiEndpoint}?search=${searchQuery}`);
-      setData(res.data?.data || res.data || []);
+      const query = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
+      const res = await api.get(`${buildEndpoint()}${query}`);
+      setData(normalizeList(res));
     } catch (err: any) {
       console.error(`Failed to fetch ${registry.pluralName}`, err);
+      error('Load Failed', err.message || `Failed to load ${registry.pluralName}`);
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +92,7 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
   const handleDelete = async (record: any) => {
     if (confirm(`Are you sure you want to archive this ${registry.singularName}?`)) {
       try {
-        await api.delete(`${registry.apiEndpoint}/${record.id}`);
+        await api.delete(buildEndpoint(`/${record.id}`));
         success('Record Archived', `Successfully deleted ${registry.singularName}.`);
         fetchData();
       } catch (err: any) {
@@ -79,10 +103,11 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
 
   const handleSubmit = async (formData: any) => {
     try {
+      const payload = preparePayload(formData);
       if (editingRecord) {
-        await api.put(`${registry.apiEndpoint}/${editingRecord.id}`, formData);
+        await api.put(buildEndpoint(`/${editingRecord.id}`), payload);
       } else {
-        await api.post(registry.apiEndpoint, formData);
+        await api.post(buildEndpoint(), payload);
       }
       setIsModalOpen(false);
       success('Success', `Successfully saved ${registry.singularName}.`);

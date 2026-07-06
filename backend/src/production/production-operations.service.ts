@@ -116,6 +116,36 @@ export class ProductionOperationsService {
         },
       });
 
+      // Automation C: Cost Overrun Warning logs
+      if (routingOperation) {
+        const estMachine = routingOperation.estimatedHours.toNumber() * machine.hourlyRate.toNumber();
+        const estLabour = routingOperation.estimatedHours.toNumber() * 250; // standard estimation fallback
+        const estTotal = estMachine + estLabour;
+
+        if (totalOperationCost > estTotal) {
+          const overrun = totalOperationCost - estTotal;
+          
+          let opName = 'Machining';
+          if (routingOperation.operationId) {
+            const opDetails = await tx.operation.findUnique({
+              where: { id: routingOperation.operationId }
+            });
+            if (opDetails) {
+              opName = opDetails.operationName;
+            }
+          }
+
+          await tx.projectActivity.create({
+            data: {
+              projectId,
+              action: 'COST_OVERRUN_WARNING',
+              description: `[ALERT] Operation "${opName}" logged cost exceeded estimate by ₹${overrun.toFixed(2)} (Actual: ₹${totalOperationCost.toFixed(2)}, Est: ₹${estTotal.toFixed(2)})`,
+              performedBy: userId || 'SYSTEM',
+            }
+          });
+        }
+      }
+
       // Record Machine cost event
       await tx.projectCostEvent.create({
         data: {

@@ -3,13 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { Users, Briefcase, Plus, TrendingUp, Edit2, X } from 'lucide-react';
+import { Users, Briefcase, Plus, TrendingUp, Edit2, X, Search, Sliders, DollarSign } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/api';
 
 export default function HrDashboard() {
   const [employees, setEmployees] = useState<any[]>([]);
+  const [machines, setMachines] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'workforce' | 'directory'>('workforce');
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newWorker, setNewWorker] = useState({
@@ -23,19 +26,51 @@ export default function HrDashboard() {
   const { success, error } = useToast();
 
   useEffect(() => {
-    loadEmployees();
+    loadAllData();
   }, []);
+
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadEmployees(),
+        loadMachines(),
+        loadUsers()
+      ]);
+    } catch (err) {
+      console.error('Failed to load HR dashboard data', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadEmployees = async () => {
     try {
-      setLoading(true);
       const res = await api.get('/hr/employees');
       setEmployees(res.data?.data || res.data || []);
     } catch (err) {
-      console.error('Failed to load HR data', err);
+      console.error('Failed to load employees', err);
       setEmployees([]);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const loadMachines = async () => {
+    try {
+      const res = await api.get('/master-data/machines');
+      setMachines(res.data?.data || res.data || []);
+    } catch (err) {
+      console.error('Failed to load machines', err);
+      setMachines([]);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const res = await api.get('/users');
+      setUsers(res.data?.data || res.data || []);
+    } catch (err) {
+      console.error('Failed to load users', err);
+      setUsers([]);
     }
   };
 
@@ -45,7 +80,6 @@ export default function HrDashboard() {
 
   const handleAddWorker = async () => {
     try {
-      // For demo purposes, pick the first department ID available from existing employees
       const defaultDeptId = safeEmployees.length > 0 ? safeEmployees[0].departmentId : null;
       if (!defaultDeptId) {
         throw new Error("No departments available. Seed the database first.");
@@ -83,12 +117,28 @@ export default function HrDashboard() {
           }
         />
 
+        {/* Tab Selection */}
+        <div className="flex space-x-6 border-b border-white/5 mb-6">
+          <button 
+            onClick={() => setActiveTab('workforce')}
+            className={`pb-3 text-sm font-bold tracking-wider uppercase transition-colors relative ${activeTab === 'workforce' ? 'text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-white'}`}
+          >
+            Workforce Directory
+          </button>
+          <button 
+            onClick={() => setActiveTab('directory')}
+            className={`pb-3 text-sm font-bold tracking-wider uppercase transition-colors relative ${activeTab === 'directory' ? 'text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-white'}`}
+          >
+            Hourly Rates Consolidated
+          </button>
+        </div>
+
         {loading ? (
           <div className="animate-pulse flex flex-col space-y-4">
             <div className="h-32 bg-white/5 rounded-xl"></div>
             <div className="h-64 bg-white/5 rounded-xl"></div>
           </div>
-        ) : (
+        ) : activeTab === 'workforce' ? (
           <div className="space-y-8">
             
             {/* Internal Staff */}
@@ -120,6 +170,13 @@ export default function HrDashboard() {
             </div>
 
           </div>
+        ) : (
+          <HourlyRatesDirectoryTable 
+            employees={safeEmployees}
+            machines={machines}
+            users={users}
+            onReload={loadAllData}
+          />
         )}
       </div>
 
@@ -276,6 +333,223 @@ function WorkerCard({ worker, isExternal = false }: { worker: any, isExternal?: 
         <button className="flex items-center text-xs font-semibold text-orange-400 hover:text-orange-300">
           <TrendingUp className="w-3 h-3 mr-1" /> History
         </button>
+      </div>
+    </div>
+  );
+}
+
+function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { employees: any[], machines: any[], users: any[], onReload: () => void }) {
+  const [search, setSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('ALL');
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingRate, setEditingRate] = useState<number>(0);
+  const [saving, setSaving] = useState(false);
+  const { success, error } = useToast();
+
+  const directoryItems: any[] = [];
+  
+  employees.forEach(emp => {
+    directoryItems.push({
+      id: emp.id,
+      name: `${emp.firstName || ''} ${emp.lastName || emp.name || ''}`,
+      code: emp.employeeCode,
+      category: 'Labour',
+      type: emp.employeeType === 'EXTERNAL' ? 'External Contractor' : 'Internal Employee',
+      designation: emp.designation || 'Machinist / Operator',
+      rate: Number(emp.hourlyRate || 0),
+      rawEntity: emp
+    });
+  });
+
+  machines.forEach(mac => {
+    directoryItems.push({
+      id: mac.id,
+      name: mac.machineName,
+      code: mac.machineCode,
+      category: 'Machine',
+      type: mac.machineType,
+      designation: 'Shopfloor Asset',
+      rate: Number(mac.hourlyRate || 0),
+      rawEntity: mac
+    });
+  });
+
+  users.forEach(usr => {
+    directoryItems.push({
+      id: usr.id,
+      name: usr.name,
+      code: usr.email,
+      category: 'Owner',
+      type: usr.role,
+      designation: 'System Access User',
+      rate: Number(usr.hourlyRate || 0),
+      rawEntity: usr
+    });
+  });
+
+  const filtered = directoryItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.code.toLowerCase().includes(search.toLowerCase()) ||
+      item.designation.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesCategory = filterCategory === 'ALL' || item.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleEditRate = (item: any) => {
+    setEditingId(item.id);
+    setEditingRate(item.rate);
+  };
+
+  const handleSaveRate = async (item: any) => {
+    setSaving(true);
+    try {
+      if (item.category === 'Labour') {
+        await api.patch(`/hr/employees/${item.id}/rate`, { 
+          newRate: Number(editingRate), 
+          reason: 'Consolidated rates directory edit' 
+        });
+      } else if (item.category === 'Machine') {
+        await api.put(`/master-data/machines/${item.id}`, {
+          ...item.rawEntity,
+          hourlyRate: Number(editingRate)
+        });
+      } else if (item.category === 'Owner') {
+        await api.put(`/users/${item.id}`, {
+          ...item.rawEntity,
+          hourlyRate: Number(editingRate)
+        });
+      }
+      success('Rate Saved', `Successfully updated hourly rate to ₹${editingRate}`);
+      setEditingId(null);
+      onReload();
+    } catch (err: any) {
+      error('Save Failed', err.message || 'Failed to update hourly rate');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#0B1018]/50 border border-white/10 rounded-2xl p-6 relative overflow-hidden shadow-2xl backdrop-blur-2xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center border border-orange-500/20">
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white tracking-tight">Consolidated Hourly Rates</h3>
+            <p className="text-xs text-slate-400">View and update billing rates for all personnel, machines, and administrative owners.</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+            <input 
+              type="text"
+              placeholder="Search resource..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white text-xs focus:outline-none focus:border-orange-500 transition-colors"
+            />
+          </div>
+          <select
+            value={filterCategory}
+            onChange={e => setFilterCategory(e.target.value)}
+            className="bg-[#0B1018] border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-orange-500"
+          >
+            <option value="ALL">All Categories</option>
+            <option value="Labour">Labours</option>
+            <option value="Machine">Machines</option>
+            <option value="Owner">Owners</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-white/5">
+        <table className="w-full text-left text-xs whitespace-nowrap">
+          <thead className="bg-white/5 text-slate-400 border-b border-white/5 font-bold uppercase tracking-wider text-[10px]">
+            <tr>
+              <th className="px-6 py-4">Resource Code</th>
+              <th className="px-6 py-4">Resource Name</th>
+              <th className="px-6 py-4">Category</th>
+              <th className="px-6 py-4">Type / Role</th>
+              <th className="px-6 py-4">Designation</th>
+              <th className="px-6 py-4">Hourly Rate (₹)</th>
+              <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-slate-500 italic">No resources found matching filter.</td>
+              </tr>
+            ) : filtered.map(item => {
+              const isEditing = editingId === item.id;
+              return (
+                <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group">
+                  <td className="px-6 py-4 font-mono font-bold text-slate-400">{item.code}</td>
+                  <td className="px-6 py-4 font-semibold text-white">{item.name}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                      item.category === 'Labour' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                      item.category === 'Machine' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                      'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    }`}>
+                      {item.category}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-400 font-medium">{item.type}</td>
+                  <td className="px-6 py-4 text-slate-400">{item.designation}</td>
+                  <td className="px-6 py-4">
+                    {isEditing ? (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-white text-xs">₹</span>
+                        <input 
+                          type="number" 
+                          value={editingRate}
+                          onChange={e => setEditingRate(Number(e.target.value))}
+                          className="w-20 bg-black/50 border border-white/20 rounded px-2 py-1 text-white text-xs font-bold font-mono focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                    ) : (
+                      <span className="font-mono font-bold text-white text-xs">₹{item.rate.toFixed(2)}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    {isEditing ? (
+                      <div className="flex items-center justify-end space-x-2">
+                        <button 
+                          onClick={() => handleSaveRate(item)} 
+                          disabled={saving}
+                          className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded font-bold hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                        >
+                          {saving ? 'Saving...' : 'Save'}
+                        </button>
+                        <button 
+                          onClick={() => setEditingId(null)} 
+                          className="text-xs text-slate-400 hover:text-white px-1"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => handleEditRate(item)}
+                        className="p-1.5 hover:bg-white/10 rounded-md transition-colors inline-flex items-center"
+                        title="Edit Hourly Rate"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 text-slate-400 group-hover:text-white" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

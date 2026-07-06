@@ -69,12 +69,33 @@ export class MachinesService {
   }
 
   async update(id: string, dto: UpdateMachineDto, userId?: string) {
-    return this.prisma.machine.update({
-      where: { id },
-      data: {
-        ...dto,
-        updatedBy: userId,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const machine = await tx.machine.findUniqueOrThrow({ where: { id } });
+      const oldRate = machine.hourlyRate;
+      const newRate = dto.hourlyRate !== undefined ? Number(dto.hourlyRate) : undefined;
+
+      const updated = await tx.machine.update({
+        where: { id },
+        data: {
+          ...dto,
+          updatedBy: userId,
+        },
+      });
+
+      if (newRate !== undefined && Number(oldRate) !== Number(newRate)) {
+        await tx.costRateHistory.create({
+          data: {
+            entityType: 'MACHINE',
+            entityId: id,
+            oldRate,
+            newRate,
+            reason: 'Machine hourly rate updated',
+            recordedBy: userId || 'SYSTEM',
+          },
+        });
+      }
+
+      return updated;
     });
   }
 

@@ -13,6 +13,7 @@ import { Modal } from "../../../components/ui/Modal";
 import { useToast } from "../../../components/ui/Toast";
 import { Input } from "../../../components/ui/Input";
 import { useProject, useUpdateProject, useDeleteProject } from "../../../hooks/useProjects";
+import { useUsers } from "../../../hooks/useUsers";
 import { useRouter } from "next/navigation";
 
 export default function ProjectLayout({
@@ -29,6 +30,11 @@ export default function ProjectLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { success, error } = useToast();
+
+  const { data: usersResult } = useUsers();
+  const users = usersResult?.data || [];
+  const projectOwnerUser = users.find((u: any) => u.name === project?.projectOwner);
+  const ownerRate = projectOwnerUser?.hourlyRate ? Number(projectOwnerUser.hourlyRate) : 0;
 
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [targetDate, setTargetDate] = useState("");
@@ -136,6 +142,13 @@ export default function ProjectLayout({
                   <div className={`w-1.5 h-1.5 rounded-full mr-2 ${project.currentStage === 'INVOICED' ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]' : 'bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.8)]'}`} />
                   {project.currentStage}
                 </span>
+
+                {project.projectOwner && (
+                  <span className="flex items-center text-xs text-slate-300 font-mono bg-white/[0.03] border border-white/10 px-2.5 py-1 rounded-md shadow-sm">
+                    <span className="text-slate-500 mr-1.5">OWNER:</span> {project.projectOwner} 
+                    {ownerRate > 0 && <span className="text-emerald-400 ml-1.5 font-bold">₹{ownerRate}/hr</span>}
+                  </span>
+                )}
               </div>
             </div>
 

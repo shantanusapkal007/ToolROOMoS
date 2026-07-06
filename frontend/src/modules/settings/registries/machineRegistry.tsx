@@ -13,6 +13,7 @@ export const machineRegistry: EntityRegistry = {
     { key: 'machineName', label: 'Name' },
     { key: 'machineType', label: 'Type' },
     { key: 'plantId', label: 'Plant' },
+    { key: 'hourlyRate', label: 'Hourly Rate (₹)' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
   ],
 
