@@ -18,6 +18,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
   const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(resolvedParams.id);
   const { data: vendors } = useMasterData('vendors');
   const { data: materials } = useMasterData('materials');
+  const { data: warehouses } = useMasterData('warehouses');
   const { data: purchaseOrders } = usePurchaseOrders(resolvedParams.id);
 
   const createPOMutation = useCreatePurchaseOrder(resolvedParams.id);
@@ -71,10 +72,11 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
 
   const openGrnModal = (po: any) => {
     setSelectedPo(po);
+    const defaultWH = warehouses && warehouses.length > 0 ? warehouses[0].id : "DEFAULT-WH";
     setGrnData({
       grnNumber: `GRN-${Date.now().toString().slice(-6)}`,
       supplierChallan: "",
-      warehouseId: "DEFAULT-WH",
+      warehouseId: defaultWH,
       remarks: "",
       items: po.items.map((i: any) => ({
         poItemId: i.id,
@@ -278,7 +280,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                         <Select
                           value={item.materialId}
                           onChange={(e) => updatePoItem(index, 'materialId', e.target.value)}
-                          options={(materials || []).map((m: any) => ({ value: m.id, label: `${m.materialName} (${m.materialGrade})` }))}
+                          options={(materials || []).map((m: any) => ({ value: m.id, label: `${m.materialCode} (${m.materialGrade})` }))}
                         />
                       </div>
                       <div className="col-span-3">
@@ -347,7 +349,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             </div>
             
             <form onSubmit={handleProcessGrn} className="flex-1 min-h-0 flex flex-col space-y-6 relative z-10">
-              <div className="grid grid-cols-3 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
+              <div className="grid grid-cols-4 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
                 <Input
                   label="GRN Number"
                   value={grnData.grnNumber}
@@ -360,6 +362,21 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   onChange={(e) => setGrnData({...grnData, supplierChallan: e.target.value})}
                   required
                 />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Warehouse</label>
+                  <select 
+                    className="w-full bg-[#050A14] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all appearance-none" 
+                    value={grnData.warehouseId}
+                    onChange={e => setGrnData({...grnData, warehouseId: e.target.value})}
+                    required
+                  >
+                    {warehouses?.map((w: any) => (
+                      <option key={w.id} value={w.id} className="bg-[#0B1018] text-white">
+                        {w.warehouseName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <Input
                   label="Remarks (Optional)"
                   value={grnData.remarks}
@@ -376,7 +393,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                         <div className="col-span-6 border-b border-white/5 pb-3 mb-1 flex justify-between items-center">
                           <div>
                             <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded text-xs mr-3">ITEM {index + 1}</span>
-                            <span className="font-bold text-white text-lg">{poItem?.material?.materialName}</span>
+                            <span className="font-bold text-white text-lg">{poItem?.material?.materialCode} - {poItem?.material?.materialGrade}</span>
                           </div>
                           <div className="text-sm text-slate-400 bg-black/50 px-3 py-1.5 rounded-lg">
                             Ordered: <strong className="text-white">{poItem?.orderedQty}</strong> <span className="mx-2 opacity-50">|</span> Rate: <strong className="text-white">&#8377;{poItem?.agreedRate}</strong>

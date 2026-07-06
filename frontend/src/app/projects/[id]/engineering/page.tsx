@@ -286,7 +286,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
                   <div key={idx} className="flex space-x-4 items-center">
                     <select className="flex-1 bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
                       <option value="">Select Material...</option>
-                      {materials?.map((m: any) => <option key={m.id} value={m.id}>{m.materialName}</option>)}
+                      {materials?.map((m: any) => <option key={m.id} value={m.id}>{m.materialCode} - {m.materialGrade}</option>)}
                     </select>
                     <input type="number" className="w-24 bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
                   </div>
@@ -309,15 +309,43 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
           onSave={(nodes, edges) => {
             console.log('Saved Routing:', { nodes, edges });
             setShowRoutingModal(false);
-            updateRoutingMutation.mutate({ 
-              operations: nodes.filter((n: any) => n.type === 'operationNode').map((n: any, idx: number) => ({
+            
+            // Map fake opCodes and machineIds to real seeded DB UUIDs
+            const operations = nodes.filter((n: any) => n.type === 'operationNode').map((n: any, idx: number) => {
+              // Resolving operation id
+              let opId = operationsList && operationsList.length > 0 ? operationsList[0].id : undefined;
+              if (operationsList && operationsList.length > 0) {
+                const labelUpper = (n.data?.label || "").toUpperCase();
+                const matchedOp = operationsList.find((op: any) => 
+                  (op.operationName || "").toUpperCase().includes(labelUpper) || 
+                  labelUpper.includes((op.operationName || "").toUpperCase())
+                );
+                if (matchedOp) opId = matchedOp.id;
+                else if (n.data?.opCode === '20' && operationsList.length > 1) opId = operationsList[1].id;
+              }
+
+              // Resolving machine id
+              let machId = machines && machines.length > 0 ? machines[0].id : undefined;
+              if (machines && machines.length > 0) {
+                const typeUpper = (n.data?.type || "").toUpperCase();
+                const labelUpper = (n.data?.label || "").toUpperCase();
+                const matchedMach = machines.find((m: any) => 
+                  (m.machineType || "").toUpperCase().includes(typeUpper) ||
+                  (m.machineName || "").toUpperCase().includes(labelUpper)
+                );
+                if (matchedMach) machId = matchedMach.id;
+              }
+
+              return {
                 sequenceOrder: (idx + 1) * 10,
-                operationId: n.data.opCode,
-                machineId: '1',
+                operationId: opId,
+                machineId: machId,
                 estimatedSetupTime: n.data.setupTime,
                 estimatedHours: n.data.runTime
-              }))
+              };
             });
+
+            updateRoutingMutation.mutate({ operations });
             success('Routing Saved', 'Visual routing graph deployed successfully.');
           }}
         />

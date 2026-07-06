@@ -217,7 +217,8 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
                 </div>
                 
                 {issueItems.map((item, index) => {
-                  const selectedBatch = availableBatches.find((b: any) => b.id === item.inventoryBatchId);
+                  const batches = availableBatches || [];
+                  const selectedBatch = batches.find((b: any) => b.id === item.inventoryBatchId);
                   const availableQty = selectedBatch ? Number(selectedBatch.availableQty) : 0;
                   
                   return (
@@ -230,9 +231,9 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
                           onChange={(e) => updateIssueItem(index, 'inventoryBatchId', e.target.value)}
                         >
                           <option value="">Select Traceable Batch...</option>
-                          {availableBatches.map((b: any) => (
+                          {batches.map((b: any) => (
                             <option key={b.id} value={b.id}>
-                              {b.material?.materialName} | {b.batchNumber} | Heat: {b.heatNumber} (Avail: {b.availableQty})
+                              {b.material?.materialCode} ({b.material?.materialGrade}) | {b.batchNumber} | Heat: {b.heatNumber} (Avail: {b.availableQty})
                             </option>
                           ))}
                         </select>

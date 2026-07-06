@@ -42,11 +42,19 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
     loadMasterData();
   }, [projectId]);
 
+  const extractArray = (res: any) => {
+    const body = res?.data;
+    if (Array.isArray(body)) return body;
+    if (body && Array.isArray(body.data)) return body.data;
+    if (body && body.data && Array.isArray(body.data.data)) return body.data.data;
+    return [];
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
       const res = await api.get(`projects/${projectId}/subcontract-orders`);
-      setOrders(res.data || []);
+      setOrders(extractArray(res));
     } catch (err) {
       console.error(err);
     } finally {
@@ -57,11 +65,11 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
   const loadMasterData = async () => {
     try {
       const vRes = await api.get('master-data/vendors');
-      // Filter for subcontract vendors if we want, or show all
-      setVendors((vRes.data || []).filter((v: any) => v.vendorType !== 'MATERIAL_SUPPLIER'));
+      const vList = extractArray(vRes);
+      setVendors(vList.filter((v: any) => v.vendorType !== 'MATERIAL_SUPPLIER'));
 
       const oRes = await api.get('master-data/operations');
-      setOperations(oRes.data || []);
+      setOperations(extractArray(oRes));
     } catch (err) {
       console.error(err);
       // Fallback operations since endpoint doesn't exist yet

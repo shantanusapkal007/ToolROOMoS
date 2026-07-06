@@ -375,7 +375,7 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                         return (
                         <div key={item.id} className="flex justify-between items-center text-xs bg-black/20 p-1.5 rounded border border-white/5">
                            <span className="text-slate-300 font-semibold flex items-center">
-                             {item.inventoryBatch?.material?.materialName} <span className="text-amber-500/70 text-[10px] ml-2 border border-amber-500/20 px-1 rounded">BATCH: {item.inventoryBatch?.batchNumber}</span>
+                             {item.inventoryBatch?.material?.materialCode} ({item.inventoryBatch?.material?.materialGrade}) <span className="text-amber-500/70 text-[10px] ml-2 border border-amber-500/20 px-1 rounded">BATCH: {item.inventoryBatch?.batchNumber}</span>
                            </span>
                            <div className="flex items-center space-x-3">
                              <span className="font-mono text-purple-400 font-bold">{item.issuedQty} units</span>
@@ -476,7 +476,7 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
               <option value="">Choose Batch...</option>
               {availableBatches?.map((b: any) => (
                 <option key={b.id} value={b.id}>
-                  {b.material?.materialName} - {b.batchNumber} (Qty: {b.currentQty})
+                  {b.material?.materialCode} ({b.material?.materialGrade}) - {b.batchNumber} (Qty: {b.currentQty})
                 </option>
               ))}
             </select>
@@ -505,7 +505,7 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
             <h3 className="text-lg font-bold text-white mb-5 relative z-10">Return Material</h3>
             <div className="relative z-10">
                <div className="mb-4 text-xs text-slate-300 bg-white/5 p-3 rounded-lg border border-white/10">
-                 Returning: <span className="font-bold text-white">{selectedIssue?.inventoryBatch?.material?.materialName}</span>
+                 Returning: <span className="font-bold text-white">{selectedIssue?.inventoryBatch?.material?.materialCode} - {selectedIssue?.inventoryBatch?.material?.materialGrade}</span>
                  <br />
                  Max Available to Return: <span className="font-mono text-amber-400">{Number(selectedIssue?.issuedQty) - Number(selectedIssue?.returnedQty || 0)}</span> units
                </div>
@@ -712,7 +712,7 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                   {viewingIssueDetails.items?.map((item: any) => (
                     <div key={item.id} className="py-2.5 flex justify-between items-center text-xs">
                       <div className="flex flex-col">
-                        <span className="text-white font-bold">{item.inventoryBatch?.material?.materialName}</span>
+                        <span className="text-white font-bold">{item.inventoryBatch?.material?.materialCode} - {item.inventoryBatch?.material?.materialGrade}</span>
                         <span className="text-[10px] text-slate-500 font-mono mt-0.5">BATCH: {item.inventoryBatch?.batchNumber}</span>
                       </div>
                       <div className="text-right flex flex-col font-mono text-purple-400 font-bold">

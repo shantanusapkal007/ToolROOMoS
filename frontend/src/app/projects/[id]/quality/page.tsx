@@ -276,7 +276,7 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
                     value={selectedOperation} onChange={e => setSelectedOperation(e.target.value)} required>
                     <option value="">-- Select Operation --</option>
                     {routingOperations.map((op: any) => (
-                      <option key={op.id} value={op.id}>OP{op.operation?.operationNumber} - {op.operation?.name}</option>
+                      <option key={op.id} value={op.id}>{op.operation?.operationCode} - {op.operation?.operationName}</option>
                     ))}
                   </select>
                 </div>
