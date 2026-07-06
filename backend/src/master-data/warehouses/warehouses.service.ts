@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
@@ -8,18 +8,22 @@ export class WarehousesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createWarehouseDto: CreateWarehouseDto) {
-    const defaultPlant = await this.prisma.plant.findFirst();
-    if (!defaultPlant) {
-      throw new Error("No plant found in the database. Please run seed script first.");
+    const warehouseCode = createWarehouseDto.warehouseCode || createWarehouseDto.code;
+    const warehouseName = createWarehouseDto.warehouseName || createWarehouseDto.name;
+    const warehouseType = createWarehouseDto.warehouseType || createWarehouseDto.type;
+
+    if (!warehouseCode || !warehouseName) {
+      throw new BadRequestException('warehouseCode and warehouseName are required.');
     }
     
     return this.prisma.warehouse.create({
       data: {
-        warehouseCode: createWarehouseDto.code,
-        warehouseName: createWarehouseDto.name,
-        warehouseType: createWarehouseDto.type,
-        status: createWarehouseDto.status,
-        plantId: defaultPlant.id,
+        warehouseCode,
+        warehouseName,
+        warehouseType,
+        status: createWarehouseDto.status || 'ACTIVE',
+        remarks: createWarehouseDto.remarks,
+        plantId: createWarehouseDto.plantId,
       },
     });
   }
@@ -43,13 +47,19 @@ export class WarehousesService {
   }
 
   async update(id: string, updateWarehouseDto: UpdateWarehouseDto) {
+    const warehouseCode = updateWarehouseDto.warehouseCode || updateWarehouseDto.code;
+    const warehouseName = updateWarehouseDto.warehouseName || updateWarehouseDto.name;
+    const warehouseType = updateWarehouseDto.warehouseType || updateWarehouseDto.type;
+
     return this.prisma.warehouse.update({
       where: { id },
       data: {
-        warehouseCode: updateWarehouseDto.code,
-        warehouseName: updateWarehouseDto.name,
-        warehouseType: updateWarehouseDto.type,
+        warehouseCode,
+        warehouseName,
+        warehouseType,
         status: updateWarehouseDto.status,
+        plantId: updateWarehouseDto.plantId,
+        remarks: updateWarehouseDto.remarks,
       },
     });
   }

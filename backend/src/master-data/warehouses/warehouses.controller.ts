@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards , ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Put, Param, Delete, UseGuards , ParseUUIDPipe } from '@nestjs/common';
 import { WarehousesService } from './warehouses.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
@@ -33,6 +33,13 @@ export class WarehousesController {
   @Patch(':id')
   @Roles('ADMIN', 'STORES', 'PURCHASE')
   async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateWarehouseDto: UpdateWarehouseDto) {
+    const data = await this.warehousesService.update(id, updateWarehouseDto);
+    return { status: 'success', data };
+  }
+
+  @Put(':id')
+  @Roles('ADMIN', 'STORES', 'PURCHASE')
+  async replace(@Param('id', ParseUUIDPipe) id: string, @Body() updateWarehouseDto: UpdateWarehouseDto) {
     const data = await this.warehousesService.update(id, updateWarehouseDto);
     return { status: 'success', data };
   }

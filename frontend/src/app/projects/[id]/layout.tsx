@@ -14,6 +14,7 @@ import { useToast } from "../../../components/ui/Toast";
 import { Input } from "../../../components/ui/Input";
 import { useProject, useUpdateProject, useDeleteProject } from "../../../hooks/useProjects";
 import { useUsers } from "../../../hooks/useUsers";
+import { useMasterData } from "../../../hooks/useMasterData";
 import { useRouter } from "next/navigation";
 
 export default function ProjectLayout({
@@ -36,8 +37,17 @@ export default function ProjectLayout({
   const projectOwnerUser = users.find((u: any) => u.name === project?.projectOwner);
   const ownerRate = projectOwnerUser?.hourlyRate ? Number(projectOwnerUser.hourlyRate) : 0;
 
+  const { data: customers } = useMasterData('customers');
+
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [targetDate, setTargetDate] = useState("");
+  const [editProjectNumber, setEditProjectNumber] = useState("");
+  const [editPartName, setEditPartName] = useState("");
+  const [editCustomerPo, setEditCustomerPo] = useState("");
+  const [editCustomerId, setEditCustomerId] = useState("");
+  const [editProjectOwner, setEditProjectOwner] = useState("");
+  const [editPriority, setEditPriority] = useState("");
+  const [editRemarks, setEditRemarks] = useState("");
   
   // Deletion States
   const [showDeleteStep1, setShowDeleteStep1] = useState(false);
@@ -45,17 +55,33 @@ export default function ProjectLayout({
   const [deleteConfirmationName, setDeleteConfirmationName] = useState("");
 
   useEffect(() => {
-    if (project?.targetDeliveryDate && !targetDate) {
-      setTargetDate(new Date(project.targetDeliveryDate).toISOString().split('T')[0]);
+    if (project) {
+      if (project.targetDeliveryDate) {
+        setTargetDate(new Date(project.targetDeliveryDate).toISOString().split('T')[0]);
+      }
+      setEditProjectNumber(project.projectNumber || "");
+      setEditPartName(project.partName || "");
+      setEditCustomerPo(project.customerPoNumber || "");
+      setEditCustomerId(project.customerId || "");
+      setEditProjectOwner(project.projectOwner || "");
+      setEditPriority(project.priority || "NORMAL");
+      setEditRemarks(project.remarks || "");
     }
   }, [project]);
 
-  const handleUpdateDeliveryDate = async (e: React.FormEvent) => {
+  const handleUpdateProjectDetails = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project) return;
     try {
       await updateProjectMutation.mutateAsync({
-        targetDeliveryDate: targetDate
+        projectNumber: editProjectNumber,
+        partName: editPartName,
+        customerPoNumber: editCustomerPo,
+        customerId: editCustomerId,
+        projectOwner: editProjectOwner,
+        priority: editPriority as any,
+        targetDeliveryDate: targetDate,
+        remarks: editRemarks,
       });
       setShowDeliveryModal(false);
     } catch (err: any) {
@@ -198,16 +224,94 @@ export default function ProjectLayout({
         </div>
       </main>
 
-      {/* Delivery Target Modal */}
-      <Modal isOpen={showDeliveryModal} onClose={() => setShowDeliveryModal(false)} title="Update Delivery Target">
-        <form onSubmit={handleUpdateDeliveryDate} className="space-y-4">
-          <Input
-            label="Target Delivery Date"
-            type="date"
-            value={targetDate}
-            onChange={(e) => setTargetDate(e.target.value)}
-            required
-          />
+      {/* Edit Project Details Modal */}
+      <Modal isOpen={showDeliveryModal} onClose={() => setShowDeliveryModal(false)} title="Edit Mission Details">
+        <form onSubmit={handleUpdateProjectDetails} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Project Number"
+              value={editProjectNumber}
+              onChange={(e) => setEditProjectNumber(e.target.value)}
+              required
+            />
+            <Input
+              label="Part Name"
+              value={editPartName}
+              onChange={(e) => setEditPartName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Customer PO Number"
+              value={editCustomerPo}
+              onChange={(e) => setEditCustomerPo(e.target.value)}
+            />
+            <Input
+              label="Target Delivery Date"
+              type="date"
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Customer</label>
+              <select 
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-all appearance-none" 
+                value={editCustomerId}
+                onChange={e => setEditCustomerId(e.target.value)}
+                required
+              >
+                {customers?.map((cust: any) => (
+                  <option key={cust.id} value={cust.id} className="bg-[#0B1018] text-white">
+                    {cust.companyName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Mission Owner</label>
+              <select 
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-all appearance-none" 
+                value={editProjectOwner}
+                onChange={e => setEditProjectOwner(e.target.value)}
+                required
+              >
+                {users?.map((user: any) => (
+                  <option key={user.id} value={user.name} className="bg-[#0B1018] text-white">
+                    {user.name} ({user.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Priority</label>
+              <select 
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-all appearance-none" 
+                value={editPriority}
+                onChange={e => setEditPriority(e.target.value)}
+                required
+              >
+                <option value="LOW" className="bg-[#0B1018]">LOW</option>
+                <option value="NORMAL" className="bg-[#0B1018]">NORMAL</option>
+                <option value="HIGH" className="bg-[#0B1018]">HIGH</option>
+                <option value="CRITICAL" className="bg-[#0B1018]">CRITICAL</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Remarks</label>
+              <textarea 
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500 min-h-[80px] resize-none" 
+                value={editRemarks}
+                onChange={(e) => setEditRemarks(e.target.value)}
+                placeholder="Project notes/remarks..."
+              />
+            </div>
+          </div>
           <div className="flex space-x-3 pt-4 border-t border-white/10 mt-6">
             <button type="button" onClick={() => setShowDeliveryModal(false)} className="flex-1 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-medium text-white transition-colors">Cancel</button>
             <button type="submit" className="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all">Save Changes</button>

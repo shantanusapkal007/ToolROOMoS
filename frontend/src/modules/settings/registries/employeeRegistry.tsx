@@ -7,36 +7,31 @@ export const employeeRegistry: EntityRegistry = {
   singularName: 'Employee',
   pluralName: 'Employees',
   apiEndpoint: 'master-data/employees',
-  
+
   columns: [
     { key: 'employeeCode', label: 'Emp ID' },
-    { key: 'firstName', label: 'First Name' },
-    { key: 'lastName', label: 'Last Name' },
-    { key: 'departmentId', label: 'Department' },
-    { key: 'role', label: 'System Role' },
-    { key: 'hourlyRate', label: 'Hourly Rate (₹)' },
+    { key: 'name', label: 'Name' },
+    { key: 'designation', label: 'Designation' },
+    { key: 'employeeType', label: 'Type' },
+    { key: 'hourlyRate', label: 'Hourly Rate' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
   ],
 
   fields: [
     { name: 'employeeCode', label: 'Employee ID', type: 'text', required: true },
-    { name: 'firstName', label: 'First Name', type: 'text', required: true },
-    { name: 'lastName', label: 'Last Name', type: 'text', required: true },
-    { name: 'email', label: 'Email Address', type: 'email' },
-    { name: 'phone', label: 'Phone Number', type: 'text' },
-    { name: 'companyId', label: 'Company (Parent)', type: 'select', required: true, optionsEndpoint: 'master-data/companies', optionsLabelKey: 'companyName', optionsValueKey: 'id' },
+    { name: 'name', label: 'Employee Name', type: 'text', required: true },
+    { name: 'designation', label: 'Designation', type: 'text' },
     { name: 'departmentId', label: 'Department', type: 'select', required: true, optionsEndpoint: 'master-data/departments', optionsLabelKey: 'departmentName', optionsValueKey: 'id' },
-    { name: 'role', label: 'System Role', type: 'select', required: true, options: [
-      { label: 'Admin', value: 'ADMIN' },
-      { label: 'Manager', value: 'MANAGER' },
-      { label: 'Engineer', value: 'ENGINEER' },
-      { label: 'Operator', value: 'OPERATOR' }
+    { name: 'shiftId', label: 'Shift', type: 'select', optionsEndpoint: 'master-data/shifts', optionsLabelKey: 'shiftName', optionsValueKey: 'id' },
+    { name: 'employeeType', label: 'Employee Type', type: 'select', options: [
+      { label: 'Internal', value: 'INTERNAL' },
+      { label: 'External', value: 'EXTERNAL' },
     ] },
-    { name: 'hourlyRate', label: 'Hourly Cost Rate (₹)', type: 'number' },
+    { name: 'hourlyRate', label: 'Hourly Cost Rate', type: 'number', required: true },
+    { name: 'remarks', label: 'Remarks', type: 'textarea', gridCols: 2 },
     { name: 'status', label: 'Status', type: 'select', options: [
       { label: 'Active', value: 'ACTIVE' },
       { label: 'Inactive', value: 'INACTIVE' },
-      { label: 'On Leave', value: 'ON_LEAVE' }
     ] },
-  ]
+  ],
 };

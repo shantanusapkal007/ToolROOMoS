@@ -31,6 +31,7 @@ import { FormsModule } from './forms/forms.module';
 import { ReportsModule } from './reports/reports.module';
 import { UsersModule } from './users/users.module';
 import { InspectionStandardsModule } from './master-data/inspection-standards/inspection-standards.module';
+import { LookupsModule } from './master-data/lookups/lookups.module';
 
 /**
  * AppModule
@@ -66,6 +67,7 @@ import { InspectionStandardsModule } from './master-data/inspection-standards/in
     WarehousesModule,
     LocationsModule,
     OperationsModule,
+    LookupsModule,
 
     // Layer 2 — Business Objects
     ProjectsModule,

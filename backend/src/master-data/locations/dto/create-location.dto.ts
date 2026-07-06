@@ -1,14 +1,24 @@
-import { IsString, IsOptional, IsIn } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateLocationDto {
   @IsString()
-  code: string;
+  @IsOptional()
+  code?: string;
 
   @IsOptional()
   @IsString()
   name?: string;
 
   @IsString()
+  @IsOptional()
+  locationCode?: string;
+
+  @IsString()
+  @IsOptional()
+  locationName?: string;
+
+  @IsString()
+  @IsNotEmpty()
   warehouseId: string;
 
   @IsOptional()
@@ -26,4 +36,8 @@ export class CreateLocationDto {
   @IsOptional()
   @IsIn(['ACTIVE', 'INACTIVE'])
   status?: string;
+
+  @IsOptional()
+  @IsString()
+  remarks?: string;
 }

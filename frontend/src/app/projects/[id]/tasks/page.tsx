@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "@/lib/api";
-import { Plus, CheckSquare, Clock, AlignLeft, Target, CalendarDays, Activity } from 'lucide-react';
+import { Plus, CheckSquare, Clock, AlignLeft, Target, CalendarDays, Activity, Edit2, X } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
-import { useProjectTasks, useCreateTask, useUpdateTaskStatus } from '@/hooks/useTasks';
+import { useProjectTasks, useCreateTask, useUpdateTaskStatus, useUpdateTask, useDeleteTask } from '@/hooks/useTasks';
 
 export default function TasksTab({ params }: { params: Promise<{ id: string }> }) {
   const { success, error } = useToast();
@@ -13,7 +13,11 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
   const { data: tasks = [], isLoading: loading } = useProjectTasks(resolvedParams.id);
   const createTaskMutation = useCreateTask(resolvedParams.id);
   const updateTaskStatusMutation = useUpdateTaskStatus(resolvedParams.id);
+  const updateTaskMutation = useUpdateTask(resolvedParams.id);
+  const deleteTaskMutation = useDeleteTask(resolvedParams.id);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskData, setTaskData] = useState({
     taskName: '',
     description: '',
@@ -23,8 +27,6 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
     status: 'PENDING'
   });
 
-  // Handled by React Query hooks
-
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskData.taskName) return;
@@ -32,11 +34,17 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
     try {
       const payload = {
         ...taskData,
-        startDate: taskData.startDate ? new Date(taskData.startDate).toISOString() : undefined,
-        endDate: taskData.endDate ? new Date(taskData.endDate).toISOString() : undefined,
+        startDate: taskData.startDate ? new Date(taskData.startDate).toISOString() : null,
+        endDate: taskData.endDate ? new Date(taskData.endDate).toISOString() : null,
       };
 
-      await createTaskMutation.mutateAsync(payload);
+      if (editingTaskId) {
+        await updateTaskMutation.mutateAsync({ taskId: editingTaskId, data: payload });
+        setEditingTaskId(null);
+      } else {
+        await createTaskMutation.mutateAsync(payload);
+      }
+
       setTaskData({
         taskName: '',
         description: '',
@@ -46,9 +54,31 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
         status: 'PENDING'
       });
       setIsModalOpen(false);
-      success('Success', 'Task added');
     } catch (err: any) {
-      error('Error', 'Failed to create task');
+      // Handled by hook
+    }
+  };
+
+  const handleEditTaskClick = (task: any) => {
+    setTaskData({
+      taskName: task.taskName || '',
+      description: task.description || '',
+      assignedTo: task.assignedTo || '',
+      startDate: task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '',
+      endDate: task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : '',
+      status: task.status || 'PENDING'
+    });
+    setEditingTaskId(task.id);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      try {
+        await deleteTaskMutation.mutateAsync(taskId);
+      } catch (err: any) {
+        // Handled by hook
+      }
     }
   };
 
@@ -95,7 +125,18 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
             </div>
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setTaskData({
+                taskName: '',
+                description: '',
+                assignedTo: '',
+                startDate: '',
+                endDate: '',
+                status: 'PENDING'
+              });
+              setEditingTaskId(null);
+              setIsModalOpen(true);
+            }}
             className="group relative px-4 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(249,115,22,0.1)]"
           >
             <span className="relative z-10 flex items-center text-orange-400 font-bold text-xs">
@@ -153,6 +194,23 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
                   ) : (
                     <span className="text-[10px] uppercase tracking-wider text-slate-500">Unassigned</span>
                   )}
+                  
+                  <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-2 transition-opacity pl-2">
+                    <button 
+                      onClick={() => handleEditTaskClick(task)}
+                      className="p-1 hover:bg-white/10 rounded transition-colors text-slate-400 hover:text-white"
+                      title="Edit Task"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="p-1 hover:bg-red-500/20 rounded transition-colors text-slate-500 hover:text-red-400"
+                      title="Delete Task"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )) : (
@@ -195,7 +253,9 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
           <div className="glass-modal w-full max-w-lg p-6 animate-slide-up border border-orange-500/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
-            <h3 className="text-xl font-bold text-white mb-5 relative z-10">Create New Task</h3>
+            <h3 className="text-xl font-bold text-white mb-5 relative z-10">
+              {editingTaskId ? 'Edit Task Details' : 'Create New Task'}
+            </h3>
             
             <form onSubmit={handleCreateTask} className="space-y-4 relative z-10">
               <div className="grid grid-cols-1 gap-3">
@@ -282,7 +342,7 @@ export default function TasksTab({ params }: { params: Promise<{ id: string }> }
                   type="submit"
                   className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white rounded-xl text-sm font-bold shadow-[0_0_15px_rgba(249,115,22,0.3)] transition-all"
                 >
-                  Create Task
+                  {editingTaskId ? 'Save Changes' : 'Create Task'}
                 </button>
               </div>
             </form>

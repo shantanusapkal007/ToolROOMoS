@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
@@ -8,12 +8,20 @@ export class LocationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createLocationDto: CreateLocationDto) {
+    const locationCode = createLocationDto.locationCode || createLocationDto.code;
+    const locationName = createLocationDto.locationName || createLocationDto.name || locationCode;
+
+    if (!locationCode || !locationName) {
+      throw new BadRequestException('locationCode and locationName are required.');
+    }
+
     // Note: warehouseId must exist. Prisma relational constraints will enforce this.
     return this.prisma.storageLocation.create({
       data: {
-        locationCode: createLocationDto.code,
-        locationName: createLocationDto.name || createLocationDto.code,
-        status: createLocationDto.status,
+        locationCode,
+        locationName,
+        status: createLocationDto.status || 'ACTIVE',
+        remarks: createLocationDto.remarks,
         warehouse: {
           connect: { id: createLocationDto.warehouseId }
         }
@@ -41,12 +49,17 @@ export class LocationsService {
   }
 
   async update(id: string, updateLocationDto: UpdateLocationDto) {
+    const locationCode = updateLocationDto.locationCode || updateLocationDto.code;
+    const locationName = updateLocationDto.locationName || updateLocationDto.name;
+
     return this.prisma.storageLocation.update({
       where: { id },
       data: {
-        locationCode: updateLocationDto.code,
-        locationName: updateLocationDto.name,
+        locationCode,
+        locationName,
+        warehouseId: updateLocationDto.warehouseId,
         status: updateLocationDto.status,
+        remarks: updateLocationDto.remarks,
       },
     });
   }

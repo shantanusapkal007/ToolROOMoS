@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards , ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Put, Param, Delete, UseGuards , ParseUUIDPipe } from '@nestjs/common';
 import { LocationsService } from './locations.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
@@ -33,6 +33,13 @@ export class LocationsController {
   @Patch(':id')
   @Roles('ADMIN', 'STORES', 'PURCHASE')
   async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateLocationDto: UpdateLocationDto) {
+    const data = await this.locationsService.update(id, updateLocationDto);
+    return { status: 'success', data };
+  }
+
+  @Put(':id')
+  @Roles('ADMIN', 'STORES', 'PURCHASE')
+  async replace(@Param('id', ParseUUIDPipe) id: string, @Body() updateLocationDto: UpdateLocationDto) {
     const data = await this.locationsService.update(id, updateLocationDto);
     return { status: 'success', data };
   }

@@ -47,3 +47,36 @@ export function useUpdateTaskStatus(projectId: string) {
     },
   });
 }
+
+export function useUpdateTask(projectId: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: ({ taskId, data }: { taskId: string, data: any }) => 
+      TasksService.updateTask(projectId, taskId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.project(projectId) });
+      success('Task Updated', 'Task updated successfully.');
+    },
+    onError: (err: any) => {
+      error('Failed to update task', err.message || 'An error occurred');
+    },
+  });
+}
+
+export function useDeleteTask(projectId: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: (taskId: string) => TasksService.deleteTask(projectId, taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.project(projectId) });
+      success('Task Deleted', 'Task removed successfully.');
+    },
+    onError: (err: any) => {
+      error('Failed to delete task', err.message || 'An error occurred');
+    },
+  });
+}

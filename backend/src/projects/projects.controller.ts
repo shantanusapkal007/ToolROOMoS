@@ -257,6 +257,20 @@ export class ProjectsController {
     };
   }
 
+  @Delete(':id/tasks/:taskId')
+  @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
+  async deleteTask(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.projectsService.deleteTask(taskId, user.userId);
+    return {
+      status: 'success',
+      message: 'Task deleted successfully.',
+      data,
+    };
+  }
+
   // --- Closing Engine ---
   @Post(':id/close')
   @Roles('ADMIN', 'FINANCE')

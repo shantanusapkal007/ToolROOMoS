@@ -573,6 +573,12 @@ export class ProjectsService {
     });
   }
 
+  async deleteTask(taskId: string, userId?: string) {
+    return this.prisma.projectTask.delete({
+      where: { id: taskId },
+    });
+  }
+
   // --- Closing Engine ---
   async closeProject(projectId: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {

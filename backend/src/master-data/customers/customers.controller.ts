@@ -84,6 +84,17 @@ export class CustomersController {
     };
   }
 
+  @Put(':id')
+  @Roles('ADMIN', 'SALES_ENGINEER')
+  async replace(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCustomerDto) {
+    const data = await this.customersService.update(id, dto);
+    return {
+      status: 'success',
+      message: 'Customer updated successfully.',
+      data,
+    };
+  }
+
   @Delete(':id')
   @Roles('ADMIN')
   async remove(@Param('id', ParseUUIDPipe) id: string) {
