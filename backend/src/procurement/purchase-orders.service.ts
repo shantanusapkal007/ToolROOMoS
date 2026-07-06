@@ -128,7 +128,23 @@ export class PurchaseOrdersService {
   async getPurchaseOrders(projectId: string) {
     return this.prisma.purchaseOrderHeader.findMany({
       where: { projectId },
-      include: { vendor: true, items: { include: { material: true } } },
+      include: { 
+        vendor: true, 
+        items: { include: { material: true } },
+        goodsReceiptHeaders: {
+          include: {
+            items: {
+              include: {
+                poItem: {
+                  include: {
+                    material: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
     });
   }
 }

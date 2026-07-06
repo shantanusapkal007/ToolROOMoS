@@ -215,7 +215,29 @@ export class ProjectsService {
         projectTimeline: { orderBy: { transitionedAt: 'desc' } },
         projectActivities: { orderBy: { performedAt: 'desc' }, take: 10 },
         billOfMaterialHeaders: true,
-        purchaseOrderHeaders: true,
+        purchaseOrderHeaders: {
+          include: {
+            vendor: true,
+            items: {
+              include: {
+                material: true
+              }
+            },
+            goodsReceiptHeaders: {
+              include: {
+                items: {
+                  include: {
+                    poItem: {
+                      include: {
+                        material: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         goodsReceiptHeaders: true,
         materialIssueHeaders: true,
         machineShopReports: true,
