@@ -90,7 +90,8 @@ axiosInstance.interceptors.response.use(
     const status = error.response.status;
 
     // 401 Unauthorized handling (Token Refresh)
-    if (status === 401 && typeof window !== 'undefined') {
+    const isAuthRoute = originalRequest.url && (originalRequest.url.includes('auth/login') || originalRequest.url.includes('auth/refresh'));
+    if (status === 401 && !isAuthRoute && typeof window !== 'undefined') {
       const originalRequest = error.config as InternalAxiosRequestConfig & { _retryCount?: number, _isRetry?: boolean };
       
       if (!originalRequest._isRetry) {
