@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
-import { Package, Factory, Activity, Plus, PackageMinus } from "lucide-react";
+import { Package, Factory, Activity, Plus, PackageMinus, X, Info, Calendar } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject } from "../../../../hooks/useProjects";
@@ -18,6 +18,7 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
   const issueMaterialMutation = useIssueMaterial(resolvedParams.id);
   
   const [showIssueModal, setShowIssueModal] = useState(false);
+  const [viewingTxDetails, setViewingTxDetails] = useState<any>(null);
   const [issueNum, setIssueNum] = useState("");
   const [issueItems, setIssueItems] = useState([{ inventoryBatchId: "", issuedQty: 1, remarks: "" }]);
 
@@ -149,17 +150,26 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
                 </div>
 
                 {/* Right: Quantity & Ref */}
-                <div className="flex items-center justify-end w-[35%] relative z-10 text-right space-x-8">
+                <div className="flex items-center justify-end w-[40%] relative z-10 text-right space-x-6">
                   <div>
-                    <span className="block text-xs text-slate-400 uppercase tracking-wider mb-1">Ref Doc</span>
-                    <span className="text-sm font-mono text-slate-200 bg-black/40 px-2 py-1 rounded border border-white/5">{tx.referenceDocType}</span>
+                    <span className="block text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1 text-center">Ref Doc</span>
+                    <span className="text-xs font-mono text-slate-300 bg-black/40 px-2 py-1 rounded border border-white/5">{tx.referenceDocType}</span>
                   </div>
                   
-                  <div className="min-w-[100px]">
-                    <span className={`block text-2xl font-black tabular-nums tracking-tight ${tx.movementType === 'GRN_RECEIPT' ? 'text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]' : 'text-purple-400 drop-shadow-[0_0_12px_rgba(168,85,247,0.3)]'}`}>
+                  <div className="min-w-[80px]">
+                    <span className={`block text-xl font-black tabular-nums tracking-tight ${tx.movementType === 'GRN_RECEIPT' ? 'text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]' : 'text-purple-400 drop-shadow-[0_0_12px_rgba(168,85,247,0.3)]'}`}>
                       {tx.movementType === 'GRN_RECEIPT' ? '+' : '-'}{Number(tx.quantity).toFixed(2)}
                     </span>
-                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mt-0.5 block">Quantity</span>
+                    <span className="text-[9px] uppercase font-bold text-slate-500 tracking-widest mt-0.5 block">Quantity</span>
+                  </div>
+
+                  <div>
+                    <button
+                      onClick={() => setViewingTxDetails(tx)}
+                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-white rounded text-[10px] uppercase tracking-wider font-bold border border-white/10 transition-colors"
+                    >
+                      Details
+                    </button>
                   </div>
                 </div>
               </div>
@@ -281,6 +291,109 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
                 <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 font-bold text-sm text-white shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all">Approve Issue Slip</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Transaction Details Modal */}
+      {viewingTxDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-lg p-6 animate-slide-up border border-purple-500/20 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
+                  viewingTxDetails.movementType === 'GRN_RECEIPT' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                }`}>
+                  {viewingTxDetails.movementType === 'GRN_RECEIPT' ? <Plus className="w-4 h-4" /> : <PackageMinus className="w-4 h-4" />}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">{viewingTxDetails.movementType.replace('_', ' ')}</h3>
+                  <p className="text-[10px] text-slate-400">Inventory Ledger Audit Entry</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setViewingTxDetails(null)} 
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Material Item:</span>
+                  <span className="text-white font-bold">{viewingTxDetails.inventoryBatch?.material?.materialName || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Material Code:</span>
+                  <span className="text-slate-300 font-mono">{viewingTxDetails.inventoryBatch?.material?.materialCode || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Quantity Transacted:</span>
+                  <span className={`font-bold font-mono ${viewingTxDetails.movementType === 'GRN_RECEIPT' ? 'text-emerald-400' : 'text-purple-400'}`}>
+                    {viewingTxDetails.movementType === 'GRN_RECEIPT' ? '+' : '-'}{Number(viewingTxDetails.quantity).toFixed(2)} units
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Warehouse:</span>
+                  <span className="text-slate-300">{viewingTxDetails.inventoryBatch?.warehouse?.warehouseName || 'Main Raw Material Stores'}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                  <Info className="w-3.5 h-3.5 mr-1" /> Traceability Details
+                </h4>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Batch Number:</span>
+                  <span className="text-amber-400 font-bold font-mono">{viewingTxDetails.inventoryBatch?.batchNumber || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Heat/Melt Number:</span>
+                  <span className="text-blue-400 font-bold font-mono">{viewingTxDetails.inventoryBatch?.heatNumber || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Reference Doc:</span>
+                  <span className="text-slate-300 font-medium">{viewingTxDetails.referenceDocType}</span>
+                </div>
+                {viewingTxDetails.remarks && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Remarks:</span>
+                    <span className="text-slate-300 italic">"{viewingTxDetails.remarks}"</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                  <Calendar className="w-3.5 h-3.5 mr-1" /> Timestamp & Signoff
+                </h4>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Transaction Date:</span>
+                  <span className="text-slate-300">{new Date(viewingTxDetails.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Transaction Time:</span>
+                  <span className="text-slate-300">{new Date(viewingTxDetails.createdAt).toLocaleTimeString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Recorded By:</span>
+                  <span className="text-slate-300 font-bold uppercase">{viewingTxDetails.createdBy || 'SYSTEM'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button 
+                type="button" 
+                onClick={() => setViewingTxDetails(null)} 
+                className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors"
+              >
+                Close Details
+              </button>
+            </div>
           </div>
         </div>
       )}

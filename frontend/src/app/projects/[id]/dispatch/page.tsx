@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
-import { Truck } from "lucide-react";
+import { Truck, X, Info, Calendar } from "lucide-react";
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject } from "../../../../hooks/useProjects";
 import { useCreateDispatch } from "../../../../hooks/useDispatch";
@@ -13,6 +13,7 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
   const { data: project, isLoading: projectLoading } = useProject(resolvedParams.id);
   const createDispatchMutation = useCreateDispatch(resolvedParams.id);
   const [showModal, setShowModal] = useState(false);
+  const [viewingDispatchDetails, setViewingDispatchDetails] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     dispatchNumber: `DISP-${Date.now().toString().slice(-4)}`,
     dispatchQty: 1,
@@ -94,12 +95,20 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
                     </div>
                     {disp.remarks && <div className="text-[10px] text-slate-500 mt-2 font-mono">"{disp.remarks}"</div>}
                 </div>
-                <div className="text-right relative z-10 flex flex-col justify-between">
+                <div className="text-right relative z-10 flex flex-col justify-between items-end">
                     <div>
                         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logistics Cost</div>
                         <div className="text-indigo-400 font-bold font-mono text-sm">&#8377;{disp.logisticsCost}</div>
                     </div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">{new Date(disp.dispatchDate).toLocaleDateString()}</div>
+                    <div className="mt-2">
+                        <button
+                          onClick={() => setViewingDispatchDetails(disp)}
+                          className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-white rounded text-[10px] uppercase tracking-wider font-bold border border-white/10 transition-colors animate-fade-in"
+                        >
+                          Details
+                        </button>
+                    </div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-2">{new Date(disp.dispatchDate).toLocaleDateString()}</div>
                 </div>
               </div>
             ))}
@@ -215,6 +224,86 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
                 <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(79,70,229,0.3)] transition-all">Save Dispatch</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {viewingDispatchDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-md p-6 animate-slide-up border border-indigo-500/20 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <Truck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Dispatch Note Details</h3>
+                  <p className="text-[10px] text-slate-400">Logistics fulfillment record</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingDispatchDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Dispatch Code:</span>
+                  <span className="text-white font-bold font-mono">{viewingDispatchDetails.dispatchNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Date Dispatched:</span>
+                  <span className="text-slate-300 font-mono">{new Date(viewingDispatchDetails.dispatchDate).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Quantity Dispatched:</span>
+                  <span className="text-slate-200 font-bold font-mono">{viewingDispatchDetails.dispatchQty} units</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                  <Info className="w-3.5 h-3.5 mr-1" /> Carrier Logistics
+                </h4>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Transporter:</span>
+                  <span className="text-slate-300 font-bold">{viewingDispatchDetails.transporterName || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Vehicle Number:</span>
+                  <span className="text-slate-300 font-mono">{viewingDispatchDetails.vehicleNumber || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Driver details:</span>
+                  <span className="text-slate-300">{viewingDispatchDetails.driverDetails || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Tracking Reference:</span>
+                  <span className="text-slate-300 font-mono">{viewingDispatchDetails.trackingReference || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                  <Calendar className="w-3.5 h-3.5 mr-1" /> Logistics Cost Summary
+                </h4>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Carrier Fare Charged:</span>
+                  <span className="text-indigo-400 font-bold font-mono text-sm">&#8377;{Number(viewingDispatchDetails.logisticsCost).toLocaleString()}</span>
+                </div>
+                {viewingDispatchDetails.remarks && (
+                  <div className="flex flex-col space-y-1 pt-1 border-t border-white/5 mt-1.5">
+                    <span className="text-slate-500 font-bold text-[9px] uppercase tracking-widest">Remarks:</span>
+                    <span className="text-slate-300 italic">"{viewingDispatchDetails.remarks}"</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button type="button" onClick={() => setViewingDispatchDetails(null)} className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors">Close Details</button>
+            </div>
           </div>
         </div>
       )}

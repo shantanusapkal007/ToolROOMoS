@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
-import { CheckSquare, AlertTriangle, FileText, ClipboardList } from "lucide-react";
+import { CheckSquare, AlertTriangle, FileText, ClipboardList, X, Info, Calendar, Activity } from "lucide-react";
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject } from "../../../../hooks/useProjects";
 import { useProjectRouting } from "../../../../hooks/useEngineering";
@@ -20,6 +20,8 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
   const logInspectionMutation = useLogInspection(resolvedParams.id);
   
   const [ncrs, setNcrs] = useState<any[]>([]);
+  const [viewingInspectionDetails, setViewingInspectionDetails] = useState<any | null>(null);
+  const [viewingNcrDetails, setViewingNcrDetails] = useState<any | null>(null);
   
   // Form State
   const [showModal, setShowModal] = useState(false);
@@ -135,6 +137,7 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
                 <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5 text-center">Qty Inspected</th>
                 <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5">Result</th>
                 <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5 text-right">Rework / Scrap</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -152,9 +155,17 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
                       {ins.result}
                     </span>
                   </td>
-                  <td className="p-3 text-xs text-slate-400 text-right font-mono flex items-center justify-end space-x-2">
+                  <td className="p-3 text-xs text-slate-400 text-right font-mono space-x-2">
                     <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded text-[10px] font-bold">R: {ins.reworkQty}</span>
                     <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded text-[10px] font-bold">S: {ins.scrapQty}</span>
+                  </td>
+                  <td className="p-3 text-right">
+                    <button
+                      onClick={() => setViewingInspectionDetails(ins)}
+                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-white rounded text-[10px] uppercase tracking-wider font-bold border border-white/10 transition-colors"
+                    >
+                      Details
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -201,14 +212,20 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
                       {ncr.status}
                     </span>
                   </td>
-                  <td className="p-3 text-right">
+                  <td className="p-3 text-right space-x-2">
+                    <button
+                      onClick={() => setViewingNcrDetails(ncr)}
+                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-white rounded text-[10px] uppercase tracking-wider font-bold border border-white/10 transition-colors"
+                    >
+                      Details
+                    </button>
                     {ncr.status === 'OPEN' && (
                       <button
                         onClick={() => {
                           setNcrToClose(ncr.id);
                           setShowNcrModal(true);
                         }}
-                        className="px-3 py-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider rounded border border-white/10 transition-colors"
+                        className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-wider rounded border border-red-500/20 transition-colors"
                       >
                         Close
                       </button>
@@ -393,6 +410,148 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
                 <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all">Close NCR</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Inspection Details Modal */}
+      {viewingInspectionDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-xl p-6 animate-slide-up border border-emerald-500/20 relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <CheckSquare className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Quality Inspection Log</h3>
+                  <p className="text-[10px] text-slate-400">Dimensional CMM audit logs</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingInspectionDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10 overflow-y-auto hide-scrollbar flex-1 min-h-0">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Inspection Number:</span>
+                  <span className="text-white font-bold font-mono">{viewingInspectionDetails.inspectionNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Inspection Type:</span>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 uppercase font-mono">
+                    {viewingInspectionDetails.inspectionType?.replace('_', ' ')}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Inspected Qty:</span>
+                  <span className="text-slate-200 font-bold font-mono">{viewingInspectionDetails.inspectedQty} units</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Final Verification Result:</span>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${
+                    viewingInspectionDetails.result === 'PASS' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                  }`}>{viewingInspectionDetails.result}</span>
+                </div>
+              </div>
+
+              {viewingInspectionDetails.measurements && viewingInspectionDetails.measurements.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center">
+                    <Activity className="w-3.5 h-3.5 mr-1" /> Dimensional Measurements
+                  </h4>
+                  <div className="bg-black/40 border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5">
+                    {viewingInspectionDetails.measurements.map((m: any, idx: number) => (
+                      <div key={idx} className="p-3 flex justify-between items-center text-xs">
+                        <div className="flex flex-col">
+                          <span className="text-white font-bold">{m.inspectionStandard?.standardName || 'Dimensional Tolerance'}</span>
+                          <span className="text-[10px] text-slate-500 font-mono mt-0.5">NOM: {m.nominalValue}mm (+{m.upperTolerance}/-{m.lowerTolerance})</span>
+                        </div>
+                        <div className="text-right flex flex-col">
+                          <span className="font-mono text-white font-bold">Act: {m.actualValue}mm</span>
+                          <span className={`text-[9px] font-bold uppercase mt-0.5 ${m.result === 'PASS' ? 'text-emerald-400' : 'text-red-400'}`}>{m.result}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewingInspectionDetails.remarks && (
+                <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-1.5">
+                  <span className="text-slate-400 block font-bold text-[9px] uppercase tracking-widest">Auditor Remarks</span>
+                  <span className="text-slate-300 italic">"{viewingInspectionDetails.remarks}"</span>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button type="button" onClick={() => setViewingInspectionDetails(null)} className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors">Close Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NCR Details Modal */}
+      {viewingNcrDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-md p-6 animate-slide-up border border-red-500/20 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Non-Conformance Report</h3>
+                  <p className="text-[10px] text-slate-400">Defect review & resolution log</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingNcrDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">NCR Code:</span>
+                  <span className="text-white font-bold font-mono">{viewingNcrDetails.ncrNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Defect Type:</span>
+                  <span className="text-slate-300 font-bold">{viewingNcrDetails.defectType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Resolution Status:</span>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-black bg-red-500/20 text-red-400 border border-red-500/20 uppercase font-mono`}>{viewingNcrDetails.status}</span>
+                </div>
+              </div>
+
+              {viewingNcrDetails.disposition && (
+                <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                  <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                    <Info className="w-3.5 h-3.5 mr-1" /> Resolution Actions
+                  </h4>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Disposition Plan:</span>
+                    <span className="text-amber-400 font-bold font-mono">{viewingNcrDetails.disposition}</span>
+                  </div>
+                  {viewingNcrDetails.rootCause && (
+                    <div className="flex flex-col space-y-1 pt-1.5">
+                      <span className="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Root Cause & Resolution Details:</span>
+                      <span className="text-slate-300 italic bg-black/20 p-2 rounded border border-white/5 mt-0.5">"{viewingNcrDetails.rootCause}"</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button type="button" onClick={() => setViewingNcrDetails(null)} className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors">Close Details</button>
+            </div>
           </div>
         </div>
       )}

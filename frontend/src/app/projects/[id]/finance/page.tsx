@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from "../../../../lib/api";
-import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent, Lock, Plus } from "lucide-react";
+import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent, Lock, Plus, X, Info, Calendar } from "lucide-react";
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject, useCloseProject } from "../../../../hooks/useProjects";
 import { useCostEvents, useCreateInvoice, useRecordPayment } from "../../../../hooks/useFinance";
@@ -29,6 +29,9 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
   const [paymentRemarks, setPaymentRemarks] = useState("");
   
   const recordPaymentMutation = useRecordPayment(resolvedParams.id);
+  
+  const [viewingInvoiceDetails, setViewingInvoiceDetails] = useState<any | null>(null);
+  const [viewingCostEventDetails, setViewingCostEventDetails] = useState<any | null>(null);
 
   if (projectLoading || !project) return null;
 
@@ -195,11 +198,19 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                             <p className="text-xs text-slate-300">{evt.description}</p>
                           </div>
                           
-                          <div className={`text-base font-bold font-mono flex items-center ${
-                            isRevenue ? 'text-green-400' : 'text-slate-200'
-                          }`}>
-                            {isRevenue ? <ArrowUpRight className="h-3.5 w-3.5 mr-1 text-green-400" /> : <ArrowDownRight className="h-3.5 w-3.5 mr-1 text-red-400" />}
-                            &#8377;{Number(evt.amount).toLocaleString()}
+                          <div className="text-right flex flex-col items-end">
+                            <div className={`text-base font-bold font-mono flex items-center ${
+                              isRevenue ? 'text-green-400' : 'text-slate-200'
+                            }`}>
+                              {isRevenue ? <ArrowUpRight className="h-3.5 w-3.5 mr-1 text-green-400" /> : <ArrowDownRight className="h-3.5 w-3.5 mr-1 text-red-400" />}
+                              &#8377;{Number(evt.amount).toLocaleString()}
+                            </div>
+                            <button
+                              onClick={() => setViewingCostEventDetails(evt)}
+                              className="mt-2 px-2.5 py-1 bg-white/5 hover:bg-white/10 text-white rounded text-[10px] uppercase tracking-wider font-bold border border-white/10 transition-colors animate-fade-in"
+                            >
+                              Details
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -252,6 +263,12 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                         <div className="text-green-400 font-bold text-lg font-mono tracking-tight">&#8377;{Number(inv.totalAmount).toLocaleString()}</div>
                         
                         <div className="mt-3 flex items-center space-x-2">
+                          <button
+                            onClick={() => setViewingInvoiceDetails(inv)}
+                            className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider rounded border border-white/10 transition-colors animate-fade-in"
+                          >
+                            Details
+                          </button>
                           {inv.paymentStatus === 'PAID' ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest">
                               PAID
@@ -424,6 +441,139 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Cost Event Details Modal */}
+      {viewingCostEventDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-md p-6 animate-slide-up border border-green-500/20 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400">
+                  <Activity className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Ledger Entry Details</h3>
+                  <p className="text-[10px] text-slate-400">Auditable transaction log</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingCostEventDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Entry Type:</span>
+                  <span className="text-white font-bold uppercase tracking-wider">{viewingCostEventDetails.costType?.replace(/_/g, ' ')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Recorded Amount:</span>
+                  <span className="text-green-400 font-bold font-mono text-sm">&#8377;{Number(viewingCostEventDetails.amount).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Entry Date:</span>
+                  <span className="text-slate-300 font-mono">{new Date(viewingCostEventDetails.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                  <Info className="w-3.5 h-3.5 mr-1" /> Ledger Narrative
+                </h4>
+                <div className="flex flex-col space-y-1">
+                  <span className="text-slate-400">Description:</span>
+                  <span className="text-slate-200 leading-relaxed bg-black/20 p-2.5 rounded border border-white/5 italic">"{viewingCostEventDetails.description}"</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button type="button" onClick={() => setViewingCostEventDetails(null)} className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors">Close Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Details Modal */}
+      {viewingInvoiceDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-md p-6 animate-slide-up border border-green-500/20 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Tax Invoice Details</h3>
+                  <p className="text-[10px] text-slate-400">Billed customer statement</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingInvoiceDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Invoice Code:</span>
+                  <span className="text-white font-bold font-mono">{viewingInvoiceDetails.invoiceNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Tax Invoice Date:</span>
+                  <span className="text-slate-300 font-mono">{new Date(viewingInvoiceDetails.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Payment Status:</span>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-black bg-green-500/20 text-green-400 border border-green-500/20 uppercase font-mono">{viewingInvoiceDetails.paymentStatus || 'ISSUED'}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                  <Info className="w-3.5 h-3.5 mr-1" /> Bill Summary (INR)
+                </h4>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Subtotal:</span>
+                  <span className="text-slate-300 font-mono">&#8377;{Number(viewingInvoiceDetails.subtotal).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">GST Tax (18%):</span>
+                  <span className="text-slate-300 font-mono">&#8377;{Number(viewingInvoiceDetails.taxAmount).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pt-1.5 border-t border-white/5">
+                  <span className="text-slate-400 font-bold">Total Bill Value:</span>
+                  <span className="text-green-400 font-bold font-mono text-sm">&#8377;{Number(viewingInvoiceDetails.totalAmount).toLocaleString()}</span>
+                </div>
+              </div>
+
+              {viewingInvoiceDetails.paymentReference && (
+                <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                  <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                    <Calendar className="w-3.5 h-3.5 mr-1" /> Payment Clearing Details
+                  </h4>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Bank TX Ref:</span>
+                    <span className="text-slate-300 font-mono">{viewingInvoiceDetails.paymentReference}</span>
+                  </div>
+                  {viewingInvoiceDetails.paymentRemarks && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Remarks:</span>
+                      <span className="text-slate-300 italic">"{viewingInvoiceDetails.paymentRemarks}"</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button type="button" onClick={() => setViewingInvoiceDetails(null)} className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors">Close Details</button>
+            </div>
           </div>
         </div>
       )}

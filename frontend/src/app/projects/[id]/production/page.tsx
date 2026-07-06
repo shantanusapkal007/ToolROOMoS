@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
-import { Activity, Wrench, PackageMinus, Plus, Factory, CheckCircle, Clock } from "lucide-react";
+import { Activity, Wrench, PackageMinus, Plus, Factory, CheckCircle, Clock, X, Info, Calendar } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
 import { Select } from "../../../../components/ui/Select";
 import { useToast } from "../../../../components/ui/Toast";
@@ -62,6 +62,11 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
   // Selected for modals
   const [selectedJobCard, setSelectedJobCard] = useState<any | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<any | null>(null);
+  
+  // Details view states
+  const [viewingJobCardDetails, setViewingJobCardDetails] = useState<any | null>(null);
+  const [viewingMsdrDetails, setViewingMsdrDetails] = useState<any | null>(null);
+  const [viewingIssueDetails, setViewingIssueDetails] = useState<any | null>(null);
 
   const msdrForm = useForm({
     resolver: zodResolver(msdrSchema),
@@ -248,15 +253,21 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                               <span><span className="text-slate-500 font-bold">CUT:</span> {job.routingOperation?.estimatedHours}h</span>
                           </div>
                        </div>
-                       <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <div className="flex items-center space-x-2">
+                           <button 
+                             onClick={() => setViewingJobCardDetails(job)} 
+                             className="bg-white/5 hover:bg-white/10 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold border border-white/10 transition-all uppercase tracking-wider"
+                           >
+                             Details
+                           </button>
                            {job.status === 'READY' && (
                                <button onClick={() => handleStartJob(job)} className="bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-500/20 transition-all uppercase tracking-wider">
-                                   Start Job
+                                   Start
                                </button>
                            )}
                            {job.status === 'IN_PROGRESS' && (
                                <button onClick={() => openMsdrForJob(job)} className="bg-green-600/10 text-green-400 hover:bg-green-600/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-green-500/20 transition-all uppercase tracking-wider flex items-center">
-                                   <CheckCircle className="w-3.5 h-3.5 mr-1"/> Finish
+                                   Finish
                                </button>
                            )}
                        </div>
@@ -295,6 +306,12 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                        </div>
                     </div>
                     <div className="text-right flex items-center space-x-3">
+                       <button
+                         onClick={() => setViewingMsdrDetails(m)}
+                         className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-white rounded text-[10px] uppercase tracking-wider font-bold border border-white/10 transition-colors"
+                       >
+                         Details
+                       </button>
                        <div className="flex flex-col text-right pr-3 border-r border-white/10">
                          <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Actual</span>
                          <div className="flex space-x-1.5 mt-0.5">
@@ -339,7 +356,15 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                   <div key={i.id} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors">
                     <div className="flex justify-between items-center mb-1.5">
                        <span className="font-bold text-white text-sm">{i.issueNumber}</span>
-                       <span className="bg-green-500/10 border border-green-500/20 text-green-400 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{i.status}</span>
+                       <div className="flex items-center space-x-2">
+                         <button
+                           onClick={() => setViewingIssueDetails(i)}
+                           className="px-2 py-0.5 bg-white/5 hover:bg-white/10 text-white rounded text-[9px] uppercase tracking-wider font-bold border border-white/10 transition-colors"
+                         >
+                           Details
+                         </button>
+                         <span className="bg-green-500/10 border border-green-500/20 text-green-400 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{i.status}</span>
+                       </div>
                     </div>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">{formatDate(i.issueDate)}</div>
                     
@@ -511,6 +536,199 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                    <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-red-600/80 hover:bg-red-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all">Confirm Return</button>
                  </div>
                </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Job Card Details Modal */}
+      {viewingJobCardDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-md p-6 animate-slide-up border border-amber-500/20 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                  <Activity className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Job Card Details</h3>
+                  <p className="text-[10px] text-slate-400">Routing sequence tracking</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingJobCardDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Routing Operation:</span>
+                  <span className="text-white font-bold">{viewingJobCardDetails.routingOperation?.operation?.operationName || 'CNC milling'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Operation Code:</span>
+                  <span className="text-slate-300 font-mono">{viewingJobCardDetails.routingOperation?.operation?.operationCode || 'OP-10'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Job Status:</span>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/15 border border-amber-500/20 text-amber-400 font-mono">{viewingJobCardDetails.status}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Target Machine:</span>
+                  <span className="text-slate-300 font-medium">{viewingJobCardDetails.machine?.machineName || 'VMC Machining Center'}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                  <Info className="w-3.5 h-3.5 mr-1" /> Estimated Planning Rate
+                </h4>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Setup Time Estimate:</span>
+                  <span className="text-slate-300 font-mono">{viewingJobCardDetails.routingOperation?.estimatedSetupTime || 0} hours</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Cutting Time Estimate:</span>
+                  <span className="text-slate-300 font-mono">{viewingJobCardDetails.routingOperation?.estimatedHours || 0} hours</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button type="button" onClick={() => setViewingJobCardDetails(null)} className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors">Close Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MSDR Details Modal */}
+      {viewingMsdrDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-md p-6 animate-slide-up border border-cyan-500/20 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                  <Wrench className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Machine Shop Daily Log</h3>
+                  <p className="text-[10px] text-slate-400">Operator execution feedback</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingMsdrDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Allocated Machine:</span>
+                  <span className="text-white font-bold">{viewingMsdrDetails.machine?.machineName || 'VMC #4'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Operator Signoff:</span>
+                  <span className="text-slate-300 font-bold">{viewingMsdrDetails.employee?.name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Report Date:</span>
+                  <span className="text-slate-300 font-mono">{new Date(viewingMsdrDetails.reportDate).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center">
+                  <Info className="w-3.5 h-3.5 mr-1" /> Logged Shop Time
+                </h4>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Actual Setup Time:</span>
+                  <span className="text-slate-300 font-mono">{viewingMsdrDetails.setupTime} hours</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Actual Cutting Time:</span>
+                  <span className="text-slate-300 font-mono">{viewingMsdrDetails.cuttingTime} hours</span>
+                </div>
+                {viewingMsdrDetails.variance !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Log Variance vs Plan:</span>
+                    <span className={`font-bold font-mono ${viewingMsdrDetails.variance > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                      {viewingMsdrDetails.variance > 0 ? '+' : ''}{viewingMsdrDetails.variance} hours
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button type="button" onClick={() => setViewingMsdrDetails(null)} className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors">Close Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Material Issue Details Modal */}
+      {viewingIssueDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-lg p-6 animate-slide-up border border-purple-500/20 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                  <PackageMinus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Material Issue Slip</h3>
+                  <p className="text-[10px] text-slate-400">Traceability audit ledger</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingIssueDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-xs relative z-10">
+              <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Issue Slip:</span>
+                  <span className="text-white font-bold font-mono">{viewingIssueDetails.issueNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Date Issued:</span>
+                  <span className="text-slate-300 font-mono">{new Date(viewingIssueDetails.issueDate).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Status:</span>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-black bg-purple-500/20 text-purple-400 border border-purple-500/20 uppercase font-mono">{viewingIssueDetails.status}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center mb-1">
+                  <Info className="w-3.5 h-3.5 mr-1" /> Items Checklist
+                </h4>
+                <div className="divide-y divide-white/5">
+                  {viewingIssueDetails.items?.map((item: any) => (
+                    <div key={item.id} className="py-2.5 flex justify-between items-center text-xs">
+                      <div className="flex flex-col">
+                        <span className="text-white font-bold">{item.inventoryBatch?.material?.materialName}</span>
+                        <span className="text-[10px] text-slate-500 font-mono mt-0.5">BATCH: {item.inventoryBatch?.batchNumber}</span>
+                      </div>
+                      <div className="text-right flex flex-col font-mono text-purple-400 font-bold">
+                        <span>{item.issuedQty} units issued</span>
+                        {Number(item.returnedQty || 0) > 0 && (
+                          <span className="text-[10px] text-red-400 mt-0.5">({item.returnedQty} units returned)</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+              <button type="button" onClick={() => setViewingIssueDetails(null)} className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors">Close Details</button>
             </div>
           </div>
         </div>
