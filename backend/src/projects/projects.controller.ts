@@ -18,6 +18,8 @@ import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { CreateProjectTaskDto } from './dto/create-project-task.dto';
+import { UpdateProjectTaskDto } from './dto/update-project-task.dto';
 import { ProjectStatus } from '@prisma/client';
 
 import { WorkflowOrchestratorService } from './workflow-orchestrator.service';
@@ -189,7 +191,7 @@ export class ProjectsController {
   @Roles('ADMIN', 'QUALITY')
   async closeNcr(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('ncrId') ncrId: string,
+    @Param('ncrId', ParseUUIDPipe) ncrId: string,
     @Body('disposition') disposition?: string,
     @Body('rootCause') rootCause?: string,
     @CurrentUser() user?: any,
@@ -216,10 +218,10 @@ export class ProjectsController {
   @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
   async createTask(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: any,
+    @Body() dto: CreateProjectTaskDto,
     @CurrentUser() user: any,
   ) {
-    const data = await this.projectsService.createTask(id, body, user.userId);
+    const data = await this.projectsService.createTask(id, dto, user.userId);
     return {
       status: 'success',
       message: 'Task created successfully.',
@@ -230,11 +232,11 @@ export class ProjectsController {
   @Put(':id/tasks/:taskId')
   @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
   async updateTask(
-    @Param('taskId') taskId: string,
-    @Body() body: any,
+    @Param('taskId', ParseUUIDPipe) taskId: string,
+    @Body() dto: UpdateProjectTaskDto,
     @CurrentUser() user: any,
   ) {
-    const data = await this.projectsService.updateTask(taskId, body, user.userId);
+    const data = await this.projectsService.updateTask(taskId, dto, user.userId);
     return {
       status: 'success',
       message: 'Task updated successfully.',
@@ -245,7 +247,7 @@ export class ProjectsController {
   @Patch(':id/tasks/:taskId/status')
   @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
   async updateTaskStatus(
-    @Param('taskId') taskId: string,
+    @Param('taskId', ParseUUIDPipe) taskId: string,
     @Body('status') status: string,
     @CurrentUser() user: any,
   ) {
@@ -260,7 +262,7 @@ export class ProjectsController {
   @Delete(':id/tasks/:taskId')
   @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
   async deleteTask(
-    @Param('taskId') taskId: string,
+    @Param('taskId', ParseUUIDPipe) taskId: string,
     @CurrentUser() user: any,
   ) {
     const data = await this.projectsService.deleteTask(taskId, user.userId);
@@ -297,6 +299,31 @@ export class ProjectsController {
     return {
       status: 'success',
       message: 'Project deleted successfully.',
+      data,
+    };
+  }
+
+  // --- Revision Engine ---
+  @Get(':id/reopen-impact')
+  @Roles('ADMIN', 'ENGINEERING')
+  async getReopenImpact(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.projectsService.getReopenImpact(id);
+    return {
+      status: 'success',
+      data,
+    };
+  }
+
+  @Patch(':id/reopen-engineering')
+  @Roles('ADMIN', 'ENGINEERING')
+  async reopenEngineering(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.projectsService.reopenEngineering(id, user.userId);
+    return {
+      status: 'success',
+      message: 'Engineering stage reopened successfully.',
       data,
     };
   }

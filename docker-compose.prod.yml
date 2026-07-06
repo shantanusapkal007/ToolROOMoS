@@ -73,6 +73,7 @@ services:
       - MINIO_ACCESS_KEY=admin
       - MINIO_SECRET_KEY=${MINIO_PASSWORD:-adminpassword}
       - JWT_SECRET=${JWT_SECRET:-production-secret}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
       - PORT=4000
       - NODE_ENV=production
     restart: always

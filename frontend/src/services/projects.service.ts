@@ -41,5 +41,15 @@ export const ProjectsService = {
   createProject: async (data: Partial<Project>): Promise<Project> => {
     const res = await api.post<Project>('projects', data);
     return res.data as unknown as Project;
+  },
+
+  getReopenImpact: async (id: string): Promise<any> => {
+    const res = await api.get<any>(`projects/${id}/reopen-impact`);
+    return res.data;
+  },
+
+  reopenEngineering: async (id: string): Promise<any> => {
+    const res = await api.patch<any>(`projects/${id}/reopen-engineering`);
+    return res.data;
   }
 };

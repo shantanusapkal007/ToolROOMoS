@@ -1,11 +1,17 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMsdrDto } from './dto/create-msdr.dto';
 import { ProjectStatus } from '@prisma/client';
+import { WipService } from './wip.service';
 
 @Injectable()
 export class ProductionOperationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ProductionOperationsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly wipService: WipService
+  ) {}
 
   async logMachineShopReport(projectId: string, dto: CreateMsdrDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
@@ -24,7 +30,7 @@ export class ProductionOperationsService {
       // Validate Job Card if provided
       let routingOperation = null;
       if (dto.jobCardId) {
-          const jobCard = await tx.jobCard.findUnique({ where: { id: dto.jobCardId }, include: { routingOperation: true } });
+          const jobCard = await tx.jobCard.findUnique({ where: { id: dto.jobCardId }, include: { routingOperation: { include: { operation: true } } } });
           if (!jobCard) throw new BadRequestException('Job Card not found.');
           routingOperation = jobCard.routingOperation;
           
@@ -99,10 +105,8 @@ export class ProductionOperationsService {
           }
       }
 
-      // 4. Cost Calculations (Variables already declared above)
-      const totalMachineHrsForCost = totalMachineHrs;
-      
-      const machineCost = totalMachineHrsForCost * machine.hourlyRate.toNumber();
+      // 4. Cost Calculations
+      const machineCost = totalMachineHrs * machine.hourlyRate.toNumber();
       const labourCost = totalMachineHrs * employee.hourlyRate.toNumber();
       const totalOperationCost = machineCost + labourCost;
 
@@ -119,7 +123,7 @@ export class ProductionOperationsService {
       // Automation C: Cost Overrun Warning logs
       if (routingOperation) {
         const estMachine = routingOperation.estimatedHours.toNumber() * machine.hourlyRate.toNumber();
-        const estLabour = routingOperation.estimatedHours.toNumber() * 250; // standard estimation fallback
+        const estLabour = routingOperation.estimatedHours.toNumber() * employee.hourlyRate.toNumber();
         const estTotal = estMachine + estLabour;
 
         if (totalOperationCost > estTotal) {
@@ -172,12 +176,24 @@ export class ProductionOperationsService {
         },
       });
 
-      // 5. Log project activity
+      // 5. Update WIP Ledger state and accrue operation costs
+      if (routingOperation && msdr.inventoryBatchId) {
+        await this.wipService.updateWipProgress({
+          projectId,
+          routingOperationId: routingOperation.id,
+          machineId: machine.id,
+          batchId: msdr.inventoryBatchId,
+          accruedMachineCost: machineCost,
+          accruedLabourCost: labourCost
+        }, tx);
+      }
+
+      // 6. Workflow Automation: Potentially advance project stage to INSPECTION
       await tx.projectActivity.create({
         data: {
           projectId,
-          action: 'OPERATION_LOGGED',
-          description: `MSDR entry processed. Cutting: ${cuttingHrs}h, Setup: ${setupHrs}h. Cost booked: Machine: ₹${machineCost}, Labour: ₹${labourCost}`,
+          action: 'PRODUCTION_LOGGED',
+          description: `MSDR recorded for operation ${routingOperation?.operation?.operationName || 'N/A'}. Produced: ${msdr.producedQty}, Scrap: ${msdr.scrapQty}`,
           performedBy: userId || 'SYSTEM',
         },
       });

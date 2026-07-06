@@ -6,10 +6,13 @@ import { ProjectStatus } from '@prisma/client';
 export class WorkflowOrchestratorService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async evaluateProjectStage(projectId: string, txClient?: any): Promise<void> {
+  async evaluateProjectStage(projectId: string, txClient?: any, depth = 0): Promise<void> {
+    // Guard against infinite recursion — max 10 stage transitions per call chain
+    if (depth >= 10) return;
+
     const tx = txClient || this.prisma;
-    
-    const project = await tx.project.findUnique({ 
+
+    const project = await tx.project.findUnique({
       where: { id: projectId },
       include: {
         billOfMaterialHeaders: { where: { status: 'APPROVED' } },
@@ -20,17 +23,17 @@ export class WorkflowOrchestratorService {
         machineShopReports: true,
         inspectionHeaders: { where: { inspectionType: 'FINAL_PDI', result: 'PASS' } },
         dispatchNotes: true,
-        invoiceHeaders: true
-      }
+        invoiceHeaders: true,
+      },
     });
 
     if (!project || project.currentStage === 'CLOSED' || project.currentStage === 'CANCELLED') {
-      return; // Terminal states do not evaluate automatically
+      return; // Terminal states — no auto progression
     }
 
     let nextStage: ProjectStatus = project.currentStage;
 
-    // Evaluate progression strictly in order
+    // Evaluate stage progression strictly in order
     if (project.currentStage === 'CREATED' || project.currentStage === 'ENGINEERING') {
       const hasBom = project.billOfMaterialHeaders.length > 0;
       const hasRouting = project.routingHeaders.length > 0;
@@ -41,67 +44,53 @@ export class WorkflowOrchestratorService {
 
     if (nextStage === 'PROCUREMENT') {
       const hasGrn = project.goodsReceiptHeaders.length > 0;
-      if (hasGrn) {
-        nextStage = 'MATERIAL_AVAILABLE';
-      }
+      if (hasGrn) nextStage = 'MATERIAL_AVAILABLE';
     }
 
     if (nextStage === 'MATERIAL_AVAILABLE') {
       const hasIssues = project.materialIssueHeaders.length > 0;
       const hasJobCards = project.jobCards.length > 0;
-      if (hasIssues && hasJobCards) {
-        nextStage = 'PRODUCTION';
-      }
+      if (hasIssues && hasJobCards) nextStage = 'PRODUCTION';
     }
 
     if (nextStage === 'PRODUCTION') {
       const hasMsdr = project.machineShopReports.length > 0;
-      // We could check if all job cards are completed, but for now ANY MSDR puts it into INSPECTION mode
-      // Let's assume MSDR completion means it can enter INSPECTION.
-      if (hasMsdr) {
-        nextStage = 'INSPECTION';
-      }
+      if (hasMsdr) nextStage = 'INSPECTION';
     }
 
     if (nextStage === 'INSPECTION') {
       const hasPassedPdi = project.inspectionHeaders.length > 0;
-      if (hasPassedPdi) {
-        nextStage = 'DISPATCH_READY';
-      }
+      if (hasPassedPdi) nextStage = 'DISPATCH_READY';
     }
 
     if (nextStage === 'DISPATCH_READY') {
       const hasDispatch = project.dispatchNotes.length > 0;
-      if (hasDispatch) {
-        nextStage = 'DISPATCHED';
-      }
+      if (hasDispatch) nextStage = 'DISPATCHED';
     }
 
     if (nextStage === 'DISPATCHED') {
       const hasInvoice = project.invoiceHeaders.length > 0;
-      if (hasInvoice) {
-        nextStage = 'INVOICED';
-      }
+      if (hasInvoice) nextStage = 'INVOICED';
     }
 
-    // Only update if there is a progression
+    // Only update if there is actual progression
     if (nextStage !== project.currentStage) {
       await tx.project.update({
         where: { id: projectId },
-        data: { currentStage: nextStage }
+        data: { currentStage: nextStage },
       });
-      
+
       await tx.projectTimeline.create({
         data: {
           projectId,
           fromStage: project.currentStage,
           toStage: nextStage,
-          remarks: 'System Auto-Progression based on Workflow rules.'
-        }
+          remarks: 'System Auto-Progression based on Workflow rules.',
+        },
       });
-      
-      // Recursively evaluate in case multiple stages can be skipped (e.g. zero inventory project)
-      await this.evaluateProjectStage(projectId, tx);
+
+      // Recursively evaluate — pass depth+1 to prevent infinite loops
+      await this.evaluateProjectStage(projectId, tx, depth + 1);
     }
   }
 }

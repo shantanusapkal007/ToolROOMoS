@@ -11,10 +11,16 @@ export default function InventoryPage() {
   const { data: ledger, isLoading } = useInventoryLedger();
   const [searchTerm, setSearchTerm] = useState('');
   
-  const filteredLedger = ledger?.filter((batch: any) => 
-    batch.material?.materialName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    batch.batchNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLedger = ledger?.filter((batch: any) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      batch.material?.materialCode?.toLowerCase().includes(term) ||
+      batch.material?.materialGrade?.toLowerCase().includes(term) ||
+      batch.batchNumber?.toLowerCase().includes(term) ||
+      batch.heatNumber?.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="flex h-screen bg-transparent relative w-full overflow-hidden">
@@ -71,7 +77,7 @@ export default function InventoryPage() {
                              <Package className="w-4 h-4 text-amber-400" />
                            </div>
                            <div>
-                             <div className="font-bold text-white text-sm">{batch.material?.materialName}</div>
+                             <div className="font-bold text-white text-sm">{batch.material?.materialCode} <span className="text-slate-400 font-normal">· {batch.material?.materialGrade}</span></div>
                              <div className="text-[10px] text-slate-500 font-mono tracking-widest uppercase flex items-center mt-0.5">
                                {batch.batchNumber} 
                                <span className="mx-2 border-r border-white/10 h-3" /> 
@@ -81,14 +87,14 @@ export default function InventoryPage() {
                          </div>
                        </td>
                        <td className="p-4">
-                         <div className="text-sm font-medium text-slate-300">{batch.warehouse?.name}</div>
-                         <div className="text-[10px] text-slate-500 uppercase tracking-wider">{batch.warehouse?.location?.name}</div>
+                         <div className="text-sm font-medium text-slate-300">{batch.location?.warehouse?.warehouseName || '—'}</div>
+                         <div className="text-[10px] text-slate-500 uppercase tracking-wider">{batch.location?.locationName || '—'}</div>
                        </td>
                        <td className="p-4 text-right">
                          <div className="flex items-center justify-end space-x-2">
                            {isLowStock && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
                            <span className="font-mono text-white font-bold">{batch.currentQty}</span>
-                           <span className="text-[10px] text-slate-500 uppercase">{batch.material?.uom}</span>
+                           <span className="text-[10px] text-slate-500 uppercase">{batch.material?.defaultUom}</span>
                          </div>
                        </td>
                        <td className="p-4 text-right font-mono text-slate-300">

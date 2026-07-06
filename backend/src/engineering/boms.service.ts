@@ -106,14 +106,17 @@ export class BomsService {
         },
       });
 
-      // 3. Financial Integration: Feed the BOM totalEstimatedCost directly into ProjectCostSummary
+      // 3. Financial Integration: Feed the BOM totalEstimatedCost into ProjectCostSummary (ESTIMATED column only)
+      // IMPORTANT: totalCost tracks ACTUAL costs only (consumption + machine + labour + dispatch).
+      // Estimated cost MUST NOT increment totalCost — doing so double-counts against actual issues.
       await tx.projectCostSummary.update({
         where: { projectId },
         data: {
           estimatedMaterialCost: bom.totalEstimatedCost,
-          totalCost: { increment: bom.totalEstimatedCost }, // Set baseline cost
+          // totalCost is NOT touched here — actual costs are booked when material is issued/consumed
         },
       });
+
 
       // Also record the Estimated Cost event in project_cost_events for detailed auditing
       await tx.projectCostEvent.create({
@@ -173,7 +176,10 @@ export class BomsService {
                   poHeaderId: poHeader.id,
                   materialId: item.materialId,
                   orderedQty: item.requiredQty,
-                  agreedRate: Number(item.estimatedCost) / Number(item.requiredQty),
+                  // Guard against Infinity/NaN if requiredQty is 0
+                  agreedRate: Number(item.requiredQty) > 0
+                    ? Number(item.estimatedCost) / Number(item.requiredQty)
+                    : 0,
                   lineTotal: item.estimatedCost,
                   remarks: 'Auto-generated item'
                 }

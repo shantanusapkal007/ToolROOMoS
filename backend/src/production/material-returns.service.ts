@@ -96,8 +96,10 @@ export class MaterialReturnsService {
         const currentTotalCost = Number(summary.totalCost || 0);
         const newTotalCost = Math.max(0, currentTotalCost - returnCost);
 
-        const currentProfit = Number(summary.profitability || 0);
-        const newProfit = currentProfit + returnCost;
+        // Recalculate profitability consistently: revenue - totalCost
+        // This matches the formula in invoices.service.ts and prevents divergence
+        const currentRevenue = Number(summary.revenue || 0);
+        const newProfit = currentRevenue - newTotalCost;
 
         await tx.projectCostSummary.update({
           where: { projectId },
@@ -108,6 +110,7 @@ export class MaterialReturnsService {
           },
         });
       }
+
 
       // 6. Log negative cost event to maintain the ledger
       await tx.projectCostEvent.create({

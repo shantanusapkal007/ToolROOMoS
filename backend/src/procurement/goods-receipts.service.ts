@@ -150,13 +150,31 @@ export class GoodsReceiptsService {
       }
 
       // 6. Costing Integration: Rollup actual material cost to ProjectCostSummary (actual column ONLY)
-      await tx.projectCostSummary.update({
+      // NOTE: totalCost is NOT incremented here — it is computed from actual consumption in material issues.
+      // Using upsert to protect against legacy projects without a cost summary record.
+      await tx.projectCostSummary.upsert({
         where: { projectId },
-        data: {
+        create: {
+          projectId,
+          actualMaterialCost: totalGrnValue,
+          estimatedMaterialCost: 0,
+          materialConsumptionCost: 0,
+          machineCost: 0,
+          labourCost: 0,
+          outsideProcessCost: 0,
+          inspectionCost: 0,
+          packingCost: 0,
+          dispatchCost: 0,
+          totalCost: 0,
+          revenue: 0,
+          profitability: 0,
+        },
+        update: {
           actualMaterialCost: { increment: totalGrnValue },
           // NOTE: totalCost is NOT incremented here — it is computed from actual consumption in material issues
         },
       });
+
 
       // Record detailed cost audit trail event
       await tx.projectCostEvent.create({

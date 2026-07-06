@@ -509,8 +509,71 @@ export class ProjectsService {
 
   // --- Revision Engine ---
   
+  async getReopenImpact(id: string) {
+    const project = await this.prisma.project.findUniqueOrThrow({
+      where: { id },
+      include: {
+        purchaseOrderHeaders: {
+          where: { status: { in: ['DRAFT', 'ISSUED'] } },
+          include: { items: true }
+        },
+        routingHeaders: {
+          where: { status: 'APPROVED' },
+          include: { operations: true }
+        },
+        goodsReceiptHeaders: true,
+        materialIssueHeaders: true,
+        machineShopReports: true,
+      }
+    });
+
+    const hasGrns = project.goodsReceiptHeaders.length > 0;
+    const hasIssues = project.materialIssueHeaders.length > 0;
+    const hasProduction = project.machineShopReports.length > 0;
+
+    const isReopenBlocked = 
+      hasGrns ||
+      hasIssues ||
+      hasProduction ||
+      ['PRODUCTION', 'INSPECTION', 'DISPATCH_READY', 'DISPATCHED', 'INVOICED', 'PAYMENT_PENDING', 'CLOSED'].includes(project.currentStage);
+
+    let blockReason = null;
+    if (isReopenBlocked) {
+      if (hasGrns) {
+        blockReason = "Reopen blocked: Goods Receipts (GRN) have already been generated for this project.";
+      } else if (hasIssues) {
+        blockReason = "Reopen blocked: Material has already been issued from stores.";
+      } else if (hasProduction) {
+        blockReason = "Reopen blocked: Shop floor reports (MSDR) have already been filed.";
+      } else {
+        blockReason = `Reopen blocked: Project is in the '${project.currentStage}' stage.`;
+      }
+    }
+
+    const affectedPosCount = project.purchaseOrderHeaders.length;
+    const affectedRoutingCount = project.routingHeaders.length;
+    const affectedMaterialsCount = project.purchaseOrderHeaders.reduce((sum, po) => sum + po.items.length, 0);
+
+    return {
+      isBlocked: isReopenBlocked,
+      blockReason,
+      affectedPOs: affectedPosCount,
+      affectedRouting: affectedRoutingCount,
+      affectedMaterials: affectedMaterialsCount,
+      currentStage: project.currentStage,
+    };
+  }
+
   async reopenEngineering(id: string, userId?: string) {
+    const impact = await this.getReopenImpact(id);
+    if (impact.isBlocked) {
+      throw new BadRequestException(impact.blockReason || "Cannot reopen engineering: stage constraints violated.");
+    }
+
     return this.prisma.$transaction(async (tx) => {
+      // Get current stage before changing it
+      const currentProj = await tx.project.findUniqueOrThrow({ where: { id } });
+
       // 1. Reopen Project Stage
       const project = await tx.project.update({
         where: { id },
@@ -533,7 +596,7 @@ export class ProjectsService {
       await tx.projectTimeline.create({
         data: {
           projectId: id,
-          fromStage: 'PROCUREMENT', // or wherever it was
+          fromStage: currentProj.currentStage,
           toStage: 'ENGINEERING',
           transitionedBy: userId || 'SYSTEM',
           remarks: 'Engineering Reopened via Revision Engine.',

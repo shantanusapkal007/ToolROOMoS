@@ -2,10 +2,14 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { ProjectStatus, InventoryMovementType } from '@prisma/client';
+import { WipService } from './wip.service';
 
 @Injectable()
 export class MaterialIssuesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly wipService: WipService,
+  ) {}
 
   async issueMaterial(projectId: string, dto: CreateIssueDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
@@ -146,17 +150,42 @@ export class MaterialIssuesService {
             createdBy: userId,
           },
         });
+
+        // 7.1 Initialize WIP Entry
+        await this.wipService.initializeWipEntry({
+          projectId,
+          materialId: batch.materialId,
+          batchId: item.inventoryBatchId,
+          qtyInWip: item.issuedQty,
+          initialMaterialCost: consumptionValue
+        }, tx);
       }
 
       // 7. Costing Integration: Rollup consumption to ProjectCostSummary (Layer 5 - Outcomes)
-      await tx.projectCostSummary.update({
+      // Using upsert to protect against legacy projects without a cost summary record
+      await tx.projectCostSummary.upsert({
         where: { projectId },
-        data: {
+        create: {
+          projectId,
+          materialConsumptionCost: totalConsumptionCost,
+          totalCost: totalConsumptionCost,
+          estimatedMaterialCost: 0,
+          actualMaterialCost: 0,
+          machineCost: 0,
+          labourCost: 0,
+          outsideProcessCost: 0,
+          inspectionCost: 0,
+          packingCost: 0,
+          dispatchCost: 0,
+          revenue: 0,
+          profitability: 0,
+        },
+        update: {
           materialConsumptionCost: { increment: totalConsumptionCost },
-          // totalCost is NOT incremented here because actual material purchases (GRN) already added to actualMaterialCost 
-          // and totalCost should not double count material cost.
+          totalCost: { increment: totalConsumptionCost },
         },
       });
+
 
       // Record detailed cost audit trail event
       await tx.projectCostEvent.create({

@@ -20,6 +20,9 @@ import {
 } from "../../../../hooks/useProduction";
 
 const msdrSchema = z.object({
+  reportDate: z.string().min(1, "Report date is required"),
+  startTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
   machineId: z.string().min(1, "Machine is required"),
   employeeId: z.string().min(1, "Operator is required"),
   setupTime: z.number().min(0, "Setup time cannot be negative"),
@@ -71,6 +74,9 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
   const msdrForm = useForm({
     resolver: zodResolver(msdrSchema),
     defaultValues: {
+      reportDate: new Date().toISOString().split('T')[0],
+      startTime: "09:00",
+      endTime: "17:00",
       machineId: "",
       employeeId: "",
       setupTime: 0,
@@ -413,6 +419,24 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
             </div>
         )}
         <form onSubmit={msdrForm.handleSubmit(handleLogMsdr)} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
+              <input type="date" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" {...msdrForm.register("reportDate")} />
+              {msdrForm.formState.errors.reportDate && <p className="text-red-400 text-xs mt-1">{msdrForm.formState.errors.reportDate.message?.toString()}</p>}
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Start Time</label>
+              <input type="time" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" {...msdrForm.register("startTime")} />
+              {msdrForm.formState.errors.startTime && <p className="text-red-400 text-xs mt-1">{msdrForm.formState.errors.startTime.message?.toString()}</p>}
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">End Time</label>
+              <input type="time" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" {...msdrForm.register("endTime")} />
+              {msdrForm.formState.errors.endTime && <p className="text-red-400 text-xs mt-1">{msdrForm.formState.errors.endTime.message?.toString()}</p>}
+            </div>
+          </div>
+          
           <div>
             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Machine</label>
             <select className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" {...msdrForm.register("machineId")}>

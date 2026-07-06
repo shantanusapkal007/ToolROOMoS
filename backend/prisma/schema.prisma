@@ -159,6 +159,8 @@ model Material {
   shape                MaterialShape?        @relation(fields: [shapeId], references: [id])
   purchaseOrderItems   PurchaseOrderItem[]
 
+  wipLedgers WipLedger[]
+
   @@map("materials")
 }
 
@@ -197,6 +199,11 @@ model Machine {
   plant                Plant                    @relation(fields: [plantId], references: [id])
   productionOperations ProductionOperation[]
   routingOperations    RoutingOperation[]
+
+  wipLedgers          WipLedger[]
+  machineCalendars    MachineCalendar[]
+  productionSchedules ProductionSchedule[]
+  oeeDailyLogs        OeeDailyLog[]
 
   @@map("machines")
 }
@@ -271,6 +278,8 @@ model Shift {
   createdBy String?
   updatedBy String?
   employees Employee[]
+
+  machineCalendars MachineCalendar[]
 
   @@map("shifts")
 }
@@ -419,6 +428,9 @@ model Project {
   subcontractOrders     SubcontractOrder[]
   subcontractReceipts   SubcontractReceipt[]
 
+  wipLedgers          WipLedger[]
+  productionSchedules ProductionSchedule[]
+
   @@map("projects")
 }
 
@@ -456,8 +468,6 @@ model DocumentRevision {
 
   @@map("document_revisions")
 }
-
-
 
 model BillOfMaterialHeader {
   id                 String               @id @default(uuid())
@@ -539,6 +549,8 @@ model RoutingOperation {
   operation               Operation                @relation(fields: [operationId], references: [id])
   plannedMachine          Machine?                 @relation(fields: [plannedMachineId], references: [id])
   routingHeader           RoutingHeader            @relation(fields: [routingHeaderId], references: [id])
+
+  wipLedgers WipLedger[]
 
   @@map("routing_operations")
 }
@@ -871,8 +883,9 @@ model InventoryBatch {
   machineShopDailyReports  MachineShopDailyReport[]
   materialIssueItems       MaterialIssueItem[]
   subcontractOrderItems    SubcontractOrderItem[]
+  wipLedgers               WipLedger[]
 
-  @@index([materialId])
+  @@index([materialId, status])
   @@index([grnItemId])
   @@map("inventory_batches")
 }
@@ -1006,6 +1019,8 @@ model JobCard {
   operator           Employee?        @relation(fields: [operatorId], references: [id])
   project            Project          @relation(fields: [projectId], references: [id])
   routingOperation   RoutingOperation @relation(fields: [routingOperationId], references: [id])
+
+  productionSchedules ProductionSchedule[]
 
   @@map("job_cards")
 }
@@ -1221,6 +1236,100 @@ model dynamic_forms {
   schema    Json
   createdAt DateTime @default(now())
   updatedAt DateTime
+}
+
+// --- SPRINT 3 ENTERPRISE MODELS ---
+
+model WipLedger {
+  id                  String   @id @default(uuid())
+  projectId           String
+  materialId          String
+  batchId             String?
+  routingOperationId  String?
+  machineId           String?
+  qtyInWip            Decimal
+  accruedMaterialCost Decimal  @default(0)
+  accruedMachineCost  Decimal  @default(0)
+  accruedLabourCost   Decimal  @default(0)
+  status              String   @default("IN_PROCESS") // IN_PROCESS, SCRAPPED, FINISHED
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  project          Project           @relation(fields: [projectId], references: [id])
+  material         Material          @relation(fields: [materialId], references: [id])
+  batch            InventoryBatch?   @relation(fields: [batchId], references: [id])
+  routingOperation RoutingOperation? @relation(fields: [routingOperationId], references: [id])
+  machine          Machine?          @relation(fields: [machineId], references: [id])
+
+  @@map("wip_ledger")
+}
+
+model WipValuationSnapshot {
+  id                String   @id @default(uuid())
+  snapshotDate      DateTime
+  totalWipValue     Decimal
+  totalMaterialCost Decimal
+  totalMachineCost  Decimal
+  totalLabourCost   Decimal
+  createdAt         DateTime @default(now())
+
+  @@map("wip_valuation_snapshots")
+}
+
+model MachineCalendar {
+  id                 String   @id @default(uuid())
+  machineId          String
+  date               DateTime
+  shiftId            String?
+  isAvailable        Boolean  @default(true)
+  plannedMaintenance Boolean  @default(false)
+  maintenanceNotes   String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  machine Machine @relation(fields: [machineId], references: [id])
+  shift   Shift?  @relation(fields: [shiftId], references: [id])
+
+  @@map("machine_calendars")
+}
+
+model ProductionSchedule {
+  id                 String   @id @default(uuid())
+  projectId          String
+  jobCardId          String
+  machineId          String
+  scheduledDate      DateTime
+  scheduledStartTime DateTime
+  scheduledEndTime   DateTime
+  estimatedHours     Decimal
+  status             String   @default("SCHEDULED")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id])
+  jobCard JobCard @relation(fields: [jobCardId], references: [id])
+  machine Machine @relation(fields: [machineId], references: [id])
+
+  @@map("production_schedules")
+}
+
+model OeeDailyLog {
+  id                String   @id @default(uuid())
+  machineId         String
+  logDate           DateTime
+  availabilityScore Decimal  @default(0)
+  performanceScore  Decimal  @default(0)
+  qualityScore      Decimal  @default(0)
+  oeeScore          Decimal  @default(0)
+  plannedTime       Decimal  @default(0)
+  operatingTime     Decimal  @default(0)
+  totalParts        Decimal  @default(0)
+  goodParts         Decimal  @default(0)
+  createdAt         DateTime @default(now())
+
+  machine Machine @relation(fields: [machineId], references: [id])
+
+  @@map("oee_daily_logs")
 }
 
 enum ProjectStatus {

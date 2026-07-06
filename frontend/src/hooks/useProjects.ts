@@ -111,3 +111,28 @@ export function useDeleteProject(id: string) {
     },
   });
 }
+
+export function useReopenImpact(id: string) {
+  return useQuery({
+    queryKey: [...projectKeys.detail(id), 'reopen-impact'] as const,
+    queryFn: () => ProjectsService.getReopenImpact(id),
+    enabled: !!id,
+  });
+}
+
+export function useReopenEngineering(id: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: () => ProjectsService.reopenEngineering(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      success('Engineering Reopened', 'The project has been rolled back to Engineering stage.');
+    },
+    onError: (err: any) => {
+      error('Reopen Failed', err.message || 'Failed to reopen engineering');
+    },
+  });
+}

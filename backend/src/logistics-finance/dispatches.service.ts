@@ -52,11 +52,13 @@ export class DispatchesService {
       });
 
       // 3. Costing Integration: Rollup logistics cost to ProjectCostSummary (Layer 5 - Outcomes)
+      // Guard against null/undefined logisticsCost (free deliveries)
+      const safeLogisticsCost = dto.logisticsCost || 0;
       await tx.projectCostSummary.update({
         where: { projectId },
         data: {
-          dispatchCost: { increment: dto.logisticsCost },
-          totalCost: { increment: dto.logisticsCost },
+          dispatchCost: { increment: safeLogisticsCost },
+          totalCost: { increment: safeLogisticsCost },
         },
       });
 
@@ -66,7 +68,7 @@ export class DispatchesService {
           projectId,
           costType: 'DISPATCH_COST',
           description: `Logistics cost logged for Dispatch Note ${dto.dispatchNumber}`,
-          amount: dto.logisticsCost,
+          amount: safeLogisticsCost,
           referenceDocType: 'DISPATCH',
           referenceDocId: dispatch.id,
           createdBy: userId,
@@ -78,7 +80,7 @@ export class DispatchesService {
         data: {
           projectId,
           action: 'PROJECT_DISPATCHED',
-          description: `Dispatch Note ${dto.dispatchNumber} logged. Parts sent: ${dto.dispatchQty}. Logistics Cost booked: ₹${dto.logisticsCost}`,
+          description: `Dispatch Note ${dto.dispatchNumber} logged. Parts sent: ${dto.dispatchQty}. Logistics Cost booked: ₹${safeLogisticsCost}`,
           performedBy: userId || 'SYSTEM',
         },
       });

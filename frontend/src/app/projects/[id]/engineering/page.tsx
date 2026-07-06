@@ -10,6 +10,7 @@ import { RoutingNodeEditor } from "../../../../components/engineering/RoutingNod
 import { BomConverter } from "../../../../components/engineering/BomConverter";
 import { useProject } from "../../../../hooks/useProjects";
 import { useMasterData } from "../../../../hooks/useMasterData";
+import { formatCurrency } from "../../../../lib/formatters";
 import { 
   useProjectBOM, useProjectRouting, useUpdateBOM, useUpdateRouting, 
   useApproveBOM, useApproveRouting 
@@ -44,8 +45,6 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
   const [activeTab, setActiveTab] = useState<'sequence' | 'converter'>('sequence');
 
   if (projectLoading || !project) return null;
-
-  const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
 
 
 
@@ -240,24 +239,33 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
             <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4 h-fit">
               <h3 className="text-sm font-bold text-white mb-4 flex items-center tracking-widest uppercase"><GitMerge className="mr-2 text-emerald-400 w-4 h-4" /> Cost Baseline</h3>
               {costSummary ? (
-                <div className="space-y-3">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-slate-400">Est. Material</span>
-                    <span className="text-white font-mono">{formatCurrency(costSummary.estimatedMaterialCost)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-slate-400">Est. Machine</span>
-                    <span className="text-white font-mono">{formatCurrency(costSummary.estimatedMachineCost)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-slate-400">Est. Labour</span>
-                    <span className="text-white font-mono">{formatCurrency(costSummary.estimatedLabourCost)}</span>
-                  </div>
-                  <div className="pt-3 border-t border-white/10 flex justify-between font-bold text-emerald-400 text-sm">
-                    <span className="uppercase tracking-widest text-[10px]">Total Mfg Cost</span>
-                    <span className="font-mono">{formatCurrency(costSummary.estimatedManufacturingCost)}</span>
-                  </div>
-                </div>
+                (() => {
+                  const estMat = Number(costSummary.estimatedMaterialCost || 0);
+                  const estMach = Number(costSummary.estimatedMachineCost || 0);
+                  const estLab = Number(costSummary.estimatedLabourCost || 0);
+                  const totalMfg = estMat + estMach + estLab;
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-400">Est. Material</span>
+                        <span className="text-white font-mono">{formatCurrency(estMat)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-400">Est. Machine</span>
+                        <span className="text-white font-mono">{formatCurrency(estMach)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-400">Est. Labour</span>
+                        <span className="text-white font-mono">{formatCurrency(estLab)}</span>
+                      </div>
+                      <div className="pt-3 border-t border-white/10 flex justify-between font-bold text-emerald-400 text-sm">
+                        <span className="uppercase tracking-widest text-[10px]">Total Mfg Cost</span>
+                        <span className="font-mono">{formatCurrency(totalMfg)}</span>
+                      </div>
+                    </div>
+                  );
+                })()
               ) : (
                 <div className="text-center text-slate-500 italic text-xs py-8">
                   Baseline will generate upon approval.
