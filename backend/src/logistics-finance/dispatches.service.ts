@@ -78,7 +78,7 @@ export class DispatchesService {
         data: {
           projectId,
           action: 'PROJECT_DISPATCHED',
-          description: `Dispatch Note ${dto.dispatchNumber} logged. Parts sent: ${dto.dispatchQty}. Logistics Cost booked: $${dto.logisticsCost}`,
+          description: `Dispatch Note ${dto.dispatchNumber} logged. Parts sent: ${dto.dispatchQty}. Logistics Cost booked: ₹${dto.logisticsCost}`,
           performedBy: userId || 'SYSTEM',
         },
       });
@@ -95,7 +95,7 @@ export class DispatchesService {
           fromStage: ProjectStatus.DISPATCH_READY,
           toStage: ProjectStatus.DISPATCHED,
           transitionedBy: userId || 'SYSTEM',
-          remarks: `Material loaded and dispatched. Shipping value: $${dto.logisticsCost}`,
+          remarks: `Material loaded and dispatched. Shipping value: ₹${dto.logisticsCost}`,
         },
       });
 

@@ -4,11 +4,23 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Briefcase, Database, Package, Settings, Users, Factory, FileText, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useGlobalSearch } from '../../hooks/useGlobalSearch';
 
 export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const router = useRouter();
+
+  // Debounce the query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [query]);
+
+  const { data: searchResults, isLoading } = useGlobalSearch(debouncedQuery);
 
   // Handle Hotkey (Cmd+K or Ctrl+K)
   useEffect(() => {
@@ -56,11 +68,21 @@ export function CommandPalette() {
     }
   ];
 
-  // Flat list for filtering
+  // Flat list for filtering static menu items
   const allItems = menuGroups.flatMap(group => group.items);
-  const filteredItems = query 
+  const filteredStaticItems = query 
     ? allItems.filter(item => item.label.toLowerCase().includes(query.toLowerCase()))
     : allItems;
+
+  const getDynamicIcon = (iconStr: string) => {
+    switch (iconStr) {
+      case 'Briefcase': return <Briefcase className="w-4 h-4 text-blue-400" />;
+      case 'Package': return <Package className="w-4 h-4 text-emerald-400" />;
+      case 'Users': return <Users className="w-4 h-4 text-orange-400" />;
+      case 'Factory': return <Factory className="w-4 h-4 text-purple-400" />;
+      default: return <Database className="w-4 h-4 text-slate-400" />;
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -109,15 +131,36 @@ export function CommandPalette() {
                 {query ? (
                   <div className="py-2">
                     <div className="text-xs font-bold text-slate-500 uppercase tracking-widest px-4 mb-2">Search Results</div>
-                    {filteredItems.length > 0 ? (
-                      <div className="space-y-1">
-                        {filteredItems.map((item, idx) => (
-                          <CommandItem key={idx} item={item} onSelect={() => handleSelect(item.path)} />
-                        ))}
-                      </div>
+                    {isLoading && debouncedQuery.length >= 2 ? (
+                      <div className="text-center py-8 text-slate-500 animate-pulse">Searching global database...</div>
                     ) : (
-                      <div className="text-center py-12 text-slate-500">
-                        No results found for "{query}"
+                      <div className="space-y-4">
+                        {/* Dynamic API Results */}
+                        {searchResults && searchResults.length > 0 && (
+                          <div className="space-y-1">
+                            {searchResults.map((item, idx) => (
+                              <CommandItem key={`dyn-${idx}`} item={{ ...item, icon: getDynamicIcon(item.icon) }} onSelect={() => handleSelect(item.path)} />
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Static Menu Results */}
+                        {filteredStaticItems.length > 0 && (
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-4 mb-2 mt-4">System Menu</div>
+                            <div className="space-y-1">
+                              {filteredStaticItems.map((item, idx) => (
+                                <CommandItem key={`stat-${idx}`} item={item} onSelect={() => handleSelect(item.path)} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {(!searchResults || searchResults.length === 0) && filteredStaticItems.length === 0 && (
+                          <div className="text-center py-12 text-slate-500">
+                            No results found for "{query}"
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

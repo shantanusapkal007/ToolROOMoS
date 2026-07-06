@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+  ParseUUIDPipe
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -55,7 +56,7 @@ export class MachinesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.machinesService.findOne(id);
     return {
       status: 'success',
@@ -66,7 +67,7 @@ export class MachinesController {
 
   @Put(':id')
   @Roles('ADMIN')
-  async update(@Param('id') id: string, @Body() dto: UpdateMachineDto) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateMachineDto) {
     const data = await this.machinesService.update(id, dto);
     return {
       status: 'success',
@@ -77,7 +78,7 @@ export class MachinesController {
 
   @Delete(':id')
   @Roles('ADMIN')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.machinesService.softDelete(id);
     return {
       status: 'success',

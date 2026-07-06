@@ -29,7 +29,7 @@ export const machineRegistry: EntityRegistry = {
       { label: 'EDM Wirecut', value: 'EDM_WIRECUT' },
       { label: 'Grinding', value: 'GRINDING' }
     ] },
-    { name: 'hourlyRate', label: 'Hourly Cost Rate ($)', type: 'number', required: true },
+    { name: 'hourlyRate', label: 'Hourly Cost Rate (₹)', type: 'number', required: true },
     { name: 'manufacturer', label: 'Manufacturer', type: 'text' },
     { name: 'modelNumber', label: 'Model Number', type: 'text' },
     { name: 'serialNumber', label: 'Serial Number', type: 'text' },

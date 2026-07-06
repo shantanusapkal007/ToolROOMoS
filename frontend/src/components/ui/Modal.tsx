@@ -55,7 +55,7 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   // Apple Spring Configuration
-  const spring = { type: "spring", stiffness: 350, damping: 30 };
+  const spring = { type: "spring" as any, stiffness: 300, damping: 30 };
 
   const modalContent = (
     <AnimatePresence>

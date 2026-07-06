@@ -10,6 +10,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { DrawingsService } from './drawings.service';
 import { BomsService } from './boms.service';
 import { RoutingService } from './routing.service';
@@ -32,8 +33,9 @@ export class EngineeringController {
   async uploadDrawing(
     @Param('projectId') projectId: string,
     @Body() dto: CreateDrawingDto,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.drawingsService.uploadDrawing(projectId, dto);
+    const data = await this.drawingsService.uploadDrawing(projectId, dto, user.userId);
     return {
       status: 'success',
       message: 'Drawing uploaded successfully.',
@@ -51,14 +53,30 @@ export class EngineeringController {
     };
   }
 
+  @Put('drawings/:drawingId/approve')
+  @Roles('ADMIN', 'ENGINEERING')
+  async approveDrawing(
+    @Param('projectId') projectId: string,
+    @Param('drawingId') drawingId: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.drawingsService.approveDrawing(projectId, drawingId, user.userId);
+    return {
+      status: 'success',
+      message: 'Drawing approved successfully.',
+      data,
+    };
+  }
+
   // BOM APIs
   @Post('bom')
   @Roles('ADMIN', 'ENGINEERING')
   async createBom(
     @Param('projectId') projectId: string,
     @Body() dto: CreateBomDto,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.bomsService.createBom(projectId, dto);
+    const data = await this.bomsService.createBom(projectId, dto, user.userId);
     return {
       status: 'success',
       message: 'BOM submitted successfully.',
@@ -71,11 +89,28 @@ export class EngineeringController {
   async approveBom(
     @Param('projectId') projectId: string,
     @Param('bomId') bomId: string,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.bomsService.approveBom(projectId, bomId);
+    const data = await this.bomsService.approveBom(projectId, bomId, user.userId);
     return {
       status: 'success',
       message: 'BOM approved. Project transitioned to Procurement stage.',
+      data,
+    };
+  }
+
+  @Put('bom/:bomId/reject')
+  @Roles('ADMIN', 'ENGINEERING')
+  async rejectBom(
+    @Param('projectId') projectId: string,
+    @Param('bomId') bomId: string,
+    @Body('remarks') remarks: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.bomsService.rejectBom(projectId, bomId, remarks, user.userId);
+    return {
+      status: 'success',
+      message: 'BOM rejected and sent back for revision.',
       data,
     };
   }
@@ -96,8 +131,9 @@ export class EngineeringController {
   async submitEngineeringPlan(
     @Param('projectId') projectId: string,
     @Body() dto: CreateRoutingDto,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.routingService.submitEngineeringPlan(projectId, dto);
+    const data = await this.routingService.submitEngineeringPlan(projectId, dto, user.userId);
     return {
       status: 'success',
       message: 'Manufacturing Routing Plan submitted successfully.',
@@ -123,11 +159,28 @@ export class EngineeringController {
   async approveManufacturingPlan(
     @Param('projectId') projectId: string,
     @Param('routingId') routingId: string,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.routingService.approveManufacturingPlan(projectId, routingId);
+    const data = await this.routingService.approveManufacturingPlan(projectId, routingId, user.userId);
     return {
       status: 'success',
       message: 'Manufacturing Plan approved. Cost Baseline frozen. Project transitioned to Procurement.',
+      data,
+    };
+  }
+
+  @Put('routing/:routingId/reject')
+  @Roles('ADMIN', 'ENGINEERING')
+  async rejectManufacturingPlan(
+    @Param('projectId') projectId: string,
+    @Param('routingId') routingId: string,
+    @Body('remarks') remarks: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.routingService.rejectManufacturingPlan(projectId, routingId, remarks, user.userId);
+    return {
+      status: 'success',
+      message: 'Manufacturing Plan rejected and returned to Engineering.',
       data,
     };
   }

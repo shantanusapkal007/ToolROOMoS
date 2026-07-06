@@ -9,6 +9,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { SubcontractingService } from './subcontracting.service';
 import { CreateSubcontractOrderDto } from './dto/create-subcontract-order.dto';
 import { CreateSubcontractReceiptDto } from './dto/create-subcontract-receipt.dto';
@@ -23,6 +24,7 @@ export class SubcontractingController {
   async createOrder(
     @Param('projectId') projectId: string,
     @Body() dto: CreateSubcontractOrderDto,
+    @CurrentUser() user: any,
   ) {
     const data = await this.subcontractingService.createOrder(projectId, dto);
     return {
@@ -47,6 +49,7 @@ export class SubcontractingController {
   async createReceipt(
     @Param('projectId') projectId: string,
     @Body() dto: CreateSubcontractReceiptDto,
+    @CurrentUser() user: any,
   ) {
     const data = await this.subcontractingService.createReceipt(projectId, dto);
     return {

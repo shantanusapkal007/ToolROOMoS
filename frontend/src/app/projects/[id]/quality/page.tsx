@@ -6,7 +6,8 @@ import { CheckSquare, AlertTriangle, FileText, ClipboardList } from "lucide-reac
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject } from "../../../../hooks/useProjects";
 import { useProjectRouting } from "../../../../hooks/useEngineering";
-import { useLogInspection } from "../../../../hooks/useQuality";
+import { useLogInspection, useCloseNcr } from "../../../../hooks/useQuality";
+import { useMasterData } from "../../../../hooks/useMasterData";
 
 export default function QualityTab({ params }: { params: Promise<{ id: string }> }) {
   const { success, error } = useToast();
@@ -26,6 +27,31 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
   const [selectedOperation, setSelectedOperation] = useState('');
   const [qty, setQty] = useState({ inspected: 0, passed: 0, rework: 0, scrap: 0 });
   const [remarks, setRemarks] = useState('');
+  const [measurements, setMeasurements] = useState<{inspectionStandardId: string, nominalValue: number, upperTolerance: number, lowerTolerance: number, actualValue: number, result: string}[]>([]);
+
+  const { data: inspectionStandards } = useMasterData('inspection-standards');
+
+  // NCR Modal State
+  const [showNcrModal, setShowNcrModal] = useState(false);
+  const [ncrToClose, setNcrToClose] = useState('');
+  const [ncrDisposition, setNcrDisposition] = useState('REWORK');
+  const [ncrRootCause, setNcrRootCause] = useState('');
+  const closeNcrMutation = useCloseNcr(resolvedParams.id);
+
+  const handleCloseNcr = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ncrToClose) return;
+    try {
+      await closeNcrMutation.mutateAsync({
+        ncrId: ncrToClose,
+        data: { disposition: ncrDisposition, rootCause: ncrRootCause }
+      });
+      setShowNcrModal(false);
+      setNcrToClose('');
+      setNcrDisposition('REWORK');
+      setNcrRootCause('');
+    } catch (err: any) {}
+  };
 
   // No manual loadData needed, React Query handles it
 
@@ -49,9 +75,11 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
         reworkQty: qty.rework,
         scrapQty: qty.scrap,
         result, 
-        remarks 
+        remarks,
+        measurements: measurements.length > 0 ? measurements : undefined
       });
       setShowModal(false);
+      setMeasurements([]);
     } catch (err: any) {}
   };
 
@@ -145,6 +173,64 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
+      {/* NCR History */}
+      <div className="bg-white/[0.01] border border-white/5 rounded-2xl relative overflow-hidden flex flex-col mt-4 min-h-0">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
+        <div className="p-4 border-b border-white/5 flex justify-between items-center relative z-10 shrink-0">
+          <h3 className="text-sm font-bold text-white uppercase tracking-widest">Non-Conformance Reports (NCR)</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto hide-scrollbar relative z-10">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-white/[0.02] sticky top-0 backdrop-blur-md z-20">
+              <tr>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5">Date</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5">NCR Number</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5">Defect Type</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5">Status</th>
+                <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {project.ncrReports?.map((ncr: any) => (
+                <tr key={ncr.id} className="hover:bg-white/[0.02] transition-colors group">
+                  <td className="p-3 text-xs text-slate-300 font-mono">{new Date(ncr.createdAt).toLocaleDateString()}</td>
+                  <td className="p-3 text-sm font-bold text-white font-mono">{ncr.ncrNumber}</td>
+                  <td className="p-3 text-xs text-slate-300">{ncr.defectType}</td>
+                  <td className="p-3">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border ${ncr.status === 'OPEN' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                      {ncr.status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right">
+                    {ncr.status === 'OPEN' && (
+                      <button
+                        onClick={() => {
+                          setNcrToClose(ncr.id);
+                          setShowNcrModal(true);
+                        }}
+                        className="px-3 py-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider rounded border border-white/10 transition-colors"
+                      >
+                        Close
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {(!project.ncrReports || project.ncrReports.length === 0) && (
+                <tr>
+                  <td colSpan={5} className="p-8">
+                    <div className="flex flex-col items-center justify-center text-slate-500 opacity-50">
+                       <AlertTriangle className="h-8 w-8 mb-3" />
+                       <span className="text-[11px] font-bold uppercase tracking-wider">No NCRs recorded</span>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
           <div className="glass-modal w-full max-w-lg p-6 animate-slide-up border border-emerald-500/20 relative overflow-hidden">
@@ -172,7 +258,7 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
                   <select className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                     value={selectedOperation} onChange={e => setSelectedOperation(e.target.value)} required>
                     <option value="">-- Select Operation --</option>
-                    {routingOperations.map(op => (
+                    {routingOperations.map((op: any) => (
                       <option key={op.id} value={op.id}>OP{op.operation?.operationNumber} - {op.operation?.name}</option>
                     ))}
                   </select>
@@ -203,6 +289,66 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
               </div>
 
               <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Detailed Measurements (Optional)</label>
+                  <button type="button" onClick={() => setMeasurements([...measurements, { inspectionStandardId: '', nominalValue: 0, upperTolerance: 0, lowerTolerance: 0, actualValue: 0, result: 'PASS' }])} className="text-emerald-400 text-[10px] font-bold hover:text-emerald-300 transition-colors">+ Add Measurement</button>
+                </div>
+                {measurements.length > 0 && (
+                  <div className="space-y-3 mb-4">
+                    {measurements.map((m, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-end bg-white/[0.02] p-2 rounded border border-white/5">
+                        <div className="col-span-3">
+                          <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Standard</label>
+                          <select className="w-full bg-black/50 border border-white/10 rounded px-2 py-1.5 text-xs text-white" value={m.inspectionStandardId} onChange={e => { const newM = [...measurements]; newM[idx].inspectionStandardId = e.target.value; setMeasurements(newM); }}>
+                            <option value="">Select</option>
+                            {inspectionStandards?.map((s:any) => <option key={s.id} value={s.id}>{s.standardName}</option>)}
+                          </select>
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nominal</label>
+                          <input type="number" step="0.01" className="w-full bg-black/50 border border-white/10 rounded px-2 py-1.5 text-xs text-white" value={m.nominalValue} onChange={e => { const newM = [...measurements]; newM[idx].nominalValue = parseFloat(e.target.value); setMeasurements(newM); }} />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tol (+/-)</label>
+                          <div className="flex space-x-1">
+                            <input type="number" step="0.01" placeholder="+" className="w-full bg-black/50 border border-white/10 rounded px-1 py-1.5 text-xs text-white" value={m.upperTolerance} onChange={e => { const newM = [...measurements]; newM[idx].upperTolerance = parseFloat(e.target.value); setMeasurements(newM); }} />
+                            <input type="number" step="0.01" placeholder="-" className="w-full bg-black/50 border border-white/10 rounded px-1 py-1.5 text-xs text-white" value={m.lowerTolerance} onChange={e => { const newM = [...measurements]; newM[idx].lowerTolerance = parseFloat(e.target.value); setMeasurements(newM); }} />
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[9px] font-bold text-emerald-500 uppercase tracking-wider mb-1">Actual</label>
+                          <input type="number" step="0.01" className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded px-2 py-1.5 text-xs text-emerald-400" value={m.actualValue} onChange={e => { 
+                            const newM = [...measurements]; 
+                            const actual = parseFloat(e.target.value);
+                            newM[idx].actualValue = actual; 
+                            
+                            // Auto-evaluate result
+                            if (newM[idx].nominalValue) {
+                              const upper = newM[idx].nominalValue + (newM[idx].upperTolerance || 0);
+                              const lower = newM[idx].nominalValue - (newM[idx].lowerTolerance || 0);
+                              newM[idx].result = (actual <= upper && actual >= lower) ? 'PASS' : 'FAIL';
+                            }
+                            setMeasurements(newM); 
+                          }} />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Result</label>
+                          <select className={`w-full border rounded px-2 py-1.5 text-xs font-bold ${m.result === 'PASS' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`} value={m.result} onChange={e => { const newM = [...measurements]; newM[idx].result = e.target.value; setMeasurements(newM); }}>
+                            <option value="PASS">PASS</option>
+                            <option value="FAIL">FAIL</option>
+                            <option value="REWORK">REWORK</option>
+                          </select>
+                        </div>
+                        <div className="col-span-1 flex justify-center pb-1.5">
+                          <button type="button" onClick={() => setMeasurements(measurements.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300 font-bold">&times;</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Remarks</label>
                 <textarea className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 min-h-[80px]"
                   value={remarks} onChange={e => setRemarks(e.target.value)} placeholder="Measurements, deviations, or NCR details..."></textarea>
@@ -211,6 +357,40 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
               <div className="pt-4 flex space-x-3 border-t border-white/10">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-sm text-white transition-colors">Cancel</button>
                 <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all">Save Inspection</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showNcrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-md p-6 animate-slide-up border border-white/10 relative overflow-hidden">
+            <h3 className="text-lg font-bold text-white mb-5 relative z-10 flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2 text-amber-400" />
+              Close Non-Conformance Report
+            </h3>
+            
+            <form onSubmit={handleCloseNcr} className="space-y-4 relative z-10">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Disposition</label>
+                <select className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                  value={ncrDisposition} onChange={e => setNcrDisposition(e.target.value)} required>
+                  <option value="REWORK">Rework</option>
+                  <option value="SCRAP">Scrap</option>
+                  <option value="USE_AS_IS">Use As Is</option>
+                  <option value="RETURN_TO_VENDOR">Return to Vendor</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Root Cause & Actions Taken</label>
+                <textarea className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50 min-h-[80px]"
+                  value={ncrRootCause} onChange={e => setNcrRootCause(e.target.value)} placeholder="Describe what went wrong and how it was fixed..."></textarea>
+              </div>
+
+              <div className="pt-4 flex space-x-3 border-t border-white/10">
+                <button type="button" onClick={() => setShowNcrModal(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-sm text-white transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all">Close NCR</button>
               </div>
             </form>
           </div>

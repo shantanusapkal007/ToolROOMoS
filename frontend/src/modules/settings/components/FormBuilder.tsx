@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { useToast } from '../../../components/ui/Toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export type FieldType = 'text' | 'number' | 'select' | 'textarea' | 'checkbox' | 'date' | 'toggle' | 'radio' | 'contact' | 'file';
 
@@ -25,10 +26,53 @@ const initialFields: FormField[] = [
 ];
 
 export const FormBuilder = () => {
-  const { success } = useToast();
-  const [fields, setFields] = useState<FormField[]>(initialFields);
+  const { success, error } = useToast();
+  const queryClient = useQueryClient();
   const [activeForm, setActiveForm] = useState('Customers');
-  const [isSaving, setIsSaving] = useState(false);
+
+  const { data: savedForm, isLoading } = useQuery({
+    queryKey: ['form', activeForm],
+    queryFn: async () => {
+      const res = await fetch(`http://localhost:3000/api/v1/settings/forms/${activeForm}`);
+      if (!res.ok) throw new Error('Failed to fetch form');
+      const json = await res.json();
+      return json.data;
+    }
+  });
+
+  const [fields, setFields] = useState<FormField[]>(initialFields);
+
+  React.useEffect(() => {
+    if (savedForm && savedForm.schema) {
+      setFields(savedForm.schema as FormField[]);
+    } else {
+      setFields(initialFields);
+    }
+  }, [savedForm, activeForm]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (schemaData: FormField[]) => {
+      const res = await fetch('http://localhost:3000/api/v1/settings/forms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formId: activeForm,
+          name: `${activeForm} Form`,
+          schema: schemaData
+        })
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['form', activeForm] });
+      success('Schema Saved', 'Advanced form schema saved successfully to database!');
+    },
+    onError: () => {
+      error('Save Failed', 'Could not save the form schema to the database.');
+    }
+  });
+
   
   // Settings Panel State
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
@@ -55,11 +99,7 @@ export const FormBuilder = () => {
   };
 
   const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      success('Schema Saved', 'Advanced form schema saved successfully!');
-    }, 1000);
+    saveMutation.mutate(fields);
   };
 
   const getIconForType = (type: FieldType) => {
@@ -103,7 +143,7 @@ export const FormBuilder = () => {
               { label: 'Materials Form', value: 'Materials' },
             ]}
           />
-          <Button variant="primary" leftIcon={<Save className="w-4 h-4" />} onClick={handleSave} isLoading={isSaving}>
+          <Button variant="primary" leftIcon={<Save className="w-4 h-4" />} onClick={handleSave} isLoading={saveMutation.isPending}>
             Save Schema
           </Button>
         </div>
@@ -161,66 +201,12 @@ export const FormBuilder = () => {
               </div>
 
               <div className="flex flex-wrap -mx-3 relative z-10">
-                {fields.map((field) => {
-                  const isEditing = editingFieldId === field.id;
-                  const isHalf = field.width === 'half';
-                  
-                  return (
-                    <div key={field.id} className={`p-3 transition-all duration-300 ${isHalf ? 'w-1/2' : 'w-full'}`}>
-                      <div className={`group relative flex flex-col p-5 rounded-2xl border transition-all duration-300 ${isEditing ? 'bg-white/10 border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)] scale-[1.01]' : 'bg-[#050A14]/60 border-white/5 hover:border-white/20 hover:bg-white/5'}`}>
-                        
-                        {/* Drag Handle */}
-                        <div className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-move p-1.5 text-slate-500 hover:text-white transition-opacity bg-[#0B1018] rounded-lg border border-white/10 shadow-lg z-20">
-                          <GripVertical className="w-4 h-4" />
-                        </div>
-                        
-                        {/* Field Header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-2">
-                            {getIconForType(field.type)}
-                            <Input 
-                              value={field.label} 
-                              onChange={(e) => updateField(field.id, { label: e.target.value })} 
-                              className="!bg-transparent !border-transparent hover:!border-white/10 focus:!bg-[#050A14]/95 !px-2 !py-0.5 -ml-2 font-bold text-sm text-white w-auto inline-block transition-colors"
-                            />
-                            {field.required && <span className="text-red-500 font-bold">*</span>}
-                          </div>
-                        </div>
-                        
-                        {/* Field Mock UI */}
-                        <div className="pointer-events-none opacity-90 transition-opacity">
-                          <FieldPreview field={field} />
-                        </div>
-
-                        {field.helpText && (
-                          <div className="mt-2 flex items-start text-[10px] text-slate-500">
-                            <HelpCircle className="w-3 h-3 mr-1 mt-0.5 shrink-0" />
-                            {field.helpText}
-                          </div>
-                        )}
-
-                        {/* Hover Controls */}
-                        <div className={`absolute right-4 top-4 flex items-center space-x-1 transition-opacity bg-[#0B1018]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-xl z-20 ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                          <button 
-                            onClick={() => setEditingFieldId(isEditing ? null : field.id)}
-                            className={`p-1.5 rounded-lg transition-colors flex items-center ${isEditing ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
-                          >
-                            <Settings className="w-4 h-4" />
-                          </button>
-                          <div className="w-px h-4 bg-white/10 mx-1"></div>
-                          <button 
-                            onClick={() => removeField(field.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {fields.length === 0 && (
+                {isLoading ? (
+                  <div className="w-full flex flex-col items-center justify-center py-24">
+                    <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-400 animate-spin mb-4"></div>
+                    <p className="text-slate-500 font-medium animate-pulse">Loading Schema from Database...</p>
+                  </div>
+                ) : fields.length === 0 ? (
                   <div className="w-full text-center py-24 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center bg-white/[0.01]">
                     <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-6 shadow-inner border border-white/10">
                       <Layout className="w-10 h-10 text-slate-500" />
@@ -228,16 +214,75 @@ export const FormBuilder = () => {
                     <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Blank Canvas</h3>
                     <p className="text-slate-400 max-w-sm font-medium leading-relaxed">Drag and drop premium field types from the left sidebar to start building this entity schema.</p>
                   </div>
+                ) : (
+                  fields.map((field) => {
+                    const isEditing = editingFieldId === field.id;
+                    const isHalf = field.width === 'half';
+                    
+                    return (
+                      <div key={field.id} className={`p-3 transition-all duration-300 ${isHalf ? 'w-1/2' : 'w-full'}`}>
+                        <div className={`group relative flex flex-col p-5 rounded-2xl border transition-all duration-300 ${isEditing ? 'bg-white/10 border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)] scale-[1.01]' : 'bg-[#050A14]/60 border-white/5 hover:border-white/20 hover:bg-white/5'}`}>
+                          
+                          {/* Drag Handle */}
+                          <div className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-move p-1.5 text-slate-500 hover:text-white transition-opacity bg-[#0B1018] rounded-lg border border-white/10 shadow-lg z-20">
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                          
+                          {/* Field Header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              {getIconForType(field.type)}
+                              <Input 
+                                value={field.label} 
+                                onChange={(e) => updateField(field.id, { label: e.target.value })} 
+                                className="!bg-transparent !border-transparent hover:!border-white/10 focus:!bg-[#050A14]/95 !px-2 !py-0.5 -ml-2 font-bold text-sm text-white w-auto inline-block transition-colors"
+                              />
+                              {field.required && <span className="text-red-500 font-bold">*</span>}
+                            </div>
+                          </div>
+                          
+                          {/* Field Mock UI */}
+                          <div className="pointer-events-none opacity-90 transition-opacity">
+                            <FieldPreview field={field} />
+                          </div>
+
+                          {field.helpText && (
+                            <div className="mt-2 flex items-start text-[10px] text-slate-500">
+                              <HelpCircle className="w-3 h-3 mr-1 mt-0.5 shrink-0" />
+                              {field.helpText}
+                            </div>
+                          )}
+
+                          {/* Hover Controls */}
+                          <div className={`absolute right-4 top-4 flex items-center space-x-1 transition-opacity bg-[#0B1018]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-xl z-20 ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                            <button 
+                              onClick={() => setEditingFieldId(isEditing ? null : field.id)}
+                              className={`p-1.5 rounded-lg transition-colors flex items-center ${isEditing ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
+                            >
+                              <Settings className="w-4 h-4" />
+                            </button>
+                            <div className="w-px h-4 bg-white/10 mx-1"></div>
+                            <button 
+                              onClick={() => removeField(field.id)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
-              
               {fields.length > 0 && (
                 <div className="mt-12 pt-6 border-t border-white/10 flex justify-end space-x-4 relative z-10">
-                  <Button variant="ghost">Discard Changes</Button>
-                  <Button variant="primary" leftIcon={<Save className="w-4 h-4" />} onClick={handleSave} isLoading={isSaving}>Deploy Schema</Button>
+                  <Button variant="ghost" onClick={() => setFields([])}>Clear Canvas</Button>
+                  <Button variant="primary" leftIcon={<Save className="w-4 h-4" />} onClick={handleSave} isLoading={saveMutation.isPending}>Deploy Schema</Button>
                 </div>
               )}
             </div>
+
           </div>
         </div>
 

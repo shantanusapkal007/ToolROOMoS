@@ -74,7 +74,7 @@ export class BomsService {
         data: {
           projectId,
           action: 'BOM_CREATED',
-          description: `BOM Rev ${revision} submitted with ${dto.items.length} items. Est Cost: $${totalCost}`,
+          description: `BOM Rev ${revision} submitted with ${dto.items.length} items. Est Cost: ₹${totalCost}`,
           performedBy: userId || 'SYSTEM',
         },
       });
@@ -198,10 +198,44 @@ export class BomsService {
     });
   }
 
+  async rejectBom(projectId: string, bomId: string, remarks?: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const bom = await tx.billOfMaterialHeader.findFirstOrThrow({ where: { id: bomId, projectId } });
+
+      if (bom.approvalStatus !== ApprovalStatus.PENDING) {
+        throw new BadRequestException('Only pending BOMs can be rejected.');
+      }
+
+      const rejectedBom = await tx.billOfMaterialHeader.update({
+        where: { id: bomId },
+        data: {
+          approvalStatus: ApprovalStatus.REJECTED,
+          status: DocumentStatus.REJECTED,
+          remarks: remarks || bom.remarks,
+          updatedBy: userId,
+        },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'BOM_REJECTED',
+          description: `BOM Rev ${bom.revision} Rejected. Reason: ${remarks || 'No reason provided'}`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return rejectedBom;
+    });
+  }
+
   async getBom(projectId: string) {
     return this.prisma.billOfMaterialHeader.findFirst({
       where: { projectId, status: { not: DocumentStatus.OBSOLETE } },
       include: { items: { include: { material: true } } },
     });
   }
+
 }
+

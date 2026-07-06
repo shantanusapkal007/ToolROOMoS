@@ -22,7 +22,7 @@ export default function LoginPage() {
       const response = await api.post<any>('/auth/login', { email, password });
       const data = response as any;
       if (data && data.access_token) {
-        login(data.access_token, data.user);
+        login(data.access_token, data.refresh_token, data.user);
       } else {
         setError('Invalid response from server.');
       }

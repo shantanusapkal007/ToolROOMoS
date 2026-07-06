@@ -11,12 +11,23 @@ import { JwtStrategy } from './jwt.strategy';
     PrismaModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'toolroomos-super-secret-key-2026',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '8h' },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService, 
+    JwtStrategy,
+    {
+      provide: 'JWT_SECRET_VALIDATOR',
+      useFactory: () => {
+        if (!process.env.JWT_SECRET) {
+          throw new Error('FATAL ERROR: JWT_SECRET environment variable is missing.');
+        }
+      },
+    }
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -9,6 +9,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { InspectionsService } from './inspections.service';
 import { DispatchesService } from './dispatches.service';
 import { InvoicesService } from './invoices.service';
@@ -31,8 +32,9 @@ export class LogisticsFinanceController {
   async createInspection(
     @Param('projectId') projectId: string,
     @Body() dto: CreateInspectionDto,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.inspectionService.createInspection(projectId, dto);
+    const data = await this.inspectionService.createInspection(projectId, dto, user.userId);
     return {
       status: 'success',
       message: 'Quality inspection report created successfully.',
@@ -56,8 +58,9 @@ export class LogisticsFinanceController {
   async createDispatch(
     @Param('projectId') projectId: string,
     @Body() dto: CreateDispatchDto,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.dispatchService.createDispatch(projectId, dto);
+    const data = await this.dispatchService.createDispatch(projectId, dto, user.userId);
     return {
       status: 'success',
       message: 'Dispatch note logged and processed.',
@@ -81,8 +84,9 @@ export class LogisticsFinanceController {
   async createInvoice(
     @Param('projectId') projectId: string,
     @Body() dto: CreateInvoiceDto,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.invoiceService.createInvoice(projectId, dto);
+    const data = await this.invoiceService.createInvoice(projectId, dto, user.userId);
     return {
       status: 'success',
       message: 'Customer invoice generated successfully.',
@@ -96,6 +100,22 @@ export class LogisticsFinanceController {
     return {
       status: 'success',
       message: 'Customer invoices retrieved.',
+      data,
+    };
+  }
+
+  // Payment routes
+  @Post('payments')
+  @Roles('ADMIN', 'FINANCE')
+  async recordPayment(
+    @Param('projectId') projectId: string,
+    @Body() dto: import('./dto/record-payment.dto').RecordPaymentDto,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.invoiceService.recordPayment(projectId, dto, user.userId);
+    return {
+      status: 'success',
+      message: 'Payment recorded successfully.',
       data,
     };
   }

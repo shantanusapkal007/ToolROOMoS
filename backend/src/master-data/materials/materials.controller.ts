@@ -8,20 +8,35 @@ import {
   Param,
   Query,
   UseGuards,
+  ParseUUIDPipe
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { MaterialsService } from './materials.service';
+import { InventoryService } from './inventory.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
-@Controller('api/v1/master-data/materials')
+@Controller('api/v1/master-data')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MaterialsController {
-  constructor(private readonly materialsService: MaterialsService) {}
+  constructor(
+    private readonly materialsService: MaterialsService,
+    private readonly inventoryService: InventoryService,
+  ) {}
 
-  @Post()
+  @Get('inventory-ledger')
+  async getInventoryLedger() {
+    const data = await this.inventoryService.getInventoryLedger();
+    return {
+      status: 'success',
+      message: 'Inventory ledger retrieved successfully.',
+      data,
+    };
+  }
+
+  @Post('materials')
   @Roles('ADMIN')
   async create(@Body() dto: CreateMaterialDto) {
     const data = await this.materialsService.create(dto);
@@ -32,7 +47,7 @@ export class MaterialsController {
     };
   }
 
-  @Get()
+  @Get('materials')
   async findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -54,8 +69,8 @@ export class MaterialsController {
     };
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
+  @Get('materials/:id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.materialsService.findOne(id);
     return {
       status: 'success',
@@ -64,9 +79,9 @@ export class MaterialsController {
     };
   }
 
-  @Put(':id')
+  @Put('materials/:id')
   @Roles('ADMIN')
-  async update(@Param('id') id: string, @Body() dto: UpdateMaterialDto) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateMaterialDto) {
     const data = await this.materialsService.update(id, dto);
     return {
       status: 'success',
@@ -75,9 +90,9 @@ export class MaterialsController {
     };
   }
 
-  @Delete(':id')
+  @Delete('materials/:id')
   @Roles('ADMIN')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.materialsService.softDelete(id);
     return {
       status: 'success',

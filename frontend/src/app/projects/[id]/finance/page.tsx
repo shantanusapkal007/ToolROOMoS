@@ -5,7 +5,7 @@ import { api } from "../../../../lib/api";
 import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent, Lock, Plus } from "lucide-react";
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject, useCloseProject } from "../../../../hooks/useProjects";
-import { useCostEvents, useCreateInvoice } from "../../../../hooks/useFinance";
+import { useCostEvents, useCreateInvoice, useRecordPayment } from "../../../../hooks/useFinance";
 import { motion } from 'framer-motion';
 
 export default function FinanceTab({ params }: { params: Promise<{ id: string }> }) {
@@ -21,6 +21,14 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
   const [invNum, setInvNum] = useState("");
   const [invAmount, setInvAmount] = useState(0);
   const [selectedDispatchId, setSelectedDispatchId] = useState("");
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentRef, setPaymentRef] = useState("");
+  const [paymentRemarks, setPaymentRemarks] = useState("");
+  
+  const recordPaymentMutation = useRecordPayment(resolvedParams.id);
 
   if (projectLoading || !project) return null;
 
@@ -43,6 +51,26 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
       setInvNum("");
       setInvAmount(0);
       setSelectedDispatchId("");
+    } catch (err: any) {}
+  };
+
+  const handleRecordPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoiceId) return;
+    try {
+      await recordPaymentMutation.mutateAsync({
+        invoiceId: selectedInvoiceId,
+        amount: paymentAmount,
+        paymentReference: paymentRef,
+        remarks: paymentRemarks
+      });
+      setShowPaymentModal(false);
+      refetchProject();
+      
+      setSelectedInvoiceId("");
+      setPaymentAmount(0);
+      setPaymentRef("");
+      setPaymentRemarks("");
     } catch (err: any) {}
   };
 
@@ -219,12 +247,28 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                           Ref Dispatch: <span className="text-slate-300 ml-1">{project.dispatchNotes?.find((d: any) => d.id === inv.dispatchNoteId)?.dispatchNumber || 'N/A'}</span>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end">
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Billed</div>
                         <div className="text-green-400 font-bold text-lg font-mono tracking-tight">&#8377;{Number(inv.totalAmount).toLocaleString()}</div>
-                        {inv.profit && (
-                          <div className="text-[10px] font-bold text-emerald-500 mt-0.5">Profit: &#8377;{Number(inv.profit).toLocaleString()}</div>
-                        )}
+                        
+                        <div className="mt-3 flex items-center space-x-2">
+                          {inv.paymentStatus === 'PAID' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest">
+                              PAID
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setSelectedInvoiceId(inv.id);
+                                setPaymentAmount(Number(inv.totalAmount));
+                                setShowPaymentModal(true);
+                              }}
+                              className="px-3 py-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider rounded border border-white/10 transition-colors"
+                            >
+                              Record Payment
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -318,6 +362,65 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                   className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 font-bold text-white shadow-[0_0_20px_rgba(22,163,74,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Save Invoice
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl animate-fade-in p-4">
+          <div className="glass-modal w-full max-w-md p-8 animate-slide-up border border-green-500/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-green-500/10 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+            
+            <h2 className="text-2xl font-bold mb-6 text-white tracking-tight relative z-10 flex items-center">
+              <DollarSign className="w-6 h-6 mr-2 text-green-400" />
+              Record Payment
+            </h2>
+            
+            <form onSubmit={handleRecordPayment} className="space-y-5 relative z-10">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Amount Received (&#8377;)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono focus:border-green-500/50 transition-colors"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Reference Number (Txn/Cheque)</label>
+                <input
+                  type="text"
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-green-500/50 transition-colors"
+                  value={paymentRef}
+                  onChange={(e) => setPaymentRef(e.target.value)}
+                  placeholder="e.g. UTR123456789"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Remarks</label>
+                <textarea
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-green-500/50 transition-colors min-h-[80px]"
+                  value={paymentRemarks}
+                  onChange={(e) => setPaymentRemarks(e.target.value)}
+                  placeholder="Optional notes..."
+                ></textarea>
+              </div>
+
+              <div className="flex space-x-4 pt-4 border-t border-white/10 mt-2">
+                <button type="button" onClick={() => setShowPaymentModal(false)} className="flex-1 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
+                <button 
+                  type="submit"
+                  className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 font-bold text-white shadow-[0_0_20px_rgba(22,163,74,0.3)] transition-all"
+                >
+                  Confirm Payment
                 </button>
               </div>
             </form>

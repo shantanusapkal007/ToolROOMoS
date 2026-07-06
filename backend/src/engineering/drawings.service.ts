@@ -87,4 +87,31 @@ export class DrawingsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async approveDrawing(projectId: string, drawingId: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const drawing = await tx.drawing.findFirstOrThrow({ where: { id: drawingId, projectId } });
+
+      const approved = await tx.drawing.update({
+        where: { id: drawingId },
+        data: {
+          status: DocumentStatus.APPROVED,
+          approvalStatus: 'APPROVED',
+          updatedBy: userId,
+        },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'DRAWING_APPROVED',
+          description: `Drawing ${drawing.drawingNumber} Rev ${drawing.revision} approved.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return approved;
+    });
+  }
 }
+

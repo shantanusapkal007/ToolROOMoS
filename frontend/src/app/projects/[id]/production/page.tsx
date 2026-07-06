@@ -16,7 +16,7 @@ import { useMasterData } from "../../../../hooks/useMasterData";
 import { useInventoryBatches } from "../../../../hooks/useInventory";
 import { 
   useJobCards, useMSDRs, useMaterialIssues, 
-  useGenerateJobCards, useUpdateJobCardStatus, useLogMSDR, useIssueMaterial 
+  useGenerateJobCards, useUpdateJobCardStatus, useLogMSDR, useIssueMaterial, useReturnMaterial 
 } from "../../../../hooks/useProduction";
 
 const msdrSchema = z.object({
@@ -50,15 +50,18 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
   const updateJobCardStatusMutation = useUpdateJobCardStatus(resolvedParams.id);
   const logMSDRMutation = useLogMSDR(resolvedParams.id);
   const issueMaterialMutation = useIssueMaterial(resolvedParams.id);
+  const returnMaterialMutation = useReturnMaterial(resolvedParams.id);
   
   const [activeSubTab, setActiveSubTab] = useState<'JOB_CARDS' | 'MSDR' | 'ISSUES'>('JOB_CARDS');
 
   // Modals
   const [showMsdrModal, setShowMsdrModal] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
 
-  // Selected Job Card for MSDR
+  // Selected for modals
   const [selectedJobCard, setSelectedJobCard] = useState<any | null>(null);
+  const [selectedIssue, setSelectedIssue] = useState<any | null>(null);
 
   const msdrForm = useForm({
     resolver: zodResolver(msdrSchema),
@@ -76,6 +79,13 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
       issueNumber: `ISS-${Date.now().toString().slice(-6)}`,
       batchId: "",
       qty: 1
+    }
+  });
+
+  const returnForm = useForm({
+    defaultValues: {
+      returnQty: 1,
+      remarks: ""
     }
   });
 
@@ -141,6 +151,27 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
         }]
       });
       setShowIssueModal(false);
+    } catch (err: any) {}
+  };
+
+  const openReturnModal = (issue: any) => {
+    setSelectedIssue(issue);
+    const maxReturn = Number(issue.issuedQty) - Number(issue.returnedQty || 0);
+    returnForm.setValue('returnQty', maxReturn);
+    returnForm.setValue('remarks', '');
+    setShowReturnModal(true);
+  };
+
+  const handleReturnMaterial = async (data: any) => {
+    if (!project || !selectedIssue) return;
+    try {
+      await returnMaterialMutation.mutateAsync({
+        issueId: selectedIssue.id,
+        returnQty: data.returnQty,
+        remarks: data.remarks
+      });
+      setShowReturnModal(false);
+      setSelectedIssue(null);
     } catch (err: any) {}
   };
 
@@ -313,14 +344,29 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">{formatDate(i.issueDate)}</div>
                     
                     <div className="pl-3 border-l border-white/10 space-y-1.5">
-                      {i.items?.map((item: any) => (
-                        <div key={item.id} className="flex justify-between text-xs bg-black/20 p-1.5 rounded border border-white/5">
+                      {i.items?.map((item: any) => {
+                        const returnedQty = Number(item.returnedQty || 0);
+                        const canReturn = item.issuedQty > returnedQty;
+                        return (
+                        <div key={item.id} className="flex justify-between items-center text-xs bg-black/20 p-1.5 rounded border border-white/5">
                            <span className="text-slate-300 font-semibold flex items-center">
                              {item.inventoryBatch?.material?.materialName} <span className="text-amber-500/70 text-[10px] ml-2 border border-amber-500/20 px-1 rounded">BATCH: {item.inventoryBatch?.batchNumber}</span>
                            </span>
-                           <span className="font-mono text-purple-400 font-bold">{item.issuedQty} units</span>
+                           <div className="flex items-center space-x-3">
+                             <span className="font-mono text-purple-400 font-bold">{item.issuedQty} units</span>
+                             {returnedQty > 0 && <span className="font-mono text-red-400 font-bold text-[10px] bg-red-500/10 px-1 rounded">- {returnedQty} ret</span>}
+                             {canReturn && (
+                               <button 
+                                 onClick={() => openReturnModal(item)}
+                                 className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider"
+                               >
+                                 Return
+                               </button>
+                             )}
+                           </div>
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 ))}
@@ -424,6 +470,49 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
           </div>
         </form>
         </div>
+        </div>
+      )}
+
+      {showReturnModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-sm p-6 animate-slide-up border border-red-500/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
+            <h3 className="text-lg font-bold text-white mb-5 relative z-10">Return Material</h3>
+            <div className="relative z-10">
+               <div className="mb-4 text-xs text-slate-300 bg-white/5 p-3 rounded-lg border border-white/10">
+                 Returning: <span className="font-bold text-white">{selectedIssue?.inventoryBatch?.material?.materialName}</span>
+                 <br />
+                 Max Available to Return: <span className="font-mono text-amber-400">{Number(selectedIssue?.issuedQty) - Number(selectedIssue?.returnedQty || 0)}</span> units
+               </div>
+               
+               <form onSubmit={returnForm.handleSubmit(handleReturnMaterial)} className="space-y-4">
+                 <div>
+                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Return Quantity</label>
+                   <input 
+                     type="number" 
+                     step="0.01" 
+                     max={Number(selectedIssue?.issuedQty) - Number(selectedIssue?.returnedQty || 0)}
+                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500/50" 
+                     {...returnForm.register("returnQty", { valueAsNumber: true })} 
+                   />
+                 </div>
+                 
+                 <div>
+                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Remarks</label>
+                   <textarea 
+                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500/50 min-h-[60px]" 
+                     placeholder="Reason for return..."
+                     {...returnForm.register("remarks")} 
+                   ></textarea>
+                 </div>
+                 
+                 <div className="flex space-x-3 pt-4 border-t border-white/10">
+                   <button type="button" onClick={() => setShowReturnModal(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-sm text-white transition-colors">Cancel</button>
+                   <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-red-600/80 hover:bg-red-500 font-bold text-sm text-white shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all">Confirm Return</button>
+                 </div>
+               </form>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -47,7 +47,7 @@ export default function ProjectsPage() {
   };
 
   // Apple Spring Configuration
-  const spring = { type: "spring", stiffness: 400, damping: 30 };
+  const spring = { type: "spring" as const, stiffness: 400, damping: 30 };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
@@ -107,7 +107,7 @@ export default function ProjectsPage() {
                 animate={{ opacity: 1 }}
                 className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8 pb-12"
               >
-                {projects.map((proj, idx) => (
+                {projects.filter(p => p.currentStage !== "CLOSED" && p.currentStage !== "CANCELLED").map((proj, idx) => (
                   <motion.div 
                     key={proj.id}
                     initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}

@@ -1,6 +1,8 @@
 import React from 'react';
-import { BarChart3, TrendingUp, PieChart, Activity, DollarSign, Package } from 'lucide-react';
+import { BarChart3, TrendingUp, PieChart, Activity, IndianRupee, Package } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
+
+import { useReportsDashboard } from '../../hooks/useReports';
 
 const StatCard = ({ title, value, change, icon, trend }: { title: string, value: string, change: string, icon: React.ReactNode, trend: 'up' | 'down' | 'neutral' }) => {
   return (
@@ -26,6 +28,22 @@ const StatCard = ({ title, value, change, icon, trend }: { title: string, value:
 };
 
 export const ReportsModule = () => {
+  const { data: metrics, isLoading } = useReportsDashboard();
+
+  if (isLoading || !metrics) {
+    return (
+      <div className="flex-1 h-full flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        <div className="text-slate-400 mt-4 text-sm font-bold tracking-widest uppercase">Aggregating Metrics...</div>
+      </div>
+    );
+  }
+
+  // Find max for scaling the chart
+  const maxCost = metrics.costTrends?.length > 0 
+    ? Math.max(...metrics.costTrends.map((t: any) => t.production + t.procurement)) 
+    : 100; // Default to 100 to avoid division by zero
+    
   return (
     <div className="flex-1 h-full flex flex-col relative z-0 pl-32 pr-12 animate-fade-in py-12 overflow-y-auto hide-scrollbar">
       <PageHeader 
@@ -37,46 +55,62 @@ export const ReportsModule = () => {
         
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Revenue" value="$2.4M" change="+12.5%" icon={<DollarSign className="w-5 h-5" />} trend="up" />
-          <StatCard title="Production Yield" value="94.2%" change="+1.2%" icon={<Activity className="w-5 h-5" />} trend="up" />
-          <StatCard title="Active Projects" value="48" change="-3" icon={<Package className="w-5 h-5" />} trend="down" />
-          <StatCard title="Inventory Value" value="$850K" change="+5.4%" icon={<PieChart className="w-5 h-5" />} trend="up" />
+          <StatCard title="Total Revenue" value={`₹${(metrics.totalRevenue / 1000000).toFixed(2)}M`} change="Live" icon={<IndianRupee className="w-5 h-5" />} trend="up" />
+          <StatCard title="Production Yield" value={`${metrics.productionYield}%`} change="Live" icon={<Activity className="w-5 h-5" />} trend={Number(metrics.productionYield) >= 90 ? 'up' : 'down'} />
+          <StatCard title="Active Projects" value={`${metrics.activeProjectsCount}`} change="Live" icon={<Package className="w-5 h-5" />} trend="neutral" />
+          <StatCard title="Inventory Value" value={`₹${(metrics.inventoryValue / 1000).toFixed(1)}K`} change="Live" icon={<PieChart className="w-5 h-5" />} trend="up" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Chart Placeholder */}
+          {/* Main Chart */}
           <div className="lg:col-span-2 glass-panel p-6 h-96 flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-white flex items-center">
                 <TrendingUp className="w-5 h-5 mr-2 text-blue-400" />
-                Production vs Procurement Costs
+                Cost Trends (Last 6 Months)
               </h3>
-              <select className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-300 outline-none focus:ring-1 focus:ring-blue-500">
-                <option>Last 6 Months</option>
-                <option>This Year</option>
-                <option>All Time</option>
-              </select>
+              <div className="flex items-center space-x-4 text-xs font-bold uppercase tracking-wider">
+                 <div className="flex items-center"><div className="w-3 h-3 bg-blue-500 rounded-sm mr-2" /> Production</div>
+                 <div className="flex items-center"><div className="w-3 h-3 bg-amber-500 rounded-sm mr-2" /> Procurement</div>
+              </div>
             </div>
             
             <div className="flex-1 relative flex items-end justify-between px-4 pb-4">
-              {/* Fake Bar Chart */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-4">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="w-full h-px bg-white/5" />
                 ))}
               </div>
               
-              {[40, 70, 45, 90, 65, 85].map((val, i) => (
-                <div key={i} className="relative w-12 flex flex-col items-center group cursor-pointer z-10 h-full justify-end pb-8">
-                  <div className="w-full bg-blue-500/80 rounded-t-sm shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300 group-hover:bg-blue-400" style={{ height: `${val}%` }} />
-                  <span className="absolute bottom-0 text-xs font-medium text-slate-400 mt-2">M{i+1}</span>
-                  
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-xs px-2 py-1 rounded pointer-events-none">
-                    ${(val * 1200).toLocaleString()}
+              {metrics.costTrends?.map((trend: any, i: number) => {
+                const total = trend.production + trend.procurement;
+                const heightPct = total === 0 ? 0 : Math.max(5, (total / maxCost) * 100);
+                const prodPct = total === 0 ? 0 : (trend.production / total) * 100;
+                const procPct = total === 0 ? 0 : (trend.procurement / total) * 100;
+
+                return (
+                  <div key={i} className="relative w-16 flex flex-col items-center group cursor-pointer z-10 h-full justify-end pb-8">
+                    <div className="w-full rounded-t-sm transition-all duration-300 flex flex-col justify-end overflow-hidden" style={{ height: `${heightPct}%` }}>
+                       <div className="w-full bg-blue-500/80 hover:bg-blue-400 transition-colors" style={{ height: `${prodPct}%` }} />
+                       <div className="w-full bg-amber-500/80 hover:bg-amber-400 transition-colors" style={{ height: `${procPct}%` }} />
+                    </div>
+                    <span className="absolute bottom-0 text-xs font-medium text-slate-400 mt-2">{trend.month}</span>
+                    
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-xs px-3 py-2 rounded pointer-events-none whitespace-nowrap z-50 shadow-xl border border-white/10">
+                      <div className="font-bold mb-1">Total: ₹{total.toLocaleString()}</div>
+                      <div className="text-blue-400">Prod: ₹{trend.production.toLocaleString()}</div>
+                      <div className="text-amber-400">Proc: ₹{trend.procurement.toLocaleString()}</div>
+                    </div>
                   </div>
+                );
+              })}
+              
+              {(!metrics.costTrends || metrics.costTrends.length === 0) && (
+                <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">
+                  No cost data in last 6 months.
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -86,23 +120,29 @@ export const ReportsModule = () => {
               <BarChart3 className="w-5 h-5 mr-2 text-purple-400" />
               Machine Utilization
             </h3>
-            <div className="flex-1 space-y-6">
-              {[
-                { name: 'CNC Milling', percent: 85, color: 'bg-emerald-500' },
-                { name: 'Laser Cutter', percent: 62, color: 'bg-amber-500' },
-                { name: '3D Printers', percent: 92, color: 'bg-blue-500' },
-                { name: 'Assembly Line', percent: 45, color: 'bg-red-500' },
-              ].map(machine => (
-                <div key={machine.name}>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-slate-300 font-medium">{machine.name}</span>
-                    <span className="text-white font-bold">{machine.percent}%</span>
+            <div className="flex-1 space-y-6 overflow-y-auto pr-2 hide-scrollbar">
+              {metrics.machineUtilization?.map((machine: any, i: number) => {
+                const colors = ['bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-purple-500', 'bg-pink-500'];
+                const color = colors[i % colors.length];
+                
+                return (
+                  <div key={machine.name}>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-slate-300 font-medium">{machine.name}</span>
+                      <span className="text-white font-bold">{machine.percent}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-[#0B1018] rounded-full overflow-hidden shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] border border-white/5">
+                      <div className={`h-full ${color} shadow-[0_0_10px_currentColor] rounded-full transition-all duration-1000`} style={{ width: `${machine.percent}%` }} />
+                    </div>
                   </div>
-                  <div className="w-full h-2 bg-[#0B1018] rounded-full overflow-hidden shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] border border-white/5">
-                    <div className={`h-full ${machine.color} shadow-[0_0_10px_currentColor] rounded-full`} style={{ width: `${machine.percent}%` }} />
-                  </div>
+                );
+              })}
+              
+              {(!metrics.machineUtilization || metrics.machineUtilization.length === 0) && (
+                <div className="text-slate-500 text-sm text-center py-8">
+                  No machine utilization data.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

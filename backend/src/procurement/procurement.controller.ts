@@ -9,6 +9,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { PurchaseOrdersService } from './purchase-orders.service';
 import { GoodsReceiptsService } from './goods-receipts.service';
 import { CreatePoDto } from './dto/create-po.dto';
@@ -28,8 +29,9 @@ export class ProcurementController {
   async createPo(
     @Param('projectId') projectId: string,
     @Body() dto: CreatePoDto,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.poService.createPo(projectId, dto);
+    const data = await this.poService.createPo(projectId, dto, user.userId);
     return {
       status: 'success',
       message: 'Purchase Order generated successfully.',
@@ -53,8 +55,9 @@ export class ProcurementController {
   async createGrn(
     @Param('projectId') projectId: string,
     @Body() dto: CreateGrnDto,
+    @CurrentUser() user: any,
   ) {
-    const data = await this.grnService.createGrn(projectId, dto);
+    const data = await this.grnService.createGrn(projectId, dto, user.userId);
     return {
       status: 'success',
       message: 'Goods Receipt Note created and processed successfully.',

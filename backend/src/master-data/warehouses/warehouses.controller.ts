@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards , ParseUUIDPipe } from '@nestjs/common';
 import { WarehousesService } from './warehouses.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
@@ -25,21 +25,21 @@ export class WarehousesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.warehousesService.findOne(id);
     return { status: 'success', data };
   }
 
   @Patch(':id')
   @Roles('ADMIN', 'STORES', 'PURCHASE')
-  async update(@Param('id') id: string, @Body() updateWarehouseDto: UpdateWarehouseDto) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateWarehouseDto: UpdateWarehouseDto) {
     const data = await this.warehousesService.update(id, updateWarehouseDto);
     return { status: 'success', data };
   }
 
   @Delete(':id')
   @Roles('ADMIN')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.warehousesService.softDelete(id);
     return { status: 'success', data };
   }

@@ -35,8 +35,35 @@ export class AuthService {
     };
 
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
+      refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
       user: payload
     };
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken, { secret: process.env.JWT_SECRET });
+      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+      
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const newPayload = { 
+        sub: user.id, 
+        email: user.email, 
+        role: user.role,
+        name: user.name,
+        employeeId: user.employeeId 
+      };
+
+      return {
+        access_token: this.jwtService.sign(newPayload, { expiresIn: '15m' }),
+        refresh_token: this.jwtService.sign(newPayload, { expiresIn: '7d' }),
+      };
+    } catch (e) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }

@@ -21,7 +21,16 @@ export class GoodsReceiptsService {
         throw new BadRequestException('Business Rule Violation: Cannot create GRN without a valid, issued Purchase Order.');
       }
 
-      // 3. Create GRN Header
+      // 3. Resolve warehouse — use provided warehouseId or fall back to DEFAULT-WH
+      const warehouse = dto.warehouseId
+        ? await tx.warehouse.findUniqueOrThrow({ where: { id: dto.warehouseId } })
+        : await tx.warehouse.findFirst({ where: { warehouseCode: 'DEFAULT-WH' } });
+
+      if (!warehouse) {
+        throw new BadRequestException('Warehouse not found. Please ensure a default warehouse (DEFAULT-WH) is configured, or provide a warehouseId.');
+      }
+
+      // 4. Create GRN Header
       const grnHeader = await tx.goodsReceiptHeader.create({
         data: {
           projectId,
@@ -29,6 +38,7 @@ export class GoodsReceiptsService {
           grnNumber: dto.grnNumber,
           documentNumber: dto.grnNumber,
           status: 'COMPLETED',
+          remarks: dto.remarks,
           createdBy: userId,
           updatedBy: userId,
         },
@@ -36,7 +46,7 @@ export class GoodsReceiptsService {
 
       let totalGrnValue = 0;
 
-      // 3. Process each GRN Item
+      // 5. Process each GRN Item
       for (const item of dto.items) {
         if (!item.heatNumber || item.heatNumber.trim() === '') {
           throw new BadRequestException(`GRN Gate Failed: Heat Number (Mill Test Certificate) is strictly required for material traceability.`);
@@ -83,14 +93,7 @@ export class GoodsReceiptsService {
           }
         });
 
-        // (poItem was fetched above)
-
-        // Retrieve the default warehouse UUID
-        const warehouse = await tx.warehouse.findUniqueOrThrow({
-          where: { warehouseCode: 'DEFAULT-WH' },
-        });
-
-        // 4. Update Current Stock (Layer 4 - Events)
+        // Update Current Stock (upsert)
         await tx.inventoryStock.upsert({
           where: {
             materialId_warehouseId: {
@@ -111,16 +114,18 @@ export class GoodsReceiptsService {
           },
         });
 
-        // 5. Generate Inventory Batch for traceability
+        // Generate Inventory Batch — unique batch number uses timestamp to prevent collision
+        const timestamp = Date.now();
+        const batchNumber = `BAT-${dto.grnNumber}-${poItem.materialId.slice(0, 8)}-${timestamp}`;
         const batch = await tx.inventoryBatch.create({
           data: {
             materialId: poItem.materialId,
             grnItemId: grnItem.id,
-            batchNumber: `BAT-${dto.grnNumber}-${poItem.materialId.slice(0, 4)}`,
+            batchNumber,
             heatNumber: item.heatNumber,
             receivedQty: item.acceptedQty,
             currentQty: item.acceptedQty,
-            availableQty: item.acceptedQty, // V2.0
+            availableQty: item.acceptedQty,
             reservedQty: 0,
             issuedQty: 0,
             unitCost: item.actualRate,
@@ -129,7 +134,7 @@ export class GoodsReceiptsService {
           },
         });
 
-        // 6. Record Inventory Transaction
+        // Record Inventory Transaction
         await tx.inventoryTransaction.create({
           data: {
             projectId,
@@ -144,12 +149,12 @@ export class GoodsReceiptsService {
         });
       }
 
-      // 7. Costing Integration: Rollup actual cost to ProjectCostSummary (Layer 5 - Outcomes)
+      // 6. Costing Integration: Rollup actual material cost to ProjectCostSummary (actual column ONLY)
       await tx.projectCostSummary.update({
         where: { projectId },
         data: {
           actualMaterialCost: { increment: totalGrnValue },
-          totalCost: { increment: totalGrnValue },
+          // NOTE: totalCost is NOT incremented here — it is computed from actual consumption in material issues
         },
       });
 
@@ -166,30 +171,30 @@ export class GoodsReceiptsService {
         },
       });
 
-      // 8. Log project activity
+      // 7. Log project activity (INR symbol)
       await tx.projectActivity.create({
         data: {
           projectId,
           action: 'MATERIAL_RECEIVED',
-          description: `GRN ${dto.grnNumber} completed. Actual Material Cost booked: $${totalGrnValue}`,
+          description: `GRN ${dto.grnNumber} completed. Actual Material Cost booked: ₹${totalGrnValue.toFixed(2)}`,
           performedBy: userId || 'SYSTEM',
         },
       });
 
-      // 9. Automations: Transition to PRODUCTION
-      // In a real flow we check if outstanding material remains. For this lifecycle demo, we auto-advance
+      // 8. FIX: Transition to MATERIAL_AVAILABLE (not PRODUCTION)
+      // The production stage is triggered separately when material is issued to the shop floor.
       await tx.project.update({
         where: { id: projectId },
-        data: { currentStage: ProjectStatus.PRODUCTION, updatedBy: userId },
+        data: { currentStage: ProjectStatus.MATERIAL_AVAILABLE, updatedBy: userId },
       });
 
       await tx.projectTimeline.create({
         data: {
           projectId,
           fromStage: ProjectStatus.PROCUREMENT,
-          toStage: ProjectStatus.PRODUCTION,
+          toStage: ProjectStatus.MATERIAL_AVAILABLE,
           transitionedBy: userId || 'SYSTEM',
-          remarks: `All materials received. Project transitioned to PRODUCTION.`,
+          remarks: `GRN ${dto.grnNumber} completed. Materials are in warehouse and available for issue.`,
         },
       });
 
@@ -197,7 +202,7 @@ export class GoodsReceiptsService {
         data: {
           projectId,
           action: 'STAGE_CHANGED',
-          description: 'Project advanced to PRODUCTION phase',
+          description: 'Materials received. Project advanced to MATERIAL_AVAILABLE.',
           performedBy: userId || 'SYSTEM',
         },
       });

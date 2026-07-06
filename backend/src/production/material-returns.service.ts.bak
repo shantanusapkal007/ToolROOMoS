@@ -1,0 +1,106 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Decimal } from '@prisma/client/runtime/library';
+
+@Injectable()
+export class MaterialReturnsService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async returnMaterial(projectId: string, issueId: string, returnQty: number, remarks: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Fetch the material issue header
+      const issue = await tx.materialIssueHeader.findUnique({
+        where: { id: issueId },
+        include: { inventoryBatch: true, material: true },
+      });
+
+      if (!issue) {
+        throw new NotFoundException('Material Issue not found');
+      }
+      
+      if (issue.projectId !== projectId) {
+        throw new BadRequestException('Issue does not belong to this project');
+      }
+
+      if (returnQty <= 0) {
+        throw new BadRequestException('Return quantity must be greater than 0');
+      }
+
+      const issuedQty = Number(issue.issuedQty);
+      const previouslyReturned = Number(issue.returnedQty || 0);
+      
+      if (returnQty > (issuedQty - previouslyReturned)) {
+        throw new BadRequestException(`Cannot return ${returnQty}. Only ${issuedQty - previouslyReturned} left to return.`);
+      }
+
+      // 2. Calculate the cost to reverse
+      const unitCost = Number(issue.inventoryBatch?.unitCost || 0);
+      const returnCost = returnQty * unitCost;
+
+      // 3. Update the Issue Header to track returns
+      await tx.materialIssueHeader.update({
+        where: { id: issueId },
+        data: {
+          returnedQty: { increment: returnQty },
+        },
+      });
+
+      // 4. Return the quantity back to Inventory Batch
+      if (issue.inventoryBatchId) {
+        await tx.inventoryBatch.update({
+          where: { id: issue.inventoryBatchId },
+          data: {
+            currentQty: { increment: returnQty },
+            status: 'AVAILABLE', // Reactivate the batch if it was previously zeroed out
+          }
+        });
+      }
+
+      // 5. Reverse the costs in ProjectCostSummary
+      const summary = await tx.projectCostSummary.findUnique({ where: { projectId } });
+      if (summary) {
+         // Decrease actualMaterialCost and totalCost, and increase profitability
+         const currentMaterialCost = Number(summary.actualMaterialCost || summary.materialConsumptionCost || 0);
+         const newMaterialCost = Math.max(0, currentMaterialCost - returnCost);
+         
+         const newTotalCost = Number(summary.totalCost || 0) - returnCost;
+         const newProfit = Number(summary.revenue || 0) - newTotalCost;
+
+         await tx.projectCostSummary.update({
+           where: { projectId },
+           data: {
+             actualMaterialCost: newMaterialCost,
+             materialConsumptionCost: newMaterialCost,
+             totalCost: newTotalCost,
+             profitability: newProfit,
+           }
+         });
+      }
+
+      // 6. Log negative cost event to maintain the ledger
+      await tx.projectCostEvent.create({
+        data: {
+          projectId,
+          costType: 'MATERIAL_CONSUMPTION',
+          description: `Material Return: ${returnQty} x ${issue.material?.materialCode}`,
+          amount: -returnCost,
+          referenceDocType: 'MATERIAL_RETURN',
+          referenceDocId: issueId,
+          createdBy: userId,
+        }
+      });
+
+      // 7. Log Project Activity
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'MATERIAL_RETURN',
+          description: `Returned ${returnQty} of ${issue.material?.materialCode}. Cost credit: ₹${returnCost.toFixed(2)}. Remarks: ${remarks || 'None'}`,
+          performedBy: userId || 'SYSTEM',
+        }
+      });
+
+      return { success: true, message: 'Material returned successfully', returnCost };
+    });
+  }
+}

@@ -66,17 +66,19 @@ export class CostBaselineService {
         create: {
           projectId,
           estimatedMaterialCost,
-          machineCost: estimatedMachineCost,
-          labourCost: estimatedLabourCost,
-          outsideProcessCost: estimatedOutsideProcessCost,
-          totalCost: estimatedManufacturingCost,
+          estimatedMachineCost,
+          estimatedLabourCost,
+          estimatedOutsideProcessCost,
+          estimatedManufacturingCost,
+          estimatedProjectCost,
         },
         update: {
           estimatedMaterialCost,
-          machineCost: estimatedMachineCost,
-          labourCost: estimatedLabourCost,
-          outsideProcessCost: estimatedOutsideProcessCost,
-          totalCost: estimatedManufacturingCost,
+          estimatedMachineCost,
+          estimatedLabourCost,
+          estimatedOutsideProcessCost,
+          estimatedManufacturingCost,
+          estimatedProjectCost,
         }
       });
 

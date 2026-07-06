@@ -303,19 +303,8 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
             </h3>
             
             <div className="space-y-4 max-h-[300px] overflow-y-auto hide-scrollbar pl-2 pr-2 relative z-10">
-              {/* Dynamic glowing vertical timeline */}
-              <div className="absolute left-[15px] top-3 bottom-4 w-px bg-gradient-to-b from-emerald-500/40 via-blue-500/10 to-transparent">
-                <div className="absolute top-0 left-0 w-full h-1/3 bg-emerald-400/80 blur-[2px] animate-pulse"></div>
-              </div>
-
               {(project.projectActivities && project.projectActivities.length > 0) ? project.projectActivities.map((act: any, idx: number) => (
-                <div key={act.id} className="relative pl-10 group cursor-default" style={{ animation: `slideUp 0.3s ease-out ${idx * 0.05}s forwards`, opacity: mounted ? 1 : 0 }}>
-                  
-                  {/* Glowing Node */}
-                  <div className="absolute left-[9px] top-2 h-3 w-3 rounded-full bg-[#050A14] border-2 border-emerald-500/40 flex items-center justify-center group-hover:border-emerald-400 group-hover:bg-emerald-500/20 group-hover:shadow-[0_0_12px_rgba(52,211,153,0.6)] transition-all duration-300">
-                    <div className="w-1 h-1 bg-emerald-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  </div>
-                  
+                <div key={act.id} className="relative group cursor-default" style={{ animation: `slideUp 0.3s ease-out ${idx * 0.05}s forwards`, opacity: mounted ? 1 : 0 }}>
                   {/* Glassmorphic Activity Card */}
                   <div className="bg-white/[0.01] border border-white/5 p-3.5 rounded-xl group-hover:bg-white/[0.03] group-hover:border-emerald-500/20 transition-all duration-300 shadow-sm group-hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)] group-hover:-translate-y-0.5 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-transparent group-hover:via-emerald-500/5 transition-all duration-500 translate-x-[-100%] group-hover:translate-x-[100%]"></div>

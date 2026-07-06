@@ -67,7 +67,7 @@ export class InvoicesService {
         data: {
           projectId,
           action: 'INVOICE_GENERATED',
-          description: `Invoice ${dto.invoiceNumber} billed. Revenue: $${newRevenue}. Live Project Profitability: $${newProfitability}`,
+          description: `Invoice ${dto.invoiceNumber} billed. Revenue: ₹${newRevenue}. Live Project Profitability: ₹${newProfitability}`,
           performedBy: userId || 'SYSTEM',
         },
       });
@@ -106,6 +106,56 @@ export class InvoicesService {
       where: { projectId },
       include: { items: true },
       orderBy: { invoiceDate: 'desc' },
+    });
+  }
+
+  async recordPayment(projectId: string, dto: import('./dto/record-payment.dto').RecordPaymentDto, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const invoice = await tx.invoiceHeader.findFirstOrThrow({
+        where: { id: dto.invoiceId, projectId }
+      });
+
+      const paymentStatus = 'PAID'; // Assuming full payment for simplicity for now
+
+      const updatedInvoice = await tx.invoiceHeader.update({
+        where: { id: dto.invoiceId },
+        data: {
+          paymentStatus,
+          paidAt: new Date(),
+          remarks: dto.remarks ? `${invoice.remarks || ''}\nPayment Ref: ${dto.paymentReference || 'N/A'}, Remarks: ${dto.remarks}` : invoice.remarks,
+        }
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'PAYMENT_RECEIVED',
+          description: `Payment recorded against Invoice ${invoice.invoiceNumber}. Amount: ₹${dto.amount || invoice.totalAmount}`,
+          performedBy: userId || 'SYSTEM',
+        }
+      });
+
+      // Update project stage to PAYMENT_PENDING if it was INVOICED
+      // (Assuming PAYMENT_PENDING means we are actively collecting, but if it's PAID, we can just move to CLOSED or let user close it)
+      const project = await tx.project.findUnique({ where: { id: projectId } });
+      if (project && project.currentStage === 'INVOICED') {
+        // Move to PAYMENT_PENDING to indicate payment is in progress/completed (stage name is a bit ambiguous, but we follow audit)
+        await tx.project.update({
+          where: { id: projectId },
+          data: { currentStage: 'PAYMENT_PENDING' }
+        });
+        await tx.projectTimeline.create({
+          data: {
+            projectId,
+            fromStage: 'INVOICED',
+            toStage: 'PAYMENT_PENDING',
+            transitionedBy: userId || 'SYSTEM',
+            remarks: 'Payment recorded.'
+          }
+        });
+      }
+
+      return updatedInvoice;
     });
   }
 }

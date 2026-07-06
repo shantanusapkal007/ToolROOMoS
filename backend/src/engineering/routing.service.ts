@@ -158,7 +158,38 @@ export class RoutingService {
     });
   }
 
+  async rejectManufacturingPlan(projectId: string, routingId: string, remarks: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const routing = await tx.routingHeader.findFirstOrThrow({ where: { id: routingId, projectId } });
+      if (routing.approvalStatus !== 'PENDING') {
+        throw new BadRequestException('Only a PENDING Routing can be rejected.');
+      }
+
+      const rejected = await tx.routingHeader.update({
+        where: { id: routingId },
+        data: {
+          approvalStatus: 'REJECTED',
+          status: 'REJECTED',
+          remarks,
+          updatedBy: userId,
+        },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'ROUTING_REJECTED',
+          description: `Manufacturing Plan Rev ${routing.revision} rejected. Reason: ${remarks}`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return rejected;
+    });
+  }
+
   async getActiveRouting(projectId: string) {
+
     return this.prisma.routingHeader.findFirst({
       where: { projectId, status: { in: ['DRAFT', 'APPROVED'] } },
       include: {

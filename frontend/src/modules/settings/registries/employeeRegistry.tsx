@@ -31,7 +31,7 @@ export const employeeRegistry: EntityRegistry = {
       { label: 'Engineer', value: 'ENGINEER' },
       { label: 'Operator', value: 'OPERATOR' }
     ] },
-    { name: 'hourlyRate', label: 'Hourly Cost Rate ($)', type: 'number' },
+    { name: 'hourlyRate', label: 'Hourly Cost Rate (₹)', type: 'number' },
     { name: 'status', label: 'Status', type: 'select', options: [
       { label: 'Active', value: 'ACTIVE' },
       { label: 'Inactive', value: 'INACTIVE' },

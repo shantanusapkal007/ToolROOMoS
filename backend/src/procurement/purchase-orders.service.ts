@@ -11,6 +11,16 @@ export class PurchaseOrdersService {
     return this.prisma.$transaction(async (tx) => {
       // 1. Validate project phase
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      
+      let vendorId = dto.vendorId;
+      if (!vendorId) {
+        // Auto-PO vendor selection: Pick a default vendor if not provided
+        const defaultVendor = await tx.vendor.findFirst({
+          where: { vendorType: 'MATERIAL_SUPPLIER' }
+        });
+        if (!defaultVendor) throw new BadRequestException('No default vendor available for auto-PO.');
+        vendorId = defaultVendor.id;
+      }
 
       if (project.currentStage !== ProjectStatus.PROCUREMENT) {
         throw new BadRequestException('Purchase Orders can only be generated during the Procurement stage.');
@@ -70,7 +80,7 @@ export class PurchaseOrdersService {
       const poHeader = await tx.purchaseOrderHeader.create({
         data: {
           projectId,
-          vendorId: dto.vendorId,
+          vendorId: vendorId,
           poNumber: dto.poNumber,
           documentNumber: dto.poNumber,
           totalAmount,
@@ -106,7 +116,7 @@ export class PurchaseOrdersService {
         data: {
           projectId,
           action: 'PO_GENERATED',
-          description: `Purchase Order ${dto.poNumber} issued to Vendor. Value: $${totalAmount}`,
+          description: `Purchase Order ${dto.poNumber} issued to Vendor. Value: ₹${totalAmount}`,
           performedBy: userId || 'SYSTEM',
         },
       });

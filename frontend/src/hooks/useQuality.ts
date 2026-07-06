@@ -18,3 +18,19 @@ export function useLogInspection(projectId: string) {
     },
   });
 }
+
+export function useCloseNcr(projectId: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: ({ ncrId, data }: { ncrId: string; data: any }) => QualityService.closeNcr(projectId, ncrId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
+      success('Success', 'NCR closed successfully.');
+    },
+    onError: (err: any) => {
+      error('NCR Close Failed', err.message || 'An error occurred');
+    },
+  });
+}

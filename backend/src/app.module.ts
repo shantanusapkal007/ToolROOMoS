@@ -26,6 +26,11 @@ import { HrModule } from './hr/hr.module';
 import { AutomationModule } from './automation/automation.module';
 import { HealthModule } from './modules/health/health.module';
 import { LoggerModule } from './modules/logger/logger.module';
+import { SearchModule } from './search/search.module';
+import { FormsModule } from './forms/forms.module';
+import { ReportsModule } from './reports/reports.module';
+import { UsersModule } from './users/users.module';
+import { InspectionStandardsModule } from './master-data/inspection-standards/inspection-standards.module';
 
 /**
  * AppModule
@@ -50,6 +55,7 @@ import { LoggerModule } from './modules/logger/logger.module';
 
     // Layer 0 — Security
     AuthModule,
+    UsersModule,
 
     // Layer 1 — Master Data
     CustomersModule,
@@ -74,6 +80,10 @@ import { LoggerModule } from './modules/logger/logger.module';
     AutomationModule,
     HealthModule,
     LoggerModule,
+    SearchModule,
+    FormsModule,
+    ReportsModule,
+    InspectionStandardsModule,
   ],
   controllers: [AppController],
   providers: [

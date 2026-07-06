@@ -35,4 +35,9 @@ export const ProductionService = {
     const res = await api.post(`projects/${projectId}/material-issues`, data);
     return res.data;
   },
+
+  returnMaterial: async (projectId: string, data: any): Promise<any> => {
+    const res = await api.post(`projects/${projectId}/material-returns`, data);
+    return res.data;
+  },
 };

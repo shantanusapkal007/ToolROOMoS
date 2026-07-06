@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards , ParseUUIDPipe } from '@nestjs/common';
 import { LocationsService } from './locations.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
@@ -25,21 +25,21 @@ export class LocationsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.locationsService.findOne(id);
     return { status: 'success', data };
   }
 
   @Patch(':id')
   @Roles('ADMIN', 'STORES', 'PURCHASE')
-  async update(@Param('id') id: string, @Body() updateLocationDto: UpdateLocationDto) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateLocationDto: UpdateLocationDto) {
     const data = await this.locationsService.update(id, updateLocationDto);
     return { status: 'success', data };
   }
 
   @Delete(':id')
   @Roles('ADMIN')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.locationsService.softDelete(id);
     return { status: 'success', data };
   }

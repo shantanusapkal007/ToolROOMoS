@@ -44,7 +44,16 @@ export class MaterialIssuesService {
 
       let totalConsumptionCost = 0;
 
-      // 4. Process each Issued Item
+      // 4. Retrieve warehouse (prevent N+1 queries)
+      const warehouse = dto.warehouseId
+        ? await tx.warehouse.findUniqueOrThrow({ where: { id: dto.warehouseId } })
+        : await tx.warehouse.findFirst({ where: { warehouseCode: 'DEFAULT-WH' } });
+
+      if (!warehouse) {
+        throw new BadRequestException('Warehouse not found. Please ensure a default warehouse (DEFAULT-WH) is configured, or provide a warehouseId.');
+      }
+
+      // 5. Process each Issued Item
       for (const item of dto.items) {
         // Fetch batch to get unit cost and current qty
         const batch = await tx.inventoryBatch.findUniqueOrThrow({
@@ -86,12 +95,21 @@ export class MaterialIssuesService {
           },
         });
 
-        // Retrieve default warehouse UUID
-        const warehouse = await tx.warehouse.findUniqueOrThrow({
-          where: { warehouseCode: 'DEFAULT-WH' },
-        });
 
         // 6. Update Inventory Stock (Layer 4 - Events)
+        const currentStock = await tx.inventoryStock.findUnique({
+          where: {
+            materialId_warehouseId: {
+              materialId: batch.materialId,
+              warehouseId: warehouse.id,
+            },
+          },
+        });
+
+        if (!currentStock || currentStock.availableQuantity.toNumber() < item.issuedQty) {
+          throw new BadRequestException(`Insufficient stock in warehouse ${warehouse.warehouseCode} for material ${batch.materialId}. Available: ${currentStock?.availableQuantity || 0}, Requested: ${item.issuedQty}`);
+        }
+
         await tx.inventoryStock.update({
           where: {
             materialId_warehouseId: {
@@ -125,7 +143,8 @@ export class MaterialIssuesService {
         where: { projectId },
         data: {
           materialConsumptionCost: { increment: totalConsumptionCost },
-          totalCost: { increment: totalConsumptionCost },
+          // totalCost is NOT incremented here because actual material purchases (GRN) already added to actualMaterialCost 
+          // and totalCost should not double count material cost.
         },
       });
 
@@ -147,7 +166,7 @@ export class MaterialIssuesService {
         data: {
           projectId,
           action: 'MATERIAL_CONSUMED',
-          description: `Material Issue ${dto.issueNumber} completed. Consumption Value booked: $${totalConsumptionCost}`,
+          description: `Material Issue ${dto.issueNumber} completed. Consumption Value booked: ₹${totalConsumptionCost}`,
           performedBy: userId || 'SYSTEM',
         },
       });

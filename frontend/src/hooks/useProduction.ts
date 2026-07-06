@@ -101,3 +101,22 @@ export function useIssueMaterial(projectId: string) {
     },
   });
 }
+
+export function useReturnMaterial(projectId: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: (data: any) => ProductionService.returnMaterial(projectId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productionKeys.issues(projectId) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
+      // Invalidate inventory ledger if it's open
+      queryClient.invalidateQueries({ queryKey: ['inventory', 'ledger'] });
+      success('Material Returned', `Stock restored and cost credited.`);
+    },
+    onError: (err: any) => {
+      error('Failed', err.message || 'An error occurred');
+    },
+  });
+}

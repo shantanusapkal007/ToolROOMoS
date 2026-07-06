@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch , ParseUUIDPipe } from '@nestjs/common';
 import { HrService } from './hr.service';
 
 @Controller('api/v1/hr')
@@ -17,7 +17,7 @@ export class HrController {
   }
 
   @Patch('employees/:id/rate')
-  async updateEmployeeRate(@Param('id') id: string, @Body() body: { newRate: number, reason: string }) {
+  async updateEmployeeRate(@Param('id', ParseUUIDPipe) id: string, @Body() body: { newRate: number, reason: string }) {
     return this.hrService.updateEmployeeRate(id, body.newRate, body.reason, 'SYSTEM');
   }
 

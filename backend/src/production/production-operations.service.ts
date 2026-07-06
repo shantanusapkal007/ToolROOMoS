@@ -78,13 +78,15 @@ export class ProductionOperationsService {
       if (routingOperation) {
           const produced = dto.producedQty || 0;
           const completedQty = routingOperation.completedQuantity.toNumber() + produced;
-          const targetQty = 1; // Or pull from Project/BOM? (Assuming routing is for the project batch)
+          const currentRemaining = routingOperation.remainingQuantity.toNumber();
+          const newRemaining = currentRemaining >= produced ? currentRemaining - produced : 0;
           
           await tx.routingOperation.update({
               where: { id: routingOperation.id },
               data: {
                   completedQuantity: completedQty,
-                  // If we don't know the exact target qty, just track completed.
+                  remainingQuantity: newRemaining,
+                  status: newRemaining === 0 ? 'COMPLETED' : 'IN_PROGRESS'
               }
           });
 
@@ -145,7 +147,7 @@ export class ProductionOperationsService {
         data: {
           projectId,
           action: 'OPERATION_LOGGED',
-          description: `MSDR entry processed. Cutting: ${cuttingHrs}h, Setup: ${setupHrs}h. Cost booked: Machine: $${machineCost}, Labour: $${labourCost}`,
+          description: `MSDR entry processed. Cutting: ${cuttingHrs}h, Setup: ${setupHrs}h. Cost booked: Machine: ₹${machineCost}, Labour: ₹${labourCost}`,
           performedBy: userId || 'SYSTEM',
         },
       });

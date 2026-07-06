@@ -11,6 +11,10 @@ export class CreateIssueDto {
   @IsOptional()
   remarks?: string;
 
+  @IsString()
+  @IsOptional()
+  warehouseId?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateIssueItemDto)

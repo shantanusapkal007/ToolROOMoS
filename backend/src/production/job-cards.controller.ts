@@ -1,7 +1,13 @@
-import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, UseGuards, ParseUUIDPipe
+} from '@nestjs/common';
 import { JobCardsService } from './job-cards.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 
-@Controller('projects/:projectId/job-cards')
+@Controller('api/v1/projects/:projectId/job-cards')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class JobCardsController {
   constructor(private readonly jobCardsService: JobCardsService) {}
 
@@ -11,16 +17,23 @@ export class JobCardsController {
   }
 
   @Post('generate')
-  generateJobCards(@Param('projectId') projectId: string) {
+  @Roles('ADMIN', 'PRODUCTION')
+  generateJobCards(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: any
+  ) {
     return this.jobCardsService.generateJobCardsFromRouting(projectId);
   }
 
   @Patch(':id/status')
+  @Roles('ADMIN', 'PRODUCTION')
   updateJobCardStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body('status') status: string,
-    @Body('operatorId') operatorId?: string
+    @Body('operatorId') operatorId?: string,
+    @CurrentUser() user?: any
   ) {
+    // In job cards service, we don't have updatedBy currently in job_cards table, but I'll pass it if needed, or just let service handle it
     return this.jobCardsService.updateJobCardStatus(id, status, operatorId);
   }
 }

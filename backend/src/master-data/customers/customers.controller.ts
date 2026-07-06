@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Patch,
+  ParseUUIDPipe
 } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -63,7 +64,7 @@ export class CustomersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.customersService.findOne(id);
     return {
       status: 'success',
@@ -74,7 +75,7 @@ export class CustomersController {
 
   @Patch(':id')
   @Roles('ADMIN', 'SALES_ENGINEER')
-  async update(@Param('id') id: string, @Body() dto: UpdateCustomerDto) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCustomerDto) {
     const data = await this.customersService.update(id, dto);
     return {
       status: 'success',
@@ -85,7 +86,7 @@ export class CustomersController {
 
   @Delete(':id')
   @Roles('ADMIN')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.customersService.softDelete(id);
     return {
       status: 'success',

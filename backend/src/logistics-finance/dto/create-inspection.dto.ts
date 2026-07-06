@@ -33,4 +33,14 @@ export class CreateInspectionDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+
+  @IsOptional()
+  measurements?: {
+    inspectionStandardId: string;
+    nominalValue: number;
+    upperTolerance?: number;
+    lowerTolerance?: number;
+    actualValue: number;
+    result: string; // 'PASS', 'FAIL', 'REWORK'
+  }[];
 }

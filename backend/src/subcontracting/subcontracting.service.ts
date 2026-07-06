@@ -214,7 +214,7 @@ export class SubcontractingService {
         data: {
           projectId,
           action: 'SUBCONTRACT_RECEIPT',
-          description: `Receipt ${receiptNumber} processed. Cost: ${totalProcessCost}`,
+          description: `Receipt ${receiptNumber} processed. Cost: ₹${totalProcessCost}`,
         },
       });
 

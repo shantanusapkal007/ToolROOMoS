@@ -32,3 +32,20 @@ export function useCreateInvoice(projectId: string) {
     },
   });
 }
+
+export function useRecordPayment(projectId: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: (data: any) => FinanceService.recordPayment(projectId, data),
+    onSuccess: (res, variables) => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.costEvents(projectId) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
+      success('Payment Recorded', `Payment recorded successfully.`);
+    },
+    onError: (err: any) => {
+      error('Payment Failed', err.message || 'An error occurred');
+    },
+  });
+}

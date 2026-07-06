@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+  ParseUUIDPipe
 } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
@@ -56,7 +57,7 @@ export class VendorsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.vendorsService.findOne(id);
     return {
       status: 'success',
@@ -67,7 +68,7 @@ export class VendorsController {
 
   @Put(':id')
   @Roles('ADMIN')
-  async update(@Param('id') id: string, @Body() dto: UpdateVendorDto) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateVendorDto) {
     const data = await this.vendorsService.update(id, dto);
     return {
       status: 'success',
@@ -78,7 +79,7 @@ export class VendorsController {
 
   @Delete(':id')
   @Roles('ADMIN')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.vendorsService.softDelete(id);
     return {
       status: 'success',

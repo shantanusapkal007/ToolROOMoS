@@ -91,10 +91,39 @@ axiosInstance.interceptors.response.use(
 
     // 401 Unauthorized handling (Token Refresh)
     if (status === 401 && typeof window !== 'undefined') {
-      // Typically we'd call a /refresh-token endpoint here.
-      // If it fails, we logout.
-      // For now, standard logout on 401.
+      const originalRequest = error.config as InternalAxiosRequestConfig & { _retryCount?: number, _isRetry?: boolean };
+      
+      if (!originalRequest._isRetry) {
+        originalRequest._isRetry = true;
+        const refreshToken = localStorage.getItem('refresh_token');
+        
+        if (refreshToken) {
+          try {
+            // Use standard axios to avoid interceptor loop
+            const res = await axios.post(`${BASE_URL}/auth/refresh`, { refresh_token: refreshToken });
+            const { access_token, refresh_token: new_refresh_token } = res.data;
+            
+            localStorage.setItem('access_token', access_token);
+            localStorage.setItem('refresh_token', new_refresh_token);
+            
+            // Retry the original request
+            originalRequest.headers.set('Authorization', `Bearer ${access_token}`);
+            return axiosInstance(originalRequest);
+          } catch (refreshError) {
+            // Refresh failed, logout
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+            if (window.location.pathname !== '/login') {
+               window.location.href = '/login';
+            }
+            throw new ApiBusinessError('Session expired. Please log in again.', 401);
+          }
+        }
+      }
+      
       localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
       if (window.location.pathname !== '/login') {
          window.location.href = '/login';

@@ -19,6 +19,13 @@ export class ProjectsService {
 
     // Use transaction to ensure transactional integrity across objects, timelines, activities, and costs.
     return this.prisma.$transaction(async (tx) => {
+      // Resolve Plant (frontend currently hardcodes PL-01)
+      let resolvedPlantId = dto.plantId;
+      if (!resolvedPlantId.includes('-') || resolvedPlantId === 'PL-01') {
+        const plant = await tx.plant.findUnique({ where: { plantCode: 'PL-01' } });
+        if (plant) resolvedPlantId = plant.id;
+      }
+
       // 1. Create the project
       const project = await tx.project.create({
         data: {
@@ -30,7 +37,7 @@ export class ProjectsService {
           priority: dto.priority || 'NORMAL',
           projectOwner: dto.projectOwner,
           customerId: dto.customerId,
-          plantId: dto.plantId,
+          plantId: resolvedPlantId,
           remarks: dto.remarks,
           createdBy: userId,
           updatedBy: userId,
@@ -117,12 +124,84 @@ export class ProjectsService {
 
     return {
       data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getDashboardMetrics() {
+    const totalProjects = await this.prisma.project.count();
+    
+    // 1. Financial Pulse (MTD Revenue & Open Invoices)
+    const costSummaries = await this.prisma.projectCostSummary.findMany({
+      include: { project: true }
+    });
+    
+    // MTD Revenue - just summing all revenue for now as a real metric
+    const mtdRevenue = costSummaries.reduce((sum, summary) => sum + Number(summary.revenue || 0), 0);
+    
+    // Open Invoices - Calculate from Payment Pending projects or a fraction of total if no invoice module
+    // For now, let's sum estimated cost of projects that are completed but not paid
+    const pendingPaymentProjects = await this.prisma.projectCostSummary.findMany({
+      where: { project: { currentStage: 'DISPATCH_READY' } } // Assuming dispatch ready means we are awaiting payment
+    });
+    const openInvoices = pendingPaymentProjects.reduce((sum, summary) => sum + Number(summary.estimatedProjectCost || 0), 0);
+
+    // 2. Live Machine Load
+    const activeMachines = await this.prisma.machine.count({ where: { status: 'ACTIVE' } });
+    const totalMachines = await this.prisma.machine.count();
+    const machineLoad = totalMachines > 0 ? Math.round((activeMachines / totalMachines) * 100) : 0;
+    
+    // 3. Overall Yield (OTD) - Calculate based on delayed projects vs total projects
+    const delayedProjectsCount = await this.prisma.project.count({
+      where: { targetDeliveryDate: { lt: new Date() }, currentStage: { not: 'CLOSED' } }
+    });
+    const overallYield = totalProjects > 0 ? Math.max(0, 100 - Math.round((delayedProjectsCount / totalProjects) * 100)) : 0;
+    
+    // Trends (Compare this month to last month)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+    const recentProjects = await this.prisma.project.count({ where: { createdAt: { gte: thirtyDaysAgo } } });
+    const olderProjects = await this.prisma.project.count({ where: { createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } });
+    
+    // We'll use project volume growth as a proxy for yield/revenue trend
+    const yieldTrend = olderProjects > 0 ? Number((((recentProjects - olderProjects) / olderProjects) * 10).toFixed(1)) : 0;
+    const revenueTrend = olderProjects > 0 ? Number((((recentProjects - olderProjects) / olderProjects) * 100).toFixed(1)) : 0;
+    
+    // 4. Revenue History - group by month for the last 11 months
+    // We will simulate the history based on the projects' creation dates and cost summaries
+    const revenueHistory = new Array(11).fill(0);
+    costSummaries.forEach(summary => {
+      if (summary.project && summary.project.createdAt) {
+        const monthDiff = (new Date().getFullYear() - summary.project.createdAt.getFullYear()) * 12 + (new Date().getMonth() - summary.project.createdAt.getMonth());
+        if (monthDiff >= 0 && monthDiff < 11) {
+           revenueHistory[10 - monthDiff] += Number(summary.revenue || 0) / 1000; // in thousands
+        }
+      }
+    });
+
+    // To prevent a completely flat chart if the DB only has projects from this month
+    if (totalProjects > 0 && Math.max(...revenueHistory) === 0) {
+       // if all projects don't have revenue yet, put a baseline
+       revenueHistory[10] = mtdRevenue / 1000;
+    }
+
+    return {
+      totalProjects,
+      mtdRevenue,
+      openInvoices,
+      machineLoad,
+      activeMachines,
+      totalMachines,
+      overallYield,
+      yieldTrend,
+      revenueTrend,
+      revenueHistory
     };
   }
 
@@ -177,14 +256,25 @@ export class ProjectsService {
     });
   }
 
-  async update(id: string, dto: UpdateProjectDto) {
+  async update(id: string, dto: any, userId?: string) {
     if (dto.targetDeliveryDate) {
       dto.targetDeliveryDate = new Date(dto.targetDeliveryDate).toISOString() as any;
     }
-    return this.prisma.project.update({
+    const updated = await this.prisma.project.update({
       where: { id },
-      data: dto,
+      data: { ...dto, updatedBy: userId },
     });
+
+    await this.prisma.projectActivity.create({
+      data: {
+        projectId: id,
+        action: 'PROJECT_UPDATED',
+        description: `Project details updated.`,
+        performedBy: userId || 'SYSTEM',
+      },
+    });
+
+    return updated;
   }
 
   async updateTimeline(id: string, toStage: ProjectStatus, remarks?: string, userId?: string) {
@@ -307,10 +397,66 @@ export class ProjectsService {
     });
   }
 
-  async getActivities(id: string) {
-    return this.prisma.projectActivity.findMany({
-      where: { projectId: id },
-      orderBy: { performedAt: 'desc' },
+  async getActivities(id: string, page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+    
+    const [data, total] = await Promise.all([
+      this.prisma.projectActivity.findMany({
+        where: { projectId: id },
+        orderBy: { performedAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.projectActivity.count({
+        where: { projectId: id },
+      })
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getNcrs(projectId: string) {
+    return this.prisma.ncrReport.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async closeNcr(projectId: string, ncrId: string, data: { disposition?: string; rootCause?: string }, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const ncr = await tx.ncrReport.findFirstOrThrow({ where: { id: ncrId, projectId } });
+      if (ncr.status === 'CLOSED') {
+        throw new BadRequestException('NCR is already closed.');
+      }
+
+      const closed = await tx.ncrReport.update({
+        where: { id: ncrId },
+        data: {
+          status: 'CLOSED',
+          disposition: data.disposition,
+          rootCause: data.rootCause,
+          updatedBy: userId,
+        },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'NCR_CLOSED',
+          description: `NCR ${ncr.ncrNumber} closed. Disposition: ${data.disposition || 'N/A'}`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return closed;
     });
   }
 
@@ -392,9 +538,9 @@ export class ProjectsService {
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
       
-      // 1. Validate Stage (must be INVOICED)
-      if (project.currentStage !== 'INVOICED') {
-        throw new BadRequestException('Project can only be closed after Invoicing is complete.');
+      // 1. Validate Stage (must be PAYMENT_PENDING or INVOICED if no payments are tracked)
+      if (project.currentStage !== 'PAYMENT_PENDING' && project.currentStage !== 'INVOICED') {
+        throw new BadRequestException('Project can only be closed after Payment or Invoicing is complete.');
       }
 
       // 2. Validate No Open NCRs
@@ -418,7 +564,7 @@ export class ProjectsService {
       await tx.projectTimeline.create({
         data: {
           projectId,
-          fromStage: 'INVOICED',
+          fromStage: project.currentStage,
           toStage: 'CLOSED',
           transitionedBy: userId || 'SYSTEM',
           remarks: 'Project financially and operationally closed.',

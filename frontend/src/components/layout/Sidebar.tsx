@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon } from "lucide-react";
+import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Package } from "lucide-react";
 import { useAuth } from '../auth/AuthProvider';
 
 export function Sidebar() {
@@ -83,6 +83,13 @@ export function Sidebar() {
             icon={<PieChart className="h-5 w-5" />} 
             label="Reports" 
             active={pathname.startsWith("/reports")} 
+            isExpanded={isHovered}
+          />
+          <NavItem 
+            href="/inventory"
+            icon={<Package className="h-5 w-5" />} 
+            label="Inventory Ledger" 
+            active={pathname.startsWith("/inventory")} 
             isExpanded={isHovered}
           />
           

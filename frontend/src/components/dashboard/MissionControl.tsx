@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Clock, Factory, Package, ArrowRight, Activity, TrendingUp, DollarSign, CheckCircle2, AlertCircle, Zap } from "lucide-react";
 import { useMasterData } from '../../hooks/useMasterData';
+import { ProjectGanttChart } from './ProjectGanttChart';
+import { useDashboardMetrics } from '../../hooks/useDashboardMetrics';
 
 interface MissionControlProps {
   projects: any[];
@@ -11,11 +13,12 @@ interface MissionControlProps {
 
 export function MissionControl({ projects, onSelectProject }: MissionControlProps) {
   const { data: machines = [] } = useMasterData('machines');
+  const { data: metrics } = useDashboardMetrics();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const activeProjects = projects.filter(p => p.status !== "COMPLETED");
-  const delayedProjects = activeProjects.filter(p => new Date(p.deliveryDate) < new Date());
+  const activeProjects = projects.filter(p => p.currentStage !== "CLOSED" && p.currentStage !== "CANCELLED");
+  const delayedProjects = activeProjects.filter(p => p.targetDeliveryDate && new Date(p.targetDeliveryDate) < new Date());
   
   return (
     <div className="flex-1 h-full overflow-y-auto pl-32 pr-12 py-12 pb-32 animate-fade-in hide-scrollbar">
@@ -46,8 +49,28 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <PremiumKpiCard title="Active Projects" value={activeProjects.length.toString()} subtext={`${projects.length} Total Lifetime`} icon={<Package />} trend="up" color="blue" delay="0ms" />
         <PremiumKpiCard title="Delayed Commitments" value={delayedProjects.length.toString()} subtext="Requires Attention" icon={<AlertCircle />} trend={delayedProjects.length > 0 ? "down" : "neutral"} color={delayedProjects.length > 0 ? "red" : "emerald"} delay="100ms" />
-        <PremiumKpiCard title="Overall Yield (OTD)" value="94.2%" subtext="+2.1% from last month" icon={<CheckCircle2 />} trend="up" color="emerald" delay="200ms" />
-        <PremiumKpiCard title="Live Machine Load" value="82%" subtext="12 of 14 VMCs Active" icon={<Factory />} trend="neutral" color="purple" delay="300ms" />
+        <PremiumKpiCard 
+          title="Overall Yield (OTD)" 
+          value={metrics && metrics.totalProjects > 0 ? `${metrics.overallYield}%` : "N/A"} 
+          subtext={metrics && metrics.totalProjects > 0 ? `+${metrics.yieldTrend}% from last month` : "No historical data"} 
+          icon={<CheckCircle2 />} 
+          trend={metrics && metrics.totalProjects > 0 ? "up" : "neutral"} 
+          color={metrics && metrics.totalProjects > 0 ? "emerald" : "slate"} 
+          delay="200ms" 
+        />
+        <PremiumKpiCard 
+          title="Live Machine Load" 
+          value={metrics ? `${metrics.machineLoad}%` : '--%'} 
+          subtext={metrics ? `${metrics.activeMachines} of ${metrics.totalMachines} VMCs Active` : 'Loading...'} 
+          icon={<Factory />} 
+          trend="neutral" 
+          color="purple" 
+          delay="300ms" 
+        />
+      </div>
+
+      <div className="mb-8">
+        <ProjectGanttChart />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -69,7 +92,7 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
             <div className="space-y-4 overflow-y-auto pr-4 hide-scrollbar flex-1">
               {activeProjects.map((proj, idx) => {
                 const totalDays = 30; 
-                const daysLeft = Math.max(0, Math.floor((new Date(proj.deliveryDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24)));
+                const daysLeft = Math.max(0, Math.floor((new Date(proj.targetDeliveryDate || proj.createdAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24)));
                 const progress = Math.min(100, Math.max(0, ((totalDays - daysLeft) / totalDays) * 100));
                 const isDelayed = daysLeft === 0;
 
@@ -128,27 +151,33 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
               <div>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">MTD Revenue</p>
                 <div className="flex items-end space-x-3">
-                  <p className="text-5xl font-black text-white tracking-tighter drop-shadow-md">$428k</p>
-                  <div className="flex items-center text-sm font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20 mb-1">
-                    <TrendingUp className="w-4 h-4 mr-1" /> +14.2%
+                  <p className="text-5xl font-black text-white tracking-tighter drop-shadow-md">
+                    &#8377;{metrics ? (metrics.mtdRevenue / 1000).toFixed(1) + 'k' : '0.0k'}
+                  </p>
+                  <div className={`flex items-center text-sm font-bold px-2 py-1 rounded-lg border mb-1 ${metrics && metrics.revenueTrend > 0 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-slate-400 bg-slate-500/10 border-slate-500/20'}`}>
+                    <TrendingUp className="w-4 h-4 mr-1" /> {metrics ? `+${metrics.revenueTrend}%` : '+0.0%'}
                   </div>
                 </div>
               </div>
               
               {/* Premium CSS Mini Chart */}
               <div className="h-16 w-full mt-4 flex items-end space-x-1">
-                {[30, 45, 40, 60, 55, 75, 65, 80, 90, 85, 100].map((val, i) => (
-                  <div key={i} className="flex-1 bg-emerald-500/20 rounded-t-sm relative group cursor-pointer transition-all hover:bg-emerald-400" style={{ height: `${val}%` }}>
-                    <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 bg-white text-black text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg pointer-events-none transform -translate-x-1/2 left-1/2 transition-opacity">
-                      {val}k
-                    </div>
+                {(metrics?.revenueHistory || [0,0,0,0,0,0,0,0,0,0,0]).map((val: number, i: number) => (
+                  <div key={i} className={`flex-1 rounded-t-sm relative group cursor-pointer transition-all ${val > 0 ? 'bg-emerald-500/20 hover:bg-emerald-400' : 'bg-slate-500/10'}`} style={{ height: `${Math.max(val, 2)}%` }}>
+                    {val > 0 && (
+                      <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 bg-white text-black text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg pointer-events-none transform -translate-x-1/2 left-1/2 transition-opacity">
+                        {val}k
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
               
               <div className="border-t border-white/10 pt-6 mt-6">
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">Open Invoices</p>
-                <p className="text-2xl font-black text-white tracking-tight">$115,200</p>
+                <p className="text-2xl font-black text-white tracking-tight">
+                  &#8377;{metrics ? metrics.openInvoices.toLocaleString() : '0'}
+                </p>
               </div>
             </div>
           </div>
@@ -204,12 +233,13 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
   );
 }
 
-function PremiumKpiCard({ title, value, subtext, icon, trend, color, delay }: { title: string, value: string, subtext: string, icon: React.ReactNode, trend: string, color: 'blue' | 'emerald' | 'red' | 'purple', delay: string }) {
+function PremiumKpiCard({ title, value, subtext, icon, trend, color, delay }: { title: string, value: string, subtext: string, icon: React.ReactNode, trend: string, color: 'blue' | 'emerald' | 'red' | 'purple' | 'slate', delay: string }) {
   const colorMap = {
     blue: 'from-blue-500/20 to-blue-600/5 border-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.1)]',
     emerald: 'from-emerald-500/20 to-emerald-600/5 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]',
     red: 'from-red-500/20 to-red-600/5 border-red-500/20 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.1)]',
     purple: 'from-purple-500/20 to-purple-600/5 border-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]',
+    slate: 'from-slate-500/20 to-slate-600/5 border-slate-500/20 text-slate-400 shadow-[0_0_15px_rgba(100,116,139,0.1)]',
   };
 
   const glowMap = {
@@ -217,6 +247,7 @@ function PremiumKpiCard({ title, value, subtext, icon, trend, color, delay }: { 
     emerald: 'bg-emerald-500',
     red: 'bg-red-500',
     purple: 'bg-purple-500',
+    slate: 'bg-slate-500',
   };
 
   return (

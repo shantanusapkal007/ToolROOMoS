@@ -44,6 +44,16 @@ export class InspectionsService {
           remarks: dto.remarks,
           createdBy: userId,
           updatedBy: userId,
+          measurements: dto.measurements ? {
+            create: dto.measurements.map(m => ({
+              inspectionStandardId: m.inspectionStandardId,
+              nominalValue: m.nominalValue,
+              upperTolerance: m.upperTolerance,
+              lowerTolerance: m.lowerTolerance,
+              actualValue: m.actualValue,
+              result: m.result as any,
+            }))
+          } : undefined
         },
       });
 

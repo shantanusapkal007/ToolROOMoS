@@ -22,7 +22,7 @@ export function WorkflowTimeline({ currentStage }: WorkflowTimelineProps) {
   const currentIndex = stages.findIndex(s => s.id === currentStage);
   const normalizedIndex = currentIndex === -1 ? 0 : currentIndex;
 
-  const springConfig = { type: "spring", stiffness: 200, damping: 20 };
+  const springConfig = { type: "spring" as any, stiffness: 200, damping: 20 };
 
   return (
     <div className="w-full py-12 mb-8 overflow-x-auto hide-scrollbar relative">
