@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { api } from "../../../../lib/api";
-import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent, Lock, Plus, X, Info, Calendar, Settings } from "lucide-react";
+import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent, Lock, Plus, X, Info, Calendar, Settings, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject, useCloseProject } from "../../../../hooks/useProjects";
 import { useCostEvents, useCreateInvoice, useRecordPayment } from "../../../../hooks/useFinance";
@@ -19,7 +20,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
   
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invNum, setInvNum] = useState("");
-  const [invAmount, setInvAmount] = useState(0);
+  const [invAmount, setInvAmount] = useState<number | "">("");
   const [selectedDispatchId, setSelectedDispatchId] = useState("");
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -43,16 +44,16 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
       await createInvoiceMutation.mutateAsync({
         dispatchNoteId: selectedDispatchId,
         invoiceNumber: invNum,
-        subtotal: invAmount,
-        taxAmount: invAmount * 0.18,
-        totalAmount: invAmount * 1.18,
+        subtotal: Number(invAmount) || 0,
+        taxAmount: (Number(invAmount) || 0) * 0.18,
+        totalAmount: (Number(invAmount) || 0) * 1.18,
       });
       setShowInvoiceModal(false);
       refetchProject();
       
       // Reset form
       setInvNum("");
-      setInvAmount(0);
+      setInvAmount("");
       setSelectedDispatchId("");
     } catch (err: any) {}
   };
@@ -82,6 +83,27 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
       await closeProjectMutation.mutateAsync();
       refetchProject();
     } catch (err: any) {}
+  };
+
+  const handleExportInvoice = (inv: any) => {
+    if (!inv) return;
+    
+    const exportData = [{
+      "Invoice Number": inv.invoiceNumber,
+      "Date": new Date(inv.createdAt).toLocaleDateString(),
+      "Status": inv.status || 'ISSUED',
+      "Subtotal": inv.subtotal,
+      "Tax (18%)": inv.taxAmount,
+      "Total Amount": inv.totalAmount,
+      "Payment Status": inv.paymentStatus || 'UNPAID',
+      "Payment Reference": inv.paymentReference || '-',
+    }];
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Invoice");
+    
+    XLSX.writeFile(wb, `Invoice_${inv.invoiceNumber}.xlsx`);
   };
 
   const cost = project.projectCostSummary || {};
@@ -262,6 +284,11 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                       <div className="text-right flex flex-col items-end">
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Billed</div>
                         <div className="text-green-400 font-bold text-lg font-mono tracking-tight">&#8377;{Number(inv.totalAmount).toLocaleString()}</div>
+                        {Number(inv.amountPaid) > 0 && Number(inv.amountPaid) < Number(inv.totalAmount) && (
+                          <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">
+                            Paid: <span className="text-white font-mono">&#8377;{Number(inv.amountPaid).toLocaleString()}</span>
+                          </div>
+                        )}
                         
                         <div className="mt-3 flex items-center space-x-2">
                           <button
@@ -274,13 +301,31 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest">
                               PAID
                             </span>
+                          ) : inv.paymentStatus === 'PARTIAL' ? (
+                            <>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 uppercase tracking-widest">
+                                PARTIAL
+                              </span>
+                              <button
+                                onClick={() => {
+                                  setSelectedInvoiceId(inv.id);
+                                  const balance = Number(inv.totalAmount) - Number(inv.amountPaid || 0);
+                                  setPaymentAmount(balance);
+                                  setShowPaymentModal(true);
+                                }}
+                                className="px-3 py-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider rounded border border-white/10 transition-colors"
+                              >
+                                Pay Bal
+                              </button>
+                            </>
                           ) : (
                             <button
-                              onClick={() => {
-                                setSelectedInvoiceId(inv.id);
-                                setPaymentAmount(Number(inv.totalAmount));
-                                setShowPaymentModal(true);
-                              }}
+                                onClick={() => {
+                                  setSelectedInvoiceId(inv.id);
+                                  const balance = Number(inv.totalAmount) - Number(inv.amountPaid || 0);
+                                  setPaymentAmount(balance);
+                                  setShowPaymentModal(true);
+                                }}
                               className="px-3 py-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider rounded border border-white/10 transition-colors"
                             >
                               Record Payment
@@ -360,15 +405,15 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
               <div className="bg-white/[0.02] p-5 rounded-2xl border border-white/5 space-y-3 mt-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Subtotal</span>
-                  <span className="text-white font-mono font-medium">&#8377;{invAmount.toFixed(2)}</span>
+                  <span className="text-white font-mono font-medium">&#8377;{(Number(invAmount) || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Tax (18% GST)</span>
-                  <span className="text-white font-mono font-medium">&#8377;{(invAmount * 0.18).toFixed(2)}</span>
+                  <span className="text-white font-mono font-medium">&#8377;{((Number(invAmount) || 0) * 0.18).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold pt-3 border-t border-white/10 mt-3">
                   <span className="text-white">Total Amount</span>
-                  <span className="text-green-400 font-mono">&#8377;{(invAmount * 1.18).toFixed(2)}</span>
+                  <span className="text-green-400 font-mono">&#8377;{((Number(invAmount) || 0) * 1.18).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -514,9 +559,18 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
                   <p className="text-[10px] text-slate-400">Billed customer statement</p>
                 </div>
               </div>
-              <button onClick={() => setViewingInvoiceDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => handleExportInvoice(viewingInvoiceDetails)}
+                  className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 hover:border-green-500/40 font-bold text-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export</span>
+                </button>
+                <button onClick={() => setViewingInvoiceDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="py-6 space-y-4 text-xs relative z-10">

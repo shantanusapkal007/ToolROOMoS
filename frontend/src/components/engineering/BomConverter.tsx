@@ -16,6 +16,7 @@ interface BomConverterProps {
   projectId: string;
   project: any;
   materials: any[];
+  onSaveBOM?: (rows: any[]) => void;
 }
 
 interface ParsedBOMRow {
@@ -29,10 +30,17 @@ interface ParsedBOMRow {
   length: number | string;
   width: number | string;
   height: number | string;
+  matchedMaterialId: string | null;
+  matchedMaterialName: string | null;
+  density: number | null;
+  rate: number | null;
+  apWeight: number | null;
+  totalWeight: number | null;
+  basicCost: number | null;
   validationError: string | null;
 }
 
-export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, materials = [] }) => {
+export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, materials = [], onSaveBOM }) => {
   const { success, error, warning } = useToast();
 
   const [file, setFile] = useState<File | null>(null);
@@ -85,6 +93,44 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
     const isValid = !isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0;
     return { length: l, width: w, height: h, isValid };
+  };
+
+  // --- Calculations ---
+  const populateCalculations = (item: ParsedBOMRow): ParsedBOMRow => {
+    let matchedMat = null;
+    if (item.materialInput) {
+       const search = item.materialInput.toLowerCase();
+       matchedMat = materials.find(m => 
+          m.materialCode?.toLowerCase().includes(search) || 
+          m.materialGrade?.toLowerCase().includes(search)
+       ) || null;
+    }
+    
+    item.matchedMaterialId = matchedMat ? matchedMat.id : null;
+    item.matchedMaterialName = matchedMat ? `${matchedMat.materialCode} - ${matchedMat.materialGrade}` : null;
+    item.density = matchedMat ? Number(matchedMat.density || 7.85) : 7.85; // Default steel density
+    item.rate = matchedMat ? Number(matchedMat.standardCost || 0) : 0;
+    
+    if (item.length && item.width && item.height) {
+        if (item.length === 'Ø') {
+           const d = Number(item.width);
+           const l = Number(item.height);
+           const vol = Math.PI * Math.pow(d / 2, 2) * l;
+           item.apWeight = (vol * item.density) / 1000000;
+        } else {
+           const l = Number(item.length);
+           const w = Number(item.width);
+           const h = Number(item.height);
+           const vol = l * w * h;
+           item.apWeight = (vol * item.density) / 1000000;
+        }
+    } else {
+        item.apWeight = 0;
+    }
+    
+    item.totalWeight = (item.apWeight || 0) * (item.quantity || 0);
+    item.basicCost = (item.totalWeight || 0) * (item.rate || 0);
+    return item;
   };
 
   // --- Validate Row Data ---
@@ -284,9 +330,17 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             length: dimensions.length as any,
             width: dimensions.width as any,
             height: dimensions.height as any,
+            matchedMaterialId: null,
+            matchedMaterialName: null,
+            density: null,
+            rate: null,
+            apWeight: null,
+            totalWeight: null,
+            basicCost: null,
             validationError: null
           };
 
+          populateCalculations(item);
           item.validationError = validateRow(item, parsedItems.length);
           parsedItems.push(item);
         }
@@ -348,6 +402,12 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
       if (field === 'length' || field === 'width' || field === 'height') {
         updated.rawMaterialSize = `${updated.length}x${updated.width}x${updated.height}`;
+      }
+
+      if (field === 'materialInput') {
+        populateCalculations(updated);
+      } else if (field === 'rawMaterialSize' || field === 'length' || field === 'width' || field === 'height' || field === 'quantity') {
+        populateCalculations(updated);
       }
 
       // Re-validate row
@@ -416,9 +476,13 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
     // Populate Rows
     let grandQty = 0;
+    let grandTotalWt = 0;
+    let grandTotalCost = 0;
 
     rows.forEach((row, idx) => {
       grandQty += row.quantity;
+      grandTotalWt += row.totalWeight || 0;
+      grandTotalCost += (row.basicCost || 0) * 1.18; // Includes GST
 
       documentData.push([
         idx + 1, // SR.NO
@@ -429,12 +493,12 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         row.height, // H
         row.materialInput, // MATERIAL
         row.quantity, // QTY
-        "", // AP WT. (leave blank)
-        "", // TOTAL WT. (leave blank)
-        "", // RATE (leave blank)
-        "", // BASIC (leave blank)
-        "", // GST (leave blank)
-        ""  // TOTAL (leave blank)
+        row.apWeight ? row.apWeight.toFixed(2) : "", // AP WT.
+        row.totalWeight ? row.totalWeight.toFixed(2) : "", // TOTAL WT.
+        row.rate ? row.rate.toFixed(2) : "", // RATE
+        row.basicCost ? row.basicCost.toFixed(2) : "", // BASIC COST
+        row.basicCost ? (row.basicCost * 0.18).toFixed(2) : "", // GST
+        row.basicCost ? (row.basicCost * 1.18).toFixed(2) : ""  // TOTAL
       ]);
     });
 
@@ -443,11 +507,11 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
       "GRAND TOTAL", "", "", "", "", "", "",
       grandQty, 
       "", 
+      grandTotalWt > 0 ? grandTotalWt.toFixed(2) : "", 
       "", 
       "", 
       "", 
-      "", 
-      ""
+      grandTotalCost > 0 ? grandTotalCost.toFixed(2) : ""
     ]);
 
     documentData.push([]); // spacing
@@ -682,13 +746,24 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
               </div>
 
               {isConverted && invalidRowsCount === 0 && (
-                <button 
-                  onClick={handleExportExcel} 
-                  className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-500/20 transition-all ml-4"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download PO Sheet</span>
-                </button>
+                <>
+                  <button 
+                    onClick={handleExportExcel} 
+                    className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-500/20 transition-all ml-4"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download PO Sheet</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (onSaveBOM) onSaveBOM(rows);
+                    }} 
+                    className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-blue-500/20 transition-all ml-2"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Save to Database</span>
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -789,34 +864,34 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                       />
                     </td>
 
-                    {/* AP WT. (Blank) */}
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-500 italic">
-                      -
+                    {/* AP WT. */}
+                    <td className="px-4 py-2.5 text-right font-mono text-emerald-400">
+                      {row.apWeight ? row.apWeight.toFixed(2) : '-'}
                     </td>
 
-                    {/* TOTAL WT. (Blank) */}
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-500 italic">
-                      -
+                    {/* TOTAL WT. */}
+                    <td className="px-4 py-2.5 text-right font-mono text-emerald-400 font-bold">
+                      {row.totalWeight ? row.totalWeight.toFixed(2) : '-'}
                     </td>
 
-                    {/* RATE (Blank) */}
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-500 italic">
-                      -
+                    {/* RATE */}
+                    <td className="px-4 py-2.5 text-right font-mono text-slate-300">
+                      {row.rate ? row.rate.toFixed(2) : '-'}
                     </td>
 
-                    {/* BASIC (Blank) */}
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-500 italic">
-                      -
+                    {/* BASIC */}
+                    <td className="px-4 py-2.5 text-right font-mono text-blue-400 font-bold">
+                      {row.basicCost ? row.basicCost.toFixed(2) : '-'}
                     </td>
 
-                    {/* GST (Blank) */}
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-500 italic">
-                      -
+                    {/* GST (Estimated 18%) */}
+                    <td className="px-4 py-2.5 text-right font-mono text-slate-500">
+                      {row.basicCost ? (row.basicCost * 0.18).toFixed(2) : '-'}
                     </td>
 
-                    {/* TOTAL (Blank) */}
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-500 italic">
-                      -
+                    {/* TOTAL */}
+                    <td className="px-4 py-2.5 text-right font-mono text-white font-bold">
+                      {row.basicCost ? (row.basicCost * 1.18).toFixed(2) : '-'}
                     </td>
 
                     {/* Row Deletion Action */}

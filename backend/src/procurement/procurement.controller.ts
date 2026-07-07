@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -46,6 +47,34 @@ export class ProcurementController {
       status: 'success',
       message: 'Purchase Orders retrieved successfully.',
       data,
+    };
+  }
+
+  @Post('purchase-orders/:poId/issue')
+  @Roles('ADMIN', 'PURCHASE')
+  async issuePo(
+    @Param('projectId') projectId: string,
+    @Param('poId') poId: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.poService.issuePo(projectId, poId, user.userId);
+    return {
+      status: 'success',
+      message: 'Purchase Order issued successfully.',
+      data,
+    };
+  }
+
+  @Delete('purchase-orders/:poId')
+  @Roles('ADMIN', 'PURCHASE')
+  async deletePo(
+    @Param('projectId') projectId: string,
+    @Param('poId') poId: string,
+  ) {
+    await this.poService.deletePo(projectId, poId);
+    return {
+      status: 'success',
+      message: 'Purchase Order deleted successfully.',
     };
   }
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { EntityColumn } from '../../modules/settings/types';
-import { Edit2, Trash2, History, Eye, ChevronRight } from 'lucide-react';
+import { Edit2, Trash2, History, Eye, ChevronRight, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { EmptyState } from './EmptyState';
 import { LoadingState } from './LoadingState';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,9 +15,35 @@ interface SmartTableProps {
   onEdit?: (record: any) => void;
   onDelete?: (record: any) => void;
   onHistory?: (record: any) => void;
+  exportable?: boolean;
+  exportFilename?: string;
 }
 
-export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading, onView, onEdit, onDelete, onHistory }) => {
+export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading, onView, onEdit, onDelete, onHistory, exportable, exportFilename }) => {
+  
+  const handleExport = () => {
+    if (!data || data.length === 0) return;
+    
+    const exportData = data.map(row => {
+      const rowData: Record<string, any> = {};
+      columns.forEach(col => {
+        let val = row[col.key];
+        // If it's an object/array, stringify it safely, else keep it
+        if (typeof val === 'object' && val !== null) {
+          val = val.name || val.id || JSON.stringify(val);
+        }
+        rowData[col.label] = val;
+      });
+      return rowData;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    
+    const fileName = `${exportFilename || 'Data_Export'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
   
   if (isLoading) {
     return <LoadingState message="Scanning Database..." />;
@@ -31,8 +58,20 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
   }
 
   return (
-    <div className="glass-panel w-full overflow-x-auto overflow-y-hidden pb-4 hide-scrollbar">
-      <table className="w-full text-left border-collapse min-w-max">
+    <div className="glass-panel w-full flex flex-col">
+      {exportable && data && data.length > 0 && (
+        <div className="flex justify-end items-center px-4 py-3 border-b border-white/5 bg-white/[0.01]">
+          <button 
+            onClick={handleExport}
+            className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-white/10 transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export to Excel</span>
+          </button>
+        </div>
+      )}
+      <div className="w-full overflow-x-auto overflow-y-hidden pb-4 hide-scrollbar">
+        <table className="w-full text-left border-collapse min-w-max">
         <thead>
           <tr className="border-b border-white/10 relative bg-white/[0.02]">
             {columns.map((col) => (
@@ -119,6 +158,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
           </AnimatePresence>
         </tbody>
       </table>
+      </div>
     </div>
   );
 };

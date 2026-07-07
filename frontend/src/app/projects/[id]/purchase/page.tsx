@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { api } from "../../../../lib/api";
-import { ShoppingCart, Plus, FileText, Package, ArrowRight, ChevronRight, CheckCircle2, Clock, X, Calendar, Activity, Info } from "lucide-react";
+import { ShoppingCart, Plus, FileText, Package, ArrowRight, ChevronRight, CheckCircle2, Clock, X, Calendar, Activity, Info, Download, Trash2 } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { Input } from "../../../../components/ui/Input";
 import { Select } from "../../../../components/ui/Select";
 import { useToast } from "../../../../components/ui/Toast";
@@ -19,7 +20,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
   const { data: vendors } = useMasterData('vendors');
   const { data: materials } = useMasterData('materials');
   const { data: warehouses } = useMasterData('warehouses');
-  const { data: purchaseOrders } = usePurchaseOrders(resolvedParams.id);
+  const { data: purchaseOrders, refetch: refetchPurchaseOrders } = usePurchaseOrders(resolvedParams.id);
 
   const createPOMutation = useCreatePurchaseOrder(resolvedParams.id);
   const processGRNMutation = useProcessGRN(resolvedParams.id);
@@ -89,6 +90,50 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
       }))
     });
     setShowGrnModal(true);
+  };
+
+  const handleExportPO = (po: any) => {
+    if (!po) return;
+    
+    // Create header data
+    const exportData = po.items.map((item: any) => ({
+      "PO Number": po.poNumber,
+      "Supplier": po.vendor?.vendorName || '-',
+      "Material": `${item.material?.materialCode || ''} - ${item.material?.materialGrade || ''}`,
+      "Ordered Qty": item.orderedQty,
+      "Agreed Rate": item.agreedRate,
+      "Line Value": Number(item.orderedQty) * Number(item.agreedRate),
+      "Received Qty": item.receivedQty,
+      "Status": item.status
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Purchase Order");
+    
+    XLSX.writeFile(wb, `PO_${po.poNumber}.xlsx`);
+  };
+
+  const handleIssuePO = async (poId: string) => {
+    try {
+      await api.post(`/projects/${resolvedParams.id}/purchase-orders/${poId}/issue`);
+      success('Purchase Order issued successfully.');
+      setViewingPoDetails(null);
+      refetchPurchaseOrders();
+    } catch (err: any) {
+      error(err.response?.data?.message || 'Failed to issue purchase order.');
+    }
+  };
+
+  const handleDeletePO = async (poId: string) => {
+    if (!window.confirm('Are you sure you want to delete this Purchase Order? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/projects/${resolvedParams.id}/purchase-orders/${poId}`);
+      success('Purchase Order deleted successfully.');
+      refetchPurchaseOrders();
+    } catch (err: any) {
+      error(err.response?.data?.message || 'Failed to delete purchase order.');
+    }
   };
 
   const handleProcessGrn = async (e: React.FormEvent) => {
@@ -197,19 +242,28 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 <div className="mt-auto pt-4 border-t border-white/5 relative z-10 flex gap-2">
                   <button
                     onClick={() => setViewingPoDetails(po)}
-                    className={`font-bold text-xs py-2.5 rounded-xl transition-all duration-300 border border-white/10 hover:bg-white/5 hover:border-white/20 text-white ${
-                      po.status !== 'CLOSED' && po.status !== 'CANCELLED' ? 'flex-1' : 'w-full'
-                    }`}
+                    className={`font-bold text-xs py-2.5 rounded-xl transition-all duration-300 border border-white/10 hover:bg-white/5 hover:border-white/20 text-white flex-1`}
                   >
                     View Details
                   </button>
                   {po.status !== 'CLOSED' && po.status !== 'CANCELLED' && (
-                    <button
-                      onClick={() => openGrnModal(po)}
-                      className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2.5 rounded-xl transition-all duration-300 border border-emerald-500/20 hover:border-emerald-500/30 font-bold text-xs flex items-center justify-center space-x-1"
-                    >
-                      <span>Process GRN</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={() => openGrnModal(po)}
+                        className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2.5 rounded-xl transition-all duration-300 border border-emerald-500/20 hover:border-emerald-500/30 font-bold text-xs flex items-center justify-center space-x-1"
+                      >
+                        <span>Process GRN</span>
+                      </button>
+                      {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
+                        <button
+                          onClick={() => handleDeletePO(po.id)}
+                          className="px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 rounded-xl transition-all duration-300 border border-red-500/20 hover:border-red-500/30 flex items-center justify-center"
+                          title="Delete Purchase Order"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </motion.div>
@@ -499,12 +553,29 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   <p className="text-[10px] text-slate-400 font-medium">Detailed fulfillment ledger & audit logs</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setViewingPoDetails(null)} 
-                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex space-x-2">
+                {viewingPoDetails.status === 'ON_HOLD' && (
+                  <button 
+                    onClick={() => handleIssuePO(viewingPoDetails.id)}
+                    className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors"
+                  >
+                    <span>Issue PO</span>
+                  </button>
+                )}
+                <button 
+                  onClick={() => handleExportPO(viewingPoDetails)}
+                  className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 font-bold text-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export</span>
+                </button>
+                <button 
+                  onClick={() => setViewingPoDetails(null)} 
+                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Content */}

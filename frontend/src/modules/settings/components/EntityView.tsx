@@ -182,6 +182,8 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onHistory={handleHistory}
+          exportable={true}
+          exportFilename={registry.singularName}
         />
       </div>
 

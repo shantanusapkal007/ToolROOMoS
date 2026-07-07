@@ -77,4 +77,10 @@ export class JobCardsService {
       }
     });
   }
+
+  async deleteJobCard(id: string) {
+    return this.prisma.jobCard.delete({
+      where: { id }
+    });
+  }
 }

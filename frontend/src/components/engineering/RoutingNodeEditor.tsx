@@ -150,23 +150,23 @@ const nodeTypes = {
   endNode: EndNode,
 };
 
-// Initial Nodes
-const initialNodes = [
+// Initial Nodes (Empty)
+const emptyNodes = [
   { id: 'start', type: 'startNode', position: { x: 50, y: 250 }, data: {} },
-  { id: 'op1', type: 'operationNode', position: { x: 250, y: 150 }, data: { opCode: '10', label: 'CNC Milling', type: 'machining', setupTime: 2.5, runTime: 12.0, machine: '', machineName: 'Configure Machine', inspectionRequired: false, notes: 'Use standard tooling.', estimatedCost: 0 } },
-  { id: 'op2', type: 'operationNode', position: { x: 700, y: 300 }, data: { opCode: '20', label: 'Heat Treatment', type: 'external', setupTime: 0, runTime: 24.0, machine: '', machineName: 'Configure Machine', inspectionRequired: true, notes: 'Hardness 45-50 HRC.', estimatedCost: 0 } },
-  { id: 'end', type: 'endNode', position: { x: 1150, y: 250 }, data: {} },
+  { id: 'end', type: 'endNode', position: { x: 500, y: 250 }, data: {} },
 ];
 
-const initialEdges = [
-  { id: 'e1-op1', source: 'start', target: 'op1', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 3, opacity: 0.6 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#10b981' } },
-  { id: 'eop1-op2', source: 'op1', target: 'op2', type: 'smoothstep', animated: true, style: { stroke: '#3b82f6', strokeWidth: 3, opacity: 0.6 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#3b82f6' } },
-  { id: 'eop2-end', source: 'op2', target: 'end', type: 'smoothstep', animated: true, style: { stroke: '#a855f7', strokeWidth: 3, opacity: 0.6 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' } },
-];
+const emptyEdges: any[] = [];
 
 // Fetch Machines
 const fetchMachines = async () => {
   const res = await api.get('/master-data/machines?limit=100');
+  return Array.isArray(res) ? res : res.data;
+};
+
+// Fetch Operations
+const fetchOperations = async () => {
+  const res = await api.get('/master-data/operations?limit=100');
   return Array.isArray(res) ? res : res.data;
 };
 
@@ -194,15 +194,57 @@ const CustomControls = () => {
 interface RoutingNodeEditorProps {
   onClose: () => void;
   onSave: (nodes: any, edges: any) => void;
+  initialRouting?: any;
 }
 
-export const RoutingNodeEditor = ({ onClose, onSave }: RoutingNodeEditorProps) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNodeEditorProps) => {
+  const initNodes = React.useMemo(() => {
+    if (!initialRouting || !initialRouting.operations || initialRouting.operations.length === 0) return emptyNodes;
+    
+    const parsedNodes: any[] = [{ id: 'start', type: 'startNode', position: { x: 50, y: 250 }, data: {} }];
+    initialRouting.operations.forEach((op: any, i: number) => {
+      parsedNodes.push({
+        id: `op${i+1}`,
+        type: 'operationNode',
+        position: { x: 250 + (i * 250), y: 200 + (i % 2 === 0 ? -50 : 50) },
+        data: {
+          opCode: op.sequenceOrder?.toString() || `${(i+1)*10}`,
+          label: op.operation?.operationName || 'Operation',
+          operationId: op.operationId || '',
+          type: 'machining',
+          setupTime: Number(op.estimatedSetupTime || 0),
+          runTime: Number(op.estimatedHours || 0),
+          machine: op.plannedMachineId || '',
+          machineName: op.plannedMachine?.machineName || '',
+          estimatedCost: 0,
+        }
+      });
+    });
+    parsedNodes.push({ id: 'end', type: 'endNode', position: { x: 250 + (initialRouting.operations.length * 250), y: 250 }, data: {} });
+    return parsedNodes;
+  }, [initialRouting]);
+
+  const initEdges = React.useMemo(() => {
+    if (!initialRouting || !initialRouting.operations || initialRouting.operations.length === 0) return emptyEdges;
+    
+    const parsedEdges: any[] = [];
+    parsedEdges.push({ id: 'e-start', source: 'start', target: 'op1', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 3, opacity: 0.6 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#10b981' } });
+    for (let i = 1; i < initialRouting.operations.length; i++) {
+       parsedEdges.push({ id: `e-op${i}-op${i+1}`, source: `op${i}`, target: `op${i+1}`, type: 'smoothstep', animated: true, style: { stroke: '#3b82f6', strokeWidth: 3, opacity: 0.6 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#3b82f6' } });
+    }
+    parsedEdges.push({ id: `e-end`, source: `op${initialRouting.operations.length}`, target: 'end', type: 'smoothstep', animated: true, style: { stroke: '#a855f7', strokeWidth: 3, opacity: 0.6 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' } });
+    return parsedEdges;
+  }, [initialRouting]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const { data: machinesData = [] } = useQuery({ queryKey: ['machines'], queryFn: fetchMachines });
   const machines = Array.isArray(machinesData) ? machinesData : [];
+
+  const { data: operationsData = [] } = useQuery({ queryKey: ['operations'], queryFn: fetchOperations });
+  const operations = Array.isArray(operationsData) ? operationsData : [];
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ 
@@ -221,7 +263,7 @@ export const RoutingNodeEditor = ({ onClose, onSave }: RoutingNodeEditorProps) =
       id: newNodeId,
       type: 'operationNode',
       position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 100 },
-      data: { opCode: `${(nodes.length - 1) * 10}`, label: 'New Operation', type: 'machining', setupTime: 1, runTime: 5, machine: '', machineName: '', inspectionRequired: false, notes: '', estimatedCost: 0 },
+      data: { opCode: `${(nodes.length - 1) * 10}`, label: 'New Operation', operationId: '', type: 'machining', setupTime: 1, runTime: 5, machine: '', machineName: '', inspectionRequired: false, notes: '', estimatedCost: 0 },
     };
     setNodes((nds) => [...nds, newNode]);
     setSelectedNodeId(newNodeId);
@@ -402,12 +444,22 @@ export const RoutingNodeEditor = ({ onClose, onSave }: RoutingNodeEditorProps) =
 
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Operation Name</label>
-                      <input 
-                        type="text" 
-                        value={selectedNode.data.label}
-                        onChange={(e) => updateSelectedNodeData('label', e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
-                      />
+                      <select 
+                        value={selectedNode.data.operationId || ''}
+                        onChange={(e) => {
+                          const op = operations.find((o: any) => o.id === e.target.value);
+                          updateSelectedNodeData('operationId', e.target.value);
+                          if (op) {
+                            setTimeout(() => updateSelectedNodeData('label', op.operationName), 0);
+                          }
+                        }}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none"
+                      >
+                        <option value="">-- Select Operation --</option>
+                        {operations.map((op: any) => (
+                          <option key={op.id} value={op.id}>{op.operationName}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-4">

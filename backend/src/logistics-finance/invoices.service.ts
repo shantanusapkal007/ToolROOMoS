@@ -115,13 +115,27 @@ export class InvoicesService {
         where: { id: dto.invoiceId, projectId }
       });
 
-      const paymentStatus = 'PAID'; // Assuming full payment for simplicity for now
+      const paymentAmount = dto.amount || invoice.totalAmount;
+      const newAmountPaid = Number(invoice.amountPaid) + Number(paymentAmount);
+      const isFullyPaid = newAmountPaid >= Number(invoice.totalAmount);
+      const paymentStatus = isFullyPaid ? 'PAID' : 'PARTIAL';
+
+      await tx.invoicePayment.create({
+        data: {
+          invoiceHeaderId: invoice.id,
+          amount: paymentAmount,
+          paymentReference: dto.paymentReference,
+          remarks: dto.remarks,
+          createdBy: userId || 'SYSTEM',
+        }
+      });
 
       const updatedInvoice = await tx.invoiceHeader.update({
         where: { id: dto.invoiceId },
         data: {
           paymentStatus,
-          paidAt: new Date(),
+          amountPaid: newAmountPaid,
+          paidAt: isFullyPaid ? new Date() : invoice.paidAt,
           remarks: dto.remarks ? `${invoice.remarks || ''}\nPayment Ref: ${dto.paymentReference || 'N/A'}, Remarks: ${dto.remarks}` : invoice.remarks,
         }
       });
@@ -130,7 +144,7 @@ export class InvoicesService {
         data: {
           projectId,
           action: 'PAYMENT_RECEIVED',
-          description: `Payment recorded against Invoice ${invoice.invoiceNumber}. Amount: ₹${dto.amount || invoice.totalAmount}`,
+          description: `Payment recorded against Invoice ${invoice.invoiceNumber}. Amount: ₹${paymentAmount}. Status: ${paymentStatus}`,
           performedBy: userId || 'SYSTEM',
         }
       });
@@ -139,7 +153,7 @@ export class InvoicesService {
       // (Assuming PAYMENT_PENDING means we are actively collecting, but if it's PAID, we can just move to CLOSED or let user close it)
       const project = await tx.project.findUnique({ where: { id: projectId } });
       if (project && project.currentStage === 'INVOICED') {
-        // Move to PAYMENT_PENDING to indicate payment is in progress/completed (stage name is a bit ambiguous, but we follow audit)
+        // Move to PAYMENT_PENDING to indicate payment is in progress/completed
         await tx.project.update({
           where: { id: projectId },
           data: { currentStage: 'PAYMENT_PENDING' }

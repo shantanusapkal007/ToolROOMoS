@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "../../components/layout/Sidebar";
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
+import * as XLSX from 'xlsx';
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useToast } from "../../components/ui/Toast";
 import { LoadingState } from "../../components/ui/LoadingState";
@@ -56,6 +57,26 @@ export default function ProjectsPage() {
     }
   };
 
+  const handleExportProjects = () => {
+    if (!projects || projects.length === 0) return;
+    
+    const exportData = projects.map((p: any) => ({
+      "Project Number": p.projectNumber,
+      "Part Name": p.partName,
+      "Customer": p.customer?.companyName || '-',
+      "Status": p.status,
+      "Current Stage": p.currentStage,
+      "Priority": p.priority,
+      "Target Delivery": p.targetDeliveryDate ? formatDate(p.targetDeliveryDate) : '-',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Projects");
+    
+    XLSX.writeFile(wb, `Projects_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   // Apple Spring Configuration
   const spring = { type: "spring" as const, stiffness: 400, damping: 30 };
 
@@ -75,15 +96,26 @@ export default function ProjectsPage() {
               <h1 className="text-display font-bold tracking-tight mb-2 bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">Active Projects</h1>
               <p className="text-body-large text-zinc-400">All manufacturing missions currently in progress.</p>
             </div>
-            <motion.button 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowNewProjectModal(true)}
-              className="glass-button px-6 py-4 font-semibold flex items-center shadow-elevation"
-            >
-              <Plus className="h-5 w-5 mr-3 text-blue-400" />
-              Initialize Project
-            </motion.button>
+            <div className="flex items-center space-x-4">
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleExportProjects}
+                className="glass-button px-6 py-4 font-semibold flex items-center shadow-elevation"
+              >
+                <Download className="h-5 w-5 mr-3 text-emerald-400" />
+                Export to Excel
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowNewProjectModal(true)}
+                className="glass-button px-6 py-4 font-semibold flex items-center shadow-elevation"
+              >
+                <Plus className="h-5 w-5 mr-3 text-blue-400" />
+                Initialize Project
+              </motion.button>
+            </div>
           </motion.div>
 
           <AnimatePresence mode="wait">

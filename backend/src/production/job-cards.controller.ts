@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards, ParseUUIDPipe
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, ParseUUIDPipe
 } from '@nestjs/common';
 import { JobCardsService } from './job-cards.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -48,6 +48,18 @@ export class JobCardsController {
       status: 'success',
       message: 'Job card status updated successfully.',
       data,
+    };
+  }
+
+  @Delete(':id')
+  @Roles('ADMIN', 'PRODUCTION')
+  async deleteJobCard(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    await this.jobCardsService.deleteJobCard(id);
+    return {
+      status: 'success',
+      message: 'Job card deleted successfully.',
     };
   }
 }

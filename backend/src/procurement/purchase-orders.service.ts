@@ -147,4 +147,45 @@ export class PurchaseOrdersService {
       },
     });
   }
+
+  async issuePo(projectId: string, poId: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const po = await tx.purchaseOrderHeader.findUniqueOrThrow({
+        where: { id: poId, projectId }
+      });
+      
+      if (po.status !== 'ON_HOLD') {
+        throw new BadRequestException('Only ON_HOLD purchase orders can be issued.');
+      }
+      
+      return tx.purchaseOrderHeader.update({
+        where: { id: poId },
+        data: {
+          status: 'ISSUED',
+          updatedBy: userId
+        }
+      });
+    });
+  }
+
+  async deletePo(projectId: string, poId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const po = await tx.purchaseOrderHeader.findUniqueOrThrow({
+        where: { id: poId, projectId }
+      });
+      
+      if (po.status === 'PARTIAL_RECEIPT' || po.status === 'CLOSED') {
+        throw new BadRequestException('Cannot delete a purchase order that has been received or closed.');
+      }
+      
+      // Delete items first due to foreign key
+      await tx.purchaseOrderItem.deleteMany({
+        where: { poHeaderId: poId }
+      });
+
+      return tx.purchaseOrderHeader.delete({
+        where: { id: poId }
+      });
+    });
+  }
 }

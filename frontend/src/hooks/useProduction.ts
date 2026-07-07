@@ -55,11 +55,27 @@ export function useUpdateJobCardStatus(projectId: string) {
   const { success, error } = useToast();
 
   return useMutation({
-    mutationFn: ({ jobCardId, status }: { jobCardId: string, status: string }) => 
-      ProductionService.updateJobCardStatus(projectId, jobCardId, status),
+    mutationFn: ({ jobCardId, status, operatorId }: { jobCardId: string, status: string, operatorId?: string }) => 
+      ProductionService.updateJobCardStatus(projectId, jobCardId, status, operatorId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productionKeys.jobCards(projectId) });
       success('Job Started', 'Job card marked as in-progress.');
+    },
+    onError: (err: any) => {
+      error('Failed', err.message || 'An error occurred');
+    },
+  });
+}
+
+export function useDeleteJobCard(projectId: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: (jobCardId: string) => ProductionService.deleteJobCard(projectId, jobCardId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productionKeys.jobCards(projectId) });
+      success('Job Card Deleted', 'Job card successfully removed.');
     },
     onError: (err: any) => {
       error('Failed', err.message || 'An error occurred');

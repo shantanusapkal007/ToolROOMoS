@@ -45,8 +45,8 @@ export class CreateCustomerDto {
   paymentTerms?: string;
 
   @IsString()
-  @IsNotEmpty()
-  companyId: string;
+  @IsOptional()
+  companyId?: string;
 
   @IsString()
   @IsOptional()

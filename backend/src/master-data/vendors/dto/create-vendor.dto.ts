@@ -31,8 +31,8 @@ export class CreateVendorDto {
   contactEmail?: string;
 
   @IsString()
-  @IsNotEmpty()
-  companyId: string;
+  @IsOptional()
+  companyId?: string;
 
   @IsString()
   @IsOptional()

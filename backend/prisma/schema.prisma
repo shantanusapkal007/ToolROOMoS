@@ -820,11 +820,27 @@ model InvoiceHeader {
   profit         Decimal       @default(0)
   paidAt         DateTime?
   paymentStatus  String        @default("PENDING")
+  amountPaid     Decimal       @default(0)
   dispatchNote   DispatchNote  @relation(fields: [dispatchNoteId], references: [id])
   project        Project       @relation(fields: [projectId], references: [id])
   items          InvoiceItem[]
+  payments       InvoicePayment[]
 
   @@map("invoice_headers")
+}
+
+model InvoicePayment {
+  id              String        @id @default(uuid())
+  invoiceHeaderId String
+  amount          Decimal
+  paymentDate     DateTime      @default(now())
+  paymentReference String?
+  remarks         String?
+  createdAt       DateTime      @default(now())
+  createdBy       String?
+  invoiceHeader   InvoiceHeader @relation(fields: [invoiceHeaderId], references: [id])
+
+  @@map("invoice_payments")
 }
 
 model InvoiceItem {

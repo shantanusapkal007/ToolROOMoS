@@ -48,14 +48,10 @@ export class MaterialIssuesService {
 
       let totalConsumptionCost = 0;
 
-      // 4. Retrieve warehouse (prevent N+1 queries)
-      const warehouse = dto.warehouseId
+      // 4. Fallback warehouse (used only if we can't auto-resolve from stock later)
+      const defaultWarehouse = dto.warehouseId
         ? await tx.warehouse.findUniqueOrThrow({ where: { id: dto.warehouseId } })
         : await tx.warehouse.findFirst({ where: { warehouseCode: 'DEFAULT-WH' } });
-
-      if (!warehouse) {
-        throw new BadRequestException('Warehouse not found. Please ensure a default warehouse (DEFAULT-WH) is configured, or provide a warehouseId.');
-      }
 
       // 5. Process each Issued Item
       for (const item of dto.items) {
@@ -108,23 +104,35 @@ export class MaterialIssuesService {
 
 
         // 6. Update Inventory Stock (Layer 4 - Events) with atomic concurrency check
-        const currentStock = await tx.inventoryStock.findUnique({
-          where: {
-            materialId_warehouseId: {
-              materialId: batch.materialId,
-              warehouseId: warehouse.id,
+        let currentStock;
+        if (dto.warehouseId) {
+          currentStock = await tx.inventoryStock.findUnique({
+            where: {
+              materialId_warehouseId: {
+                materialId: batch.materialId,
+                warehouseId: dto.warehouseId,
+              },
             },
-          },
-        });
+          });
+        } else {
+          currentStock = await tx.inventoryStock.findFirst({
+            where: {
+              materialId: batch.materialId,
+              availableQuantity: { gte: item.issuedQty }
+            }
+          });
+        }
 
         if (!currentStock || currentStock.availableQuantity.toNumber() < item.issuedQty) {
-          throw new BadRequestException(`Insufficient stock in warehouse ${warehouse.warehouseCode} for material ${batch.materialId}. Available: ${currentStock?.availableQuantity || 0}, Requested: ${item.issuedQty}`);
+          throw new BadRequestException(`Insufficient stock for material ${batch.materialId}. Available: ${currentStock?.availableQuantity || 0}, Requested: ${item.issuedQty}`);
         }
+        
+        const activeWarehouseId = currentStock.warehouseId;
 
         const updateStockCount = await tx.inventoryStock.updateMany({
           where: {
             materialId: batch.materialId,
-            warehouseId: warehouse.id,
+            warehouseId: activeWarehouseId,
             availableQuantity: { gte: item.issuedQty },
           },
           data: {
@@ -134,7 +142,7 @@ export class MaterialIssuesService {
         });
 
         if (updateStockCount.count === 0) {
-          throw new BadRequestException(`Insufficient stock in warehouse ${warehouse.warehouseCode} for material ${batch.materialId}. Requested: ${item.issuedQty}`);
+          throw new BadRequestException(`Insufficient stock in resolved warehouse for material ${batch.materialId}. Requested: ${item.issuedQty}`);
         }
 
         // 7. Record Inventory Transaction

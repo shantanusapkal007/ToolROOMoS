@@ -19,6 +19,8 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
   
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [viewingTxDetails, setViewingTxDetails] = useState<any>(null);
+  const [showGrnListModal, setShowGrnListModal] = useState(false);
+  const [showIssueListModal, setShowIssueListModal] = useState(false);
   const [issueNum, setIssueNum] = useState("");
   const [issueItems, setIssueItems] = useState([{ inventoryBatchId: "", issuedQty: 1, remarks: "" }]);
 
@@ -90,13 +92,19 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 shrink-0">
         <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl -mr-5 -mt-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-          <h3 className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-1">Goods Receipts (GRN)</h3>
+          <div className="flex justify-between items-start mb-1">
+            <h3 className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">Goods Receipts (GRN)</h3>
+            <button onClick={() => setShowGrnListModal(true)} className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded transition-colors border border-emerald-500/20 hover:border-emerald-500/40">View Details</button>
+          </div>
           <p className="text-xl font-black text-emerald-400 font-mono">{project.goodsReceiptHeaders?.length || 0}</p>
           <p className="text-[10px] text-slate-400 mt-1">Total inbound material shipments</p>
         </div>
         <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-xl -mr-5 -mt-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-          <h3 className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-1">Material Issues</h3>
+          <div className="flex justify-between items-start mb-1">
+            <h3 className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">Material Issues</h3>
+            <button onClick={() => setShowIssueListModal(true)} className="text-[9px] font-bold uppercase tracking-wider text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-1 rounded transition-colors border border-purple-500/20 hover:border-purple-500/40">View Details</button>
+          </div>
           <p className="text-xl font-black text-purple-400 font-mono">{project.materialIssueHeaders?.length || 0}</p>
           <p className="text-[10px] text-slate-400 mt-1">Total shop-floor consumptions</p>
         </div>
@@ -394,6 +402,128 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
               >
                 Close Details
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GRN List Modal */}
+      {showGrnListModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-4xl p-6 animate-slide-up border border-emerald-500/20 relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Goods Receipt Notes</h3>
+                  <p className="text-[10px] text-slate-400">All inbound material shipments for this project</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowGrnListModal(false)} 
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="py-4 space-y-4 overflow-y-auto hide-scrollbar relative z-10">
+              {project.goodsReceiptHeaders?.map((grn: any) => (
+                <div key={grn.id} className="p-4 bg-black/30 rounded-xl border border-white/5 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-xs font-bold text-emerald-400 font-mono">{grn.grnNumber}</span>
+                      <p className="text-[10px] text-slate-500 mt-1">Processed: {new Date(grn.receiptDate).toLocaleDateString()}</p>
+                    </div>
+                    {grn.remarks && (
+                      <div className="text-[10px] bg-white/5 text-slate-400 px-2 py-1 rounded max-w-xs truncate border border-white/5">
+                        {grn.remarks}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5 pt-2 border-t border-white/[0.03]">
+                    <div className="grid grid-cols-4 gap-2 px-2 py-1 text-[9px] font-bold text-slate-500 uppercase">
+                      <div className="col-span-2">Material</div>
+                      <div className="text-right">Received Qty</div>
+                      <div className="text-right">Accepted Qty</div>
+                    </div>
+                    {grn.items?.map((gItem: any) => (
+                      <div key={gItem.id} className="grid grid-cols-4 gap-2 text-xs py-1 px-2 bg-white/[0.01] rounded border border-white/[0.02]">
+                        <span className="col-span-2 text-slate-300 font-medium">{gItem.poItem?.material?.materialCode || gItem.poItem?.material?.materialName}</span>
+                        <span className="text-right font-mono text-white">{Number(gItem.receivedQty)}</span>
+                        <span className="text-right font-mono text-emerald-400">{Number(gItem.acceptedQty)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {(!project.goodsReceiptHeaders || project.goodsReceiptHeaders.length === 0) && (
+                <div className="text-center py-8 text-slate-500 text-xs italic">
+                  No Goods Receipt Notes available.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Material Issue List Modal */}
+      {showIssueListModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-4xl p-6 animate-slide-up border border-purple-500/20 relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[70px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center border bg-purple-500/10 text-purple-400 border-purple-500/20">
+                  <PackageMinus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Material Issues</h3>
+                  <p className="text-[10px] text-slate-400">All shop-floor consumptions for this project</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowIssueListModal(false)} 
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="py-4 space-y-4 overflow-y-auto hide-scrollbar relative z-10">
+              {project.materialIssueHeaders?.map((issue: any) => (
+                <div key={issue.id} className="p-4 bg-black/30 rounded-xl border border-white/5 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-xs font-bold text-purple-400 font-mono">{issue.issueNumber}</span>
+                      <p className="text-[10px] text-slate-500 mt-1">Issued: {new Date(issue.issueDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 pt-2 border-t border-white/[0.03]">
+                    <div className="grid grid-cols-4 gap-2 px-2 py-1 text-[9px] font-bold text-slate-500 uppercase">
+                      <div className="col-span-2">Material Batch</div>
+                      <div className="text-right">Issued Qty</div>
+                      <div>Remarks</div>
+                    </div>
+                    {issue.items?.map((iItem: any) => (
+                      <div key={iItem.id} className="grid grid-cols-4 gap-2 text-xs py-1 px-2 bg-white/[0.01] rounded border border-white/[0.02] items-center">
+                        <span className="col-span-2 text-slate-300 font-medium">
+                          {iItem.inventoryBatch?.material?.materialCode || iItem.inventoryBatch?.material?.materialName}
+                          <span className="ml-2 text-[9px] text-slate-500">Batch: {iItem.inventoryBatch?.batchNumber}</span>
+                        </span>
+                        <span className="text-right font-mono text-purple-400 font-bold">{Number(iItem.issuedQty)}</span>
+                        <span className="text-[10px] text-slate-400 italic truncate" title={iItem.remarks}>{iItem.remarks || '-'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {(!project.materialIssueHeaders || project.materialIssueHeaders.length === 0) && (
+                <div className="text-center py-8 text-slate-500 text-xs italic">
+                  No Material Issues available.
+                </div>
+              )}
             </div>
           </div>
         </div>

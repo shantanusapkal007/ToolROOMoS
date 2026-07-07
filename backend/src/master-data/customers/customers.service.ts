@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -15,9 +15,20 @@ export class CustomersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateCustomerDto, userId?: string) {
+    let { companyId, ...rest } = dto;
+    
+    if (!companyId) {
+      const defaultCompany = await this.prisma.company.findFirst();
+      if (!defaultCompany) {
+        throw new BadRequestException('System configuration error: No company found to attach customer to.');
+      }
+      companyId = defaultCompany.id;
+    }
+
     return this.prisma.customer.create({
       data: {
-        ...dto,
+        ...rest,
+        companyId,
         createdBy: userId,
         updatedBy: userId,
       },

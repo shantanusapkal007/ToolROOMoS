@@ -53,7 +53,38 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
     try {
       await updateBOMMutation.mutateAsync({ items: bomItems });
       setShowBomModal(false);
-    } catch (err: any) {}
+      refetchBOM();
+      success("BOM Saved", "Bill of Materials successfully updated.");
+    } catch (err: any) {
+      error("BOM Save Failed", err.message);
+    }
+  };
+
+  const handleSaveConvertedBom = async (rows: any[]) => {
+    try {
+      // Map ParsedBOMRow to CreateBomItemDto format
+      const items = rows
+        .filter(r => r.matchedMaterialId)
+        .map(r => ({
+          materialId: r.matchedMaterialId,
+          requiredQty: Number(r.quantity),
+          calculatedWeight: Number(r.totalWeight),
+          estimatedCost: Number(r.basicCost),
+          rawSize: r.rawMaterialSize
+        }));
+      
+      if (items.length === 0) {
+        warning("No Valid Items", "No matched materials found to save.");
+        return;
+      }
+
+      await updateBOMMutation.mutateAsync({ items });
+      success("BOM Saved", `Successfully imported ${items.length} items from converter.`);
+      setActiveTab('sequence');
+      refetchBOM();
+    } catch (err: any) {
+      error("BOM Import Failed", err.message);
+    }
   };
 
   const handleApproveBom = async () => {
@@ -77,7 +108,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
 
   const handleReopenEngineering = async () => {
     try {
-      await api.post(`projects/${project.id}/reopen-engineering`);
+      await api.patch(`projects/${project.id}/reopen-engineering`);
       warning("Engineering Reopened", "Previous plan obsoleted. Downstream POs are on hold.");
       refetchProject();
       refetchBOM();
@@ -221,7 +252,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
                       <div key={op.id} className="grid grid-cols-12 gap-4 text-xs font-semibold text-slate-300 py-2 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors px-1 rounded">
                         <div className="col-span-2 font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded w-fit">{op.sequenceOrder}</div>
                         <div className="col-span-4 flex items-center">{op.operation?.operationName}</div>
-                        <div className="col-span-4 flex items-center">{op.machine?.machineName || <span className="text-red-400 px-2 py-0.5 bg-red-500/10 rounded">Unassigned</span>}</div>
+                        <div className="col-span-4 flex items-center">{op.plannedMachine?.machineName || <span className="text-red-400 px-2 py-0.5 bg-red-500/10 rounded">Unassigned</span>}</div>
                         <div className="col-span-2 text-right font-mono flex items-center justify-end">{op.estimatedHours}h</div>
                       </div>
                     ))}
@@ -279,6 +310,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
           projectId={resolvedParams.id} 
           project={project} 
           materials={materials || []} 
+          onSaveBOM={handleSaveConvertedBom}
         />
       )}
 
@@ -313,6 +345,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
       {/* Routing Node Editor */}
       {showRoutingModal && (
         <RoutingNodeEditor 
+          initialRouting={activeRouting}
           onClose={() => setShowRoutingModal(false)}
           onSave={(nodes, edges) => {
             console.log('Saved Routing:', { nodes, edges });
@@ -321,8 +354,8 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
             // Map fake opCodes and machineIds to real seeded DB UUIDs
             const operations = nodes.filter((n: any) => n.type === 'operationNode').map((n: any, idx: number) => {
               // Resolving operation id
-              let opId = operationsList && operationsList.length > 0 ? operationsList[0].id : undefined;
-              if (operationsList && operationsList.length > 0) {
+              let opId = n.data?.operationId;
+              if (!opId && operationsList && operationsList.length > 0) {
                 const labelUpper = (n.data?.label || "").toUpperCase();
                 const matchedOp = operationsList.find((op: any) => 
                   (op.operationName || "").toUpperCase().includes(labelUpper) || 
@@ -330,6 +363,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
                 );
                 if (matchedOp) opId = matchedOp.id;
                 else if (n.data?.opCode === '20' && operationsList.length > 1) opId = operationsList[1].id;
+                else opId = operationsList[0].id;
               }
 
               // Resolving machine id

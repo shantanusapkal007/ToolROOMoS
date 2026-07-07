@@ -21,8 +21,13 @@ export const ProductionService = {
     return res.data;
   },
 
-  updateJobCardStatus: async (projectId: string, jobCardId: string, status: string): Promise<any> => {
-    const res = await api.patch(`projects/${projectId}/job-cards/${jobCardId}/status`, { status });
+  updateJobCardStatus: async (projectId: string, jobCardId: string, status: string, operatorId?: string): Promise<any> => {
+    const res = await api.patch(`projects/${projectId}/job-cards/${jobCardId}/status`, { status, operatorId });
+    return res.data;
+  },
+
+  deleteJobCard: async (projectId: string, jobCardId: string): Promise<any> => {
+    const res = await api.delete(`projects/${projectId}/job-cards/${jobCardId}`);
     return res.data;
   },
 

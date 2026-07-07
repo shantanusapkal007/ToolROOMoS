@@ -135,22 +135,28 @@ export class ProjectsService {
     const totalProjects = await this.prisma.project.count();
     
     // 1. Financial Pulse (MTD Revenue & Open Invoices)
-    const costSummaries = await this.prisma.projectCostSummary.findMany({
-      include: { project: true }
-    });
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
-    // MTD Revenue - just summing all revenue for now as a real metric
-    const mtdRevenue = costSummaries.reduce((sum, summary) => sum + Number(summary.revenue || 0), 0);
-    
-    // Open Invoices - Calculate from Payment Pending projects or a fraction of total if no invoice module
-    // For now, let's sum estimated cost of projects that are completed but not paid
-    const pendingPaymentProjects = await this.prisma.projectCostSummary.findMany({
-      where: { project: { currentStage: 'DISPATCH_READY' } } // Assuming dispatch ready means we are awaiting payment
+    // MTD Revenue - Sum of all InvoiceHeaders created this month
+    const mtdInvoices = await this.prisma.invoiceHeader.findMany({
+      where: { createdAt: { gte: firstDayOfMonth } }
     });
-    const openInvoices = pendingPaymentProjects.reduce((sum, summary) => sum + Number(summary.estimatedProjectCost || 0), 0);
+    const mtdRevenue = mtdInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    
+    // Open Invoices - Sum of all unpaid InvoiceHeaders
+    const openInvoicesList = await this.prisma.invoiceHeader.findMany({
+      where: { paymentStatus: { not: 'PAID' } }
+    });
+    const openInvoices = openInvoicesList.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
 
     // 2. Live Machine Load
-    const activeMachines = await this.prisma.machine.count({ where: { status: 'ACTIVE' } });
+    const activeJobs = await this.prisma.jobCard.findMany({
+      where: { status: 'IN_PROGRESS' },
+      select: { machineId: true },
+      distinct: ['machineId']
+    });
+    const activeMachines = activeJobs.filter(j => j.machineId).length;
     const totalMachines = await this.prisma.machine.count();
     const machineLoad = totalMachines > 0 ? Math.round((activeMachines / totalMachines) * 100) : 0;
     
@@ -174,20 +180,21 @@ export class ProjectsService {
     const revenueTrend = olderProjects > 0 ? Number((((recentProjects - olderProjects) / olderProjects) * 100).toFixed(1)) : 0;
     
     // 4. Revenue History - group by month for the last 11 months
-    // We will simulate the history based on the projects' creation dates and cost summaries
+    const allInvoices = await this.prisma.invoiceHeader.findMany({
+      select: { invoiceDate: true, totalAmount: true }
+    });
     const revenueHistory = new Array(11).fill(0);
-    costSummaries.forEach(summary => {
-      if (summary.project && summary.project.createdAt) {
-        const monthDiff = (new Date().getFullYear() - summary.project.createdAt.getFullYear()) * 12 + (new Date().getMonth() - summary.project.createdAt.getMonth());
+    allInvoices.forEach(inv => {
+      if (inv.invoiceDate) {
+        const monthDiff = (new Date().getFullYear() - inv.invoiceDate.getFullYear()) * 12 + (new Date().getMonth() - inv.invoiceDate.getMonth());
         if (monthDiff >= 0 && monthDiff < 11) {
-           revenueHistory[10 - monthDiff] += Number(summary.revenue || 0) / 1000; // in thousands
+           revenueHistory[10 - monthDiff] += Number(inv.totalAmount || 0) / 1000; // in thousands
         }
       }
     });
 
     // To prevent a completely flat chart if the DB only has projects from this month
     if (totalProjects > 0 && Math.max(...revenueHistory) === 0) {
-       // if all projects don't have revenue yet, put a baseline
        revenueHistory[10] = mtdRevenue / 1000;
     }
 
@@ -238,8 +245,32 @@ export class ProjectsService {
             }
           }
         },
-        goodsReceiptHeaders: true,
-        materialIssueHeaders: true,
+        goodsReceiptHeaders: {
+          include: {
+            items: {
+              include: {
+                poItem: {
+                  include: {
+                    material: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        materialIssueHeaders: {
+          include: {
+            items: {
+              include: {
+                inventoryBatch: {
+                  include: {
+                    material: true
+                  }
+                }
+              }
+            }
+          }
+        },
         machineShopReports: true,
         inspectionHeaders: true,
         dispatchNotes: true,

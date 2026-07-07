@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
@@ -9,9 +9,20 @@ export class VendorsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateVendorDto, userId?: string) {
+    let { companyId, ...rest } = dto;
+    
+    if (!companyId) {
+      const defaultCompany = await this.prisma.company.findFirst();
+      if (!defaultCompany) {
+        throw new BadRequestException('System configuration error: No company found to attach vendor to.');
+      }
+      companyId = defaultCompany.id;
+    }
+
     return this.prisma.vendor.create({
       data: {
-        ...dto,
+        ...rest,
+        companyId,
         createdBy: userId,
         updatedBy: userId,
       },

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
-import { Truck, X, Info, Calendar } from "lucide-react";
+import { Truck, X, Info, Calendar, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject } from "../../../../hooks/useProjects";
 import { useCreateDispatch } from "../../../../hooks/useDispatch";
@@ -36,6 +37,28 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
       await createDispatchMutation.mutateAsync(formData);
       setShowModal(false);
     } catch (err: any) {}
+  };
+
+  const handleExportDispatch = (disp: any) => {
+    if (!disp) return;
+    
+    const exportData = [{
+      "Dispatch Number": disp.dispatchNumber,
+      "Date": new Date(disp.dispatchDate).toLocaleDateString(),
+      "Quantity": disp.dispatchQty,
+      "Transporter Name": disp.transporterName || '-',
+      "Vehicle Number": disp.vehicleNumber || '-',
+      "Driver Details": disp.driverDetails || '-',
+      "Tracking Reference": disp.trackingReference || '-',
+      "Logistics Cost": disp.logisticsCost,
+      "Remarks": disp.remarks || '-'
+    }];
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dispatch Note");
+    
+    XLSX.writeFile(wb, `Dispatch_${disp.dispatchNumber}.xlsx`);
   };
 
 
@@ -241,9 +264,18 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
                   <p className="text-[10px] text-slate-400">Logistics fulfillment record</p>
                 </div>
               </div>
-              <button onClick={() => setViewingDispatchDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => handleExportDispatch(viewingDispatchDetails)}
+                  className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 hover:border-indigo-500/40 font-bold text-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export</span>
+                </button>
+                <button onClick={() => setViewingDispatchDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="py-6 space-y-4 text-xs relative z-10">

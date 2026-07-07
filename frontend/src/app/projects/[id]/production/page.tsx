@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../../lib/api";
-import { Activity, Wrench, PackageMinus, Plus, Factory, CheckCircle, Clock, X, Info, Calendar } from "lucide-react";
+import { Activity, Wrench, PackageMinus, Plus, Factory, CheckCircle, Clock, X, Info, Calendar, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { Input } from "../../../../components/ui/Input";
 import { Select } from "../../../../components/ui/Select";
 import { useToast } from "../../../../components/ui/Toast";
@@ -16,7 +17,8 @@ import { useMasterData } from "../../../../hooks/useMasterData";
 import { useInventoryBatches } from "../../../../hooks/useInventory";
 import { 
   useJobCards, useMSDRs, useMaterialIssues, 
-  useGenerateJobCards, useUpdateJobCardStatus, useLogMSDR, useIssueMaterial, useReturnMaterial 
+  useGenerateJobCards, useUpdateJobCardStatus, useLogMSDR, useIssueMaterial, useReturnMaterial,
+  useDeleteJobCard
 } from "../../../../hooks/useProduction";
 
 const msdrSchema = z.object({
@@ -54,6 +56,7 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
   const logMSDRMutation = useLogMSDR(resolvedParams.id);
   const issueMaterialMutation = useIssueMaterial(resolvedParams.id);
   const returnMaterialMutation = useReturnMaterial(resolvedParams.id);
+  const deleteJobCardMutation = useDeleteJobCard(resolvedParams.id);
   
   const [activeSubTab, setActiveSubTab] = useState<'JOB_CARDS' | 'MSDR' | 'ISSUES'>('JOB_CARDS');
 
@@ -61,6 +64,8 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
   const [showMsdrModal, setShowMsdrModal] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
+  const [startingJobCard, setStartingJobCard] = useState<any | null>(null);
+  const [selectedOperatorId, setSelectedOperatorId] = useState("");
 
   // Selected for modals
   const [selectedJobCard, setSelectedJobCard] = useState<any | null>(null);
@@ -100,6 +105,26 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
     }
   });
 
+  const handleExportJobCard = (jobCard: any) => {
+    if (!jobCard) return;
+    
+    const exportData = [{
+      "Job Card Number": jobCard.id.slice(-6).toUpperCase(),
+      "Status": jobCard.status,
+      "Routing Operation": jobCard.routingOperation?.operation?.operationName || 'Unknown',
+      "Operation Code": jobCard.routingOperation?.operation?.operationCode || 'Unknown',
+      "Machine Name": jobCard.machine?.machineName || '-',
+      "Estimated Setup (hrs)": jobCard.routingOperation?.estimatedSetupTime || 0,
+      "Estimated Cutting (hrs)": jobCard.routingOperation?.estimatedHours || 0
+    }];
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Job Card");
+    
+    XLSX.writeFile(wb, `JobCard_${jobCard.id.slice(-6).toUpperCase()}.xlsx`);
+  };
+
   useEffect(() => {
     if (availableBatches && availableBatches.length > 0) {
       issueForm.setValue('batchId', availableBatches[0].id);
@@ -114,10 +139,26 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
     } catch (err: any) {}
   }
 
-  const handleStartJob = async (jobCard: any) => {
+  const handleStartJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!startingJobCard || !selectedOperatorId) return;
     try {
-        await updateJobCardStatusMutation.mutateAsync({ jobCardId: jobCard.id, status: 'IN_PROGRESS' });
+        await updateJobCardStatusMutation.mutateAsync({ 
+          jobCardId: startingJobCard.id, 
+          status: 'IN_PROGRESS',
+          operatorId: selectedOperatorId
+        });
+        setStartingJobCard(null);
+        setSelectedOperatorId("");
     } catch(err: any) {}
+  };
+
+  const handleDeleteJobCard = async (jobCardId: string) => {
+    if (confirm("Are you sure you want to delete this job card?")) {
+      try {
+        await deleteJobCardMutation.mutateAsync(jobCardId);
+      } catch (err: any) {}
+    }
   };
 
   const openMsdrForJob = (jobCard: any) => {
@@ -136,15 +177,23 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
   const handleLogMsdr = async (data: any) => {
     if (!project) return;
     try {
+      // Create valid Date strings for backend
+      const reportDateStr = data.reportDate || new Date().toISOString().split('T')[0];
+      const startTimeStr = new Date(`${reportDateStr}T${data.startTime}:00`).toISOString();
+      const endTimeStr = new Date(`${reportDateStr}T${data.endTime}:00`).toISOString();
+      const reportDateIso = new Date(reportDateStr).toISOString();
+
       await logMSDRMutation.mutateAsync({
         jobCardId: selectedJobCard?.id,
         routingOperationId: selectedJobCard?.routingOperationId,
         machineId: data.machineId,
         employeeId: data.employeeId,
-        reportDate: new Date().toISOString(),
+        reportDate: reportDateIso,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
         setupTime: data.setupTime,
         cuttingTime: data.cuttingTime,
-        producedQty: 1, 
+        producedQty: 1,
       });
       setShowMsdrModal(false);
       setSelectedJobCard(null);
@@ -267,9 +316,14 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                              Details
                            </button>
                            {job.status === 'READY' && (
-                               <button onClick={() => handleStartJob(job)} className="bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-500/20 transition-all uppercase tracking-wider">
-                                   Start
-                               </button>
+                               <>
+                                 <button onClick={() => setStartingJobCard(job)} className="bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-500/20 transition-all uppercase tracking-wider">
+                                     Start
+                                 </button>
+                                 <button onClick={() => handleDeleteJobCard(job.id)} className="bg-red-600/10 text-red-400 hover:bg-red-600/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/20 transition-all uppercase tracking-wider">
+                                     Delete
+                                 </button>
+                               </>
                            )}
                            {job.status === 'IN_PROGRESS' && (
                                <button onClick={() => openMsdrForJob(job)} className="bg-green-600/10 text-green-400 hover:bg-green-600/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-green-500/20 transition-all uppercase tracking-wider flex items-center">
@@ -406,6 +460,35 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
           </div>
         )}
       </div>
+
+      {startingJobCard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-sm p-6 animate-slide-up border border-blue-500/20 flex flex-col">
+            <h3 className="text-lg font-bold text-white mb-5">Start Job Card</h3>
+            <div className="mb-4 text-sm text-slate-300">
+              Assign an operator for <span className="font-bold text-blue-400">{startingJobCard.routingOperation?.operation?.operationName}</span> on <span className="font-bold text-slate-200">{startingJobCard.machine?.machineName}</span>.
+            </div>
+            <form onSubmit={handleStartJob} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Operator</label>
+                <select 
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50" 
+                  value={selectedOperatorId} 
+                  onChange={(e) => setSelectedOperatorId(e.target.value)}
+                  required
+                >
+                   <option value="">Select Operator...</option>
+                   {employees?.map((e: any) => <option key={e.id} value={e.id}>{e.name}</option>)}
+                </select>
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button type="button" onClick={() => setStartingJobCard(null)} className="flex-1 py-2 bg-white/5 rounded-xl text-white font-bold text-sm">Cancel</button>
+                <button type="submit" className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.3)] rounded-xl text-white font-bold text-sm transition-colors">Start Job</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showMsdrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
@@ -579,9 +662,18 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
                   <p className="text-[10px] text-slate-400">Routing sequence tracking</p>
                 </div>
               </div>
-              <button onClick={() => setViewingJobCardDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => handleExportJobCard(viewingJobCardDetails)}
+                  className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 hover:border-amber-500/40 font-bold text-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export</span>
+                </button>
+                <button onClick={() => setViewingJobCardDetails(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="py-6 space-y-4 text-xs relative z-10">

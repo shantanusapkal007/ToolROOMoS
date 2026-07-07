@@ -29,10 +29,23 @@ export class BomsService {
         });
       }
 
-      // 2. Calculate estimated cost summation
+      // 2. Calculate estimated cost summation and fetch standard costs
+      const materialIds = dto.items.map(i => i.materialId);
+      const materials = await tx.material.findMany({ where: { id: { in: materialIds } } });
+      const materialMap = new Map(materials.map(m => [m.id, m]));
+
       let totalCost = 0;
       for (const item of dto.items) {
-        const estCost = item.estimatedCost || 0;
+        let estCost = Number(item.estimatedCost || 0);
+        
+        if (estCost === 0 && item.materialId) {
+            const mat = materialMap.get(item.materialId);
+            if (mat && mat.standardCost) {
+                estCost = Number(mat.standardCost) * Number(item.requiredQty);
+                item.estimatedCost = estCost;
+            }
+        }
+        
         totalCost += estCost;
       }
 
@@ -89,7 +102,7 @@ export class BomsService {
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
       const bom = await tx.billOfMaterialHeader.findFirstOrThrow({
         where: { id: bomId, projectId },
-        include: { items: true },
+        include: { items: { include: { material: true } } },
       });
 
       if (bom.approvalStatus === ApprovalStatus.APPROVED) {
@@ -146,6 +159,21 @@ export class BomsService {
 
       // 5. Automation: Auto-Generate Draft PO for required materials
       try {
+        // Cleanup previous stale auto-generated POs for this project
+        const stalePos = await tx.purchaseOrderHeader.findMany({
+          where: { 
+            projectId, 
+            poNumber: { startsWith: 'PO-AUTO-' },
+            status: { in: ['DRAFT', 'ON_HOLD'] }
+          },
+          select: { id: true }
+        });
+        
+        for (const stale of stalePos) {
+          await tx.purchaseOrderItem.deleteMany({ where: { poHeaderId: stale.id } });
+          await tx.purchaseOrderHeader.delete({ where: { id: stale.id } });
+        }
+
         let defaultVendor = await tx.vendor.findFirst({ where: { vendorType: 'MATERIAL_SUPPLIER' } });
         if (!defaultVendor) {
           defaultVendor = await tx.vendor.findFirst();
@@ -156,13 +184,31 @@ export class BomsService {
           const itemsToOrder = bom.items.filter(item => Number(item.requiredQty) > 0);
 
           if (itemsToOrder.length > 0) {
-            const poTotal = itemsToOrder.reduce((sum, item) => sum + Number(item.estimatedCost), 0);
-            
+            let poTotal = 0;
+            const itemsWithRates = itemsToOrder.map(item => {
+              const reqQty = Number(item.requiredQty);
+              const weight = Number(item.calculatedWeight || 0);
+              const qtyToOrder = weight > 0 ? weight : reqQty;
+              let estCost = Number(item.estimatedCost || 0);
+              let rate = 0;
+              
+              if (estCost === 0 && item.material && Number(item.material.standardCost || 0) > 0) {
+                 rate = Number(item.material.standardCost);
+                 estCost = rate * qtyToOrder;
+              } else if (qtyToOrder > 0) {
+                 rate = estCost / qtyToOrder;
+              }
+              
+              poTotal += estCost;
+              return { ...item, calculatedRate: rate, finalCost: estCost, qtyToOrder };
+            });
+
+            const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
             const poHeader = await tx.purchaseOrderHeader.create({
               data: {
                 projectId,
                 vendorId: defaultVendor.id,
-                poNumber: `PO-AUTO-${project.projectNumber}-${Date.now().toString().slice(-4)}`,
+                poNumber: `PO-AUTO-${project.projectNumber}-${randomSuffix}`,
                 status: 'DRAFT',
                 totalAmount: poTotal,
                 createdBy: 'SYSTEM',
@@ -170,17 +216,14 @@ export class BomsService {
               }
             });
 
-            await Promise.all(itemsToOrder.map(item => 
+            await Promise.all(itemsWithRates.map(item => 
               tx.purchaseOrderItem.create({
                 data: {
                   poHeaderId: poHeader.id,
                   materialId: item.materialId,
-                  orderedQty: item.requiredQty,
-                  // Guard against Infinity/NaN if requiredQty is 0
-                  agreedRate: Number(item.requiredQty) > 0
-                    ? Number(item.estimatedCost) / Number(item.requiredQty)
-                    : 0,
-                  lineTotal: item.estimatedCost,
+                  orderedQty: item.qtyToOrder,
+                  agreedRate: item.calculatedRate,
+                  lineTotal: item.finalCost,
                   remarks: 'Auto-generated item'
                 }
               })
