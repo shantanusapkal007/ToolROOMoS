@@ -33,7 +33,7 @@ export class CreateProjectDto {
   @IsNotEmpty()
   customerId: string;
 
-  @IsUUID()
+  @IsString()
   @IsNotEmpty()
   plantId: string;
 

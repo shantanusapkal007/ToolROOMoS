@@ -26,9 +26,9 @@ interface ParsedBOMRow {
   finishSize: string;
   rawMaterialSize: string;
   materialInput: string;
-  length: number;
-  width: number;
-  height: number;
+  length: number | string;
+  width: number | string;
+  height: number | string;
   validationError: string | null;
 }
 
@@ -49,13 +49,31 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
   // --- Size Parser ---
   const parseDimensions = (sizeStr: string) => {
-    if (!sizeStr) return { length: 0, width: 0, height: 0, isValid: false };
+    if (!sizeStr) return { length: '', width: '', height: '', isValid: false };
     const cleaned = sizeStr.toString().trim();
+    
+    // Check for round bar (e.g. Ø20x110 or Dia20x110)
+    const isRound = /^[Ø0O\s]*dia/i.test(cleaned) || /^Ø/i.test(cleaned);
+    
     // Match numbers split by x, X, ×, *
     const parts = cleaned.split(/[\s]*[xX×\*][\s]*/);
-    if (parts.length < 3) {
-      return { length: 0, width: 0, height: 0, isValid: false };
+    
+    if (isRound && parts.length >= 2) {
+      const dMatch = parts[0].match(/([\d\.]+)/);
+      const lMatch = parts[1].match(/([\d\.]+)/);
+      
+      const d = dMatch ? parseFloat(dMatch[1]) : NaN;
+      const l = lMatch ? parseFloat(lMatch[1]) : NaN;
+      
+      const isValid = !isNaN(d) && !isNaN(l) && d > 0 && l > 0;
+      // Format: L=Ø, W=Dia, H=Length
+      return { length: 'Ø', width: d, height: l, isValid };
     }
+
+    if (parts.length < 3) {
+      return { length: '', width: '', height: '', isValid: false };
+    }
+    
     // Pull numbers (including float decimals) from each part
     const lMatch = parts[0].match(/([\d\.]+)/);
     const wMatch = parts[1].match(/([\d\.]+)/);
@@ -263,9 +281,9 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             finishSize: finishVal,
             rawMaterialSize: rmVal,
             materialInput: matVal,
-            length: dimensions.length,
-            width: dimensions.width,
-            height: dimensions.height,
+            length: dimensions.length as any,
+            width: dimensions.width as any,
+            height: dimensions.height as any,
             validationError: null
           };
 
@@ -323,9 +341,9 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
       if (field === 'rawMaterialSize') {
         const dims = parseDimensions(val);
-        updated.length = dims.length;
-        updated.width = dims.width;
-        updated.height = dims.height;
+        updated.length = dims.length as any;
+        updated.width = dims.width as any;
+        updated.height = dims.height as any;
       }
 
       if (field === 'length' || field === 'width' || field === 'height') {
@@ -392,7 +410,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     // Table Headers (exactly 14 columns matching company specification)
     const headers = [
       "SR.NO", "TOOL NO", "DET NO", "L", "W", "H", "MATERIAL", "QTY", 
-      "AP WT.", "TOTAL WT.", "RATE", "BASIC", "GST", "TOTAL"
+      "AP WT.", "TOTAL WT.", "RATE", "BASIC COST", "GST", "TOTAL"
     ];
     documentData.push(headers);
 
@@ -689,7 +707,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                   <th className="px-4 py-3 text-right">AP WT.</th>
                   <th className="px-4 py-3 text-right">TOTAL WT.</th>
                   <th className="px-4 py-3 text-right">RATE</th>
-                  <th className="px-4 py-3 text-right">BASIC</th>
+                  <th className="px-4 py-3 text-right">BASIC COST</th>
                   <th className="px-4 py-3 text-right">GST</th>
                   <th className="px-4 py-3 text-right">TOTAL</th>
                   <th className="px-4 py-3 text-center w-16">Actions</th>
@@ -724,10 +742,10 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                     <td className="px-2 py-2 text-center">
                       <div className="flex items-center space-x-1.5 justify-center">
                         <input 
-                          type="number" 
+                          type="text" 
                           placeholder="L"
                           value={row.length || ''} 
-                          onChange={(e) => handleCellEdit(row.id, 'length', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => handleCellEdit(row.id, 'length', e.target.value)}
                           className="w-14 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
                         />
                         <span className="text-slate-500">×</span>

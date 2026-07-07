@@ -29,20 +29,16 @@ export default function ProjectsPage() {
   const [newPartName, setNewPartName] = useState("");
   const [newCustomerPo, setNewCustomerPo] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [selectedProjectOwner, setSelectedProjectOwner] = useState("");
 
   if (customers && customers.length > 0 && !selectedCustomerId) {
     setSelectedCustomerId(customers[0].id);
   }
 
-  const [isOwnerDropdownOpen, setIsOwnerDropdownOpen] = useState(false);
-
   useEffect(() => {
     if (showNewProjectModal) {
       if (customers && customers.length > 0) setSelectedCustomerId(customers[0].id);
-      if (users && users.length > 0 && !selectedProjectOwner) setSelectedProjectOwner(users[0].name);
     }
-  }, [showNewProjectModal, customers, users, selectedProjectOwner]);
+  }, [showNewProjectModal, customers]);
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +48,6 @@ export default function ProjectsPage() {
         partName: newPartName, 
         customerPoNumber: newCustomerPo,
         customerId: selectedCustomerId,
-        projectOwner: selectedProjectOwner,
         plantId: "PL-01",
       } as any);
       setShowNewProjectModal(false);
@@ -226,63 +221,6 @@ export default function ProjectsPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
-                  <div className="relative">
-                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Mission Owner</label>
-                    <div 
-                      className="w-full bg-[#050A14]/95 backdrop-blur-md border border-white/10 hover:border-blue-500/50 rounded-xl px-4 py-3 text-white cursor-pointer flex items-center justify-between transition-all"
-                      onClick={() => setIsOwnerDropdownOpen(!isOwnerDropdownOpen)}
-                    >
-                      {selectedProjectOwner ? (
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold shadow-inner">
-                            {selectedProjectOwner.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-bold text-sm text-white">{selectedProjectOwner}</div>
-                            <div className="text-[10px] text-slate-400 uppercase tracking-widest">
-                              {users?.find((u:any) => u.name === selectedProjectOwner)?.role || 'User'}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-slate-500">Select Mission Owner</span>
-                      )}
-                      <svg className={`w-5 h-5 text-slate-400 transition-transform ${isOwnerDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-
-                    {isOwnerDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-2 py-2 bg-[#0A0F1C]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
-                        {(!users || users.length === 0) && (
-                          <div className="px-4 py-3 text-slate-500 text-sm italic">No users available</div>
-                        )}
-                        {users?.map((user: any) => (
-                          <div 
-                            key={user.id}
-                            className="px-4 py-3 hover:bg-white/5 cursor-pointer flex items-center justify-between transition-colors"
-                            onClick={() => {
-                              setSelectedProjectOwner(user.name);
-                              setIsOwnerDropdownOpen(false);
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center font-bold text-slate-300">
-                                {user.name.charAt(0)}
-                              </div>
-                              <div>
-                                <div className="font-bold text-sm text-slate-200">{user.name}</div>
-                                <div className="text-[10px] text-slate-500 uppercase tracking-widest">{user.role}</div>
-                              </div>
-                            </div>
-                            {selectedProjectOwner === user.name && (
-                              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]"></div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
                 <div className="flex justify-end pt-8 gap-4 border-t border-white/10">

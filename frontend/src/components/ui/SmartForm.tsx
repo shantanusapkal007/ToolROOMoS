@@ -4,6 +4,8 @@ import { api } from '../../lib/api';
 import { Input } from './Input';
 import { Select } from './Select';
 import { Button } from './Button';
+import { Modal } from './Modal';
+import { useToast } from './Toast';
 
 interface SmartFormProps {
   fields: EntityField[];
@@ -16,6 +18,13 @@ interface SmartFormProps {
 export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState<any>({});
   const [dynamicOptions, setDynamicOptions] = useState<Record<string, {label: string, value: string}[]>>({});
+  
+  // Quick Add State
+  const [quickAddField, setQuickAddField] = useState<EntityField | null>(null);
+  const [quickAddData, setQuickAddData] = useState<any>({});
+  const [isQuickAdding, setIsQuickAdding] = useState(false);
+  const [quickAddOptions, setQuickAddOptions] = useState<Record<string, any[]>>({});
+  const { success, error } = useToast();
 
   const normalizeList = (response: any) => {
     if (Array.isArray(response?.data)) return response.data;
@@ -46,14 +55,76 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
           }));
           setDynamicOptions(prev => ({ ...prev, [f.name]: opts }));
         } catch(err) {
-          console.error("Failed to load options for", f.name);
+          console.error(`Failed to load options for ${f.name} via ${f.optionsEndpoint}:`, err);
         }
       }
     });
   }, [initialData, fields]);
 
+  // Load missing options for Quick Add if needed
+  useEffect(() => {
+    if (!quickAddField) return;
+    const loadQuickOpts = async (endpoint: string, key: string, labelKey: string) => {
+      try {
+        const res = await api.get(endpoint);
+        const opts = normalizeList(res).map((item: any) => ({
+          label: String(item[labelKey] || item.name || item.id),
+          value: String(item.id)
+        }));
+        setQuickAddOptions(prev => ({ ...prev, [key]: opts }));
+      } catch (e) {
+        console.error("Quick add options load failed", e);
+      }
+    };
+
+    if (quickAddField.optionsEndpoint?.includes('departments')) {
+      loadQuickOpts('master-data/plants', 'plants', 'plantName');
+    }
+    if (quickAddField.optionsEndpoint?.includes('plants')) {
+      loadQuickOpts('master-data/companies', 'companies', 'companyName');
+    }
+  }, [quickAddField]);
+
   const handleChange = (name: string, value: any) => {
+    // Intercept CREATE_NEW
+    if (value === 'CREATE_NEW') {
+      const field = fields.find(f => f.name === name);
+      if (field) {
+        setQuickAddField(field);
+        setQuickAddData({});
+      }
+      return;
+    }
     setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleQuickAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickAddField || !quickAddField.optionsEndpoint) return;
+    setIsQuickAdding(true);
+    try {
+      const endpoint = quickAddField.optionsEndpoint.replace(/^\/+/, '');
+      const res = await api.post(endpoint, quickAddData);
+      const newEntity = res.data || res;
+      
+      const newOption = {
+        label: String(newEntity[quickAddField.optionsLabelKey || 'name'] || newEntity.id),
+        value: String(newEntity[quickAddField.optionsValueKey || 'id'])
+      };
+
+      setDynamicOptions(prev => ({
+        ...prev,
+        [quickAddField.name]: [...(prev[quickAddField.name] || []), newOption]
+      }));
+
+      handleChange(quickAddField.name, newOption.value);
+      success('Created', `Successfully added new option.`);
+      setQuickAddField(null);
+    } catch (err: any) {
+      error('Creation Failed', err.message || 'Failed to create new option.');
+    } finally {
+      setIsQuickAdding(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,6 +137,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
     
     if (field.type === 'select') {
       const opts = field.optionsEndpoint ? (dynamicOptions[field.name] || []) : (field.options || []);
+      const isCreatable = !!field.optionsEndpoint && field.optionsEndpoint.startsWith('master-data/');
       return (
         <div key={field.name} className={gridClass}>
           <Select
@@ -74,6 +146,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
             value={formData[field.name] || ''}
             onChange={(e) => handleChange(field.name, e.target.value)}
             options={opts}
+            creatable={isCreatable}
           />
         </div>
       );
@@ -194,6 +267,61 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
           {initialData ? 'Update Record' : 'Create Record'}
         </Button>
       </div>
+
+      {/* Quick Add Modal */}
+      <Modal
+        isOpen={!!quickAddField}
+        onClose={() => setQuickAddField(null)}
+        title={`Add New ${quickAddField?.label}`}
+        maxWidth="md"
+      >
+        {quickAddField && (
+          <form onSubmit={handleQuickAddSubmit} className="space-y-4">
+            
+            {quickAddField.optionsEndpoint?.includes('departments') && (
+              <>
+                <Input required label="Department Name" value={quickAddData.departmentName || ''} onChange={(e) => setQuickAddData({...quickAddData, departmentName: e.target.value})} />
+                <Select required label="Parent Plant" value={quickAddData.plantId || ''} onChange={(e) => setQuickAddData({...quickAddData, plantId: e.target.value})} options={quickAddOptions['plants'] || dynamicOptions['plantId'] || []} />
+              </>
+            )}
+
+            {quickAddField.optionsEndpoint?.includes('plants') && (
+              <>
+                <Input required label="Plant Name" value={quickAddData.plantName || ''} onChange={(e) => setQuickAddData({...quickAddData, plantName: e.target.value})} />
+                <Select required label="Parent Company" value={quickAddData.companyId || ''} onChange={(e) => setQuickAddData({...quickAddData, companyId: e.target.value})} options={quickAddOptions['companies'] || dynamicOptions['companyId'] || []} />
+              </>
+            )}
+
+            {quickAddField.optionsEndpoint?.includes('companies') && (
+              <Input required label="Company Name" value={quickAddData.companyName || ''} onChange={(e) => setQuickAddData({...quickAddData, companyName: e.target.value})} />
+            )}
+
+            {quickAddField.optionsEndpoint?.includes('shifts') && (
+              <>
+                <Input required label="Shift Name" value={quickAddData.shiftName || ''} onChange={(e) => setQuickAddData({...quickAddData, shiftName: e.target.value})} />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input required type="time" label="Start Time" value={quickAddData.startTime || ''} onChange={(e) => setQuickAddData({...quickAddData, startTime: e.target.value})} />
+                  <Input required type="time" label="End Time" value={quickAddData.endTime || ''} onChange={(e) => setQuickAddData({...quickAddData, endTime: e.target.value})} />
+                </div>
+              </>
+            )}
+
+            {quickAddField.optionsEndpoint?.includes('material-shapes') && (
+              <Input required label="Shape Name" value={quickAddData.shapeName || ''} onChange={(e) => setQuickAddData({...quickAddData, shapeName: e.target.value})} />
+            )}
+
+            {/* Fallback simple name input if endpoint is unknown */}
+            {!['departments', 'plants', 'companies', 'shifts', 'material-shapes'].some(ep => quickAddField.optionsEndpoint?.includes(ep)) && (
+              <Input required label="Name" value={quickAddData.name || ''} onChange={(e) => setQuickAddData({...quickAddData, name: e.target.value})} />
+            )}
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button type="button" variant="ghost" onClick={() => setQuickAddField(null)}>Cancel</Button>
+              <Button type="submit" variant="primary" isLoading={isQuickAdding}>Save</Button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </form>
   );
 };

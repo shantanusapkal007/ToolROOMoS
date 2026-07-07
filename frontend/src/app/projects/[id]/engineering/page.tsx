@@ -333,8 +333,9 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
               }
 
               // Resolving machine id
-              let machId = machines && machines.length > 0 ? machines[0].id : undefined;
-              if (machines && machines.length > 0) {
+              let machId = n.data?.machine || undefined;
+              
+              if (!machId && machines && machines.length > 0) {
                 const typeUpper = (n.data?.type || "").toUpperCase();
                 const labelUpper = (n.data?.label || "").toUpperCase();
                 const matchedMach = machines.find((m: any) => 
@@ -342,6 +343,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
                   (m.machineName || "").toUpperCase().includes(labelUpper)
                 );
                 if (matchedMach) machId = matchedMach.id;
+                else machId = machines[0].id;
               }
 
               return {

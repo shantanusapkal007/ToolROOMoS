@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from "../../../../lib/api";
-import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent, Lock, Plus, X, Info, Calendar } from "lucide-react";
+import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, Activity, PieChart, Wrench, HardHat, Truck, TrendingUp, Percent, Lock, Plus, X, Info, Calendar, Settings } from "lucide-react";
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject, useCloseProject } from "../../../../hooks/useProjects";
 import { useCostEvents, useCreateInvoice, useRecordPayment } from "../../../../hooks/useFinance";
@@ -145,13 +145,14 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 shrink-0 mb-4 relative z-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3 shrink-0 mb-4 relative z-10">
         <KPICard title="Total Cost" value={`₹${Number(cost.totalCost || 0).toLocaleString()}`} icon={PieChart} colorClass="text-slate-400" delay={0.0} />
         <KPICard title="Material" value={`₹${Number(cost.actualMaterialCost || 0).toLocaleString()}`} icon={Wrench} colorClass="text-amber-500" delay={0.05} />
-        <KPICard title="Labour" value={`₹${Number(cost.actualLabourCost || 0).toLocaleString()}`} icon={HardHat} colorClass="text-blue-500" delay={0.1} />
-        <KPICard title="Subcontract" value={`₹${Number(cost.actualSubcontractCost || 0).toLocaleString()}`} icon={Truck} colorClass="text-orange-500" delay={0.15} />
-        <KPICard title="Total Revenue" value={`₹${Number(cost.revenue || 0).toLocaleString()}`} icon={TrendingUp} colorClass="text-green-400" highlight={true} delay={0.2} />
-        <KPICard title="Margin" value={`${cost.revenue > 0 ? ((Number(cost.profitability) / Number(cost.revenue)) * 100).toFixed(1) : 0}%`} icon={Percent} colorClass="text-emerald-400" highlight={true} delay={0.25} />
+        <KPICard title="Machine" value={`₹${Number(cost.machineCost || 0).toLocaleString()}`} icon={Settings} colorClass="text-purple-500" delay={0.1} />
+        <KPICard title="Labour" value={`₹${Number(cost.labourCost || 0).toLocaleString()}`} icon={HardHat} colorClass="text-blue-500" delay={0.15} />
+        <KPICard title="Subcontract" value={`₹${Number(cost.outsideProcessCost || 0).toLocaleString()}`} icon={Truck} colorClass="text-orange-500" delay={0.2} />
+        <KPICard title="Revenue" value={`₹${Number(cost.revenue || 0).toLocaleString()}`} icon={TrendingUp} colorClass="text-green-400" highlight={true} delay={0.25} />
+        <KPICard title="Margin" value={`${cost.revenue > 0 ? ((Number(cost.profitability) / Number(cost.revenue)) * 100).toFixed(1) : 0}%`} icon={Percent} colorClass="text-emerald-400" highlight={true} delay={0.3} />
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-12 relative z-10">

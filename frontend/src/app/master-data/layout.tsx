@@ -15,6 +15,7 @@ const navigation = [
   { id: 'employees', label: 'Employees', desc: 'Workforce & operators', icon: <UserCog /> },
   { id: 'warehouses', label: 'Warehouses', desc: 'Primary storage hubs', icon: <Building2 /> },
   { id: 'locations', label: 'Locations', desc: 'Specific storage bins', icon: <Package /> },
+  { id: 'rates', label: 'Resource Rates', desc: 'Hourly cost rate cards', icon: <Database /> },
 ];
 
 export default function MasterDataLayout({ children }: { children: React.ReactNode }) {

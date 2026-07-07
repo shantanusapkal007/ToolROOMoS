@@ -9,10 +9,11 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
   label?: string;
   error?: string;
   options: SelectOption[];
+  creatable?: boolean;
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className = '', label, error, options, ...props }, ref) => {
+  ({ className = '', label, error, options, creatable = false, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
@@ -39,6 +40,11 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             <option value="" disabled className="bg-[#0B1018] text-slate-500">
               Select an option...
             </option>
+            {creatable && (
+              <option value="CREATE_NEW" className="bg-blue-500/10 text-blue-400 font-bold">
+                + Add New...
+              </option>
+            )}
             {options.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-[#0B1018] text-white">
                 {opt.label}
