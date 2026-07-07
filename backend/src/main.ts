@@ -28,11 +28,11 @@ async function bootstrap() {
 
   // Global validation pipe
   // whitelist: strips properties not in DTO
-  // forbidNonWhitelisted: rejects requests with extra properties (prevents mass-assignment)
+  // forbidNonWhitelisted: set to false so extra fields (like status from UI) are stripped without failing
   // transform: auto-convert primitives (string → number etc.)
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
-    forbidNonWhitelisted: true,
+    forbidNonWhitelisted: false,
     transform: true,
     transformOptions: { enableImplicitConversion: true },
   }));

@@ -54,7 +54,11 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
     setIsLoading(true);
     try {
       // Assuming all our master data APIs return { data: any[] } or an array directly
-      const query = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('status', 'ACTIVE'); // Hide deleted (INACTIVE) records
+      const query = `?${params.toString()}`;
+      
       const res = await api.get(`${buildEndpoint()}${query}`);
       setData(normalizeList(res));
     } catch (err: any) {

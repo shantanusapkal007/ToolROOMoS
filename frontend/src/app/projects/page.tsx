@@ -182,7 +182,7 @@ export default function ProjectsPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={spring}
-              className="glass-modal w-full max-w-2xl p-10 relative overflow-hidden"
+              className="glass-modal w-full max-w-2xl p-10 relative !overflow-visible"
             >
               <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/20 blur-[100px] pointer-events-none rounded-full" />
               
@@ -254,7 +254,10 @@ export default function ProjectsPage() {
                     </div>
 
                     {isOwnerDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-2 bg-[#0A0F1C]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+                      <div className="absolute z-50 w-full mt-2 py-2 bg-[#0A0F1C]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+                        {(!users || users.length === 0) && (
+                          <div className="px-4 py-3 text-slate-500 text-sm italic">No users available</div>
+                        )}
                         {users?.map((user: any) => (
                           <div 
                             key={user.id}

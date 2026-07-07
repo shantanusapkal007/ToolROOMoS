@@ -45,7 +45,7 @@ export class AutomationService {
           where: {
             projectId: project.id,
             action: 'DELIVERY_ALERT',
-            createdAt: { gte: todayStart },
+            performedAt: { gte: todayStart },
           },
         });
 

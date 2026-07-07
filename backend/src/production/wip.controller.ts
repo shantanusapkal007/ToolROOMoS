@@ -17,7 +17,7 @@ export class WipController {
       where: projectId ? { projectId, status: 'IN_PROCESS' } : { status: 'IN_PROCESS' },
       include: {
         project: { select: { projectNumber: true, partName: true } },
-        material: { select: { materialCode: true, materialName: true } },
+        material: { select: { materialCode: true, materialGrade: true } },
         routingOperation: { include: { operation: true } },
         machine: { select: { machineName: true } }
       },
