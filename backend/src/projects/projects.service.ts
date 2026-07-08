@@ -734,32 +734,10 @@ export class ProjectsService {
   async remove(id: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.findUniqueOrThrow({ where: { id } });
-      
-      const deletedProject = await tx.project.update({
-        where: { id },
-        data: {
-          status: 'DELETED',
-          updatedBy: userId
-        }
-      });
-
-      await tx.projectTimeline.create({
-        data: {
-          projectId: id,
-          fromStage: project.currentStage,
-          toStage: 'CANCELLED',
-          transitionedBy: userId || 'SYSTEM',
-          remarks: 'Project permanently deleted by user.',
-        },
-      });
-
-      await tx.projectActivity.create({
-        data: {
-          projectId: id,
-          action: 'PROJECT_DELETED',
-          description: `Project soft-deleted and removed from active views.`,
-          performedBy: userId || 'SYSTEM',
-        },
+      // Delete the project permanently. Due to Prisma onDelete: Cascade,
+      // all related entities will also be deleted.
+      const deletedProject = await tx.project.delete({
+        where: { id }
       });
 
       return deletedProject;

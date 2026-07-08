@@ -21,7 +21,7 @@ export function Sidebar() {
       onMouseLeave={() => setIsHovered(false)}
       animate={{ width: isHovered ? 240 : 64 }}
       transition={springConfig}
-      className="fixed left-3 top-3 bottom-3 z-50 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] bg-[#050A14]/70 backdrop-blur-3xl overflow-hidden flex flex-col group/sidebar transition-colors hover:border-white/20 hover:bg-[#050A14]/80"
+      className="fixed left-3 top-3 bottom-3 z-50 rounded-3xl border border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,1),inset_0_1px_0_rgba(255,255,255,0.15)] bg-[#050505] overflow-hidden flex flex-col group/sidebar transition-colors hover:border-white/20"
     >
       {/* Ambient Inner Glow */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-purple-500/5 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-screen" />

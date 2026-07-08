@@ -11,9 +11,9 @@ html {
 
   /* Neutral Colors */
   --bg-primary: #000000;         /* True black for maximum contrast in OLED/Canvas */
-  --bg-canvas: #09090b;          /* Dark gray canvas */
-  --bg-surface: rgba(24, 24, 27, 0.4); /* Base Glass Surface */
-  --bg-panel: rgba(39, 39, 42, 0.4);   /* Elevated Panel */
+  --bg-canvas: #000000;          /* Pure black canvas for OLED Vibe */
+  --bg-surface: rgba(18, 18, 20, 0.4); /* Base Glass Surface */
+  --bg-panel: rgba(24, 24, 27, 0.5);   /* Elevated Panel */
   
   --glass-surface: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -181,6 +181,50 @@ body {
 
   .glass-button:active {
     transform: translateY(1px) scale(0.98);
+  }
+
+  /* Spotlight Card for premium hover effects */
+  .spotlight-card {
+    position: relative;
+    border-radius: var(--radius-xl);
+    background: rgba(24, 24, 27, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s;
+  }
+
+  .spotlight-card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.8), 0 0 20px rgba(255,255,255,0.03);
+  }
+
+  .spotlight-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.06), transparent 40%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .spotlight-card:hover::before {
+    opacity: 1;
+  }
+
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.5) 100%);
+  }
+
+  .text-gradient-accent {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(135deg, var(--color-engineering) 0%, var(--color-production) 100%);
   }
 
   /* --- PHASE 1: TYPOGRAPHY SCALE (8-Point System) --- */

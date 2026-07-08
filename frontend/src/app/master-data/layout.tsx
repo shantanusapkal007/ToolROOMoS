@@ -4,6 +4,7 @@ import React from 'react';
 import { Users, ShoppingCart, Package, Factory, UserCog, Building2, Database } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Sidebar } from "@/components/layout/Sidebar";
 
 const navigation = [
@@ -51,32 +52,45 @@ export default function MasterDataLayout({ children }: { children: React.ReactNo
                 <Link
                   key={item.id}
                   href={href}
-                  className={`relative group flex items-center w-full p-2.5 rounded-xl transition-all duration-300 text-left overflow-hidden border backdrop-blur-xl ${
+                  className={`relative group flex items-center w-full p-3 rounded-xl transition-all duration-300 text-left overflow-hidden border ${
                     isActive 
-                      ? 'bg-[#050A14]/90 border-emerald-500/30 shadow-[0_4px_16px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20' 
-                      : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.06] hover:border-white/10 hover:shadow-lg'
+                      ? 'bg-emerald-500/10 border-emerald-500/30 shadow-[0_4px_20px_rgba(16,185,129,0.2)]' 
+                      : 'bg-[#050505] border-white/5 hover:border-emerald-500/20 hover:bg-[#0a0a0c] spotlight-card'
                   }`}
                 >
+                  {/* Hover transform effect */}
+                  <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-[0.98]" />
+
                   {isActive && (
                     <>
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none" />
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,1)]" />
+                      <motion.div 
+                        layoutId="masterDataActiveTab"
+                        className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none" 
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                      <motion.div 
+                        layoutId="masterDataActiveBar"
+                        className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,1)]" 
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
                     </>
                   )}
                   
                   <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 relative z-10 ${
                     isActive 
                       ? 'bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_10px_rgba(16,185,129,0.4)]' 
-                      : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-emerald-300'
+                      : 'bg-[#111] text-slate-400 group-hover:bg-emerald-500/10 group-hover:text-emerald-300 border border-white/5 group-hover:border-emerald-500/20'
                   }`}>
                     {React.cloneElement(item.icon as React.ReactElement<{className?: string}>, { className: 'w-4 h-4' })}
                   </div>
                   
-                  <div className="ml-3 flex-1 relative z-10">
+                  <div className="ml-3 flex-1 relative z-10 transition-transform duration-300 group-hover:translate-x-1">
                     <h3 className={`text-xs font-bold tracking-wide transition-colors ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
                       {item.label}
                     </h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium group-hover:text-slate-400 transition-colors uppercase tracking-wider">{item.desc}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium group-hover:text-emerald-500/70 transition-colors uppercase tracking-wider">{item.desc}</p>
                   </div>
                 </Link>
               );

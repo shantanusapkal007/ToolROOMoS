@@ -51,4 +51,8 @@ export class CreateCustomerDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 }

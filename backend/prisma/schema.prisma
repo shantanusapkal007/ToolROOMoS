@@ -450,7 +450,7 @@ model ProjectDocument {
   updatedBy      String?
   revisions      DocumentRevision[]
   documentType   DocumentType       @relation(fields: [documentTypeId], references: [id])
-  project        Project            @relation(fields: [projectId], references: [id])
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("project_documents")
 }
@@ -482,7 +482,7 @@ model BillOfMaterialHeader {
   updatedAt          DateTime             @updatedAt
   createdBy          String?
   updatedBy          String?
-  project            Project              @relation(fields: [projectId], references: [id])
+  project            Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items              BillOfMaterialItem[]
 
   @@map("bill_of_material_headers")
@@ -520,7 +520,7 @@ model RoutingHeader {
   updatedAt      DateTime           @updatedAt
   createdBy      String?
   updatedBy      String?
-  project        Project            @relation(fields: [projectId], references: [id])
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   operations     RoutingOperation[]
 
   @@map("routing_headers")
@@ -568,7 +568,7 @@ model MaterialRequirement {
   createdBy    String?
   updatedBy    String?
   material     Material  @relation(fields: [materialId], references: [id])
-  project      Project   @relation(fields: [projectId], references: [id])
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("material_requirements")
 }
@@ -590,7 +590,7 @@ model PurchaseOrderHeader {
   createdBy            String?
   updatedBy            String?
   goodsReceiptHeaders  GoodsReceiptHeader[]
-  project              Project              @relation(fields: [projectId], references: [id])
+  project              Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   vendor               Vendor               @relation(fields: [vendorId], references: [id])
   items                PurchaseOrderItem[]
 
@@ -632,7 +632,7 @@ model GoodsReceiptHeader {
   createdBy      String?
   updatedBy      String?
   poHeader       PurchaseOrderHeader @relation(fields: [poHeaderId], references: [id])
-  project        Project             @relation(fields: [projectId], references: [id])
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items          GoodsReceiptItem[]
 
   @@map("goods_receipt_headers")
@@ -673,7 +673,7 @@ model MaterialIssueHeader {
   createdBy               String?
   updatedBy               String?
   machineShopDailyReports MachineShopDailyReport[]
-  project                 Project                  @relation(fields: [projectId], references: [id])
+  project                 Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items                   MaterialIssueItem[]
 
   @@map("material_issue_headers")
@@ -717,7 +717,7 @@ model InspectionHeader {
   updatedBy             String?
   inspectionType        InspectionType          @default(IN_PROCESS)
   routingOperationId    String?
-  project               Project                 @relation(fields: [projectId], references: [id])
+  project               Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
   routingOperation      RoutingOperation?       @relation(fields: [routingOperationId], references: [id])
   measurements          InspectionMeasurement[]
 
@@ -755,7 +755,7 @@ model NcrReport {
   updatedAt         DateTime @updatedAt
   createdBy         String?
   updatedBy         String?
-  project           Project  @relation(fields: [projectId], references: [id])
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("ncr_reports")
 }
@@ -782,7 +782,7 @@ model DispatchNote {
   trackingReference  String?
   items              DispatchItem[]
   customer           Customer        @relation(fields: [customerId], references: [id])
-  project            Project         @relation(fields: [projectId], references: [id])
+  project            Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   invoiceHeaders     InvoiceHeader[]
 
   @@map("dispatch_notes")
@@ -822,7 +822,7 @@ model InvoiceHeader {
   paymentStatus  String        @default("PENDING")
   amountPaid     Decimal       @default(0)
   dispatchNote   DispatchNote  @relation(fields: [dispatchNoteId], references: [id])
-  project        Project       @relation(fields: [projectId], references: [id])
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items          InvoiceItem[]
   payments       InvoicePayment[]
 
@@ -918,7 +918,7 @@ model InventoryTransaction {
   createdAt        DateTime              @default(now())
   createdBy        String?
   inventoryBatch   InventoryBatch        @relation(fields: [inventoryBatchId], references: [id])
-  project          Project?              @relation(fields: [projectId], references: [id])
+  project          Project?              @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("inventory_transactions")
 }
@@ -933,7 +933,7 @@ model InventoryReservation {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdBy   String?
-  project     Project  @relation(fields: [projectId], references: [id])
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("inventory_reservations")
 }
@@ -950,7 +950,7 @@ model ProductionBatch {
   updatedAt   DateTime              @updatedAt
   createdBy   String?
   updatedBy   String?
-  project     Project               @relation(fields: [projectId], references: [id])
+  project     Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   operations  ProductionOperation[]
 
   @@map("production_batches")
@@ -1013,7 +1013,7 @@ model MachineShopDailyReport {
   inventoryBatch     InventoryBatch?      @relation(fields: [inventoryBatchId], references: [id])
   machine            Machine              @relation(fields: [machineId], references: [id])
   materialIssue      MaterialIssueHeader? @relation(fields: [materialIssueId], references: [id])
-  project            Project              @relation(fields: [projectId], references: [id])
+  project            Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   routingOperation   RoutingOperation?    @relation(fields: [routingOperationId], references: [id])
 
   @@map("machine_shop_daily_reports")
@@ -1033,7 +1033,7 @@ model JobCard {
   updatedBy          String?
   machine            Machine          @relation(fields: [machineId], references: [id])
   operator           Employee?        @relation(fields: [operatorId], references: [id])
-  project            Project          @relation(fields: [projectId], references: [id])
+  project            Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   routingOperation   RoutingOperation @relation(fields: [routingOperationId], references: [id])
 
   productionSchedules ProductionSchedule[]
@@ -1049,7 +1049,7 @@ model ProjectTimeline {
   transitionedAt DateTime      @default(now())
   transitionedBy String?
   remarks        String?
-  project        Project       @relation(fields: [projectId], references: [id])
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("project_timeline")
 }
@@ -1061,7 +1061,7 @@ model ProjectActivity {
   description String?
   performedBy String?
   performedAt DateTime @default(now())
-  project     Project  @relation(fields: [projectId], references: [id])
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("project_activities")
@@ -1080,7 +1080,7 @@ model Approval {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   createdBy       String?
-  project         Project        @relation(fields: [projectId], references: [id])
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("approvals")
 }
@@ -1095,7 +1095,7 @@ model ProjectCostEvent {
   referenceDocId   String?
   createdAt        DateTime      @default(now())
   createdBy        String?
-  project          Project       @relation(fields: [projectId], references: [id])
+  project          Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("project_cost_events")
@@ -1122,7 +1122,7 @@ model ProjectCostSummary {
   estimatedManufacturingCost  Decimal  @default(0)
   estimatedOutsideProcessCost Decimal  @default(0)
   estimatedProjectCost        Decimal  @default(0)
-  project                     Project  @relation(fields: [projectId], references: [id])
+  project                     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("project_cost_summary")
 }
@@ -1144,7 +1144,7 @@ model SubcontractOrder {
   createdBy           String?
   updatedBy           String?
   items               SubcontractOrderItem[]
-  project             Project                @relation(fields: [projectId], references: [id])
+  project             Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   vendor              Vendor                 @relation(fields: [vendorId], references: [id])
   subcontractReceipts SubcontractReceipt[]
 
@@ -1186,7 +1186,7 @@ model SubcontractReceipt {
   createdBy          String?
   updatedBy          String?
   items              SubcontractReceiptItem[]
-  project            Project                  @relation(fields: [projectId], references: [id])
+  project            Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   subcontractOrder   SubcontractOrder         @relation(fields: [subcontractOrderId], references: [id])
 
   @@map("subcontract_receipts")
@@ -1240,7 +1240,7 @@ model ProjectTask {
   updatedAt   DateTime  @updatedAt
   createdBy   String?
   updatedBy   String?
-  project     Project   @relation(fields: [projectId], references: [id])
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("project_tasks")
 }
@@ -1271,7 +1271,7 @@ model WipLedger {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  project          Project           @relation(fields: [projectId], references: [id])
+  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   material         Material          @relation(fields: [materialId], references: [id])
   batch            InventoryBatch?   @relation(fields: [batchId], references: [id])
   routingOperation RoutingOperation? @relation(fields: [routingOperationId], references: [id])
@@ -1322,7 +1322,7 @@ model ProductionSchedule {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id])
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   jobCard JobCard @relation(fields: [jobCardId], references: [id])
   machine Machine @relation(fields: [machineId], references: [id])
 

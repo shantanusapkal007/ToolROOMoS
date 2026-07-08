@@ -58,7 +58,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
   }
 
   return (
-    <div className="glass-panel w-full flex flex-col">
+    <div className="glass-panel w-full flex flex-col spotlight-card">
       {exportable && data && data.length > 0 && (
         <div className="flex justify-end items-center px-4 py-3 border-b border-white/5 bg-white/[0.01]">
           <button 
@@ -95,7 +95,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: Math.min(idx * 0.05, 0.5), duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="group hover:bg-blue-500/10 transition-colors relative cursor-default"
+                className="group hover:bg-white/[0.03] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 relative cursor-default hover:-translate-y-0.5 rounded-lg overflow-hidden"
               >
                 {columns.map((col) => (
                   <td key={col.key} className="px-3 py-2 text-xs text-white/90 relative z-10 font-medium">

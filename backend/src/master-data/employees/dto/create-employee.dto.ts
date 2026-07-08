@@ -28,4 +28,8 @@ export class CreateEmployeeDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+  @IsString()
+  @IsOptional()
+  status?: string;
 }
+

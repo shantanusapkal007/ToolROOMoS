@@ -36,4 +36,8 @@ export class CreateMaterialDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 }

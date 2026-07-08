@@ -152,20 +152,25 @@ export default function ProjectsPage() {
                 {projects.filter(p => p.currentStage !== "CLOSED" && p.currentStage !== "CANCELLED").map((proj, idx) => (
                   <motion.div 
                     key={proj.id}
-                    initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+                    initial={{ opacity: 0, y: 20, filter: "blur(8px)", rotateX: 0, rotateY: 0 }}
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                     transition={{ delay: idx * 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                     whileHover={{ 
                       y: -8, 
                       scale: 1.02, 
-                      boxShadow: "0 20px 40px -10px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)" 
+                      boxShadow: "0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 20px rgba(59, 130, 246, 0.15)",
+                      rotateX: 2,
+                      rotateY: -2
                     }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.98, rotateX: 0, rotateY: 0 }}
                     onClick={() => router.push(`/projects/${proj.id}/overview`)}
-                    className="glass-panel p-8 cursor-pointer group flex flex-col h-[280px] relative overflow-hidden"
+                    className="spotlight-card p-8 cursor-pointer group flex flex-col h-[280px] relative overflow-hidden"
                   >
+                    {/* Inner Glass Highlights */}
+                    <div className="absolute inset-0 border border-white/5 rounded-xl pointer-events-none z-20 group-hover:border-white/10 transition-colors" />
+                    
                     {/* Hover Glow Light */}
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-full" />
+                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/20 blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-full z-0" />
                     
                     <div className="flex-1 z-10 flex flex-col">
                       <div className="flex justify-between items-start mb-6">

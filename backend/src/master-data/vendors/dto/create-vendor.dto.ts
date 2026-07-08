@@ -37,4 +37,8 @@ export class CreateVendorDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+  @IsString()
+  @IsOptional()
+  status?: string;
 }
+

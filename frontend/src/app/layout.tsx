@@ -5,6 +5,7 @@ import { AuthProvider } from "../components/auth/AuthProvider";
 import { ToastProvider } from "../components/ui/Toast";
 import QueryProvider from "../providers/QueryProvider";
 import { CommandPalette } from "../components/ui/CommandPalette";
+import { SpotlightWrapper } from "../components/ui/SpotlightWrapper";
 
 const fontOutfit = Outfit({
   variable: "--font-outfit",
@@ -34,20 +35,22 @@ export default function RootLayout({
       className={`${fontOutfit.variable} ${fontSpaceGrotesk.variable} antialiased`}
     >
       <body className="mission-control-bg min-h-screen text-[#ededed] font-sans antialiased selection:bg-purple-500/30">
-        {/* Dynamic Glowing Background Orbs */}
-        <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[60px] animate-float opacity-70" />
-          <div className="absolute top-[40%] right-[-10%] w-[35%] h-[50%] rounded-full bg-purple-600/10 blur-[60px] animate-float opacity-50" style={{ animationDelay: '2s' }} />
-          <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[40%] rounded-full bg-cyan-600/10 blur-[60px] animate-float opacity-60" style={{ animationDelay: '4s' }} />
-          {/* Subtle noise texture overlay */}
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
+        {/* Dynamic Glowing Background Orbs (OLED Vibe) */}
+        <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden bg-black">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[100px] animate-float opacity-50" />
+          <div className="absolute top-[30%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-900/10 blur-[120px] animate-float opacity-40" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-[-20%] left-[10%] w-[50%] h-[50%] rounded-full bg-cyan-700/10 blur-[100px] animate-float opacity-30" style={{ animationDelay: '4s' }} />
+          {/* Noise texture overlay */}
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04] mix-blend-overlay"></div>
         </div>
         
         <AuthProvider>
           <QueryProvider>
             <ToastProvider>
-              {children}
-              <CommandPalette />
+              <SpotlightWrapper>
+                {children}
+                <CommandPalette />
+              </SpotlightWrapper>
             </ToastProvider>
           </QueryProvider>
         </AuthProvider>

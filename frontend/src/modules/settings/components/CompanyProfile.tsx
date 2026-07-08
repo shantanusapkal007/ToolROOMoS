@@ -38,20 +38,20 @@ export const CompanyProfile = () => {
             <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">General Information</h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="col-span-2">
-                <Input label="Company Name" defaultValue="ToolRoom Inc." required />
+                <Input label="Company Name" defaultValue="" required />
               </div>
-              <Input label="Registration Number (GST/VAT)" defaultValue="GST123456789" />
-              <Input label="Tax ID" defaultValue="TAX-998877" />
+              <Input label="Registration Number (GST/VAT)" defaultValue="" />
+              <Input label="Tax ID" defaultValue="" />
             </div>
           </div>
 
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">Contact Details</h3>
             <div className="grid grid-cols-2 gap-6">
-              <Input label="Primary Email" type="email" defaultValue="admin@toolroom.com" />
-              <Input label="Phone Number" type="tel" defaultValue="+1 (555) 123-4567" />
+              <Input label="Primary Email" type="email" defaultValue="" />
+              <Input label="Phone Number" type="tel" defaultValue="" />
               <div className="col-span-2">
-                <Input label="Headquarters Address" defaultValue="123 Manufacturing Way, Tech Park, CA" />
+                <Input label="Headquarters Address" defaultValue="" />
               </div>
             </div>
           </div>
@@ -66,7 +66,7 @@ export const CompanyProfile = () => {
                   { label: 'EUR (&#8364;)', value: 'EUR' },
                   { label: 'GBP (&#163;)', value: 'GBP' },
                 ]} 
-                defaultValue="INR"
+                defaultValue=""
               />
               <Select 
                 label="Timezone" 
@@ -75,7 +75,7 @@ export const CompanyProfile = () => {
                   { label: 'America/New_York', value: 'EST' },
                   { label: 'Asia/Kolkata', value: 'IST' },
                 ]} 
-                defaultValue="UTC"
+                defaultValue=""
               />
             </div>
           </div>

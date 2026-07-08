@@ -32,4 +32,8 @@ export class CreateMachineDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+  @IsString()
+  @IsOptional()
+  status?: string;
 }
+
