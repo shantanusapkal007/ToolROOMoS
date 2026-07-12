@@ -19,7 +19,7 @@ async function bootstrap() {
   // Enable CORS — origins read from env for production safety
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3005'];
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3005', 'http://127.0.0.1:3005', 'http://127.0.0.1:3000'];
 
   app.enableCors({
     origin: allowedOrigins,

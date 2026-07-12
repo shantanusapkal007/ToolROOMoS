@@ -1,3 +1,0 @@
-DROP TABLE IF EXISTS departments;
-DROP TABLE IF EXISTS plants;
-DROP TABLE IF EXISTS companies;

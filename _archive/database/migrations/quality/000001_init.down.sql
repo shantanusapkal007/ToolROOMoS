@@ -1,4 +1,0 @@
-DROP TABLE IF EXISTS fais;
-DROP TABLE IF EXISTS gauge_rnrs;
-DROP TABLE IF EXISTS control_plans;
-DROP TABLE IF EXISTS pfmeas;
