@@ -7,19 +7,24 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  passwordHash String
-  name         String
-  role         SystemRole @default(PRODUCTION)
-  employeeId   String?    @unique
-  hourlyRate   Decimal    @default(0)
-  status       String     @default("ACTIVE")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  plantId      String?
-  employee     Employee?  @relation(fields: [employeeId], references: [id])
-  plants       Plant?     @relation(fields: [plantId], references: [id])
+  id             String        @id @default(uuid())
+  email          String        @unique
+  passwordHash   String
+  name           String
+  role           SystemRole    @default(PRODUCTION)
+  isActive       Boolean       @default(true)
+  employeeId     String?       @unique
+  hourlyRate     Decimal       @default(0)
+  status         String        @default("ACTIVE")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  lastLoginAt    DateTime?
+  plantId        String?
+  primaryPlantId String?
+  employee       Employee?     @relation(fields: [employeeId], references: [id])
+  plants         Plant?        @relation("UserPlants", fields: [plantId], references: [id])
+  primaryPlant   Plant?        @relation("UserPrimaryPlant", fields: [primaryPlantId], references: [id])
+  projectTeams   ProjectTeam[]
 
   @@map("users")
 }
@@ -64,7 +69,8 @@ model Plant {
   machines     Machine[]
   company      Company      @relation(fields: [companyId], references: [id])
   projects     Project[]
-  users        User[]
+  users        User[]       @relation("UserPlants")
+  primaryUsers User[]       @relation("UserPrimaryPlant")
   warehouses   Warehouse[]
 
   @@map("plants")
@@ -132,34 +138,42 @@ model Vendor {
   purchaseOrderHeaders PurchaseOrderHeader[]
   subcontractOrders    SubcontractOrder[]
   company              Company               @relation(fields: [companyId], references: [id])
+  vendorBills          VendorBill[]
 
   @@map("vendors")
 }
 
 model Material {
-  id                   String                @id @default(uuid())
-  materialCode         String                @unique
-  materialGrade        String
-  materialCategory     String?
-  density              Decimal?
-  standardCost         Decimal               @default(0)
-  defaultUom           String
-  defaultVendor        String?
-  shapeId              String?
-  status               String                @default("ACTIVE")
-  remarks              String?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  createdBy            String?
-  updatedBy            String?
-  billOfMaterialItems  BillOfMaterialItem[]
-  inventoryBatches     InventoryBatch[]
-  inventoryStock       InventoryStock[]
-  materialRequirements MaterialRequirement[]
-  shape                MaterialShape?        @relation(fields: [shapeId], references: [id])
-  purchaseOrderItems   PurchaseOrderItem[]
+  id                          String                       @id @default(uuid())
+  materialCode                String                       @unique
+  materialGrade               String
+  materialCategory            String?
+  density                     Decimal?
+  standardCost                Decimal                      @default(0)
+  defaultUom                  String
+  defaultVendor               String?
+  shapeId                     String?
+  status                      String                       @default("ACTIVE")
+  remarks                     String?
+  hsnCode                     String?
+  gstPercent                  Decimal?
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
+  createdBy                   String?
+  updatedBy                   String?
+  billOfMaterialItems         BillOfMaterialItem[]
+  inventoryBatches            InventoryBatch[]
+  inventoryStock              InventoryStock[]
+  materialRequirements        MaterialRequirement[]
+  planningExceptions          PlanningException[]
+  planningRecommendationItems PlanningRecommendationItem[]
+  shape                       MaterialShape?               @relation(fields: [shapeId], references: [id])
+  purchaseOrderItems          PurchaseOrderItem[]
 
-  wipLedgers WipLedger[]
+  wipLedgers           WipLedger[]
+  purchaseRequestItems PurchaseRequestItem[]
+  vendorBillItems      VendorBillItem[]
+  assemblyComponents   AssemblyComponent[]
 
   @@map("materials")
 }
@@ -205,6 +219,9 @@ model Machine {
   productionSchedules ProductionSchedule[]
   oeeDailyLogs        OeeDailyLog[]
 
+  isActive    Boolean      @default(true)
+  msdrHeaders MsdrHeader[]
+
   @@map("machines")
 }
 
@@ -220,6 +237,7 @@ model Operation {
   updatedBy             String?
   routingOperations     RoutingOperation[]
   subcontractOrderItems SubcontractOrderItem[]
+  msdrOperations        MsdrOperation[]
 
   @@map("operations")
 }
@@ -262,6 +280,7 @@ model Employee {
   machineShopReports   MachineShopDailyReport[]
   productionOperations ProductionOperation[]
   user                 User?
+  msdrHeaders          MsdrHeader[]
 
   @@map("employees")
 }
@@ -414,6 +433,7 @@ model Project {
   materialIssueHeaders  MaterialIssueHeader[]
   materialRequirements  MaterialRequirement[]
   ncrReports            NcrReport[]
+  planningRuns          PlanningRun[]
   productionBatches     ProductionBatch[]
   projectActivities     ProjectActivity[]
   projectCostEvents     ProjectCostEvent[]
@@ -428,8 +448,13 @@ model Project {
   subcontractOrders     SubcontractOrder[]
   subcontractReceipts   SubcontractReceipt[]
 
-  wipLedgers          WipLedger[]
-  productionSchedules ProductionSchedule[]
+  wipLedgers             WipLedger[]
+  productionSchedules    ProductionSchedule[]
+  purchaseRequestHeaders PurchaseRequestHeader[]
+  projectBudget          ProjectBudget?
+  projectTeams           ProjectTeam[]
+  accountEntries         AccountEntry[]
+  assemblyHeaders        AssemblyHeader[]
 
   @@map("projects")
 }
@@ -489,21 +514,29 @@ model BillOfMaterialHeader {
 }
 
 model BillOfMaterialItem {
-  id               String               @id @default(uuid())
+  id               String   @id @default(uuid())
   bomHeaderId      String
   materialId       String
   rawSize          String?
+  dimensions       String?
+  hsnCode          String?
   calculatedWeight Decimal?
   requiredQty      Decimal
-  estimatedCost    Decimal              @default(0)
+  estimatedCost    Decimal  @default(0)
   remarks          String?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   createdBy        String?
   updatedBy        String?
-  isAssembly       Boolean              @default(false)
-  bomHeader        BillOfMaterialHeader @relation(fields: [bomHeaderId], references: [id])
-  material         Material             @relation(fields: [materialId], references: [id])
+  isAssembly       Boolean  @default(false)
+  customFields     Json?
+
+  parentItemId String?
+  parentItem   BillOfMaterialItem?  @relation("BomItemHierarchy", fields: [parentItemId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  childItems   BillOfMaterialItem[] @relation("BomItemHierarchy")
+
+  bomHeader BillOfMaterialHeader @relation(fields: [bomHeaderId], references: [id], onDelete: Cascade)
+  material  Material             @relation(fields: [materialId], references: [id])
 
   @@map("bill_of_material_items")
 }
@@ -574,6 +607,7 @@ model MaterialRequirement {
 }
 
 model PurchaseOrderHeader {
+  purchaseRequestId String?
   id                   String               @id @default(uuid())
   projectId            String
   vendorId             String
@@ -593,6 +627,17 @@ model PurchaseOrderHeader {
   project              Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   vendor               Vendor               @relation(fields: [vendorId], references: [id])
   items                PurchaseOrderItem[]
+
+  deliveryDate DateTime?
+
+  vendorGstNumber String?
+
+  costCentre  String?
+  vendorBills VendorBill[]
+
+  gstPercent Decimal?
+
+  hsnCode String?
 
   @@map("purchase_order_headers")
 }
@@ -615,6 +660,12 @@ model PurchaseOrderItem {
   material          Material            @relation(fields: [materialId], references: [id])
   poHeader          PurchaseOrderHeader @relation(fields: [poHeaderId], references: [id])
 
+  dimensions String?
+
+  gstPercent Decimal?
+
+  hsnCode String?
+
   @@map("purchase_order_items")
 }
 
@@ -634,6 +685,11 @@ model GoodsReceiptHeader {
   poHeader       PurchaseOrderHeader @relation(fields: [poHeaderId], references: [id])
   project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items          GoodsReceiptItem[]
+
+  vendorInvoiceNumber String?
+
+  invoiceDate  DateTime?
+  customFields Json?
 
   @@map("goods_receipt_headers")
 }
@@ -656,6 +712,15 @@ model GoodsReceiptItem {
   grnHeader          GoodsReceiptHeader @relation(fields: [grnHeaderId], references: [id])
   poItem             PurchaseOrderItem  @relation(fields: [poItemId], references: [id])
   inventoryBatches   InventoryBatch[]
+
+  batchNumber String?
+
+  hsnCode     String?
+  warehouseId String?
+
+  gstPercent Decimal?
+
+  rackLocation String?
 
   @@map("goods_receipt_items")
 }
@@ -802,27 +867,27 @@ model DispatchItem {
 }
 
 model InvoiceHeader {
-  id             String        @id @default(uuid())
+  id             String           @id @default(uuid())
   projectId      String
   dispatchNoteId String
-  invoiceNumber  String        @unique
+  invoiceNumber  String           @unique
   documentNumber String?
-  invoiceDate    DateTime      @default(now())
-  subtotal       Decimal       @default(0)
-  taxAmount      Decimal       @default(0)
-  totalAmount    Decimal       @default(0)
-  status         String        @default("GENERATED")
+  invoiceDate    DateTime         @default(now())
+  subtotal       Decimal          @default(0)
+  taxAmount      Decimal          @default(0)
+  totalAmount    Decimal          @default(0)
+  status         String           @default("GENERATED")
   remarks        String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   createdBy      String?
   updatedBy      String?
-  profit         Decimal       @default(0)
+  profit         Decimal          @default(0)
   paidAt         DateTime?
-  paymentStatus  String        @default("PENDING")
-  amountPaid     Decimal       @default(0)
-  dispatchNote   DispatchNote  @relation(fields: [dispatchNoteId], references: [id])
-  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  paymentStatus  String           @default("PENDING")
+  amountPaid     Decimal          @default(0)
+  dispatchNote   DispatchNote     @relation(fields: [dispatchNoteId], references: [id])
+  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items          InvoiceItem[]
   payments       InvoicePayment[]
 
@@ -830,15 +895,15 @@ model InvoiceHeader {
 }
 
 model InvoicePayment {
-  id              String        @id @default(uuid())
-  invoiceHeaderId String
-  amount          Decimal
-  paymentDate     DateTime      @default(now())
+  id               String        @id @default(uuid())
+  invoiceHeaderId  String
+  amount           Decimal
+  paymentDate      DateTime      @default(now())
   paymentReference String?
-  remarks         String?
-  createdAt       DateTime      @default(now())
-  createdBy       String?
-  invoiceHeader   InvoiceHeader @relation(fields: [invoiceHeaderId], references: [id])
+  remarks          String?
+  createdAt        DateTime      @default(now())
+  createdBy        String?
+  invoiceHeader    InvoiceHeader @relation(fields: [invoiceHeaderId], references: [id])
 
   @@map("invoice_payments")
 }
@@ -900,6 +965,15 @@ model InventoryBatch {
   materialIssueItems       MaterialIssueItem[]
   subcontractOrderItems    SubcontractOrderItem[]
   wipLedgers               WipLedger[]
+  rack                     String?
+  parentBatchId            String?
+  bin                      String?
+  isOffcut                 Boolean                  @default(false)
+  isReusable               Boolean                  @default(false)
+  length                   Decimal?
+  width                    Decimal?
+  height                   Decimal?
+  thickness                Decimal?
 
   @@index([materialId, status])
   @@index([grnItemId])
@@ -1037,6 +1111,7 @@ model JobCard {
   routingOperation   RoutingOperation @relation(fields: [routingOperationId], references: [id])
 
   productionSchedules ProductionSchedule[]
+  timeLogs            JobCardTimeLog[]
 
   @@map("job_cards")
 }
@@ -1366,9 +1441,15 @@ enum ProjectStatus {
 enum DocumentStatus {
   DRAFT
   PENDING_APPROVAL
+  UNDER_REVIEW
   APPROVED
+  FROZEN
+  RELEASED
+  SUPERSEDED
+  ARCHIVED
   REJECTED
   OBSOLETE
+  CANCELLED
 }
 
 enum PurchaseOrderStatus {
@@ -1437,10 +1518,14 @@ enum EmployeeType {
 enum InspectionType {
   IN_PROCESS
   FINAL_PDI
+  FIRST_PIECE
+  FINAL
+  PDI
 }
 
 enum SystemRole {
   ADMIN
+  SALES
   SALES_ENGINEER
   ENGINEERING
   PURCHASE
@@ -1449,3 +1534,445 @@ enum SystemRole {
   QUALITY
   FINANCE
 }
+
+model PlanningRun {
+  id        String   @id @default(uuid())
+  projectId String
+  runDate   DateTime @default(now())
+  status    String   @default("COMPLETED")
+  runBy     String?
+  remarks   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project         Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  exceptions      PlanningException[]
+  recommendations PlanningRecommendation[]
+
+  @@map("planning_runs")
+}
+
+model PlanningException {
+  id               String   @id @default(uuid())
+  planningRunId    String
+  materialId       String?
+  exceptionType    String   @default("MATERIAL_SHORTAGE") // MATERIAL_SHORTAGE, LATE_SUPPLY, CAPACITY_OVERLOAD
+  exceptionMessage String
+  severity         String   @default("WARNING") // WARNING, CRITICAL
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  planningRun PlanningRun @relation(fields: [planningRunId], references: [id], onDelete: Cascade)
+  material    Material?   @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@map("planning_exceptions")
+}
+
+model PlanningRecommendation {
+  id               String   @id @default(uuid())
+  planningRunId    String
+  projectId        String
+  recommendationNo String?  @unique
+  status           String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdBy        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  planningRun PlanningRun                  @relation(fields: [planningRunId], references: [id], onDelete: Cascade)
+  items       PlanningRecommendationItem[]
+
+  @@map("planning_recommendations")
+}
+
+model PlanningRecommendationItem {
+  id               String    @id @default(uuid())
+  recommendationId String
+  materialId       String
+  requiredQuantity Decimal
+  requiredDate     DateTime?
+  source           String    @default("PURCHASE") // PURCHASE, IN_HOUSE, TRANSFER
+  status           String    @default("PENDING")
+  remarks          String?
+
+  recommendation PlanningRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  material       Material               @relation(fields: [materialId], references: [id])
+
+  @@map("planning_recommendation_items")
+}
+
+model PurchaseRequestHeader {
+  id        String                @id @default(uuid())
+  projectId String
+  prNumber  String                @unique
+  status    String                @default("DRAFT")
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  createdBy String?
+  updatedBy String?
+  project   Project               @relation(fields: [projectId], references: [id])
+  items     PurchaseRequestItem[]
+
+  @@map("purchase_request_headers")
+}
+
+model PurchaseRequestItem {
+  id               String                @id @default(uuid())
+  prHeaderId       String
+  materialId       String
+  requiredQuantity Decimal
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  prHeader         PurchaseRequestHeader @relation(fields: [prHeaderId], references: [id])
+  material         Material              @relation(fields: [materialId], references: [id])
+
+  @@map("purchase_request_items")
+}
+
+model VendorBill {
+  id          String           @id @default(uuid())
+  poHeaderId  String
+  billNumber  String           @unique
+  status      String           @default("DRAFT")
+  totalAmount Decimal          @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  createdBy   String?
+  items       VendorBillItem[]
+
+  projectId String
+  updatedBy String?
+
+  vendorId String?
+  vendor   Vendor? @relation(fields: [vendorId], references: [id])
+
+  billDate DateTime?
+  poHeader PurchaseOrderHeader @relation(fields: [poHeaderId], references: [id])
+
+  dueDate DateTime?
+
+  gstAmount Decimal @default(0)
+
+  @@map("vendor_bills")
+}
+
+model VendorBillItem {
+  id           String     @id @default(uuid())
+  vendorBillId String
+  materialId   String
+  quantity     Decimal
+  amount       Decimal
+  vendorBill   VendorBill @relation(fields: [vendorBillId], references: [id])
+
+  material Material @relation(fields: [materialId], references: [id])
+
+  @@map("vendor_bill_items")
+}
+
+model PurchaseReturn {
+  id           String               @id @default(uuid())
+  vendorId     String
+  poHeaderId   String
+  returnNumber String?
+  status       String               @default("DRAFT")
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  createdBy    String?
+  items        PurchaseReturnItem[]
+
+  @@map("purchase_returns")
+}
+
+model PurchaseReturnItem {
+  id               String         @id @default(uuid())
+  purchaseReturnId String
+  materialId       String
+  quantity         Decimal
+  purchaseReturn   PurchaseReturn @relation(fields: [purchaseReturnId], references: [id])
+
+  @@map("purchase_return_items")
+}
+
+model MsdrHeader {
+  id         String          @id @default(uuid())
+  projectId  String
+  msdrNumber String?
+  status     String          @default("DRAFT")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  createdBy  String?
+  operations MsdrOperation[]
+
+  machineId String?
+
+  employeeId String?
+  reportDate DateTime  @default(now())
+  machine    Machine?  @relation(fields: [machineId], references: [id])
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  shift String?
+
+  supervisorId String?
+
+  remarks String?
+
+  @@map("msdr_headers")
+}
+
+model MsdrOperation {
+  id           String     @id @default(uuid())
+  msdrHeaderId String
+  operationId  String
+  msdrHeader   MsdrHeader @relation(fields: [msdrHeaderId], references: [id])
+  operation    Operation  @relation(fields: [operationId], references: [id])
+
+  routingOperationId String?
+  producedQty        Decimal @default(0)
+  scrapQty           Decimal @default(0)
+  runningHours       Decimal @default(0)
+
+  materialIssueId String?
+
+  inventoryBatchId String?
+
+  startTime DateTime?
+  endTime   DateTime?
+
+  setupTime Decimal @default(0)
+
+  @@map("msdr_operations")
+}
+
+model JobCardTimeLog {
+  id              String    @id @default(uuid())
+  jobCardId       String
+  startTime       DateTime
+  endTime         DateTime?
+  durationMinutes Int?
+  operatorId      String?
+  jobCard         JobCard   @relation(fields: [jobCardId], references: [id])
+
+  status   String   @default("ACTIVE")
+  duration Decimal?
+
+  @@map("job_card_time_logs")
+}
+
+model ProjectBudget {
+  id            String  @id @default(uuid())
+  projectId     String  @unique
+  estimatedCost Decimal @default(0)
+  actualCost    Decimal @default(0)
+  project       Project @relation(fields: [projectId], references: [id])
+
+  @@map("project_budgets")
+}
+
+model ProjectTeam {
+  id        String  @id @default(uuid())
+  projectId String
+  userId    String
+  role      String
+  project   Project @relation(fields: [projectId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@map("project_teams")
+}
+
+model AccountEntry {
+  id          String   @id @default(uuid())
+  projectId   String
+  type        String
+  amount      Decimal
+  referenceId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id])
+
+  entryDate DateTime?
+
+  entryType String?
+
+  category String?
+
+  referenceDocType String?
+
+  @@map("account_entries")
+}
+
+model AssemblyHeader {
+  id             String              @id @default(uuid())
+  projectId      String
+  assemblyNumber String              @unique
+  status         String              @default("DRAFT")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  project        Project             @relation(fields: [projectId], references: [id])
+  components     AssemblyComponent[]
+
+  assemblyName String?
+
+  @@map("assembly_headers")
+}
+
+model AssemblyComponent {
+  id               String         @id @default(uuid())
+  assemblyHeaderId String
+  materialId       String
+  quantity         Decimal
+  assemblyHeader   AssemblyHeader @relation(fields: [assemblyHeaderId], references: [id])
+  material         Material       @relation(fields: [materialId], references: [id])
+
+  @@map("assembly_components")
+}
+
+model Comment {
+  id           String   @id @default(uuid())
+  documentId   String
+  documentType String
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdBy    String?
+
+  @@map("comments")
+}
+
+model DocumentLink {
+  id           String   @id @default(uuid())
+  sourceId     String
+  sourceType   String
+  targetId     String
+  targetType   String
+  relationType String   @default("REFERENCE")
+  createdAt    DateTime @default(now())
+
+  sourceEntityType String?
+  targetEntityType String?
+
+  @@map("document_links")
+}
+
+model DocumentRegistry {
+  id             String   @id @default(uuid())
+  documentNumber String   @unique
+  documentType   String
+  status         String   @default("ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  createdBy String?
+
+  @@map("document_registries")
+}
+
+model ImportExportJob {
+  id               String   @id @default(uuid())
+  jobType          String
+  status           String   @default("PENDING")
+  totalRecords     Int      @default(0)
+  processedRecords Int      @default(0)
+  failedRecords    Int      @default(0)
+  errors           Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  entityType   String?
+  processedRow Int     @default(0)
+
+  @@map("import_export_jobs")
+}
+
+model NotificationTemplate {
+  id           String   @id @default(uuid())
+  templateCode String   @unique
+  subject      String
+  body         String
+  createdAt    DateTime @default(now())
+
+  templateKey String? @unique
+
+  @@map("notification_templates")
+}
+
+model NotificationLog {
+  id           String   @id @default(uuid())
+  userId       String
+  templateCode String
+  status       String   @default("SENT")
+  createdAt    DateTime @default(now())
+
+  templateKey String?
+
+  @@map("notification_logs")
+}
+
+model DocumentSequence {
+  id            String   @id @default(uuid())
+  documentType  String   @unique
+  prefix        String
+  currentNumber Int      @default(0)
+  padding       Int      @default(4)
+  suffix        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  nextNumber Int @default(1)
+
+  zeroPadding   Boolean @default(true)
+  financialYear String?
+
+  @@map("document_sequences")
+}
+
+model SystemSetting {
+  id           String   @id @default(uuid())
+  settingKey   String   @unique
+  settingValue Json
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  plantId   String?
+  updatedBy String?
+
+  @@unique([plantId, settingKey])
+  @@map("system_settings")
+}
+
+model WorkflowInstance {
+  id           String                 @id @default(uuid())
+  workflowId   String
+  documentId   String
+  documentType String
+  status       String                 @default("IN_PROGRESS")
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  steps        WorkflowStepInstance[]
+
+  workflowName String?
+  completedAt  DateTime?
+
+  entityType String?
+
+  @@map("workflow_instances")
+}
+
+model WorkflowStepInstance {
+  id                 String           @id @default(uuid())
+  workflowInstanceId String
+  stepName           String
+  status             String           @default("PENDING")
+  approverId         String?
+  comments           String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  workflowInstance   WorkflowInstance @relation(fields: [workflowInstanceId], references: [id])
+
+  stepOrder    Int       @default(0)
+  errorPayload Json?
+  completedAt  DateTime?
+  startedAt    DateTime?
+
+  @@map("workflow_step_instances")
+}
+

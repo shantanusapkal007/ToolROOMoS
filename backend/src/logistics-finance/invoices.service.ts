@@ -9,11 +9,8 @@ export class InvoicesService {
 
   async createInvoice(projectId: string, dto: CreateInvoiceDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Validate project stage
+      // 1. Fetch project stage - Removed restriction
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      if (project.currentStage !== ProjectStatus.DISPATCHED) {
-        throw new BadRequestException('Invoices can only be generated during the Dispatched stage.');
-      }
 
       // 2. Business Rule: Cannot invoice undispatched goods
       const dispatch = await tx.dispatchNote.findUnique({

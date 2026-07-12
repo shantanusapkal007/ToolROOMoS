@@ -11,6 +11,7 @@ import { useProject } from "../../../../hooks/useProjects";
 import { useMasterData } from "../../../../hooks/useMasterData";
 import { usePurchaseOrders, useCreatePurchaseOrder, useProcessGRN } from "../../../../hooks/useProcurement";
 import { motion } from 'framer-motion';
+import { PremiumDrawer } from '../../../../components/ui/PremiumDrawer';
 
 export default function PurchaseTab({ params }: { params: Promise<{ id: string }> }) {
   const { error, success } = useToast();
@@ -154,7 +155,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
     } catch (err: any) {}
   };
 
-  const addPoItemRow = () => setPoItems([...poItems, { materialId: "", orderedQty: 1, agreedRate: 0 }]);
+  const addPoItemRow = () => setPoItems([...poItems, { materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18 }]);
   const removePoItemRow = (index: number) => setPoItems(poItems.filter((_, i) => i !== index));
   const updatePoItem = (index: number, field: string, value: any) => {
     const newItems = [...poItems] as any[];
@@ -246,24 +247,30 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   >
                     View Details
                   </button>
-                  {po.status !== 'CLOSED' && po.status !== 'CANCELLED' && (
-                    <>
-                      <button
-                        onClick={() => openGrnModal(po)}
-                        className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2.5 rounded-xl transition-all duration-300 border border-emerald-500/20 hover:border-emerald-500/30 font-bold text-xs flex items-center justify-center space-x-1"
-                      >
-                        <span>Process GRN</span>
-                      </button>
-                      {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
-                        <button
-                          onClick={() => handleDeletePO(po.id)}
-                          className="px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 rounded-xl transition-all duration-300 border border-red-500/20 hover:border-red-500/30 flex items-center justify-center"
-                          title="Delete Purchase Order"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </>
+                  {po.status === 'DRAFT' && (
+                    <button
+                      onClick={() => handleIssuePo(po.id)}
+                      className="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 py-2.5 rounded-xl transition-all duration-300 border border-blue-500/20 hover:border-blue-500/30 font-bold text-xs flex items-center justify-center space-x-1"
+                    >
+                      <span>Issue PO</span>
+                    </button>
+                  )}
+                  {(po.status === 'ISSUED' || po.status === 'PARTIAL') && (
+                    <button
+                      onClick={() => openGrnModal(po)}
+                      className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2.5 rounded-xl transition-all duration-300 border border-emerald-500/20 hover:border-emerald-500/30 font-bold text-xs flex items-center justify-center space-x-1"
+                    >
+                      <span>Process GRN</span>
+                    </button>
+                  )}
+                  {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
+                    <button
+                      onClick={() => handleDeletePO(po.id)}
+                      className="px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 rounded-xl transition-all duration-300 border border-red-500/20 hover:border-red-500/30 flex items-center justify-center"
+                      title="Delete Purchase Order"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   )}
                 </div>
               </motion.div>
@@ -286,251 +293,278 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
         )}
       </div>
 
-      {/* Create PO Modal */}
-      {showPoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl animate-fade-in p-4">
-          <div className="glass-modal w-full max-w-4xl p-8 animate-slide-up border border-amber-500/20 max-h-[90vh] flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
-            
-            <h2 className="text-3xl font-bold mb-8 text-white shrink-0 tracking-tight relative z-10">Create Purchase Order</h2>
-            
-            <form onSubmit={handleCreatePo} className="flex-1 min-h-0 flex flex-col space-y-6 relative z-10">
-              <div className="grid grid-cols-2 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
-                <Input
-                  label="PO Number"
-                  value={poNum}
-                  onChange={(e) => setPoNum(e.target.value)}
-                  required
-                />
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Vendor</label>
-                  <Select
-                    value={selectedVendorId}
-                    onChange={(e) => setSelectedVendorId(e.target.value)}
-                    options={filteredVendors.map((v: any) => ({ value: v.id, label: v.vendorName }))}
-                  />
-                </div>
-                <Input
-                  label="Expected Delivery Date"
-                  type="date"
-                  value={expectedDeliveryDate}
-                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                />
-              </div>
-              
-              <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Order Lines</h4>
-                <div className="grid grid-cols-12 gap-4 mb-3">
-                  <div className="col-span-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Material</div>
-                  <div className="col-span-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Quantity</div>
-                  <div className="col-span-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Rate (&#8377;)</div>
-                  <div className="col-span-1"></div>
-                </div>
-                
-                <div className="space-y-3">
-                  {poItems.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-4 items-center bg-white/[0.02] p-3 rounded-xl border border-white/5">
-                      <div className="col-span-5">
-                        <Select
-                          value={item.materialId}
-                          onChange={(e) => updatePoItem(index, 'materialId', e.target.value)}
-                          options={(materials || []).map((m: any) => ({ value: m.id, label: `${m.materialCode} (${m.materialGrade})` }))}
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          type="number"
-                          min="1"
-                          step="0.01"
-                          required
-                          className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-amber-500/50 transition-colors"
-                          value={item.orderedQty}
-                          onChange={(e) => updatePoItem(index, 'orderedQty', Number(e.target.value))}
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          required
-                          className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-amber-500/50 transition-colors"
-                          value={item.agreedRate}
-                          onChange={(e) => updatePoItem(index, 'agreedRate', Number(e.target.value))}
-                        />
-                      </div>
-                      <div className="col-span-1 flex justify-center">
-                        <button 
-                          type="button" 
-                          onClick={() => removePoItemRow(index)}
-                          className="w-10 h-10 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors"
-                          disabled={poItems.length === 1}
-                        >
-                          &times;
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <button 
-                  type="button" 
-                  onClick={addPoItemRow}
-                  className="w-full py-4 mt-6 border-2 border-dashed border-amber-500/20 text-amber-500 rounded-xl font-bold text-sm hover:bg-amber-500/10 hover:border-amber-500/40 transition-all"
-                >
-                  + Add Another Item
-                </button>
-              </div>
-
-              <div className="flex space-x-4 pt-6 shrink-0 border-t border-white/10">
-                <button type="button" onClick={() => setShowPoModal(false)} className="flex-1 px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 font-bold text-white shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all">Generate Purchase Order</button>
-              </div>
-            </form>
+      {/* Create PO Drawer */}
+      <PremiumDrawer
+        isOpen={showPoModal}
+        onClose={() => setShowPoModal(false)}
+        title="Create Purchase Order"
+        subtitle="Generate a new vendor PO for raw materials"
+        width="2xl"
+        showToolbar={false}
+      >
+        <form onSubmit={handleCreatePo} className="flex flex-col space-y-6 h-full p-6">
+          <div className="grid grid-cols-2 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
+            <Input
+              label="PO Number (Auto-generated if empty)"
+              value={poNum}
+              onChange={(e) => setPoNum(e.target.value)}
+              placeholder="Leave blank to auto-generate"
+            />
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Vendor</label>
+              <Select
+                value={selectedVendorId}
+                onChange={(e) => setSelectedVendorId(e.target.value)}
+                options={filteredVendors.map((v: any) => ({ value: v.id, label: v.vendorName }))}
+              />
+            </div>
+            <Input
+              label="Expected Delivery Date"
+              type="date"
+              value={expectedDeliveryDate}
+              onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+            />
           </div>
-        </div>
-      )}
-
-      {/* GRN Modal */}
-      {showGrnModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl animate-fade-in p-4">
-          <div className="glass-modal w-full max-w-5xl p-8 animate-slide-up border border-emerald-500/20 max-h-[90vh] flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
-
-            <div className="shrink-0 mb-8 relative z-10">
-              <h2 className="text-3xl font-bold text-white tracking-tight mb-2">Goods Receipt Note (GRN)</h2>
-              <p className="text-slate-400">Processing receipt for PO: <span className="font-bold text-emerald-400">{selectedPo?.poNumber}</span></p>
+          
+          <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Order Lines</h4>
+            <div className="grid grid-cols-12 gap-4 mb-3">
+              <div className="col-span-12 md:col-span-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Material</div>
+              <div className="col-span-6 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Dimensions</div>
+              <div className="col-span-6 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">HSN Code</div>
+              <div className="col-span-6 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Qty</div>
+              <div className="col-span-5 md:col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Rate</div>
+              <div className="col-span-1"></div>
             </div>
             
-            <form onSubmit={handleProcessGrn} className="flex-1 min-h-0 flex flex-col space-y-6 relative z-10">
-              <div className="grid grid-cols-4 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
-                <Input
-                  label="GRN Number"
-                  value={grnData.grnNumber}
-                  onChange={(e) => setGrnData({...grnData, grnNumber: e.target.value})}
-                  required
-                />
-                <Input
-                  label="Supplier Challan"
-                  value={grnData.supplierChallan}
-                  onChange={(e) => setGrnData({...grnData, supplierChallan: e.target.value})}
-                  required
-                />
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Warehouse</label>
-                  <select 
-                    className="w-full bg-[#050A14] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all appearance-none" 
-                    value={grnData.warehouseId}
-                    onChange={e => setGrnData({...grnData, warehouseId: e.target.value})}
-                    required
-                  >
-                    {warehouses?.map((w: any) => (
-                      <option key={w.id} value={w.id} className="bg-[#0B1018] text-white">
-                        {w.warehouseName}
-                      </option>
-                    ))}
-                  </select>
+            <div className="space-y-3">
+              {poItems.map((item, index) => (
+                <div key={index} className="grid grid-cols-12 gap-4 items-center bg-white/[0.02] p-3 rounded-xl border border-white/5">
+                  <div className="col-span-12 md:col-span-4">
+                    <Select
+                      value={item.materialId}
+                      onChange={(e) => {
+                         const val = e.target.value;
+                         const mat = materials?.find((m: any) => m.id === val);
+                         const newItems = [...poItems];
+                         newItems[index].materialId = val;
+                         if (mat) {
+                            newItems[index].hsnCode = mat.hsnCode || "";
+                            newItems[index].gstPercent = mat.gstPercent ? Number(mat.gstPercent) : 18;
+                         }
+                         setPoItems(newItems);
+                      }}
+                      options={(materials || []).map((m: any) => ({ value: m.id, label: `${m.materialCode} (${m.materialGrade})` }))}
+                    />
+                  </div>
+                  <div className="col-span-6 md:col-span-2">
+                    <input
+                      type="text"
+                      placeholder="Dim (LxWxH)"
+                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
+                      value={item.dimensions || ""}
+                      onChange={(e) => updatePoItem(index, 'dimensions', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-span-6 md:col-span-2">
+                    <input
+                      type="text"
+                      placeholder="HSN"
+                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
+                      value={item.hsnCode || ""}
+                      onChange={(e) => updatePoItem(index, 'hsnCode', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-span-6 md:col-span-2">
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      required
+                      placeholder="Qty"
+                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
+                      value={item.orderedQty}
+                      onChange={(e) => updatePoItem(index, 'orderedQty', Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="col-span-5 md:col-span-1">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required
+                      placeholder="Rate"
+                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
+                      value={item.agreedRate}
+                      onChange={(e) => updatePoItem(index, 'agreedRate', Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="col-span-1 flex justify-center">
+                    <button 
+                      type="button" 
+                      onClick={() => removePoItemRow(index)}
+                      className="w-10 h-10 rounded-xl bg-white/[0.02] border border-white/[0.05] text-red-400 flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/30 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all"
+                      disabled={poItems.length === 1}
+                    >
+                      &times;
+                    </button>
+                  </div>
                 </div>
-                <Input
-                  label="Remarks (Optional)"
-                  value={grnData.remarks}
-                  onChange={(e) => setGrnData({...grnData, remarks: e.target.value})}
-                />
-              </div>
-              
-              <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
-                <div className="space-y-6">
-                  {grnData.items.map((item, index) => {
-                    const poItem = selectedPo?.items.find((i: any) => i.id === item.poItemId);
-                    return (
-                      <div key={index} className="grid grid-cols-6 gap-6 items-end bg-white/[0.02] p-6 rounded-xl border border-white/5">
-                        <div className="col-span-6 border-b border-white/5 pb-3 mb-1 flex justify-between items-center">
-                          <div>
-                            <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded text-xs mr-3">ITEM {index + 1}</span>
-                            <span className="font-bold text-white text-lg">{poItem?.material?.materialCode} - {poItem?.material?.materialGrade}</span>
-                          </div>
-                          <div className="text-sm text-slate-400 bg-black/50 px-3 py-1.5 rounded-lg">
-                            Ordered: <strong className="text-white">{poItem?.orderedQty}</strong> <span className="mx-2 opacity-50">|</span> Rate: <strong className="text-white">&#8377;{poItem?.agreedRate}</strong>
-                          </div>
-                        </div>
-                        
-                        <div className="col-span-2">
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Heat / Batch Number <span className="text-red-400">*</span></label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="MTC / Batch No."
-                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-emerald-500/50 transition-colors"
-                            value={item.heatNumber}
-                            onChange={(e) => {
-                              const newItems = [...grnData.items];
-                              newItems[index].heatNumber = e.target.value;
-                              setGrnData({ ...grnData, items: newItems });
-                            }}
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Incoming</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            required
-                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-emerald-500/50 transition-colors"
-                            value={item.receivedQty}
-                            onChange={(e) => {
-                              const newItems = [...grnData.items];
-                              newItems[index].receivedQty = Number(e.target.value);
-                              setGrnData({ ...grnData, items: newItems });
-                            }}
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <label className="block text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">Accepted</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            required
-                            className="w-full bg-emerald-500/5 border border-emerald-500/20 rounded-lg px-4 py-3 text-sm text-emerald-100 focus:border-emerald-500/50 transition-colors"
-                            value={item.acceptedQty}
-                            onChange={(e) => {
-                              const newItems = [...grnData.items];
-                              newItems[index].acceptedQty = Number(e.target.value);
-                              setGrnData({ ...grnData, items: newItems });
-                            }}
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Actual Rate (&#8377;)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            required
-                            className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-emerald-500/50 transition-colors"
-                            value={item.actualRate}
-                            onChange={(e) => {
-                              const newItems = [...grnData.items];
-                              newItems[index].actualRate = Number(e.target.value);
-                              setGrnData({ ...grnData, items: newItems });
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex space-x-4 pt-6 shrink-0 border-t border-white/10">
-                <button type="button" onClick={() => setShowGrnModal(false)} className="flex-1 px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 font-bold text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all">Complete Goods Receipt</button>
-              </div>
-            </form>
+              ))}
+            </div>
+            
+            <button 
+              type="button" 
+              onClick={addPoItemRow}
+              className="w-full py-4 mt-6 border-2 border-dashed border-amber-500/20 text-amber-500 rounded-xl font-bold text-sm hover:bg-amber-500/10 hover:border-amber-500/40 transition-all"
+            >
+              + Add Another Item
+            </button>
           </div>
-        </div>
-      )}
+
+          <div className="flex space-x-4 pt-4 shrink-0 border-t border-white/10 mt-auto">
+            <button type="button" onClick={() => setShowPoModal(false)} className="flex-1 px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 font-bold text-white shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all">Generate Purchase Order</button>
+          </div>
+        </form>
+      </PremiumDrawer>
+
+      {/* GRN Drawer */}
+      <PremiumDrawer
+        isOpen={showGrnModal}
+        onClose={() => setShowGrnModal(false)}
+        title="Goods Receipt Note (GRN)"
+        subtitle={`Processing receipt for PO: ${selectedPo?.poNumber}`}
+        width="3xl"
+        showToolbar={false}
+      >
+        <form onSubmit={handleProcessGrn} className="flex flex-col space-y-6 h-full p-6">
+          <div className="grid grid-cols-4 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
+            <Input
+              label="GRN Number"
+              value={grnData.grnNumber}
+              onChange={(e) => setGrnData({...grnData, grnNumber: e.target.value})}
+              required
+            />
+            <Input
+              label="Supplier Challan"
+              value={grnData.supplierChallan}
+              onChange={(e) => setGrnData({...grnData, supplierChallan: e.target.value})}
+              required
+            />
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Warehouse</label>
+              <select 
+                className="w-full bg-[#050A14] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all appearance-none" 
+                value={grnData.warehouseId}
+                onChange={e => setGrnData({...grnData, warehouseId: e.target.value})}
+                required
+              >
+                {warehouses?.map((w: any) => (
+                  <option key={w.id} value={w.id} className="bg-[#0B1018] text-white">
+                    {w.warehouseName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Input
+              label="Remarks (Optional)"
+              value={grnData.remarks}
+              onChange={(e) => setGrnData({...grnData, remarks: e.target.value})}
+            />
+          </div>
+          
+          <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
+            <div className="space-y-6">
+              {grnData.items.map((item, index) => {
+                const poItem = selectedPo?.items.find((i: any) => i.id === item.poItemId);
+                return (
+                  <div key={index} className="grid grid-cols-6 gap-6 items-end bg-white/[0.02] p-6 rounded-xl border border-white/5">
+                    <div className="col-span-6 border-b border-white/5 pb-3 mb-1 flex justify-between items-center">
+                      <div>
+                        <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded text-xs mr-3">ITEM {index + 1}</span>
+                        <span className="font-bold text-white text-lg">{poItem?.material?.materialCode} - {poItem?.material?.materialGrade}</span>
+                      </div>
+                      <div className="text-sm text-slate-400 bg-black/50 px-3 py-1.5 rounded-lg">
+                        Ordered: <strong className="text-white">{poItem?.orderedQty}</strong> <span className="mx-2 opacity-50">|</span> Rate: <strong className="text-white">&#8377;{poItem?.agreedRate}</strong>
+                      </div>
+                    </div>
+                    
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Heat / Batch Number <span className="text-red-400">*</span></label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="MTC / Batch No."
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(16,185,129,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
+                        value={item.heatNumber}
+                        onChange={(e) => {
+                          const newItems = [...grnData.items];
+                          newItems[index].heatNumber = e.target.value;
+                          setGrnData({ ...grnData, items: newItems });
+                        }}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Incoming</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(16,185,129,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
+                        value={item.receivedQty}
+                        onChange={(e) => {
+                          const newItems = [...grnData.items];
+                          newItems[index].receivedQty = Number(e.target.value);
+                          setGrnData({ ...grnData, items: newItems });
+                        }}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <label className="block text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">Accepted</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-emerald-100 focus:border-emerald-500/50 focus:bg-emerald-500/20 focus:shadow-[0_0_20px_rgba(16,185,129,0.2),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-emerald-500/15"
+                        value={item.acceptedQty}
+                        onChange={(e) => {
+                          const newItems = [...grnData.items];
+                          newItems[index].acceptedQty = Number(e.target.value);
+                          setGrnData({ ...grnData, items: newItems });
+                        }}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Actual Rate (&#8377;)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(16,185,129,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
+                        value={item.actualRate}
+                        onChange={(e) => {
+                          const newItems = [...grnData.items];
+                          newItems[index].actualRate = Number(e.target.value);
+                          setGrnData({ ...grnData, items: newItems });
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex space-x-4 pt-4 shrink-0 border-t border-white/10 mt-auto">
+            <button type="button" onClick={() => setShowGrnModal(false)} className="flex-1 px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 font-bold text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all">Complete Goods Receipt</button>
+          </div>
+        </form>
+      </PremiumDrawer>
       {/* View PO Details Modal */}
       {viewingPoDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">

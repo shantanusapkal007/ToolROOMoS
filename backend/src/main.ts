@@ -8,6 +8,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
+  console.log("Starting backend... Please wait.");
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   
   app.useLogger(app.get(Logger));
@@ -18,7 +19,7 @@ async function bootstrap() {
   // Enable CORS — origins read from env for production safety
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : ['http://localhost:3000', 'http://localhost:3001'];
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3005'];
 
   app.enableCors({
     origin: allowedOrigins,

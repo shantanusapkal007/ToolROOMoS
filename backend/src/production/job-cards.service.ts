@@ -25,18 +25,21 @@ export class JobCardsService {
     return this.prisma.$transaction(async (tx) => {
       // Find the approved routing for this project
       const routing = await tx.routingHeader.findFirst({
-        where: { projectId, approvalStatus: 'APPROVED' },
+        where: { projectId },
+        orderBy: { createdAt: 'desc' },
         include: { operations: true }
       });
 
       if (!routing) {
-        throw new BadRequestException('Cannot generate Job Cards: No APPROVED Routing found for this project.');
+        throw new BadRequestException('Cannot generate Job Cards: No Routing exists for this project yet.');
       }
 
-      // Check if job cards already exist
-      const existing = await tx.jobCard.count({ where: { projectId } });
+      // Check if job cards already exist for THIS routing version
+      const existing = await tx.jobCard.count({ 
+        where: { routingOperation: { routingHeaderId: routing.id } } 
+      });
       if (existing > 0) {
-        throw new BadRequestException('Job Cards already exist for this project.');
+        throw new BadRequestException('Job Cards already exist for this routing version.');
       }
 
       const jobCardsToCreate = routing.operations.map(op => {

@@ -15,9 +15,7 @@ export class RoutingService {
     return this.prisma.$transaction(async (tx) => {
       // 1. Validation Engine
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      if (project.currentStage !== ProjectStatus.ENGINEERING) {
-        throw new BadRequestException('Manufacturing Plan can only be submitted during the ENGINEERING stage.');
-      }
+      // Stage restriction removed to allow routing creation at any time
 
       // 2. Validate sequence uniqueness & machine assignment
       const sequences = new Set();
@@ -106,9 +104,7 @@ export class RoutingService {
 
   async approveManufacturingPlan(projectId: string, routingId: string, userId?: string) {
     const validation = await this.validateManufacturingPlan(projectId, routingId);
-    if (!validation.isValid) {
-      throw new BadRequestException('Approval Failed: Engineering Quality Gates not met.');
-    }
+    // Validation gate removed to allow routing approval without an approved BOM
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Approve Routing

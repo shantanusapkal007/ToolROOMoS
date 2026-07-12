@@ -9,27 +9,10 @@ export class DispatchesService {
 
   async createDispatch(projectId: string, dto: CreateDispatchDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Validate project stage
+      // 1. Fetch project to get customerId
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      if (project.currentStage !== ProjectStatus.DISPATCH_READY) {
-        throw new BadRequestException('Dispatches can only be registered during the Dispatch Ready stage.');
-      }
-
-      // 2. Business Rule: Cannot dispatch without Passed PDI
-      const pdi = await tx.inspectionHeader.findFirst({
-        where: { projectId, inspectionType: 'FINAL_PDI', result: 'PASS' }
-      });
-      if (!pdi) {
-        throw new BadRequestException('Business Rule Violation: Cannot dispatch material without a passed Pre-Dispatch Inspection (PDI).');
-      }
-
-      // 3. Business Rule: Cannot dispatch with Open NCR
-      const openNcr = await tx.ncrReport.findFirst({
-        where: { projectId, status: 'OPEN' }
-      });
-      if (openNcr) {
-        throw new BadRequestException(`Business Rule Violation: Cannot dispatch project with Open NCR (${openNcr.ncrNumber}).`);
-      }
+      // 2. Business Rule: Cannot dispatch without Passed PDI - Removed
+      // 3. Business Rule: Cannot dispatch with Open NCR - Removed
 
       // 2. Create Dispatch Note
       const dispatch = await tx.dispatchNote.create({

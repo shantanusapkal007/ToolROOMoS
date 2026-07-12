@@ -339,93 +339,9 @@ export class ProjectsService {
         throw new BadRequestException('Project is already in this stage.');
       }
 
-      if (toStage !== 'CANCELLED') {
-        const fromIndex = STAGE_ORDER.indexOf(fromStage);
-        const toIndex = STAGE_ORDER.indexOf(toStage);
 
-        // Prevent skipping stages forward
-        if (toIndex > fromIndex + 1) {
-          throw new BadRequestException(`Cannot skip stages. Next valid stage is ${STAGE_ORDER[fromIndex + 1]}`);
-        }
+      // All hardcoded phase locks have been removed to allow independent usage of modules.
 
-        // Hard Business Validations for advancing forward
-        if (toIndex > fromIndex) {
-          if (toStage === 'PROCUREMENT') {
-            const boms = await tx.billOfMaterialHeader.count({
-              where: { projectId: id, status: 'APPROVED' }
-            });
-            if (boms === 0) {
-              throw new BadRequestException('Cannot enter Procurement: No Approved BOM exists.');
-            }
-            const routings = await tx.routingHeader.count({
-              where: { projectId: id, approvalStatus: 'APPROVED' }
-            });
-            if (routings === 0) {
-              throw new BadRequestException('Cannot enter Procurement: No Approved Routing exists. Manufacturing Plan is incomplete.');
-            }
-          }
-          else if (toStage === 'MATERIAL_AVAILABLE') {
-            const grns = await tx.goodsReceiptHeader.count({ where: { projectId: id } });
-            if (grns === 0) {
-              throw new BadRequestException('Cannot mark Material Available: No Goods Receipts (GRN) found.');
-            }
-          }
-          else if (toStage === 'PRODUCTION') {
-            const issues = await tx.materialIssueHeader.count({ where: { projectId: id } });
-            if (issues === 0) {
-              throw new BadRequestException('Cannot start Production: No material has been issued to the floor.');
-            }
-            const jobCards = await tx.jobCard.count({ where: { projectId: id } });
-            if (jobCards === 0) {
-              throw new BadRequestException('Cannot start Production: Job Cards have not been generated from Routing.');
-            }
-          }
-          else if (toStage === 'INSPECTION') {
-            const msdr = await tx.machineShopDailyReport.count({ where: { projectId: id } });
-            if (msdr === 0) {
-              throw new BadRequestException('Cannot enter Inspection: No production operations (MSDR) logged.');
-            }
-          }
-          else if (toStage === 'DISPATCH_READY') {
-            const pdi = await tx.inspectionHeader.findFirst({
-              where: { projectId: id, inspectionType: 'FINAL_PDI', result: 'PASS' }
-            });
-            if (!pdi) {
-              throw new BadRequestException('Cannot mark Dispatch Ready: Final Pre-Dispatch Inspection (PDI) has not passed.');
-            }
-          }
-          else if (toStage === 'DISPATCHED') {
-            const dispatch = await tx.dispatchNote.count({ where: { projectId: id } });
-            if (dispatch === 0) {
-              throw new BadRequestException('Cannot mark Dispatched: No Dispatch Note logged.');
-            }
-          }
-          else if (toStage === 'INVOICED') {
-            const invoice = await tx.invoiceHeader.count({ where: { projectId: id } });
-            if (invoice === 0) {
-              throw new BadRequestException('Cannot mark Invoiced: No Invoice generated.');
-            }
-          }
-          else if (toStage === 'PAYMENT_PENDING') {
-            const invoice = await tx.invoiceHeader.count({ where: { projectId: id } });
-            if (invoice === 0) {
-              throw new BadRequestException('Cannot enter Payment Pending: No Invoice generated.');
-            }
-          }
-          else if (toStage === 'CLOSED') {
-            const invoice = await tx.invoiceHeader.count({ where: { projectId: id } });
-            if (invoice === 0) {
-              throw new BadRequestException('Cannot close project: No invoices have been generated.');
-            }
-            const unpaidInvoices = await tx.invoiceHeader.count({
-              where: { projectId: id, status: { not: 'PAID' } }
-            });
-            if (unpaidInvoices > 0) {
-              throw new BadRequestException('Cannot close project: Settlement required. Unpaid invoices remain.');
-            }
-          }
-        }
-      }
 
       // Update project stage
       const updatedProject = await tx.project.update({
@@ -562,24 +478,9 @@ export class ProjectsService {
     const hasIssues = project.materialIssueHeaders.length > 0;
     const hasProduction = project.machineShopReports.length > 0;
 
-    const isReopenBlocked = 
-      hasGrns ||
-      hasIssues ||
-      hasProduction ||
-      ['PRODUCTION', 'INSPECTION', 'DISPATCH_READY', 'DISPATCHED', 'INVOICED', 'PAYMENT_PENDING', 'CLOSED'].includes(project.currentStage);
-
+    const isReopenBlocked = false;
     let blockReason = null;
-    if (isReopenBlocked) {
-      if (hasGrns) {
-        blockReason = "Reopen blocked: Goods Receipts (GRN) have already been generated for this project.";
-      } else if (hasIssues) {
-        blockReason = "Reopen blocked: Material has already been issued from stores.";
-      } else if (hasProduction) {
-        blockReason = "Reopen blocked: Shop floor reports (MSDR) have already been filed.";
-      } else {
-        blockReason = `Reopen blocked: Project is in the '${project.currentStage}' stage.`;
-      }
-    }
+
 
     const affectedPosCount = project.purchaseOrderHeaders.length;
     const affectedRoutingCount = project.routingHeaders.length;
@@ -678,10 +579,8 @@ export class ProjectsService {
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
       
-      // 1. Validate Stage (must be PAYMENT_PENDING or INVOICED if no payments are tracked)
-      if (project.currentStage !== 'PAYMENT_PENDING' && project.currentStage !== 'INVOICED') {
-        throw new BadRequestException('Project can only be closed after Payment or Invoicing is complete.');
-      }
+      // 1. Validate Stage - Removed to allow closing from any stage
+
 
       // 2. Validate No Open NCRs
       const openNcr = await tx.ncrReport.findFirst({

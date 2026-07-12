@@ -13,13 +13,9 @@ export class MaterialIssuesService {
 
   async issueMaterial(projectId: string, dto: CreateIssueDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Validate project stage
+      // 1. Fetch project stage for automations
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
       const currentStage = project.currentStage;
-      
-      if (currentStage !== ProjectStatus.MATERIAL_AVAILABLE && currentStage !== ProjectStatus.PRODUCTION) {
-        throw new BadRequestException('Materials can only be issued during Material Available or Production stages.');
-      }
 
       // 2. Create Material Issue Header
       const issueHeader = await tx.materialIssueHeader.create({
@@ -33,19 +29,8 @@ export class MaterialIssuesService {
         },
       });
 
-      // 3. BOM Validation Gate (Precompute)
-      const activeBom = await tx.billOfMaterialHeader.findFirst({
-        where: { projectId, status: 'APPROVED' },
-        include: { items: true },
-        orderBy: { revision: 'desc' }
-      });
+      // 3. BOM Validation Gate (Precompute) - Removed to allow issuing any material
       
-      if (!activeBom) {
-        throw new BadRequestException('Material Issue Gate Failed: Project has no approved Engineering BOM.');
-      }
-      
-      const bomMaterials = new Set(activeBom.items.map(i => i.materialId));
-
       let totalConsumptionCost = 0;
 
       // 4. Fallback warehouse (used only if we can't auto-resolve from stock later)
@@ -60,9 +45,8 @@ export class MaterialIssuesService {
           where: { id: item.inventoryBatchId },
         });
 
-        if (!bomMaterials.has(batch.materialId)) {
-          throw new BadRequestException(`Material Issue Gate Failed: Material ID ${batch.materialId} (Batch ${batch.batchNumber}) is not in the approved BOM for this project.`);
-        }
+        // Removed bomMaterials.has check
+
 
         if (batch.availableQty.toNumber() < item.issuedQty) {
           throw new BadRequestException(`Insufficient available stock in Batch ${batch.batchNumber}. Available: ${batch.availableQty}, Requested: ${item.issuedQty}`);

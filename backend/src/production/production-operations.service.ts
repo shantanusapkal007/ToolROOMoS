@@ -15,17 +15,9 @@ export class ProductionOperationsService {
 
   async logMachineShopReport(projectId: string, dto: CreateMsdrDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Validate project stage
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      if (project.currentStage !== ProjectStatus.PRODUCTION) {
-        throw new BadRequestException('Machine Shop Daily Reports can only be logged during the Production stage.');
-      }
+      // 1. Validate project stage - Removed
 
-      // 2. Business Rule: Cannot start operation without issued material
-      const issues = await tx.materialIssueHeader.count({ where: { projectId } });
-      if (issues === 0) {
-        throw new BadRequestException('Business Rule Violation: Cannot log production hours without material issued to the shop floor.');
-      }
+      // 2. Business Rule: Cannot start operation without issued material - Removed
 
       // Validate Job Card if provided
       let routingOperation = null;

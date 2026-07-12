@@ -28,4 +28,12 @@ export class CreateGrnItemDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+
+  @IsString()
+  @IsOptional()
+  hsnCode?: string;
+
+  @IsNumber()
+  @IsOptional()
+  gstPercent?: number;
 }

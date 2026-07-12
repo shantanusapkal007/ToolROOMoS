@@ -2,10 +2,14 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePoDto } from './dto/create-po.dto';
 import { PurchaseOrderStatus, ProjectStatus, ApprovalStatus } from '@prisma/client';
+import { SequenceEngine } from '../common/sequence.engine';
 
 @Injectable()
 export class PurchaseOrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sequenceEngine: SequenceEngine
+  ) {}
 
   async createPo(projectId: string, dto: CreatePoDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
@@ -22,52 +26,14 @@ export class PurchaseOrdersService {
         vendorId = defaultVendor.id;
       }
 
-      if (project.currentStage !== ProjectStatus.PROCUREMENT) {
-        throw new BadRequestException('Purchase Orders can only be generated during the Procurement stage.');
-      }
+      // Phase validation removed to allow independent progression
 
-      // 2. Business Rule: Strict BOM Gate
-      const activeBom = await tx.billOfMaterialHeader.findFirst({
-        where: { projectId, status: 'APPROVED' },
-        include: { items: true },
-        orderBy: { revision: 'desc' }
-      });
+      // 2. Business Rule: Strict BOM Gate - Removed
+      // Allow PO creation without any BOM validation for flexibility
 
-      if (!activeBom) {
-        throw new BadRequestException('Procurement Gate Failed: Cannot create Purchase Order without an Approved Engineering BOM.');
-      }
-
-      // Map required quantities from BOM
-      const bomMaterialMap = new Map<string, number>();
-      for (const item of activeBom.items) {
-        const currentQty = bomMaterialMap.get(item.materialId) || 0;
-        bomMaterialMap.set(item.materialId, currentQty + Number(item.requiredQty));
-      }
-
-      // 3. Validate requested PO Items against BOM and existing POs
-      for (const item of dto.items) {
-        if (!bomMaterialMap.has(item.materialId)) {
-          throw new BadRequestException(`Procurement Gate Failed: Material ID ${item.materialId} is not approved in the Engineering BOM.`);
-        }
-
-        // Check if we are over-ordering
-        const requiredQty = bomMaterialMap.get(item.materialId)!;
-        
-        const existingPoItems = await tx.purchaseOrderItem.findMany({
-          where: {
-            poHeader: { projectId, status: { notIn: ['DRAFT', 'CANCELLED'] } },
-            materialId: item.materialId
-          }
-        });
-        
-        const alreadyOrdered = existingPoItems.reduce((sum, poItem) => sum + Number(poItem.orderedQty), 0);
-        
-        // Allow a 10% standard buffer for raw materials (standard lengths/plates)
-        const maxAllowed = requiredQty * 1.1;
-        
-        if (alreadyOrdered + item.orderedQty > maxAllowed) {
-          throw new BadRequestException(`Procurement Gate Failed: Quantity ${item.orderedQty} for material ${item.materialId} exceeds the maximum allowed BOM limit (Already ordered: ${alreadyOrdered}, Max Allowed: ${maxAllowed.toFixed(2)}).`);
-        }
+      let finalPoNumber = dto.poNumber;
+      if (!finalPoNumber || finalPoNumber.trim() === '') {
+        finalPoNumber = await this.sequenceEngine.generateNextNumber('PO');
       }
 
       // Calculate total po amount
@@ -81,8 +47,8 @@ export class PurchaseOrdersService {
         data: {
           projectId,
           vendorId: vendorId,
-          poNumber: dto.poNumber,
-          documentNumber: dto.poNumber,
+          poNumber: finalPoNumber,
+          documentNumber: finalPoNumber,
           totalAmount,
           expectedDeliveryDate: dto.expectedDeliveryDate ? new Date(dto.expectedDeliveryDate) : null,
           status: PurchaseOrderStatus.ISSUED,
@@ -116,7 +82,7 @@ export class PurchaseOrdersService {
         data: {
           projectId,
           action: 'PO_GENERATED',
-          description: `Purchase Order ${dto.poNumber} issued to Vendor. Value: ₹${totalAmount}`,
+          description: `Purchase Order ${finalPoNumber} issued to Vendor. Value: ₹${totalAmount}`,
           performedBy: userId || 'SYSTEM',
         },
       });

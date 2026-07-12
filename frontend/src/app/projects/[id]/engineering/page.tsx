@@ -15,6 +15,7 @@ import {
   useProjectBOM, useProjectRouting, useUpdateBOM, useUpdateRouting, 
   useApproveBOM, useApproveRouting 
 } from "../../../../hooks/useEngineering";
+import { PremiumDrawer } from "../../../../components/ui/PremiumDrawer";
 
 export default function EngineeringTab({ params }: { params: Promise<{ id: string }> }) {
   const { success, error, warning } = useToast();
@@ -39,7 +40,21 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
   const approveRoutingMutation = useApproveRouting(resolvedParams.id);
   // Modals & States
   const [showBomModal, setShowBomModal] = useState(false);
-  const [bomItems, setBomItems] = useState([{ materialId: "", requiredQty: 1, estimatedCost: 0 }]);
+  const [bomItems, setBomItems] = useState([{ materialId: "", requiredQty: 1, estimatedCost: 0, dimensions: "", hsnCode: "" }]);
+
+  useEffect(() => {
+    if (activeBom && activeBom.items && activeBom.items.length > 0) {
+      setBomItems(activeBom.items.map((i: any) => ({
+        materialId: i.materialId,
+        requiredQty: i.requiredQty,
+        estimatedCost: i.estimatedCost,
+        dimensions: i.dimensions || "",
+        hsnCode: i.hsnCode || ""
+      })));
+    } else {
+      setBomItems([{ materialId: "", requiredQty: 1, estimatedCost: 0, dimensions: "", hsnCode: "" }]);
+    }
+  }, [activeBom, showBomModal]);
 
   const [showRoutingModal, setShowRoutingModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'sequence' | 'converter'>('sequence');
@@ -63,7 +78,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
   const handleSaveConvertedBom = async (rows: any[]) => {
     try {
       // Map ParsedBOMRow to CreateBomItemDto format
-      const items = rows
+      const newItems = rows
         .filter(r => r.matchedMaterialId)
         .map(r => ({
           materialId: r.matchedMaterialId,
@@ -73,13 +88,26 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
           rawSize: r.rawMaterialSize
         }));
       
-      if (items.length === 0) {
+      if (newItems.length === 0) {
         warning("No Valid Items", "No matched materials found to save.");
         return;
       }
 
-      await updateBOMMutation.mutateAsync({ items });
-      success("BOM Saved", `Successfully imported ${items.length} items from converter.`);
+      // Merge with existing items so we append instead of overwrite
+      const existingItems = activeBom?.items?.map((i: any) => ({
+        materialId: i.materialId,
+        requiredQty: i.requiredQty,
+        calculatedWeight: i.calculatedWeight,
+        estimatedCost: i.estimatedCost,
+        rawSize: i.rawSize,
+        dimensions: i.dimensions,
+        hsnCode: i.hsnCode
+      })) || [];
+
+      const combinedItems = [...existingItems, ...newItems];
+
+      await updateBOMMutation.mutateAsync({ items: combinedItems });
+      success("BOM Saved", `Successfully imported ${newItems.length} items (Total: ${combinedItems.length}).`);
       setActiveTab('sequence');
       refetchBOM();
     } catch (err: any) {
@@ -177,46 +205,43 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
                 <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">1</span>
                 Material Plan
               </h3>
-              {isBomComplete ? (
+              {isBomComplete && (
                 <div className="text-[11px] font-bold text-emerald-400 flex items-center mt-2">
                   <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                  BOM Locked
-                </div>
-              ) : (
-                <div className="mt-2 space-y-2">
-                  {!activeBom ? (
-                    <button onClick={() => setShowBomModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">Create BOM</button>
-                  ) : (
-                    <button onClick={handleApproveBom} className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-[0_0_10px_rgba(5,150,105,0.3)]">Approve BOM</button>
-                  )}
+                  BOM Approved
                 </div>
               )}
+              <div className="mt-2 space-y-2">
+                <button onClick={() => setShowBomModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">
+                  {activeBom ? 'Edit BOM' : 'Create BOM'}
+                </button>
+                {activeBom && !isBomComplete && (
+                  <button onClick={handleApproveBom} className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-[0_0_10px_rgba(5,150,105,0.3)]">Approve BOM</button>
+                )}
+              </div>
             </div>
 
             {/* Step 2: Routing */}
-            <div className={`p-4 rounded-xl border ${isRoutingComplete ? 'border-emerald-500/30 bg-emerald-950/10' : (!isBomComplete ? 'border-white/5 bg-white/5 opacity-50' : 'border-blue-500/30 bg-blue-950/10')} relative flex flex-col justify-between`}>
-              {!isBomComplete && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] rounded-xl"><Lock className="text-white/30 w-4 h-4" /></div>}
+            <div className={`p-4 rounded-xl border ${isRoutingComplete ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-blue-500/30 bg-blue-950/10'} relative flex flex-col justify-between`}>
               <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
                 <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">2</span>
                 Machine Routing
               </h3>
-              {isRoutingComplete ? (
+              {isRoutingComplete && (
                 <div className="text-[11px] font-bold text-emerald-400 flex items-center mt-2">
                   <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                  Routing Locked
-                </div>
-              ) : (
-                <div className="mt-2 space-y-2">
-                  <button onClick={() => setShowRoutingModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">
-                    {activeRouting ? 'Edit Routing' : 'Plan Routing'}
-                  </button>
+                  Routing Approved
                 </div>
               )}
+              <div className="mt-2 space-y-2">
+                <button onClick={() => setShowRoutingModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">
+                  {activeRouting ? 'Edit Routing' : 'Plan Routing'}
+                </button>
+              </div>
             </div>
 
             {/* Step 3: Approval */}
-            <div className={`p-4 rounded-xl border ${isFullyApproved ? 'border-emerald-500/30 bg-emerald-950/10' : (!activeRouting ? 'border-white/5 bg-white/5 opacity-50' : 'border-orange-500/30 bg-orange-950/10')} relative flex flex-col justify-between`}>
-              {!activeRouting && <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] rounded-xl"><Lock className="text-white/30 w-4 h-4" /></div>}
+            <div className={`p-4 rounded-xl border ${isFullyApproved ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-orange-500/30 bg-orange-950/10'} relative flex flex-col justify-between`}>
               <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
                 <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">3</span>
                 Cost Baseline
@@ -316,31 +341,34 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
 
 
 
-      {showBomModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
-          <div className="glass-modal w-full max-w-2xl p-6 animate-slide-up border border-blue-500/20 flex flex-col max-h-[90vh]">
-            <h3 className="text-lg font-bold text-white mb-5">Material Plan (BOM)</h3>
-            <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col">
-              <div className="flex-1 overflow-y-auto space-y-4 max-h-[60vh] pr-2">
-                {bomItems.map((item, idx) => (
-                  <div key={idx} className="flex space-x-4 items-center">
-                    <select className="flex-1 bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
-                      <option value="">Select Material...</option>
-                      {materials?.map((m: any) => <option key={m.id} value={m.id}>{m.materialCode} - {m.materialGrade}</option>)}
-                    </select>
-                    <input type="number" className="w-24 bg-[#050A14] border border-white/10 rounded-lg p-2 text-white" required placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
-                  </div>
-                ))}
-                <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, estimatedCost: 0 }])} className="w-full py-2 border-2 border-dashed border-blue-500/30 text-blue-400 font-bold rounded-lg">+ Add Material</button>
+      <PremiumDrawer
+        isOpen={showBomModal}
+        onClose={() => setShowBomModal(false)}
+        title="Material Plan (BOM)"
+        subtitle="Define required materials for this project"
+        width="2xl"
+      >
+        <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col p-6">
+          <div className="flex-1 overflow-y-auto space-y-4 max-h-[60vh] pr-2">
+            {bomItems.map((item, idx) => (
+              <div key={idx} className="flex space-x-4 items-center bg-white/[0.02] p-3 rounded-xl border border-white/[0.05] hover:bg-white/[0.04] transition-colors shadow-[0_4px_10px_rgba(0,0,0,0.2),_inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                <select className="flex-1 bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs hover:border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] appearance-none" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
+                  <option value="" className="bg-[#050A14]">Select Material...</option>
+                  {materials?.map((m: any) => <option key={m.id} value={m.id} className="bg-[#050A14]">{m.materialCode} - {m.materialGrade}</option>)}
+                </select>
+                <input type="text" className="w-32 bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs hover:border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" placeholder="Dim (LxWxH)" value={item.dimensions || ""} onChange={(e) => { const a = [...bomItems]; a[idx].dimensions = e.target.value; setBomItems(a); }} />
+                <input type="text" className="w-28 bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs hover:border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" placeholder="HSN" value={item.hsnCode || ""} onChange={(e) => { const a = [...bomItems]; a[idx].hsnCode = e.target.value; setBomItems(a); }} />
+                <input type="number" className="w-20 bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs hover:border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" required placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
               </div>
-              <div className="flex space-x-3 pt-4 mt-4 border-t border-white/10 shrink-0">
-                <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-2 bg-white/5 rounded-xl text-white font-bold text-sm">Cancel</button>
-                <button type="submit" className="flex-1 py-2 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] rounded-xl text-white font-bold text-sm">Save BOM</button>
-              </div>
-            </form>
+            ))}
+            <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, estimatedCost: 0, dimensions: "", hsnCode: "" }])} className="w-full py-3 border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 text-indigo-400 hover:text-indigo-300 font-bold rounded-xl transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">+ Add Material</button>
           </div>
-        </div>
-      )}
+          <div className="flex space-x-3 pt-4 mt-4 border-t border-white/10 shrink-0">
+            <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-3 bg-white/[0.05] hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl text-white font-bold text-sm transition-all">Cancel</button>
+            <button type="submit" className="flex-1 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 hover:border-indigo-500/50 shadow-[0_0_20px_rgba(79,70,229,0.2),_inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-xl text-indigo-300 hover:text-white font-bold text-sm transition-all">Save BOM</button>
+          </div>
+        </form>
+      </PremiumDrawer>
 
       {/* Routing Node Editor */}
       {showRoutingModal && (

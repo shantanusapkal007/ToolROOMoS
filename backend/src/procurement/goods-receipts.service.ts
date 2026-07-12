@@ -11,9 +11,7 @@ export class GoodsReceiptsService {
     return this.prisma.$transaction(async (tx) => {
       // 1. Validate project stage
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      if (project.currentStage !== ProjectStatus.PROCUREMENT) {
-        throw new BadRequestException('GRNs can only be processed during the Procurement stage.');
-      }
+      // Phase validation removed to allow independent progression
 
       // 2. Business Rule: Cannot create GRN without a valid, issued PO
       const po = await tx.purchaseOrderHeader.findUnique({ where: { id: dto.poHeaderId } });

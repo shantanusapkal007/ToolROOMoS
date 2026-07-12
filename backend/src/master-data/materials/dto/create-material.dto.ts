@@ -40,4 +40,12 @@ export class CreateMaterialDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @IsString()
+  @IsOptional()
+  hsnCode?: string;
+
+  @IsNumber()
+  @IsOptional()
+  gstPercent?: number;
 }

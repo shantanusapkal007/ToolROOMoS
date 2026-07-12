@@ -12,10 +12,7 @@ export class BomsService {
       // 1. Fetch project to ensure existence
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
 
-      // Only allow BOM creation if project is in ENGINEERING stage
-      if (project.currentStage !== ProjectStatus.ENGINEERING) {
-        throw new BadRequestException('BOM can only be created during the Engineering stage.');
-      }
+      // Stage restriction removed to allow BOM creation at any time
 
       // Check for any active BOM revision
       const existingBoms = await tx.billOfMaterialHeader.count({ where: { projectId } });

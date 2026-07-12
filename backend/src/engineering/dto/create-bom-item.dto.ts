@@ -24,4 +24,12 @@ export class CreateBomItemDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+
+  @IsString()
+  @IsOptional()
+  dimensions?: string;
+
+  @IsString()
+  @IsOptional()
+  hsnCode?: string;
 }

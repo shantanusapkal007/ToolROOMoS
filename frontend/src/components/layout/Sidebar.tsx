@@ -21,7 +21,7 @@ export function Sidebar() {
       onMouseLeave={() => setIsHovered(false)}
       animate={{ width: isHovered ? 240 : 64 }}
       transition={springConfig}
-      className="fixed left-3 top-3 bottom-3 z-50 rounded-3xl border border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,1),inset_0_1px_0_rgba(255,255,255,0.15)] bg-[#050505] overflow-hidden flex flex-col group/sidebar transition-colors hover:border-white/20"
+      className="fixed left-3 top-3 bottom-3 z-50 rounded-3xl border border-white/[0.05] shadow-[0_20px_60px_-15px_rgba(0,0,0,1),inset_0_1px_1px_rgba(255,255,255,0.1)] bg-black/40 backdrop-blur-3xl overflow-hidden flex flex-col group/sidebar transition-colors hover:border-white/10"
     >
       {/* Ambient Inner Glow */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-purple-500/5 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-screen" />
@@ -162,20 +162,20 @@ function NavItem({
       {active && (
         <motion.div 
           layoutId="activeNav"
-          className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-transparent border-l-2 border-blue-400 rounded-r-xl pointer-events-none shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]"
+          className="absolute inset-0 bg-white/[0.03] border border-white/[0.05] rounded-xl pointer-events-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),_0_0_15px_rgba(255,255,255,0.05)]"
           initial={false}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-          <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-blue-500/10 to-transparent opacity-50 blur-lg"></div>
+          <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-white/[0.02] to-transparent opacity-50 blur-lg"></div>
         </motion.div>
       )}
       
       <div className={`relative z-10 flex items-center h-12 px-3 rounded-xl transition-all duration-300 group-hover:scale-[1.02] ${
         active 
-          ? 'text-white drop-shadow-md' 
-          : 'text-zinc-400 hover:text-white hover:bg-white/5'
+          ? 'text-white' 
+          : 'text-zinc-400 hover:text-white hover:bg-white/[0.02]'
       }`}>
-        <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${active ? 'bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30 shadow-inner' : 'group-hover:bg-white/5'}`}>
+        <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${active ? 'bg-white/10 text-white shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'group-hover:bg-white/5'}`}>
           {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
         </div>
         

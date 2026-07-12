@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { CommonModule } from './common/common.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { CustomersModule } from './master-data/customers/customers.module';
@@ -54,7 +56,8 @@ import { LookupsModule } from './master-data/lookups/lookups.module';
     // Layer 5 — Persistence (Global)
     PrismaModule,
 
-    // Layer 0 — Security
+    // Layer 0 — Security & Common
+    CommonModule,
     AuthModule,
     UsersModule,
 

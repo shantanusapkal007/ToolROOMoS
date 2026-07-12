@@ -37,6 +37,8 @@ interface ParsedBOMRow {
   apWeight: number | null;
   totalWeight: number | null;
   basicCost: number | null;
+  hsnCode: string | null;
+  gstPercent: number | null;
   validationError: string | null;
 }
 
@@ -110,6 +112,8 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     item.matchedMaterialName = matchedMat ? `${matchedMat.materialCode} - ${matchedMat.materialGrade}` : null;
     item.density = matchedMat ? Number(matchedMat.density || 7.85) : 7.85; // Default steel density
     item.rate = matchedMat ? Number(matchedMat.standardCost || 0) : 0;
+    item.hsnCode = matchedMat?.hsnCode || null;
+    item.gstPercent = matchedMat?.gstPercent ? Number(matchedMat.gstPercent) : 18; // Default GST 18% if not set
     
     if (item.length && item.width && item.height) {
         if (item.length === 'Ø') {
@@ -254,28 +258,30 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             if (!cell) return;
             const cleanHeader = cell.toString().trim().toLowerCase();
             
-            if (cleanHeader === "sr no" || cleanHeader === "sr. no." || cleanHeader === "detail no" || cleanHeader === "detail.no") {
+            const clean = cleanHeader.replace(/[^a-z0-9]/g, ''); // strip spaces and punctuation for matching
+            
+            if (clean.includes("srno") || clean.includes("serial") || clean.includes("detailno") || clean.includes("itemno") || clean === "no" || clean === "sn" || clean === "detno" || clean === "sr") {
               tempMapping["srNo"] = c;
               matches++;
-            } else if (cleanHeader.includes("part name") || cleanHeader.includes("description")) {
+            } else if (clean.includes("partname") || clean.includes("nameofpart") || clean.includes("desc") || clean.includes("component") || clean.includes("itemname") || clean.includes("partdesc") || clean === "part") {
               tempMapping["partName"] = c;
               matches++;
-            } else if (cleanHeader === "quantity" || cleanHeader === "qty") {
+            } else if (clean.includes("qty") || clean.includes("quantity") || clean.includes("reqqty") || clean === "nos" || clean.includes("required")) {
               tempMapping["quantity"] = c;
               matches++;
-            } else if (cleanHeader.includes("finish size")) {
+            } else if (clean.includes("finishsize") || clean.includes("finalsize") || clean.includes("fsize")) {
               tempMapping["finishSize"] = c;
               matches++;
-            } else if (cleanHeader.includes("raw material size") || cleanHeader.includes("rm size")) {
+            } else if (clean.includes("rawmaterialsize") || clean.includes("rmsize") || clean.includes("dim") || clean.includes("size") || clean.includes("blanksize") || clean.includes("cutsize") || clean.includes("stocksize") || clean.includes("lxbxh")) {
               tempMapping["rawMaterialSize"] = c;
               matches++;
-            } else if (cleanHeader === "material" || cleanHeader === "grade") {
+            } else if (clean.includes("material") || clean.includes("grade") || clean.includes("matl") || clean.includes("mat") || clean.includes("spec")) {
               tempMapping["material"] = c;
               matches++;
             }
           });
 
-          if (matches >= 3) {
+          if (matches >= 2) {
             headerRowIndex = r;
             colMapping = tempMapping;
             break;
@@ -283,15 +289,17 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         }
 
         if (headerRowIndex === -1) {
-          throw new Error("Could not find table headers. Make sure 'Sr No', 'Quantity', 'Raw Material Size', and 'Material' are present.");
+          throw new Error("Could not detect table headers automatically. Ensure you have columns like 'Qty', 'Material', 'Size', and 'Part Name'.");
         }
 
-        if (colMapping["srNo"] === undefined || 
-            colMapping["quantity"] === undefined || 
-            colMapping["rawMaterialSize"] === undefined || 
+        if (colMapping["quantity"] === undefined || 
             colMapping["material"] === undefined) {
-          throw new Error("Missing required columns: 'Sr No', 'Quantity', 'Raw Material Size', or 'Material'.");
+          throw new Error("Missing required columns: We need at least 'Quantity' and 'Material'. We found: " + Object.keys(colMapping).join(", "));
         }
+        
+        // If SrNo or Size aren't strictly found, just warn but allow import to continue (it will leave them blank)
+        if (colMapping["srNo"] === undefined) colMapping["srNo"] = -1; // -1 means we'll auto-generate
+        if (colMapping["rawMaterialSize"] === undefined) colMapping["rawMaterialSize"] = -1; // -1 means blank size
 
         // 3. Map Data Rows
         const parsedItems: ParsedBOMRow[] = [];
@@ -307,12 +315,12 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             continue;
           }
 
-          const srVal = row[colMapping["srNo"]]?.toString().trim() || "";
+          const srVal = colMapping["srNo"] !== -1 ? row[colMapping["srNo"]]?.toString().trim() || "" : "";
           const nameVal = colMapping["partName"] !== undefined ? row[colMapping["partName"]]?.toString().trim() || "" : "";
-          const qtyVal = parseInt(row[colMapping["quantity"]]?.toString().trim() || "0", 10);
+          const qtyVal = colMapping["quantity"] !== -1 ? parseInt(row[colMapping["quantity"]]?.toString().trim() || "0", 10) : 0;
           const finishVal = colMapping["finishSize"] !== undefined ? row[colMapping["finishSize"]]?.toString().trim() || "" : "";
-          const rmVal = row[colMapping["rawMaterialSize"]]?.toString().trim() || "";
-          const matVal = row[colMapping["material"]]?.toString().trim() || "";
+          const rmVal = colMapping["rawMaterialSize"] !== -1 ? row[colMapping["rawMaterialSize"]]?.toString().trim() || "" : "";
+          const matVal = colMapping["material"] !== -1 ? row[colMapping["material"]]?.toString().trim() || "" : "";
 
           if (!srVal && !nameVal && !rmVal) continue; // Skip padding blank rows
 
@@ -337,6 +345,8 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             apWeight: null,
             totalWeight: null,
             basicCost: null,
+            hsnCode: null,
+            gstPercent: null,
             validationError: null
           };
 
@@ -482,7 +492,10 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     rows.forEach((row, idx) => {
       grandQty += row.quantity;
       grandTotalWt += row.totalWeight || 0;
-      grandTotalCost += (row.basicCost || 0) * 1.18; // Includes GST
+      
+      const rate = row.rate || 0;
+      const gst = row.gstPercent || 18;
+      grandTotalCost += (row.basicCost || 0) * (1 + (gst / 100)); // Includes GST
 
       documentData.push([
         idx + 1, // SR.NO
@@ -497,8 +510,8 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         row.totalWeight ? row.totalWeight.toFixed(2) : "", // TOTAL WT.
         row.rate ? row.rate.toFixed(2) : "", // RATE
         row.basicCost ? row.basicCost.toFixed(2) : "", // BASIC COST
-        row.basicCost ? (row.basicCost * 0.18).toFixed(2) : "", // GST
-        row.basicCost ? (row.basicCost * 1.18).toFixed(2) : ""  // TOTAL
+        row.basicCost ? (row.basicCost * ((row.gstPercent || 18) / 100)).toFixed(2) : "", // GST
+        row.basicCost ? (row.basicCost * (1 + ((row.gstPercent || 18) / 100))).toFixed(2) : ""  // TOTAL
       ]);
     });
 

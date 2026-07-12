@@ -14,6 +14,8 @@ export const materialRegistry: EntityRegistry = {
     { key: 'materialCategory', label: 'Category' },
     { key: 'defaultUom', label: 'Base Unit' },
     { key: 'standardCost', label: 'Standard Cost' },
+    { key: 'hsnCode', label: 'HSN Code' },
+    { key: 'gstPercent', label: 'GST %' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
   ],
 
@@ -34,6 +36,8 @@ export const materialRegistry: EntityRegistry = {
     ] },
     { name: 'density', label: 'Density', type: 'number' },
     { name: 'standardCost', label: 'Standard Cost', type: 'number' },
+    { name: 'hsnCode', label: 'HSN Code', type: 'text' },
+    { name: 'gstPercent', label: 'GST %', type: 'number' },
     { name: 'defaultVendor', label: 'Default Vendor', type: 'text' },
     { name: 'shapeId', label: 'Material Shape', type: 'select', optionsEndpoint: 'master-data/material-shapes', optionsLabelKey: 'shapeName', optionsValueKey: 'id' },
     { name: 'remarks', label: 'Remarks', type: 'textarea', gridCols: 2 },
