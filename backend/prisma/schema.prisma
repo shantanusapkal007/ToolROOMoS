@@ -1733,6 +1733,13 @@ model MsdrOperation {
   materialIssueId String?
 
   inventoryBatchId String?
+  
+  toolNo           String?
+  detNo            String?
+  description      String?
+  rawMatlSize      String?
+  materialId       String?
+  finishMatlSize   String?
 
   startTime DateTime?
   endTime   DateTime?

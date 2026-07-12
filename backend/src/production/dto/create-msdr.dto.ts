@@ -1,22 +1,45 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class CreateMsdrItemDto {
+  @IsString()
+  @IsOptional()
+  toolNo?: string;
+
+  @IsString()
+  @IsOptional()
+  detNo?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  rawMatlSize?: string;
+
+  @IsString()
+  @IsOptional()
+  materialId?: string;
+
+  @IsString()
+  @IsOptional()
+  finishMatlSize?: string;
+
+  @IsNumber()
+  @IsOptional()
+  qty?: number;
+
+  @IsString()
+  @IsOptional()
+  startTime?: string;
+
+  @IsString()
+  @IsOptional()
+  endTime?: string;
+}
 
 export class CreateMsdrDto {
-  @IsString()
-  @IsOptional()
-  jobCardId?: string;
-
-  @IsString()
-  @IsOptional()
-  routingOperationId?: string;
-
-  @IsString()
-  @IsOptional()
-  materialIssueId?: string;
-
-  @IsString()
-  @IsOptional()
-  inventoryBatchId?: string;
-
   @IsString()
   @IsNotEmpty()
   machineId: string;
@@ -29,39 +52,8 @@ export class CreateMsdrDto {
   @IsNotEmpty()
   reportDate: string;
 
-  @IsDateString()
-  @IsNotEmpty()
-  startTime: string;
-
-  @IsDateString()
-  @IsNotEmpty()
-  endTime: string;
-
-  @IsNumber()
-  @IsOptional()
-  setupTime?: number;
-
-  @IsNumber()
-  @IsOptional()
-  cuttingTime?: number;
-
-  @IsNumber()
-  @IsOptional()
-  idleTime?: number;
-
-  @IsNumber()
-  @IsOptional()
-  producedQty?: number;
-
-  @IsNumber()
-  @IsOptional()
-  scrapQty?: number;
-
-  @IsNumber()
-  @IsOptional()
-  reworkQty?: number;
-
-  @IsString()
-  @IsOptional()
-  remarks?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMsdrItemDto)
+  items: CreateMsdrItemDto[];
 }

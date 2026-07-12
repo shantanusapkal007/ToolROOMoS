@@ -40,6 +40,22 @@ export class ProcurementController {
     };
   }
 
+  @Post('purchase-orders/:poId')
+  @Roles('ADMIN', 'PURCHASE')
+  async updatePo(
+    @Param('projectId') projectId: string,
+    @Param('poId') poId: string,
+    @Body() dto: CreatePoDto,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.poService.updatePo(projectId, poId, dto, user.userId);
+    return {
+      status: 'success',
+      message: 'Purchase Order updated successfully.',
+      data,
+    };
+  }
+
   @Get('purchase-orders')
   async getPurchaseOrders(@Param('projectId') projectId: string) {
     const data = await this.poService.getPurchaseOrders(projectId);

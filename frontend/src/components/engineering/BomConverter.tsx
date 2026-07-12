@@ -69,8 +69,15 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     const parts = cleaned.split(/[\s]*[xX×\*][\s]*/);
     
     if (isRound && parts.length >= 2) {
-      const dMatch = parts[0].match(/([\d\.]+)/);
-      const lMatch = parts[1].match(/([\d\.]+)/);
+      let dStr = parts[0];
+      let lStr = parts[1];
+      if (parts[0] === 'Ø' || parts[0].toLowerCase() === 'dia' || parts[0].toLowerCase() === '0') {
+         dStr = parts[1];
+         lStr = parts[2] || '';
+      }
+      
+      const dMatch = dStr?.match(/([\d\.]+)/);
+      const lMatch = lStr?.match(/([\d\.]+)/);
       
       const d = dMatch ? parseFloat(dMatch[1]) : NaN;
       const l = lMatch ? parseFloat(lMatch[1]) : NaN;
@@ -317,7 +324,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
           const srVal = colMapping["srNo"] !== -1 ? row[colMapping["srNo"]]?.toString().trim() || "" : "";
           const nameVal = colMapping["partName"] !== undefined ? row[colMapping["partName"]]?.toString().trim() || "" : "";
-          const qtyVal = colMapping["quantity"] !== -1 ? parseInt(row[colMapping["quantity"]]?.toString().trim() || "0", 10) : 0;
+          const qtyVal = colMapping["quantity"] !== -1 ? (parseInt(row[colMapping["quantity"]]?.toString().trim() || "0", 10) || 0) : 0;
           const finishVal = colMapping["finishSize"] !== undefined ? row[colMapping["finishSize"]]?.toString().trim() || "" : "";
           const rmVal = colMapping["rawMaterialSize"] !== -1 ? row[colMapping["rawMaterialSize"]]?.toString().trim() || "" : "";
           const matVal = colMapping["material"] !== -1 ? row[colMapping["material"]]?.toString().trim() || "" : "";
@@ -418,6 +425,10 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         populateCalculations(updated);
       } else if (field === 'rawMaterialSize' || field === 'length' || field === 'width' || field === 'height' || field === 'quantity') {
         populateCalculations(updated);
+      } else if (field === 'apWeight' || field === 'rate' || field === 'gstPercent') {
+        // Manual override: Only recalculate downstream totals, do not wipe user inputs
+        updated.totalWeight = (updated.apWeight || 0) * (updated.quantity || 0);
+        updated.basicCost = (updated.totalWeight || 0) * (updated.rate || 0);
       }
 
       // Re-validate row
@@ -758,14 +769,14 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                 </button>
               </div>
 
-              {isConverted && invalidRowsCount === 0 && (
+              {validationRun && invalidRowsCount === 0 && (
                 <>
                   <button 
                     onClick={handleExportExcel} 
                     className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-500/20 transition-all ml-4"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download PO Sheet</span>
+                    <span>Download Excel</span>
                   </button>
                   <button 
                     onClick={() => {
@@ -822,8 +833,13 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                     </td>
 
                     {/* DET NO */}
-                    <td className="px-4 py-2.5 font-mono font-bold text-slate-200">
-                      {row.srNo}
+                    <td className="px-2 py-2">
+                      <input 
+                        type="text" 
+                        value={row.srNo} 
+                        onChange={(e) => handleCellEdit(row.id, 'srNo', e.target.value)}
+                        className="w-16 bg-black/60 border border-white/10 rounded px-2 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                      />
                     </td>
 
                     {/* Raw size dimension fields (Editable: Length, Width, Height) */}
@@ -841,7 +857,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           type="number" 
                           placeholder="W"
                           value={row.width || ''} 
-                          onChange={(e) => handleCellEdit(row.id, 'width', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => handleCellEdit(row.id, 'width', e.target.value === '' ? '' : parseFloat(e.target.value))}
                           className="w-14 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
                         />
                         <span className="text-slate-500">×</span>
@@ -849,7 +865,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           type="number" 
                           placeholder="H"
                           value={row.height || ''} 
-                          onChange={(e) => handleCellEdit(row.id, 'height', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => handleCellEdit(row.id, 'height', e.target.value === '' ? '' : parseFloat(e.target.value))}
                           className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
                         />
                       </div>
@@ -870,16 +886,22 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                     <td className="px-2 py-2 text-center">
                       <input 
                         type="number" 
-                        value={row.quantity} 
-                        onChange={(e) => handleCellEdit(row.id, 'quantity', parseInt(e.target.value) || 0)}
+                        value={Number.isNaN(row.quantity) ? '' : row.quantity} 
+                        onChange={(e) => handleCellEdit(row.id, 'quantity', e.target.value === '' ? '' : parseInt(e.target.value))}
                         className="w-16 bg-black/60 border border-white/10 rounded px-2 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
                         min="1"
                       />
                     </td>
 
-                    {/* AP WT. */}
-                    <td className="px-4 py-2.5 text-right font-mono text-emerald-400">
-                      {row.apWeight ? row.apWeight.toFixed(2) : '-'}
+                    {/* AP WT. (Editable) */}
+                    <td className="px-2 py-2 text-right">
+                      <input 
+                        type="number" 
+                        value={Number.isNaN(row.apWeight) ? '' : (row.apWeight || '')} 
+                        onChange={(e) => handleCellEdit(row.id, 'apWeight', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                        className="w-16 bg-black/60 border border-white/10 rounded px-2 py-1 text-right font-mono text-emerald-400 text-xs focus:outline-none focus:border-emerald-500/50"
+                        step="0.01"
+                      />
                     </td>
 
                     {/* TOTAL WT. */}
@@ -887,9 +909,15 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                       {row.totalWeight ? row.totalWeight.toFixed(2) : '-'}
                     </td>
 
-                    {/* RATE */}
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-300">
-                      {row.rate ? row.rate.toFixed(2) : '-'}
+                    {/* RATE (Editable) */}
+                    <td className="px-2 py-2 text-right">
+                      <input 
+                        type="number" 
+                        value={Number.isNaN(row.rate) ? '' : (row.rate || '')} 
+                        onChange={(e) => handleCellEdit(row.id, 'rate', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                        className="w-16 bg-black/60 border border-white/10 rounded px-2 py-1 text-right font-mono text-slate-300 text-xs focus:outline-none focus:border-blue-500/50"
+                        step="0.01"
+                      />
                     </td>
 
                     {/* BASIC */}
@@ -897,9 +925,18 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                       {row.basicCost ? row.basicCost.toFixed(2) : '-'}
                     </td>
 
-                    {/* GST (Estimated 18%) */}
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-500">
-                      {row.basicCost ? (row.basicCost * 0.18).toFixed(2) : '-'}
+                    {/* GST % (Editable) */}
+                    <td className="px-2 py-2 text-right">
+                      <div className="flex items-center justify-end space-x-1">
+                        <input 
+                          type="number" 
+                          value={Number.isNaN(row.gstPercent) ? '' : (row.gstPercent || '')} 
+                          onChange={(e) => handleCellEdit(row.id, 'gstPercent', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                          className="w-14 bg-black/60 border border-white/10 rounded px-2 py-1 text-right font-mono text-slate-500 text-xs focus:outline-none focus:border-blue-500/50"
+                          step="0.1"
+                        />
+                        <span className="text-slate-500 text-[10px]">%</span>
+                      </div>
                     </td>
 
                     {/* TOTAL */}

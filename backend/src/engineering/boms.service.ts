@@ -8,6 +8,7 @@ export class BomsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createBom(projectId: string, dto: CreateBomDto, userId?: string) {
+    console.log("CreateBOM DTO items:", JSON.stringify(dto.items, null, 2));
     return this.prisma.$transaction(async (tx) => {
       // 1. Fetch project to ensure existence
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
@@ -68,10 +69,13 @@ export class BomsService {
               bomHeaderId: bomHeader.id,
               materialId: item.materialId,
               rawSize: item.rawSize,
+              dimensions: item.dimensions,
+              hsnCode: item.hsnCode,
               calculatedWeight: item.calculatedWeight,
               requiredQty: item.requiredQty,
               estimatedCost: item.estimatedCost || 0,
               remarks: item.remarks,
+              customFields: { gstPercent: item.gstPercent || 18 },
               createdBy: userId,
               updatedBy: userId,
             },
@@ -221,6 +225,9 @@ export class BomsService {
                   orderedQty: item.qtyToOrder,
                   agreedRate: item.calculatedRate,
                   lineTotal: item.finalCost,
+                  dimensions: item.dimensions,
+                  hsnCode: item.hsnCode,
+                  gstPercent: (item.customFields as any)?.gstPercent || 18,
                   remarks: 'Auto-generated item'
                 }
               })

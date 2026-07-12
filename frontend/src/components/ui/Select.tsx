@@ -37,11 +37,14 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               ${className}
             `}
             disabled={props.disabled}
+            style={{ colorScheme: 'dark' }}
             {...props}
           >
-            <option value="" disabled className="bg-[#0B1018] text-slate-500">
-              Select an option...
-            </option>
+            {!props.children && (
+              <option value="" disabled className="bg-[#0B1018] text-slate-500">
+                Select an option...
+              </option>
+            )}
             {creatable && (
               <option value="CREATE_NEW" className="bg-blue-500/10 text-blue-400 font-bold">
                 + Add New...

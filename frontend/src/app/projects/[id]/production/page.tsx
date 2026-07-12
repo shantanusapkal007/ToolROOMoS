@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Activity, Wrench, PackageMinus, Plus, Factory, CheckCircle, Clock, FileText, ChevronRight, PlayCircle } from "lucide-react";
 import { SmartTable } from "@/components/ui/SmartTable";
 import { PremiumDrawer } from "@/components/ui/PremiumDrawer";
+import { MsdrTableForm } from "@/components/production/MsdrTableForm";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
@@ -91,6 +92,12 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
         </div>
         <div className="flex gap-3">
           <button 
+            onClick={() => { setSelectedItem(null); setDrawerMode('MSDR'); }} 
+            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] text-sm font-medium"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Log Daily Report
+          </button>
+          <button 
             onClick={() => setDrawerMode('ISSUE')} 
             className="flex items-center px-4 py-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl hover:bg-indigo-500/30 transition-all text-sm font-medium"
           >
@@ -98,7 +105,7 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
           </button>
           <button 
             onClick={handleGenerateJobCards} 
-            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] text-sm font-medium"
+            className="flex items-center px-4 py-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl hover:bg-indigo-500/30 transition-all text-sm font-medium"
           >
             <Wrench className="w-4 h-4 mr-2" /> Generate Job Cards
           </button>
@@ -150,8 +157,8 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
               { key: 'reportDate', label: 'Date', render: (v) => formatDate(v) },
               { key: 'machine', label: 'Machine', render: (v) => v?.machineName },
               { key: 'employee', label: 'Operator', render: (v) => v?.firstName },
-              { key: 'setupTime', label: 'Setup (hrs)' },
-              { key: 'cuttingTime', label: 'Cutting (hrs)' }
+              { key: 'msdrNumber', label: 'Report No' },
+              { key: 'operations', label: 'Operations', render: (v) => v?.length || 0 }
             ]}
           />
         )}
@@ -210,38 +217,13 @@ export default function ProductionTab({ params }: { params: Promise<{ id: string
         </div>
       </PremiumDrawer>
 
-      <PremiumDrawer
-        isOpen={drawerMode === 'MSDR'}
-        onClose={() => setDrawerMode(null)}
-        title="Log Machine Shop Report"
-        subtitle={`Logging hours for ${selectedItem?.routingOperation?.operation?.operationName || 'Operation'}`}
-      >
-        <div className="space-y-4 p-1">
-          <Input label="Date" type="date" value={msdrForm.reportDate} onChange={e => setMsdrForm({...msdrForm, reportDate: e.target.value})} />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Start Time" type="time" value={msdrForm.startTime} onChange={e => setMsdrForm({...msdrForm, startTime: e.target.value})} />
-            <Input label="End Time" type="time" value={msdrForm.endTime} onChange={e => setMsdrForm({...msdrForm, endTime: e.target.value})} />
-          </div>
-          <Select label="Machine" value={msdrForm.machineId} onChange={e => setMsdrForm({...msdrForm, machineId: e.target.value})}>
-            <option value="">Select machine...</option>
-            {machines?.map((m: any) => <option key={m.id} value={m.id}>{m.machineName}</option>)}
-          </Select>
-          <Select label="Operator" value={msdrForm.employeeId} onChange={e => setMsdrForm({...msdrForm, employeeId: e.target.value})}>
-            <option value="">Select operator...</option>
-            {employees?.map((e: any) => <option key={e.id} value={e.id}>{e.firstName} {e.lastName}</option>)}
-          </Select>
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Setup Time (hrs)" type="number" value={msdrForm.setupTime} onChange={e => setMsdrForm({...msdrForm, setupTime: Number(e.target.value)})} />
-            <Input label="Cutting Time (hrs)" type="number" value={msdrForm.cuttingTime} onChange={e => setMsdrForm({...msdrForm, cuttingTime: Number(e.target.value)})} />
-          </div>
-          
-          <div className="pt-6">
-            <button onClick={handleLogMSDR} className="w-full py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 hover:border-indigo-500/50 shadow-[0_0_20px_rgba(79,70,229,0.2),_inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-xl text-indigo-300 hover:text-white font-bold text-sm transition-all">
-              Save Report
-            </button>
-          </div>
-        </div>
-      </PremiumDrawer>
+      {drawerMode === 'MSDR' && (
+        <MsdrTableForm
+          projectId={projectId}
+          onClose={() => setDrawerMode(null)}
+          onSuccess={() => { setDrawerMode(null); }}
+        />
+      )}
 
     </div>
   );

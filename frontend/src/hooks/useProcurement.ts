@@ -31,6 +31,22 @@ export function useCreatePurchaseOrder(projectId: string) {
   });
 }
 
+export function useUpdatePurchaseOrder(projectId: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: ({ poId, data }: { poId: string, data: any }) => ProcurementService.updatePurchaseOrder(projectId, poId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: procurementKeys.orders(projectId) });
+      success('PO Updated', 'Purchase Order was successfully updated.');
+    },
+    onError: (err: any) => {
+      error('Failed to update PO', err.message || 'An error occurred');
+    },
+  });
+}
+
 export function useProcessGRN(projectId: string) {
   const queryClient = useQueryClient();
   const { success, error } = useToast();

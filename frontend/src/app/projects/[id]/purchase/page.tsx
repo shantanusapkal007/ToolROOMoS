@@ -9,9 +9,10 @@ import { Select } from "../../../../components/ui/Select";
 import { useToast } from "../../../../components/ui/Toast";
 import { useProject } from "../../../../hooks/useProjects";
 import { useMasterData } from "../../../../hooks/useMasterData";
-import { usePurchaseOrders, useCreatePurchaseOrder, useProcessGRN } from "../../../../hooks/useProcurement";
+import { usePurchaseOrders, useCreatePurchaseOrder, useProcessGRN, useUpdatePurchaseOrder } from "../../../../hooks/useProcurement";
 import { motion } from 'framer-motion';
 import { PremiumDrawer } from '../../../../components/ui/PremiumDrawer';
+import { Edit2 } from "lucide-react";
 
 export default function PurchaseTab({ params }: { params: Promise<{ id: string }> }) {
   const { error, success } = useToast();
@@ -24,16 +25,18 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
   const { data: purchaseOrders, refetch: refetchPurchaseOrders } = usePurchaseOrders(resolvedParams.id);
 
   const createPOMutation = useCreatePurchaseOrder(resolvedParams.id);
+  const updatePOMutation = useUpdatePurchaseOrder(resolvedParams.id);
   const processGRNMutation = useProcessGRN(resolvedParams.id);
 
   const [showPoModal, setShowPoModal] = useState(false);
   const [showGrnModal, setShowGrnModal] = useState(false);
   const [viewingPoDetails, setViewingPoDetails] = useState<any>(null);
+  const [editingPoId, setEditingPoId] = useState<string | null>(null);
   
   const [poNum, setPoNum] = useState("");
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
-  const [poItems, setPoItems] = useState([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
+  const [poItems, setPoItems] = useState<any[]>([{ materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18 }]);
   
   const [selectedPo, setSelectedPo] = useState<any>(null);
   const [grnData, setGrnData] = useState({
@@ -48,7 +51,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
 
   if (projectLoading || !project) return null;
 
-  const handleCreatePo = async (e: React.FormEvent) => {
+  const handleSavePo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project) return;
     
@@ -57,19 +60,49 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
     }
 
     try {
-      await createPOMutation.mutateAsync({
-        vendorId: selectedVendorId,
-        poNumber: poNum,
-        expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate).toISOString() : undefined,
-        items: poItems
-      });
+      if (editingPoId) {
+        await updatePOMutation.mutateAsync({
+          poId: editingPoId,
+          data: {
+            vendorId: selectedVendorId,
+            poNumber: poNum,
+            expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate).toISOString() : undefined,
+            items: poItems
+          }
+        });
+      } else {
+        await createPOMutation.mutateAsync({
+          vendorId: selectedVendorId,
+          poNumber: poNum,
+          expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate).toISOString() : undefined,
+          items: poItems
+        });
+      }
       setShowPoModal(false);
       refetchProject();
       
       setPoNum("");
       setSelectedVendorId("");
       setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
+      setEditingPoId(null);
     } catch (err: any) {}
+  };
+
+  const openEditPoModal = (po: any) => {
+    setEditingPoId(po.id);
+    setPoNum(po.poNumber);
+    setSelectedVendorId(po.vendorId || "");
+    setExpectedDeliveryDate(po.expectedDeliveryDate ? new Date(po.expectedDeliveryDate).toISOString().split('T')[0] : "");
+    setPoItems(po.items.map((i: any) => ({
+      materialId: i.materialId,
+      orderedQty: i.orderedQty,
+      agreedRate: i.agreedRate,
+      dimensions: i.dimensions || "",
+      hsnCode: i.hsnCode || "",
+      gstPercent: i.gstPercent || 18
+    })));
+    setShowPoModal(true);
+    setViewingPoDetails(null);
   };
 
   const openGrnModal = (po: any) => {
@@ -174,7 +207,13 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
           <h2 className="text-lg font-bold text-white tracking-tight">Procurement & Sourcing</h2>
         </div>
         <button 
-          onClick={() => setShowPoModal(true)} 
+          onClick={() => {
+            setEditingPoId(null);
+            setPoNum("");
+            setSelectedVendorId("");
+            setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
+            setShowPoModal(true);
+          }} 
           className="group relative px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(245,158,11,0.1)] hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]"
         >
           <span className="relative z-10 flex items-center text-amber-400 font-bold text-sm">
@@ -249,7 +288,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   </button>
                   {po.status === 'DRAFT' && (
                     <button
-                      onClick={() => handleIssuePo(po.id)}
+                      onClick={() => handleIssuePO(po.id)}
                       className="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 py-2.5 rounded-xl transition-all duration-300 border border-blue-500/20 hover:border-blue-500/30 font-bold text-xs flex items-center justify-center space-x-1"
                     >
                       <span>Issue PO</span>
@@ -261,6 +300,15 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2.5 rounded-xl transition-all duration-300 border border-emerald-500/20 hover:border-emerald-500/30 font-bold text-xs flex items-center justify-center space-x-1"
                     >
                       <span>Process GRN</span>
+                    </button>
+                  )}
+                  {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
+                    <button
+                      onClick={() => openEditPoModal(po)}
+                      className="px-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 py-2.5 rounded-xl transition-all duration-300 border border-blue-500/20 hover:border-blue-500/30 flex items-center justify-center"
+                      title="Edit Purchase Order"
+                    >
+                      <Edit2 className="w-4 h-4" />
                     </button>
                   )}
                   {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
@@ -296,13 +344,19 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
       {/* Create PO Drawer */}
       <PremiumDrawer
         isOpen={showPoModal}
-        onClose={() => setShowPoModal(false)}
-        title="Create Purchase Order"
-        subtitle="Generate a new vendor PO for raw materials"
+        onClose={() => {
+          setShowPoModal(false);
+          setEditingPoId(null);
+          setPoNum("");
+          setSelectedVendorId("");
+          setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
+        }}
+        title={editingPoId ? "Edit Purchase Order" : "Create Purchase Order"}
+        subtitle={editingPoId ? "Modify PO details" : "Generate a new vendor PO for raw materials"}
         width="2xl"
         showToolbar={false}
       >
-        <form onSubmit={handleCreatePo} className="flex flex-col space-y-6 h-full p-6">
+        <form onSubmit={handleSavePo} className="flex flex-col space-y-6 h-full p-6">
           <div className="grid grid-cols-2 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
             <Input
               label="PO Number (Auto-generated if empty)"
@@ -329,18 +383,19 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
           <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Order Lines</h4>
             <div className="grid grid-cols-12 gap-4 mb-3">
-              <div className="col-span-12 md:col-span-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Material</div>
+              <div className="col-span-12 md:col-span-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Material</div>
               <div className="col-span-6 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Dimensions</div>
               <div className="col-span-6 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">HSN Code</div>
-              <div className="col-span-6 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Qty</div>
+              <div className="col-span-6 md:col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Qty</div>
               <div className="col-span-5 md:col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Rate</div>
+              <div className="col-span-5 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">GST %</div>
               <div className="col-span-1"></div>
             </div>
             
             <div className="space-y-3">
               {poItems.map((item, index) => (
                 <div key={index} className="grid grid-cols-12 gap-4 items-center bg-white/[0.02] p-3 rounded-xl border border-white/5">
-                  <div className="col-span-12 md:col-span-4">
+                  <div className="col-span-12 md:col-span-3">
                     <Select
                       value={item.materialId}
                       onChange={(e) => {
@@ -375,7 +430,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       onChange={(e) => updatePoItem(index, 'hsnCode', e.target.value)}
                     />
                   </div>
-                  <div className="col-span-6 md:col-span-2">
+                  <div className="col-span-6 md:col-span-1">
                     <input
                       type="number"
                       min="1"
@@ -397,6 +452,17 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
                       value={item.agreedRate}
                       onChange={(e) => updatePoItem(index, 'agreedRate', Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="col-span-5 md:col-span-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="GST %"
+                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
+                      value={item.gstPercent || ''}
+                      onChange={(e) => updatePoItem(index, 'gstPercent', Number(e.target.value))}
                     />
                   </div>
                   <div className="col-span-1 flex justify-center">
@@ -423,8 +489,16 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
           </div>
 
           <div className="flex space-x-4 pt-4 shrink-0 border-t border-white/10 mt-auto">
-            <button type="button" onClick={() => setShowPoModal(false)} className="flex-1 px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 font-bold text-white shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all">Generate Purchase Order</button>
+            <button type="button" onClick={() => {
+              setShowPoModal(false);
+              setEditingPoId(null);
+              setPoNum("");
+              setSelectedVendorId("");
+              setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18 }]);
+            }} className="flex-1 px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 font-bold text-white shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all">
+              {editingPoId ? "Save Changes" : "Generate Purchase Order"}
+            </button>
           </div>
         </form>
       </PremiumDrawer>
@@ -588,6 +662,14 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 </div>
               </div>
               <div className="flex space-x-2">
+                {(viewingPoDetails.status === 'DRAFT' || viewingPoDetails.status === 'ON_HOLD') && (
+                  <button 
+                    onClick={() => openEditPoModal(viewingPoDetails)}
+                    className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 font-bold text-xs transition-colors"
+                  >
+                    <span>Edit PO</span>
+                  </button>
+                )}
                 {viewingPoDetails.status === 'ON_HOLD' && (
                   <button 
                     onClick={() => handleIssuePO(viewingPoDetails.id)}
@@ -689,8 +771,9 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 
                 <div className="bg-white/[0.01] border border-white/5 rounded-xl overflow-hidden">
                   <div className="grid grid-cols-12 gap-2 px-4 py-2.5 text-[9px] font-black text-slate-500 uppercase tracking-wider bg-black/40 border-b border-white/5">
-                    <div className="col-span-5">Material Item</div>
+                    <div className="col-span-4">Material Item</div>
                     <div className="col-span-2 text-right">Unit Rate</div>
+                    <div className="col-span-1 text-right">GST %</div>
                     <div className="col-span-3 px-2">Fulfillment Progress</div>
                     <div className="col-span-2 text-right">Line Total</div>
                   </div>
@@ -702,11 +785,14 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       
                       return (
                         <div key={item.id} className="grid grid-cols-12 gap-2 px-4 py-3 text-xs text-slate-300 hover:bg-white/[0.01] transition-colors items-center">
-                          <div className="col-span-5 font-semibold text-white">
+                          <div className="col-span-4 font-semibold text-white">
                             {item.material?.materialName || 'Raw Material'}
                           </div>
                           <div className="col-span-2 text-right font-mono font-medium">
                             &#8377;{Number(item.agreedRate).toLocaleString()}
+                          </div>
+                          <div className="col-span-1 text-right font-mono font-medium text-slate-400">
+                            {item.gstPercent ? `${item.gstPercent}%` : '-'}
                           </div>
                           <div className="col-span-3 px-2 flex flex-col space-y-1">
                             <div className="flex justify-between text-[10px] font-bold text-slate-500">

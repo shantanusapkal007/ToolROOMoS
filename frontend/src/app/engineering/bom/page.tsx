@@ -110,7 +110,8 @@ function BomWrapper({ project, materials, onClose, onSuccess, onError }: any) {
         rawSize: r.rawMaterialSize || r.rawSize || '',
         calculatedWeight: r.totalWeight || r.calculatedWeight || 0,
         dimensions: r.length && r.width && r.height ? `${r.length}x${r.width}x${r.height}` : undefined,
-        hsnCode: r.hsnCode || undefined
+        hsnCode: r.hsnCode || undefined,
+        gstPercent: r.gstPercent || undefined
       }));
       await updateBOMMutation.mutateAsync({ items });
       onSuccess();

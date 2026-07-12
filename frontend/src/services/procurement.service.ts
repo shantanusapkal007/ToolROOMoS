@@ -11,6 +11,11 @@ export const ProcurementService = {
     return res.data;
   },
 
+  updatePurchaseOrder: async (projectId: string, poId: string, data: any): Promise<any> => {
+    const res = await api.post(`projects/${projectId}/purchase-orders/${poId}`, data);
+    return res.data;
+  },
+
   processGRN: async (projectId: string, data: any): Promise<any> => {
     const res = await api.post(`projects/${projectId}/goods-receipts`, data);
     return res.data;

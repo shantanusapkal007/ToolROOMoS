@@ -32,4 +32,8 @@ export class CreateBomItemDto {
   @IsString()
   @IsOptional()
   hsnCode?: string;
+
+  @IsNumber()
+  @IsOptional()
+  gstPercent?: number;
 }

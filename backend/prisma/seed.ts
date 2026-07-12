@@ -2,6 +2,7 @@ import { PrismaClient, VendorType } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import 'dotenv/config';
+import * as bcrypt from 'bcrypt';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -9,6 +10,21 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 Starting database seeding...');
+
+  // 0. Seed Admin User
+  const passwordHash = await bcrypt.hash('password123', 10);
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@toolroom.com' },
+    update: { passwordHash },
+    create: {
+      email: 'admin@toolroom.com',
+      passwordHash,
+      name: 'System Admin',
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    },
+  });
+  console.log(`✅ Seeded User: ${adminUser.email}`);
 
   // 1. Seed Company
   const company = await prisma.company.upsert({

@@ -69,6 +69,9 @@ export class PurchaseOrdersService {
               orderedQty: item.orderedQty,
               agreedRate: item.agreedRate,
               lineTotal: item.orderedQty * item.agreedRate,
+              dimensions: item.dimensions,
+              hsnCode: item.hsnCode,
+              gstPercent: item.gstPercent,
               remarks: item.remarks,
               createdBy: userId,
               updatedBy: userId,
@@ -111,6 +114,76 @@ export class PurchaseOrdersService {
           }
         }
       },
+    });
+  }
+
+  async updatePo(projectId: string, poId: string, dto: CreatePoDto, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const po = await tx.purchaseOrderHeader.findUniqueOrThrow({
+        where: { id: poId, projectId }
+      });
+
+      if (po.status !== 'DRAFT' && po.status !== 'ON_HOLD') {
+        throw new BadRequestException('Only DRAFT or ON_HOLD purchase orders can be edited.');
+      }
+
+      // Calculate total po amount
+      let totalAmount = 0;
+      for (const item of dto.items) {
+        totalAmount += item.orderedQty * item.agreedRate;
+      }
+
+      // Delete existing items
+      await tx.purchaseOrderItem.deleteMany({
+        where: { poHeaderId: poId }
+      });
+
+      // Update PO Header
+      const updatedPoHeader = await tx.purchaseOrderHeader.update({
+        where: { id: poId },
+        data: {
+          vendorId: dto.vendorId,
+          poNumber: dto.poNumber,
+          documentNumber: dto.poNumber,
+          totalAmount,
+          expectedDeliveryDate: dto.expectedDeliveryDate ? new Date(dto.expectedDeliveryDate) : null,
+          remarks: dto.remarks,
+          updatedBy: userId,
+        },
+      });
+
+      // Create new PO Items
+      await Promise.all(
+        dto.items.map((item) =>
+          tx.purchaseOrderItem.create({
+            data: {
+              poHeaderId: updatedPoHeader.id,
+              materialId: item.materialId,
+              orderedQty: item.orderedQty,
+              agreedRate: item.agreedRate,
+              lineTotal: item.orderedQty * item.agreedRate,
+              dimensions: item.dimensions,
+              hsnCode: item.hsnCode,
+              gstPercent: item.gstPercent,
+              remarks: item.remarks,
+              createdBy: userId,
+              updatedBy: userId,
+            },
+          })
+        )
+      );
+
+      // Log activity
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'PO_UPDATED',
+          description: `Purchase Order ${dto.poNumber} was modified. New Value: ₹${totalAmount}`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return updatedPoHeader;
     });
   }
 
