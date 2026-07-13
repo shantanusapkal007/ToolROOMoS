@@ -1,28 +1,26 @@
 @import "tailwindcss";
 
 html {
-  /* 13px base: gives a naturally dense, information-rich layout at 100% browser zoom.
-     All rem units scale proportionally — no browser zoom needed. */
-  font-size: 13px;
+  font-size: 14px;
 }
 
 :root {
   /* --- PHASE 1: DESIGN SYSTEM TOKENS --- */
 
   /* Neutral Colors */
-  --bg-primary: #000000;         /* True black for maximum contrast in OLED/Canvas */
-  --bg-canvas: #000000;          /* Pure black canvas for OLED Vibe */
-  --bg-surface: rgba(18, 18, 20, 0.4); /* Base Glass Surface */
-  --bg-panel: rgba(24, 24, 27, 0.5);   /* Elevated Panel */
+  --bg-primary: #0A0A0C;         /* Brightened from pure black for better visibility */
+  --bg-canvas: #050508;          /* Lifted canvas color */
+  --bg-surface: rgba(30, 30, 35, 0.6); /* Brighter base glass surface */
+  --bg-panel: rgba(40, 40, 48, 0.75);  /* Brighter elevated panel */
   
-  --glass-surface: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-highlight: rgba(255, 255, 255, 0.12);
-  --glass-divider: rgba(255, 255, 255, 0.05);
+  --glass-surface: rgba(255, 255, 255, 0.06); /* Increased from 0.03 */
+  --glass-border: rgba(255, 255, 255, 0.15);  /* Increased from 0.08 */
+  --glass-highlight: rgba(255, 255, 255, 0.20); /* Increased from 0.12 */
+  --glass-divider: rgba(255, 255, 255, 0.10); /* Increased from 0.05 */
 
-  --text-primary: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-tertiary: #71717A;
+  --text-primary: #FFFFFF;
+  --text-secondary: #D4D4D8; /* Zinc-300 instead of Zinc-400 */
+  --text-tertiary: #A1A1AA; /* Zinc-400 instead of Zinc-500 */
 
   /* Semantic Workflow Colors */
   --color-engineering: #3B82F6; /* Blue */

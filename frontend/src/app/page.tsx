@@ -15,7 +15,7 @@ export default function Home() {
   return (
     <div className="flex h-screen w-full overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
-      <main className="flex-1 h-screen overflow-hidden flex flex-col relative z-0" style={{ paddingLeft: '76px' }}>
+      <main className="flex-1 h-screen overflow-hidden flex flex-col relative z-0 pl-[5.5rem]">
         <MissionControl 
           projects={projects} 
           onSelectProject={(proj) => router.push(`/projects/${proj.id}/overview`)} 

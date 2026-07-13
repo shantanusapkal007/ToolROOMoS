@@ -149,7 +149,7 @@ export function MsdrTableForm({ projectId, onClose, onSuccess }: MsdrTableFormPr
             </label>
             <Select value={header.employeeId} onChange={e => setHeader({...header, employeeId: e.target.value})} className="bg-[#151821]">
               <option value="" disabled className="bg-[#0B1018] text-slate-500">Select Operator...</option>
-              {employees?.map((emp: any) => <option key={emp.id} value={emp.id} className="bg-[#0B1018] text-white">{emp.firstName} {emp.lastName}</option>)}
+              {employees?.map((emp: any) => <option key={emp.id} value={emp.id} className="bg-[#0B1018] text-white">{emp.name}</option>)}
             </Select>
           </div>
           <div className="flex-1 min-w-[200px]">
@@ -187,9 +187,9 @@ export function MsdrTableForm({ projectId, onClose, onSuccess }: MsdrTableFormPr
                   </td>
                   <td className="py-2 px-1">
                     <select className="w-36 bg-black/20 border border-transparent hover:border-white/10 focus:border-indigo-500 rounded px-2 py-1.5 outline-none transition-all text-white [color-scheme:dark]" value={item.detNo} onChange={e => handleItemChange(index, 'detNo', e.target.value)}>
-                      <option value="" className="bg-[#151821]">Select Det...</option>
+                      <option value="" className="bg-[#151821] text-slate-500">Select Det...</option>
                       {jobCards?.map((jc: any) => (
-                        <option key={jc.id} value={jc.id} className="bg-[#151821]">
+                        <option key={jc.id} value={jc.id} className="bg-[#151821] text-white">
                           {jc.id.slice(-6).toUpperCase()} - {jc.routingOperation?.operation?.operationName || 'Operation'}
                         </option>
                       ))}
@@ -203,9 +203,9 @@ export function MsdrTableForm({ projectId, onClose, onSuccess }: MsdrTableFormPr
                   </td>
                   <td className="py-2 px-1">
                     <select className="w-32 bg-black/20 border border-transparent hover:border-white/10 focus:border-indigo-500 rounded px-2 py-1.5 outline-none transition-all text-white [color-scheme:dark]" value={item.materialId} onChange={e => handleItemChange(index, 'materialId', e.target.value)}>
-                      <option value="" className="bg-[#151821]">Select Mat...</option>
+                      <option value="" className="bg-[#151821] text-slate-500">Select Mat...</option>
                       {materials?.map((mat: any) => (
-                        <option key={mat.id} value={mat.id} className="bg-[#151821]">
+                        <option key={mat.id} value={mat.id} className="bg-[#151821] text-white">
                           {mat.materialCode} {mat.materialGrade ? `- ${mat.materialGrade}` : ''}
                         </option>
                       ))}

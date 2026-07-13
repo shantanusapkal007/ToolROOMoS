@@ -541,7 +541,9 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
     let grandTotal = 0;
 
     po.items?.forEach((item: any, idx: number) => {
-      const grnItem = item.goodsReceiptItems?.[0]; 
+      // Find the corresponding GRN item either from the direct relation or from the included headers
+      const grnItem = item.goodsReceiptItems?.[0] || 
+                      po.goodsReceiptHeaders?.[0]?.items?.find((i: any) => i.poItemId === item.id);
       
       const qty = grnItem ? Number(grnItem.acceptedQty) : Number(item.orderedQty);
       const rate = Number(item.agreedRate || 0);

@@ -19,9 +19,9 @@ export function Sidebar() {
     <motion.div 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      animate={{ width: isHovered ? 240 : 64 }}
+      animate={{ width: isHovered ? "17rem" : "4.5rem" }}
       transition={springConfig}
-      className="fixed left-3 top-3 bottom-3 z-50 rounded-3xl border border-white/[0.05] shadow-[0_20px_60px_-15px_rgba(0,0,0,1),inset_0_1px_1px_rgba(255,255,255,0.1)] bg-black/40 backdrop-blur-3xl overflow-hidden flex flex-col group/sidebar transition-colors hover:border-white/10 hide-on-print"
+      className="fixed left-3 top-3 bottom-3 z-50 rounded-3xl border border-white/[0.08] shadow-[10px_0_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] bg-[#08080C] overflow-hidden flex flex-col group/sidebar transition-colors hover:border-white/15 hide-on-print"
     >
       {/* Ambient Inner Glow */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-purple-500/5 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-screen" />

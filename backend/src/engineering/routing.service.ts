@@ -1,14 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoutingDto } from './dto/create-routing.dto';
-import { CostBaselineService } from './cost-baseline.service';
 import { ProjectStatus } from '@prisma/client';
 
 @Injectable()
 export class RoutingService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly costBaselineService: CostBaselineService
+    private readonly prisma: PrismaService
   ) {}
 
   async submitEngineeringPlan(projectId: string, dto: CreateRoutingDto, userId?: string) {
@@ -117,8 +115,7 @@ export class RoutingService {
         }
       });
 
-      // 2. Generate and Freeze Cost Baseline
-      await this.costBaselineService.calculateAndFreezeCostBaseline(projectId, userId);
+      // 2. Cost Baseline calculation removed. Actual costs handled by MSDR.
 
       // 3. Advance Workflow (Ready for Procurement)
       // Note: In real setup, the transition logic handles validation.

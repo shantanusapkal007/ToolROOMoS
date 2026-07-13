@@ -91,7 +91,7 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
           </div>
 
           {/* Page Content */}
-          <div className="flex-1 relative bg-white/[0.01] border border-white/5 rounded-2xl backdrop-blur-md overflow-hidden flex flex-col">
+          <div className="flex-1 bg-black/40 backdrop-blur-2xl border border-white/5 rounded-3xl overflow-y-auto shadow-2xl relative z-10 flex flex-col min-h-0">
              {children}
           </div>
         </div>

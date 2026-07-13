@@ -16,7 +16,6 @@ export class WorkflowOrchestratorService {
       where: { id: projectId },
       include: {
         billOfMaterialHeaders: { where: { status: 'APPROVED' } },
-        routingHeaders: { where: { approvalStatus: 'APPROVED' } },
         goodsReceiptHeaders: true,
         materialIssueHeaders: true,
         jobCards: true,
@@ -36,8 +35,7 @@ export class WorkflowOrchestratorService {
     // Evaluate stage progression strictly in order
     if (project.currentStage === 'CREATED' || project.currentStage === 'ENGINEERING') {
       const hasBom = project.billOfMaterialHeaders.length > 0;
-      const hasRouting = project.routingHeaders.length > 0;
-      if (hasBom && hasRouting) {
+      if (hasBom) {
         nextStage = 'PROCUREMENT';
       }
     }
@@ -49,8 +47,7 @@ export class WorkflowOrchestratorService {
 
     if (nextStage === 'MATERIAL_AVAILABLE') {
       const hasIssues = project.materialIssueHeaders.length > 0;
-      const hasJobCards = project.jobCards.length > 0;
-      if (hasIssues && hasJobCards) nextStage = 'PRODUCTION';
+      if (hasIssues) nextStage = 'PRODUCTION';
     }
 
     if (nextStage === 'PRODUCTION') {

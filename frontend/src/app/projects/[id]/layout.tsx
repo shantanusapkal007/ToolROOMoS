@@ -119,7 +119,7 @@ export default function ProjectLayout({
     return (
       <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
         <Sidebar />
-        <main className="flex-1 h-full flex flex-col relative z-0" style={{ paddingLeft: '76px' }}>
+        <main className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem]">
           <LoadingState message="Initializing Project Core..." />
         </main>
       </div>
@@ -133,7 +133,7 @@ export default function ProjectLayout({
   return (
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative z-0" style={{ paddingLeft: '76px' }}>
+      <main className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem]">
         <div className="flex-1 h-full flex flex-col animate-slide-up min-h-0 overflow-hidden">
             
           {/* Premium Ultra-Dense Context Header */}
@@ -207,7 +207,7 @@ export default function ProjectLayout({
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 min-h-0 relative z-0 px-6 pt-4 pb-2 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 relative z-0 px-6 pt-4 pb-2 overflow-y-auto hide-scrollbar flex flex-col">
             {children}
           </div>
 

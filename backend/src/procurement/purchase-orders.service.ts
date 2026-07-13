@@ -104,7 +104,12 @@ export class PurchaseOrdersService {
       where: { projectId },
       include: { 
         vendor: true, 
-        items: { include: { material: true } },
+        items: { 
+          include: { 
+            material: true,
+            goodsReceiptItems: true
+          } 
+        },
         goodsReceiptHeaders: {
           include: {
             items: {
