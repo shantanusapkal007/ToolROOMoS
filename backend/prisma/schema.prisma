@@ -531,6 +531,9 @@ model BillOfMaterialItem {
   isAssembly       Boolean  @default(false)
   customFields     Json?
 
+  catalogSize      String?
+  stockSize        String?
+
   parentItemId String?
   parentItem   BillOfMaterialItem?  @relation("BomItemHierarchy", fields: [parentItemId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   childItems   BillOfMaterialItem[] @relation("BomItemHierarchy")
@@ -638,6 +641,7 @@ model PurchaseOrderHeader {
   gstPercent Decimal?
 
   hsnCode String?
+  customFields Json?
 
   @@map("purchase_order_headers")
 }
@@ -656,6 +660,7 @@ model PurchaseOrderItem {
   updatedBy         String?
   receivedQty       Decimal             @default(0)
   status            String              @default("PENDING")
+  customFields      Json?
   goodsReceiptItems GoodsReceiptItem[]
   material          Material            @relation(fields: [materialId], references: [id])
   poHeader          PurchaseOrderHeader @relation(fields: [poHeaderId], references: [id])
@@ -666,15 +671,22 @@ model PurchaseOrderItem {
 
   hsnCode String?
 
+  uom String?
+  discount Decimal?
+  cgst Decimal?
+  sgst Decimal?
+  basicValue Decimal?
+
   @@map("purchase_order_items")
 }
 
 model GoodsReceiptHeader {
-  id             String              @id @default(uuid())
-  projectId      String
-  poHeaderId     String
-  grnNumber      String              @unique
-  documentNumber String?
+  id              String              @id @default(uuid())
+  projectId       String
+  poHeaderId      String
+  grnNumber       String              @unique
+  supplierChallan String?
+  documentNumber  String?
   receiptDate    DateTime            @default(now())
   status         String              @default("COMPLETED")
   remarks        String?
@@ -721,6 +733,17 @@ model GoodsReceiptItem {
   gstPercent Decimal?
 
   rackLocation String?
+
+  toolNo String?
+  detNo String?
+  length Decimal?
+  width Decimal?
+  height Decimal?
+  apWeight Decimal?
+  totalWeight Decimal?
+  basicCost Decimal?
+  gst Decimal?
+  total Decimal?
 
   @@map("goods_receipt_items")
 }

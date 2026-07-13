@@ -19,6 +19,9 @@ export class CreatePoDto {
   @IsOptional()
   remarks?: string;
 
+  @IsOptional()
+  customFields?: any;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreatePoItemDto)

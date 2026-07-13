@@ -25,8 +25,13 @@ interface ParsedBOMRow {
   partName: string;
   quantity: number;
   finishSize: string;
+  finishL?: string | number;
+  finishW?: string | number;
+  finishH?: string | number;
   rawMaterialSize: string;
   materialInput: string;
+  catalogSize: string;
+  stockSize: string;
   length: number | string;
   width: number | string;
   height: number | string;
@@ -285,6 +290,10 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             } else if (clean.includes("material") || clean.includes("grade") || clean.includes("matl") || clean.includes("mat") || clean.includes("spec")) {
               tempMapping["material"] = c;
               matches++;
+            } else if (clean.includes("catalogsize") || clean.includes("catsize") || clean.includes("standard")) {
+              tempMapping["catalogSize"] = c;
+            } else if (clean.includes("stocksize") || clean.includes("stock")) {
+              tempMapping["stockSize"] = c;
             }
           });
 
@@ -328,8 +337,10 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
           const finishVal = colMapping["finishSize"] !== undefined ? row[colMapping["finishSize"]]?.toString().trim() || "" : "";
           const rmVal = colMapping["rawMaterialSize"] !== -1 ? row[colMapping["rawMaterialSize"]]?.toString().trim() || "" : "";
           const matVal = colMapping["material"] !== -1 ? row[colMapping["material"]]?.toString().trim() || "" : "";
+          const catVal = colMapping["catalogSize"] !== undefined ? row[colMapping["catalogSize"]]?.toString().trim() || "" : "";
+          const stockVal = colMapping["stockSize"] !== undefined ? row[colMapping["stockSize"]]?.toString().trim() || "" : "";
 
-          if (!srVal && !nameVal && !rmVal) continue; // Skip padding blank rows
+          if (!srVal && !nameVal && !rmVal && !catVal) continue; // Skip padding blank rows
 
           // Resolve dimensions
           const dimensions = parseDimensions(rmVal);
@@ -342,6 +353,8 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             finishSize: finishVal,
             rawMaterialSize: rmVal,
             materialInput: matVal,
+            catalogSize: catVal,
+            stockSize: stockVal,
             length: dimensions.length as any,
             width: dimensions.width as any,
             height: dimensions.height as any,
@@ -800,7 +813,8 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                   <th className="px-4 py-3 text-center w-12">SR.NO</th>
                   <th className="px-4 py-3">TOOL NO</th>
                   <th className="px-4 py-3">DET NO</th>
-                  <th className="px-4 py-3 text-center w-48">L × W × H</th>
+                  <th className="px-4 py-3 text-center w-40">FINISH (L×W×H)</th>
+                  <th className="px-4 py-3 text-center w-40">RM (L×W×H)</th>
                   <th className="px-4 py-3">MATERIAL</th>
                   <th className="px-4 py-3 text-center w-20">QTY</th>
                   <th className="px-4 py-3 text-right">AP WT.</th>
@@ -842,6 +856,33 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                       />
                     </td>
 
+                    {/* Finish size dimension fields (Editable: Length, Width, Height) */}
+                    <td className="px-2 py-2 text-center">
+                      <div className="flex items-center space-x-1.5 justify-center">
+                        <input 
+                          type="text" 
+                          placeholder="L"
+                          value={row.finishL || ''} 
+                          onChange={(e) => handleCellEdit(row.id, 'finishL', e.target.value)}
+                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="W"
+                          value={row.finishW || ''} 
+                          onChange={(e) => handleCellEdit(row.id, 'finishW', e.target.value)}
+                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="H"
+                          value={row.finishH || ''} 
+                          onChange={(e) => handleCellEdit(row.id, 'finishH', e.target.value)}
+                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                        />
+                      </div>
+                    </td>
+
                     {/* Raw size dimension fields (Editable: Length, Width, Height) */}
                     <td className="px-2 py-2 text-center">
                       <div className="flex items-center space-x-1.5 justify-center">
@@ -850,17 +891,15 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           placeholder="L"
                           value={row.length || ''} 
                           onChange={(e) => handleCellEdit(row.id, 'length', e.target.value)}
-                          className="w-14 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
                         />
-                        <span className="text-slate-500">×</span>
                         <input 
                           type="number" 
                           placeholder="W"
                           value={row.width || ''} 
                           onChange={(e) => handleCellEdit(row.id, 'width', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          className="w-14 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
                         />
-                        <span className="text-slate-500">×</span>
                         <input 
                           type="number" 
                           placeholder="H"

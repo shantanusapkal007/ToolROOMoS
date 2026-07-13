@@ -36,4 +36,44 @@ export class CreateGrnItemDto {
   @IsNumber()
   @IsOptional()
   gstPercent?: number;
+
+  @IsString()
+  @IsOptional()
+  toolNo?: string;
+
+  @IsString()
+  @IsOptional()
+  detNo?: string;
+
+  @IsNumber()
+  @IsOptional()
+  length?: number;
+
+  @IsNumber()
+  @IsOptional()
+  width?: number;
+
+  @IsNumber()
+  @IsOptional()
+  height?: number;
+
+  @IsNumber()
+  @IsOptional()
+  apWeight?: number;
+
+  @IsNumber()
+  @IsOptional()
+  totalWeight?: number;
+
+  @IsNumber()
+  @IsOptional()
+  basicCost?: number;
+
+  @IsNumber()
+  @IsOptional()
+  gst?: number;
+
+  @IsNumber()
+  @IsOptional()
+  total?: number;
 }

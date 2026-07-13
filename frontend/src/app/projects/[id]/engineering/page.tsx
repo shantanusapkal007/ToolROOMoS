@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { api } from "../../../../lib/api";
 import { FileText, Layers, GitMerge, CheckCircle, Lock, Cpu, Settings } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
@@ -40,19 +41,49 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
   const approveRoutingMutation = useApproveRouting(resolvedParams.id);
   // Modals & States
   const [showBomModal, setShowBomModal] = useState(false);
-  const [bomItems, setBomItems] = useState([{ materialId: "", requiredQty: 1, estimatedCost: 0, dimensions: "", hsnCode: "" }]);
+  const [bomItems, setBomItems] = useState([{ materialId: "", requiredQty: 1, finishL: "", finishW: "", finishH: "", rmL: "", rmW: "", rmH: "", hsnCode: "", partName: "", description: "" }]);
+  const [bomHeader, setBomHeader] = useState({ releaseDate: "", designerBy: "", approvedBy: "" });
+
+  const parseDimString = (str: string) => {
+    if (!str) return { l: '', w: '', h: '' };
+    const parts = str.split(/[*xX×]/);
+    if (parts.length >= 3) return { l: parts[0], w: parts[1], h: parts[2] };
+    return { l: str, w: '', h: '' };
+  };
 
   useEffect(() => {
-    if (activeBom && activeBom.items && activeBom.items.length > 0) {
-      setBomItems(activeBom.items.map((i: any) => ({
-        materialId: i.materialId,
-        requiredQty: i.requiredQty,
-        estimatedCost: i.estimatedCost,
-        dimensions: i.dimensions || "",
-        hsnCode: i.hsnCode || ""
-      })));
-    } else {
-      setBomItems([{ materialId: "", requiredQty: 1, estimatedCost: 0, dimensions: "", hsnCode: "" }]);
+    if (activeBom) {
+      if (activeBom.items && activeBom.items.length > 0) {
+        setBomItems(activeBom.items.map((i: any) => {
+          const fin = parseDimString(i.dimensions || "");
+          const rm = parseDimString(i.rawSize || "");
+          return {
+            materialId: i.materialId,
+            requiredQty: i.requiredQty,
+            finishL: fin.l, finishW: fin.w, finishH: fin.h,
+            rmL: rm.l, rmW: rm.w, rmH: rm.h,
+            hsnCode: i.hsnCode || "",
+            partName: i.customFields?.partName || "",
+            description: i.customFields?.description || ""
+          };
+        }));
+      } else {
+        setBomItems([{ materialId: "", requiredQty: 1, finishL: "", finishW: "", finishH: "", rmL: "", rmW: "", rmH: "", hsnCode: "", partName: "", description: "" }]);
+      }
+
+      if (activeBom.remarks) {
+        try {
+          const parsed = JSON.parse(activeBom.remarks);
+          setBomHeader({
+            releaseDate: parsed.releaseDate || "",
+            designerBy: parsed.designerBy || "",
+            approvedBy: parsed.approvedBy || ""
+          });
+        } catch {
+          // Fallback if remarks was just text
+          setBomHeader({ releaseDate: "", designerBy: "", approvedBy: "" });
+        }
+      }
     }
   }, [activeBom, showBomModal]);
 
@@ -63,10 +94,81 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
 
 
 
+  const handleExportBOM = () => {
+    const documentData: any[][] = [];
+
+    documentData.push(["                            KRUPA TOOLS & STAMPING LTD\r\n                            B O M Table"]);
+    documentData.push(["CUSTOMER", null, project?.customer?.companyName || "", null, "PROJECT NUMBER", project?.projectNumber || "", "VERSION"]);
+    
+    const headers = ["NO.", "PART NAME", "QTY", "CATALOG/SIZE", "FINISH SIZES", "STOCK SIZES", "MATERIAL"];
+    documentData.push(headers);
+
+    bomItems.forEach((item, idx) => {
+      const mat = materials?.find((m: any) => m.id === item.materialId);
+      const matName = mat ? `${mat.materialCode}` : "";
+      
+      const finishSizes = item.finishL && item.finishW && item.finishH ? `${item.finishL}X${item.finishW}X${item.finishH}` : (item.finishL || "");
+      const stockSizes = item.rmL && item.rmW && item.rmH ? `${item.rmL}X${item.rmW}X${item.rmH}` : (item.rmL || "");
+
+      documentData.push([
+        idx + 1,
+        item.partName,
+        item.requiredQty,
+        item.description, // using description as catalog/size 
+        finishSizes,
+        stockSizes,
+        matName
+      ]);
+    });
+
+    documentData.push(["RELEASE DATE", null, `DATE :-${bomHeader.releaseDate || new Date().toLocaleDateString()}`, null, "DESIGNER BY", bomHeader.designerBy || "", "APPROVED BY", bomHeader.approvedBy || ""]);
+
+    const worksheet = XLSX.utils.aoa_to_sheet(documentData);
+
+    // Apply exact template merges
+    worksheet['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Header Title
+      
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }, // CUSTOMER label
+      { s: { r: 1, c: 2 }, e: { r: 1, c: 3 } }, // Customer Name value
+      
+      { s: { r: documentData.length - 1, c: 0 }, e: { r: documentData.length - 1, c: 1 } }, // RELEASE DATE label
+      { s: { r: documentData.length - 1, c: 2 }, e: { r: documentData.length - 1, c: 3 } }, // DATE value
+    ];
+
+    const wscols = [
+      { wch: 5 },  { wch: 30 }, { wch: 6 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }
+    ];
+    worksheet['!cols'] = wscols;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "PDW_BOM_TEMPLATE");
+    XLSX.writeFile(workbook, `BOM_${project?.projectNumber || 'Form'}.xlsx`);
+  };
+
   const handleSubmitBom = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateBOMMutation.mutateAsync({ items: bomItems });
+      const headerInfo = JSON.stringify(bomHeader);
+      const payloadItems = bomItems.map((i: any) => ({
+        materialId: i.materialId,
+        requiredQty: Number(i.requiredQty),
+        dimensions: i.finishL && i.finishW && i.finishH ? `${i.finishL}*${i.finishW}*${i.finishH}` : (i.finishL || ''),
+        rawSize: i.rmL && i.rmW && i.rmH ? `${i.rmL}*${i.rmW}*${i.rmH}` : (i.rmL || ''),
+        hsnCode: i.hsnCode,
+        customFields: {
+          partName: i.partName,
+          description: i.description,
+          length: i.rmL,
+          width: i.rmW,
+          height: i.rmH,
+          finishL: i.finishL,
+          finishW: i.finishW,
+          finishH: i.finishH
+        }
+      }));
+
+      await updateBOMMutation.mutateAsync({ remarks: headerInfo, items: payloadItems });
       setShowBomModal(false);
       refetchBOM();
       success("BOM Saved", "Bill of Materials successfully updated.");
@@ -85,7 +187,9 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
           requiredQty: Number(r.quantity),
           calculatedWeight: Number(r.totalWeight),
           estimatedCost: Number(r.basicCost),
-          rawSize: r.rawMaterialSize
+          rawSize: r.rawMaterialSize,
+          catalogSize: r.catalogSize,
+          stockSize: r.stockSize
         }));
       
       if (newItems.length === 0) {
@@ -100,6 +204,8 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
         calculatedWeight: i.calculatedWeight,
         estimatedCost: i.estimatedCost,
         rawSize: i.rawSize,
+        catalogSize: i.catalogSize,
+        stockSize: i.stockSize,
         dimensions: i.dimensions,
         hsnCode: i.hsnCode
       })) || [];
@@ -346,26 +452,102 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
         onClose={() => setShowBomModal(false)}
         title="Material Plan (BOM)"
         subtitle="Define required materials for this project"
-        width="2xl"
+        width="full"
       >
-        <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col p-6">
-          <div className="flex-1 overflow-y-auto space-y-4 max-h-[60vh] pr-2">
+        <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col p-6 bg-[#030712] print:bg-white text-white print:text-black">
+          
+          {/* Header Information (Document Style) */}
+          <div className="grid grid-cols-4 gap-6 mb-6 pb-6 border-b border-white/10 print:border-black/20">
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Customer</p>
+              <p className="text-sm font-semibold">{project?.customer?.companyName || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Project Number</p>
+              <p className="text-sm font-semibold font-mono">{project?.projectNumber || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Tool</p>
+              <p className="text-sm font-semibold">{project?.partName || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Date</p>
+              <p className="text-sm font-semibold">{new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-2 max-h-[50vh] pr-2 custom-scrollbar print:max-h-none print:overflow-visible">
+            {/* Table Headers */}
+            <div className="grid grid-cols-[3rem_1.5fr_0.5fr_1fr_1fr_1.5fr_1.5fr] gap-3 px-4 py-2 bg-[#0B1018] rounded-xl border border-white/5 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 print:bg-slate-100 print:text-black print:border-black/20">
+              <div className="text-center">No.</div>
+              <div>Part Name</div>
+              <div className="text-center">Qty</div>
+              <div className="text-center">Finish Size (L×W×H)</div>
+              <div className="text-center">RM Size (L×W×H)</div>
+              <div>Material</div>
+              <div>Description</div>
+            </div>
+
             {bomItems.map((item, idx) => (
-              <div key={idx} className="flex space-x-4 items-center bg-white/[0.02] p-3 rounded-xl border border-white/[0.05] hover:bg-white/[0.04] transition-colors shadow-[0_4px_10px_rgba(0,0,0,0.2),_inset_0_1px_1px_rgba(255,255,255,0.05)]">
-                <select className="flex-1 bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs hover:border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] appearance-none" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
-                  <option value="" className="bg-[#050A14]">Select Material...</option>
+              <div key={idx} className="grid grid-cols-[3rem_1.5fr_0.5fr_1fr_1fr_1.5fr_1.5fr] gap-3 items-center bg-white/[0.02] px-4 py-2 rounded-xl border border-white/[0.05] hover:bg-white/[0.04] transition-colors shadow-[0_4px_10px_rgba(0,0,0,0.2)] print:bg-white print:border-black/20 print:shadow-none">
+                
+                {/* No. */}
+                <div className="text-center font-mono text-slate-500 text-xs font-bold">{idx + 1}</div>
+                
+                {/* Part Name */}
+                <input type="text" className="w-full bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="Part Name" value={item.partName} onChange={(e) => { const a = [...bomItems]; a[idx].partName = e.target.value; setBomItems(a); }} />
+                
+                {/* Qty */}
+                <input type="number" className="w-full bg-black/40 border border-white/[0.05] rounded-lg p-2 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" required min="1" placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
+                
+                {/* Finish Size */}
+                <div className="flex items-center space-x-1.5 bg-black/20 border border-white/[0.05] rounded-lg p-1">
+                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="L" value={item.finishL} onChange={(e) => { const a = [...bomItems]; a[idx].finishL = e.target.value; setBomItems(a); }} />
+                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="W" value={item.finishW} onChange={(e) => { const a = [...bomItems]; a[idx].finishW = e.target.value; setBomItems(a); }} />
+                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="H" value={item.finishH} onChange={(e) => { const a = [...bomItems]; a[idx].finishH = e.target.value; setBomItems(a); }} />
+                </div>
+                
+                {/* RM Size */}
+                <div className="flex items-center space-x-1.5 bg-black/20 border border-white/[0.05] rounded-lg p-1">
+                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="L" value={item.rmL} onChange={(e) => { const a = [...bomItems]; a[idx].rmL = e.target.value; setBomItems(a); }} />
+                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="W" value={item.rmW} onChange={(e) => { const a = [...bomItems]; a[idx].rmW = e.target.value; setBomItems(a); }} />
+                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="H" value={item.rmH} onChange={(e) => { const a = [...bomItems]; a[idx].rmH = e.target.value; setBomItems(a); }} />
+                </div>
+                
+                {/* Material */}
+                <select className="w-full bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all appearance-none [color-scheme:dark] print:bg-transparent print:text-black print:border-none print:p-0 print:appearance-none" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
+                  <option value="" className="bg-[#050A14] text-slate-500">Select Material...</option>
                   {materials?.map((m: any) => <option key={m.id} value={m.id} className="bg-[#050A14]">{m.materialCode} - {m.materialGrade}</option>)}
                 </select>
-                <input type="text" className="w-32 bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs hover:border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" placeholder="Dim (LxWxH)" value={item.dimensions || ""} onChange={(e) => { const a = [...bomItems]; a[idx].dimensions = e.target.value; setBomItems(a); }} />
-                <input type="text" className="w-28 bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs hover:border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" placeholder="HSN" value={item.hsnCode || ""} onChange={(e) => { const a = [...bomItems]; a[idx].hsnCode = e.target.value; setBomItems(a); }} />
-                <input type="number" className="w-20 bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs hover:border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" required placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
+
+                {/* Description */}
+                <input type="text" className="w-full bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="Remarks/Desc" value={item.description} onChange={(e) => { const a = [...bomItems]; a[idx].description = e.target.value; setBomItems(a); }} />
               </div>
             ))}
-            <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, estimatedCost: 0, dimensions: "", hsnCode: "" }])} className="w-full py-3 border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 text-indigo-400 hover:text-indigo-300 font-bold rounded-xl transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">+ Add Material</button>
+            
+            <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, finishL: "", finishW: "", finishH: "", rmL: "", rmW: "", rmH: "", hsnCode: "", partName: "", description: "" }])} className="w-full py-3 mt-4 border border-white/10 border-dashed bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 text-indigo-400 hover:text-indigo-300 font-bold rounded-xl transition-all hide-on-print">+ Add Material Row</button>
           </div>
-          <div className="flex space-x-3 pt-4 mt-4 border-t border-white/10 shrink-0">
+
+          {/* Footer Information */}
+          <div className="grid grid-cols-3 gap-6 pt-6 mt-6 border-t border-white/10 print:border-black/20">
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Designer By</p>
+              <input type="text" className="w-full bg-black/40 border border-white/[0.05] border-b-white/20 rounded-t-lg p-2 text-white text-sm focus:border-b-indigo-500 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1" placeholder="Designer Signature" value={bomHeader.designerBy} onChange={(e) => setBomHeader({...bomHeader, designerBy: e.target.value})} />
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Approved By</p>
+              <input type="text" className="w-full bg-black/40 border border-white/[0.05] border-b-white/20 rounded-t-lg p-2 text-white text-sm focus:border-b-indigo-500 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1" placeholder="Approver Signature" value={bomHeader.approvedBy} onChange={(e) => setBomHeader({...bomHeader, approvedBy: e.target.value})} />
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Release Date</p>
+              <input type="date" className="w-full bg-black/40 border border-white/[0.05] border-b-white/20 rounded-t-lg p-2 text-white text-sm focus:border-b-indigo-500 focus:bg-white/[0.05] focus:outline-none transition-all [color-scheme:dark] print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1 print:appearance-none" value={bomHeader.releaseDate} onChange={(e) => setBomHeader({...bomHeader, releaseDate: e.target.value})} />
+            </div>
+          </div>
+
+          <div className="flex space-x-3 pt-6 mt-8 border-t border-white/5 shrink-0 hide-on-print">
             <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-3 bg-white/[0.05] hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl text-white font-bold text-sm transition-all">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 hover:border-indigo-500/50 shadow-[0_0_20px_rgba(79,70,229,0.2),_inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-xl text-indigo-300 hover:text-white font-bold text-sm transition-all">Save BOM</button>
+            <button type="button" onClick={handleExportBOM} className="px-6 py-3 bg-white/[0.05] hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl text-white font-bold text-sm transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">Export Form (Excel)</button>
+            <button type="submit" className="flex-1 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 hover:border-indigo-500/50 shadow-[0_0_20px_rgba(79,70,229,0.2),_inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-xl text-indigo-300 hover:text-white font-bold text-sm transition-all">Save Material Plan</button>
           </div>
         </form>
       </PremiumDrawer>

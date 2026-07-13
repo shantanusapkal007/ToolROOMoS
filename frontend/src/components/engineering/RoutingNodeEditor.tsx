@@ -433,7 +433,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                         <select 
                           value={selectedNode.data.type}
                           onChange={(e) => updateSelectedNodeData('type', e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none"
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none [color-scheme:dark]"
                         >
                           <option value="machining">Machining</option>
                           <option value="external">External</option>
@@ -453,7 +453,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                             setTimeout(() => updateSelectedNodeData('label', op.operationName), 0);
                           }
                         }}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none [color-scheme:dark]"
                       >
                         <option value="">-- Select Operation --</option>
                         {operations.map((op: any) => (
@@ -471,7 +471,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                         <select 
                           value={selectedNode.data.machine}
                           onChange={(e) => updateSelectedNodeData('machine', e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none"
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none [color-scheme:dark]"
                         >
                           <option value="">-- Select Machine --</option>
                           {machines.map((m: any) => (

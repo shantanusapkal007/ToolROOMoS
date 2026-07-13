@@ -28,4 +28,27 @@ export class CreatePoItemDto {
   @IsNumber()
   @IsOptional()
   gstPercent?: number;
+
+  @IsOptional()
+  customFields?: any;
+
+  @IsString()
+  @IsOptional()
+  uom?: string;
+
+  @IsNumber()
+  @IsOptional()
+  discount?: number;
+
+  @IsNumber()
+  @IsOptional()
+  cgst?: number;
+
+  @IsNumber()
+  @IsOptional()
+  sgst?: number;
+
+  @IsNumber()
+  @IsOptional()
+  basicValue?: number;
 }

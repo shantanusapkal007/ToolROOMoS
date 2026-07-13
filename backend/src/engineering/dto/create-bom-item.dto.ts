@@ -36,4 +36,15 @@ export class CreateBomItemDto {
   @IsNumber()
   @IsOptional()
   gstPercent?: number;
+
+  @IsOptional()
+  customFields?: any;
+
+  @IsString()
+  @IsOptional()
+  catalogSize?: string;
+
+  @IsString()
+  @IsOptional()
+  stockSize?: string;
 }

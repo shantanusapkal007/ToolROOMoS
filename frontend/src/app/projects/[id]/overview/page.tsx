@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useToast } from "../../../../components/ui/Toast";
 import { formatCurrency, formatDate } from "../../../../lib/formatters";
-import { useProject, useAdvanceProjectStage, useReopenImpact, useReopenEngineering } from "../../../../hooks/useProjects";
+import { useProject, useAdvanceProjectStage, useReopenImpact, useReopenEngineering, useCloseProject } from "../../../../hooks/useProjects";
 
 export default function OverviewTab({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = React.use(params);
@@ -15,12 +15,14 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
   const advanceStageMutation = useAdvanceProjectStage(resolvedParams.id);
   const reopenEngineeringMutation = useReopenEngineering(resolvedParams.id);
   const { data: reopenImpact, refetch: refetchImpact } = useReopenImpact(resolvedParams.id);
+  const closeProjectMutation = useCloseProject(resolvedParams.id);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { success, error } = useToast();
 
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showReopenModal, setShowReopenModal] = useState(false);
+  const [showCloseModal, setShowCloseModal] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [statusRemarks, setStatusRemarks] = useState("");
 
@@ -46,12 +48,21 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
     }
   };
 
-  // Correct field names from Prisma schema: totalCost (actual), revenue (invoiced)
   const totalCost = Number(project.projectCostSummary?.totalCost || 0);
   const revenue = Number(project.projectCostSummary?.revenue || 0);
   const profit = revenue - totalCost;
   const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
+  const pendingApprovals = [];
+  if (project.billOfMaterialHeaders?.some((b: any) => b.approvalStatus === 'PENDING')) {
+    pendingApprovals.push({ title: 'Bill of Materials', desc: 'Awaiting engineering approval', type: 'BOM' });
+  }
+  if (project.routingHeaders?.some((r: any) => r.approvalStatus === 'PENDING')) {
+    pendingApprovals.push({ title: 'Routing & Operations', desc: 'Awaiting production planning approval', type: 'ROUTING' });
+  }
+  if (project.purchaseOrderHeaders?.some((p: any) => p.approvalStatus === 'PENDING')) {
+    pendingApprovals.push({ title: 'Purchase Orders', desc: 'Awaiting procurement approval', type: 'PO' });
+  }
 
   return (
     <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col min-h-0">
@@ -83,6 +94,14 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                 className="group/btn relative inline-flex items-center gap-1.5 font-bold text-xs transition-all outline-none px-3.5 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-400/40"
               >
                 Reopen Engineering
+              </button>
+            )}
+            {project.currentStage !== 'CLOSED' && project.currentStage !== 'CANCELLED' && (
+              <button 
+                onClick={() => setShowCloseModal(true)}
+                className="group/btn relative inline-flex items-center gap-1.5 font-bold text-xs transition-all outline-none px-3.5 py-2 rounded-lg bg-slate-500/10 text-slate-300 border border-slate-500/20 hover:bg-slate-500/20 hover:border-slate-400/40 hover:text-white"
+              >
+                Close Project
               </button>
             )}
             <button 
@@ -346,6 +365,46 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
             </div>
           </div>
 
+          {/* Pending Approvals & Action Items */}
+          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 relative overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/5 to-orange-500/5 rounded-3xl blur-2xl pointer-events-none"></div>
+            
+            <div className="flex justify-between items-end mb-4 relative z-10">
+              <div>
+                 <h3 className="text-base font-bold text-white flex items-center">
+                   <Target className="w-4 h-4 mr-2 text-amber-400" />
+                   Pending Approvals
+                 </h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 relative z-10">
+              {pendingApprovals.length > 0 ? pendingApprovals.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 transition-colors group cursor-default shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/30 group-hover:scale-110 transition-transform shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                      <CheckCircle2 className="w-5 h-5 text-amber-400 animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-amber-100 text-sm">{item.title}</h4>
+                      <p className="text-xs text-amber-400/80 font-medium tracking-wide mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                  <button className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/40 border border-amber-500/40 rounded-lg text-xs font-bold text-amber-200 uppercase tracking-widest transition-colors opacity-0 group-hover:opacity-100 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                    Review
+                  </button>
+                </div>
+              )) : (
+                <div className="flex items-center justify-center p-6 bg-white/[0.02] border border-white/5 rounded-xl border-dashed">
+                  <div className="text-center">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-500/50 mx-auto mb-2" />
+                    <p className="text-slate-400 text-xs font-medium">All approvals are up to date.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Premium Activity Feed */}
           <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4 relative overflow-hidden group/feed transition-all duration-500 hover:border-white/10 hover:shadow-[0_0_30px_rgba(16,185,129,0.05)]">
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-[50px] -mr-24 -mt-24 pointer-events-none opacity-50 group-hover/feed:opacity-100 group-hover/feed:bg-emerald-500/10 transition-all duration-700" />
@@ -581,6 +640,82 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showCloseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
+          <div className="bg-slate-900/90 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />
+            
+            <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-sm font-black text-white uppercase tracking-wider">Close Project</h3>
+              </div>
+              <button 
+                onClick={() => setShowCloseModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs text-slate-300">
+              <p className="text-slate-400">
+                You are about to officially close <strong className="text-white">{project.projectNumber}</strong>.
+              </p>
+
+              <div className="p-4 bg-black/40 border border-white/5 rounded-xl space-y-2 font-medium">
+                <div className="flex justify-between items-center">
+                  <span>Current Stage:</span>
+                  <span className="text-white font-bold bg-white/10 px-2 py-0.5 rounded">{project.currentStage}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Project Progress:</span>
+                  <span className={`font-bold ${Number(project.progress) >= 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {Number(project.progress).toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Net Profit:</span>
+                  <span className={`font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {formatCurrency(profit)}
+                  </span>
+                </div>
+              </div>
+
+              {Number(project.progress) < 100 && (
+                <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-200 rounded-xl flex gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>
+                    Warning: The project is not fully completed yet. Closing it now will lock all workflows and freeze cost accumulation.
+                  </span>
+                </div>
+              )}
+
+              <div className="pt-4 flex justify-end space-x-3">
+                <button 
+                  onClick={() => setShowCloseModal(false)}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => {
+                    try {
+                      await closeProjectMutation.mutateAsync();
+                      setShowCloseModal(false);
+                    } catch (err) {}
+                  }}
+                  disabled={closeProjectMutation.isPending}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-40"
+                >
+                  {closeProjectMutation.isPending ? 'Closing...' : 'Confirm Closure'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

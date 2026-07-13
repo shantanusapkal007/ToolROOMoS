@@ -56,6 +56,7 @@ export class BomsService {
           status: DocumentStatus.DRAFT,
           approvalStatus: ApprovalStatus.PENDING,
           totalEstimatedCost: totalCost,
+          remarks: dto.remarks,
           createdBy: userId,
           updatedBy: userId,
         },
@@ -74,8 +75,13 @@ export class BomsService {
               calculatedWeight: item.calculatedWeight,
               requiredQty: item.requiredQty,
               estimatedCost: item.estimatedCost || 0,
+              catalogSize: item.catalogSize,
+              stockSize: item.stockSize,
               remarks: item.remarks,
-              customFields: { gstPercent: item.gstPercent || 18 },
+              customFields: { 
+                gstPercent: item.gstPercent || 18, 
+                ...(item.customFields || {}) 
+              },
               createdBy: userId,
               updatedBy: userId,
             },
@@ -100,7 +106,10 @@ export class BomsService {
   async approveBom(projectId: string, bomId: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Fetch project and BOM
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const project = await tx.project.findUniqueOrThrow({ 
+        where: { id: projectId },
+        include: { customer: true }
+      });
       const bom = await tx.billOfMaterialHeader.findFirstOrThrow({
         where: { id: bomId, projectId },
         include: { items: { include: { material: true } } },
@@ -205,20 +214,32 @@ export class BomsService {
             });
 
             const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            const poNumber = `PO-AUTO-${project.projectNumber}-${randomSuffix}`;
+            const rmSlipNo = `PUR/${new Date().getFullYear().toString().slice(-2)}-${(new Date().getFullYear()+1).toString().slice(-2)}/${randomSuffix}`;
+            
             const poHeader = await tx.purchaseOrderHeader.create({
               data: {
                 projectId,
                 vendorId: defaultVendor.id,
-                poNumber: `PO-AUTO-${project.projectNumber}-${randomSuffix}`,
+                poNumber: poNumber,
                 status: 'DRAFT',
                 totalAmount: poTotal,
                 createdBy: 'SYSTEM',
-                remarks: 'Auto-generated from Approved BOM'
+                remarks: 'Auto-generated from Approved BOM',
+                customFields: {
+                  vendorName: defaultVendor.vendorName,
+                  vendorAddress: defaultVendor.address,
+                  customerName: project.customer?.companyName || "",
+                  customerLocation: project.customer?.billingAddress || "",
+                  rmSlipNo: rmSlipNo,
+                  date: new Date().toISOString()
+                }
               }
             });
 
-            await Promise.all(itemsWithRates.map(item => 
-              tx.purchaseOrderItem.create({
+            await Promise.all(itemsWithRates.map((item, index) => {
+              const cf: any = item.customFields || {};
+              return tx.purchaseOrderItem.create({
                 data: {
                   poHeaderId: poHeader.id,
                   materialId: item.materialId,
@@ -227,11 +248,27 @@ export class BomsService {
                   lineTotal: item.finalCost,
                   dimensions: item.dimensions,
                   hsnCode: item.hsnCode,
-                  gstPercent: (item.customFields as any)?.gstPercent || 18,
-                  remarks: 'Auto-generated item'
+                  gstPercent: cf?.gstPercent || 18,
+                  remarks: 'Auto-generated item',
+                  customFields: {
+                    srNo: cf.srNo || (index + 1),
+                    toolNo: project.projectNumber || "",
+                    detNo: cf.srNo || (index + 1),
+                    L: cf.length || 0,
+                    W: cf.width || 0,
+                    H: cf.height || 0,
+                    material: item.material?.materialGrade || item.material?.materialCode || "",
+                    qty: item.qtyToOrder,
+                    apWt: cf.apWeight || item.calculatedWeight || 0,
+                    totalWt: cf.totalWeight || item.calculatedWeight || 0,
+                    rate: item.calculatedRate,
+                    basicCost: item.finalCost,
+                    gst: item.finalCost * ((cf?.gstPercent || 18) / 100),
+                    total: item.finalCost + (item.finalCost * ((cf?.gstPercent || 18) / 100))
+                  }
                 }
               })
-            ));
+            }));
 
             await tx.projectActivity.create({
               data: {

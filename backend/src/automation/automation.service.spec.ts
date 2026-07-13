@@ -13,6 +13,10 @@ describe('AutomationService', () => {
           provide: PrismaService,
           useValue: {},
         },
+        {
+          provide: require('../production/wip.service').WipService,
+          useValue: {},
+        },
       ],
     }).compile();
 

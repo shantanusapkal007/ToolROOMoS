@@ -72,6 +72,11 @@ export class PurchaseOrdersService {
               dimensions: item.dimensions,
               hsnCode: item.hsnCode,
               gstPercent: item.gstPercent,
+              uom: item.uom,
+              discount: item.discount,
+              cgst: item.cgst,
+              sgst: item.sgst,
+              basicValue: item.basicValue,
               remarks: item.remarks,
               createdBy: userId,
               updatedBy: userId,
@@ -165,6 +170,11 @@ export class PurchaseOrdersService {
               dimensions: item.dimensions,
               hsnCode: item.hsnCode,
               gstPercent: item.gstPercent,
+              uom: item.uom,
+              discount: item.discount,
+              cgst: item.cgst,
+              sgst: item.sgst,
+              basicValue: item.basicValue,
               remarks: item.remarks,
               createdBy: userId,
               updatedBy: userId,
@@ -193,8 +203,8 @@ export class PurchaseOrdersService {
         where: { id: poId, projectId }
       });
       
-      if (po.status !== 'ON_HOLD') {
-        throw new BadRequestException('Only ON_HOLD purchase orders can be issued.');
+      if (po.status !== 'ON_HOLD' && po.status !== 'DRAFT') {
+        throw new BadRequestException('Only DRAFT or ON_HOLD purchase orders can be issued.');
       }
       
       return tx.purchaseOrderHeader.update({

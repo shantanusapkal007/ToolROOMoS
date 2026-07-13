@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from "../../../../lib/api";
-import { ShoppingCart, Plus, FileText, Package, ArrowRight, ChevronRight, CheckCircle2, Clock, X, Calendar, Activity, Info, Download, Trash2 } from "lucide-react";
+import { ShoppingCart, Plus, FileText, Package, ArrowRight, ChevronRight, CheckCircle2, Clock, X, Calendar, Activity, Info, Download, Trash2, Upload } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { Input } from "../../../../components/ui/Input";
 import { Select } from "../../../../components/ui/Select";
@@ -36,7 +36,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
   const [poNum, setPoNum] = useState("");
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
-  const [poItems, setPoItems] = useState<any[]>([{ materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18 }]);
+  const [poItems, setPoItems] = useState<any[]>([{ materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18, uom: "NOS", discount: 0, cgst: 9, sgst: 9, basicValue: 0 }]);
   
   const [selectedPo, setSelectedPo] = useState<any>(null);
   const [grnData, setGrnData] = useState({
@@ -44,7 +44,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
     supplierChallan: "",
     warehouseId: "DEFAULT-WH",
     remarks: "",
-    items: [{ poItemId: "", receivedQty: 1, acceptedQty: 1, rejectedQty: 0, actualRate: 0, heatNumber: "", remarks: "" }]
+    items: [{ poItemId: "", receivedQty: 1, acceptedQty: 1, rejectedQty: 0, actualRate: 0, heatNumber: "", toolNo: "", detNo: "", length: 0, width: 0, height: 0, apWeight: 0, totalWeight: 0, basicCost: 0, gst: 0, total: 0, remarks: "" }]
   });
 
   const filteredVendors = (vendors || []).filter((v: any) => v.vendorType === 'MATERIAL_SUPPLIER');
@@ -99,7 +99,12 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
       agreedRate: i.agreedRate,
       dimensions: i.dimensions || "",
       hsnCode: i.hsnCode || "",
-      gstPercent: i.gstPercent || 18
+      gstPercent: i.gstPercent || 18,
+      uom: i.uom || "NOS",
+      discount: i.discount || 0,
+      cgst: i.cgst || (i.gstPercent ? i.gstPercent / 2 : 9),
+      sgst: i.sgst || (i.gstPercent ? i.gstPercent / 2 : 9),
+      basicValue: i.basicValue || (i.orderedQty * i.agreedRate - (i.discount || 0))
     })));
     setShowPoModal(true);
     setViewingPoDetails(null);
@@ -119,33 +124,494 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
         acceptedQty: i.orderedQty - (i.receivedQty || 0),
         rejectedQty: 0,
         heatNumber: "",
+        toolNo: i.customFields?.toolNo || "",
+        detNo: i.customFields?.detNo || "",
+        length: i.customFields?.L || 0,
+        width: i.customFields?.W || 0,
+        height: i.customFields?.H || 0,
+        apWeight: i.customFields?.apWt || 0,
+        totalWeight: i.customFields?.totalWt || 0,
         actualRate: i.agreedRate,
+        basicCost: i.customFields?.basicCost || 0,
+        gst: i.customFields?.gst || 0,
+        total: i.customFields?.total || 0,
         remarks: ""
       }))
     });
     setShowGrnModal(true);
   };
 
+  const handleImportPO = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        const allRows: any[][] = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: '' });
+        if (allRows.length === 0) throw new Error("Empty Excel file");
+
+        let docPoNum = "";
+        let docVendor = "";
+        
+        allRows.forEach(row => {
+          row.forEach((cell, cellIdx) => {
+            if (!cell) return;
+            const strCell = cell.toString().trim().toLowerCase();
+            if (strCell.includes("po number") || strCell.includes("ponumber")) {
+              const val = row[cellIdx + 1] || row[cellIdx + 2];
+              if (val) docPoNum = val.toString().trim();
+            }
+            if (strCell.includes("vendor") || strCell.includes("supplier")) {
+              const val = row[cellIdx + 1] || row[cellIdx + 2];
+              if (val) docVendor = val.toString().trim();
+            }
+          });
+        });
+
+        if (docPoNum) setPoNum(docPoNum);
+        if (docVendor) {
+          const matchedVendor = vendors?.find((v:any) => v.vendorName.toLowerCase().includes(docVendor.toLowerCase()));
+          if (matchedVendor) setSelectedVendorId(matchedVendor.id);
+        }
+
+        let headerRowIndex = -1;
+        let colMapping: any = {};
+        
+        for (let r = 0; r < allRows.length; r++) {
+          const row = allRows[r];
+          let matches = 0;
+          let tempMapping: any = {};
+
+          row.forEach((cell, c) => {
+            if (!cell) return;
+            const clean = cell.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (clean.includes("material") || clean.includes("desc") || clean.includes("part")) { tempMapping.material = c; matches++; }
+            if (clean.includes("qty") || clean.includes("quantity")) { tempMapping.qty = c; matches++; }
+            if (clean.includes("rate") || clean.includes("price")) { tempMapping.rate = c; matches++; }
+            if (clean.includes("discount") || clean.includes("disc")) { tempMapping.disc = c; }
+            if (clean.includes("gst")) { tempMapping.gst = c; }
+            if (clean.includes("uom") || clean.includes("unit")) { tempMapping.uom = c; }
+            if (clean.includes("dim") || clean.includes("size")) { tempMapping.dim = c; }
+            if (clean.includes("hsn")) { tempMapping.hsn = c; }
+          });
+          
+          if (matches >= 2) {
+            headerRowIndex = r;
+            colMapping = tempMapping;
+            break;
+          }
+        }
+
+        if (headerRowIndex === -1) throw new Error("Could not detect table headers automatically.");
+
+        const parsedItems: any[] = [];
+        
+        for (let r = headerRowIndex + 1; r < allRows.length; r++) {
+          const row = allRows[r];
+          const isBlank = row.every(c => c === undefined || c === null || c === '');
+          if (isBlank) continue;
+
+          const matStr = colMapping.material !== undefined ? row[colMapping.material]?.toString() : "";
+          if (!matStr || matStr.toLowerCase().includes("grand total")) continue;
+
+          let matchedMaterialId = "";
+          let hsn = "";
+          let defaultGst = 18;
+          if (matStr) {
+            const mat = materials?.find((m:any) => 
+              (m.materialCode && matStr.toLowerCase().includes(m.materialCode.toLowerCase())) || 
+              (m.materialGrade && matStr.toLowerCase().includes(m.materialGrade.toLowerCase()))
+            );
+            if (mat) {
+              matchedMaterialId = mat.id;
+              hsn = mat.hsnCode || "";
+              defaultGst = mat.gstPercent ? Number(mat.gstPercent) : 18;
+            }
+          }
+
+          const qty = colMapping.qty !== undefined ? (Number(row[colMapping.qty]) || 1) : 1;
+          const rate = colMapping.rate !== undefined ? (Number(row[colMapping.rate]) || 0) : 0;
+          const disc = colMapping.disc !== undefined ? (Number(row[colMapping.disc]) || 0) : 0;
+          const gst = colMapping.gst !== undefined ? (Number(row[colMapping.gst]) || defaultGst) : defaultGst;
+          const uom = colMapping.uom !== undefined ? (row[colMapping.uom]?.toString() || "NOS") : "NOS";
+          const dim = colMapping.dim !== undefined ? (row[colMapping.dim]?.toString() || "") : "";
+          const hsnVal = colMapping.hsn !== undefined ? (row[colMapping.hsn]?.toString() || hsn) : hsn;
+
+          const basicValue = (qty * rate) - disc;
+
+          parsedItems.push({
+            materialId: matchedMaterialId,
+            orderedQty: qty,
+            agreedRate: rate,
+            dimensions: dim,
+            hsnCode: hsnVal,
+            gstPercent: gst,
+            uom: uom,
+            discount: disc,
+            cgst: gst / 2,
+            sgst: gst / 2,
+            basicValue: basicValue
+          });
+        }
+        
+        if (parsedItems.length > 0) {
+          setPoItems(parsedItems);
+          success("PO Imported", `Successfully imported ${parsedItems.length} items from Excel.`);
+        } else {
+          error("PO Import Failed", "No valid items found in the Excel sheet.");
+        }
+      } catch (err: any) {
+        error("PO Import Failed", err.message);
+      }
+      if (e.target) e.target.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleImportGRN = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        const allRows: any[][] = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: '' });
+        if (allRows.length === 0) throw new Error("Empty Excel file");
+
+        let docRmSlipNo = "";
+        
+        allRows.forEach(row => {
+          row.forEach((cell, cellIdx) => {
+            if (!cell) return;
+            const strCell = cell.toString().trim().toLowerCase();
+            if (strCell.includes("rm slip no") || strCell.includes("rmslip")) {
+              const val = row[cellIdx + 1] || row[cellIdx + 2];
+              if (val) docRmSlipNo = val.toString().trim();
+            }
+          });
+        });
+
+        if (docRmSlipNo) {
+          setGrnData(prev => ({ ...prev, supplierChallan: docRmSlipNo }));
+        }
+
+        let headerRowIndex = -1;
+        let colMapping: any = {};
+        
+        for (let r = 0; r < allRows.length; r++) {
+          const row = allRows[r];
+          let matches = 0;
+          let tempMapping: any = {};
+
+          row.forEach((cell, c) => {
+            if (!cell) return;
+            const clean = cell.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (clean.includes("toolno")) { tempMapping.toolNo = c; matches++; }
+            if (clean.includes("detno")) { tempMapping.detNo = c; matches++; }
+            if (clean === "l") { tempMapping.l = c; }
+            if (clean === "w") { tempMapping.w = c; }
+            if (clean === "h") { tempMapping.h = c; }
+            if (clean.includes("qty") || clean.includes("quantity")) { tempMapping.qty = c; matches++; }
+            if (clean.includes("apwt") || clean.includes("weight")) { tempMapping.apWt = c; matches++; }
+            if (clean.includes("totalwt")) { tempMapping.totalWt = c; }
+          });
+          
+          if (matches >= 2) {
+            headerRowIndex = r;
+            colMapping = tempMapping;
+            break;
+          }
+        }
+
+        if (headerRowIndex === -1) throw new Error("Could not detect table headers automatically.");
+
+        const importedItems: any[] = [];
+        
+        for (let r = headerRowIndex + 1; r < allRows.length; r++) {
+          const row = allRows[r];
+          const isBlank = row.every(c => c === undefined || c === null || c === '');
+          if (isBlank) continue;
+
+          const toolNo = colMapping.toolNo !== undefined ? row[colMapping.toolNo]?.toString() : "";
+          const detNo = colMapping.detNo !== undefined ? row[colMapping.detNo]?.toString() : "";
+          if (toolNo?.toLowerCase().includes("grand total")) continue;
+
+          const qty = colMapping.qty !== undefined ? Number(row[colMapping.qty]) || 0 : 0;
+          const apWt = colMapping.apWt !== undefined ? Number(row[colMapping.apWt]) || 0 : 0;
+          const l = colMapping.l !== undefined ? Number(row[colMapping.l]) || 0 : 0;
+          const w = colMapping.w !== undefined ? Number(row[colMapping.w]) || 0 : 0;
+          const h = colMapping.h !== undefined ? Number(row[colMapping.h]) || 0 : 0;
+          
+          if (qty > 0 || apWt > 0) {
+            importedItems.push({ toolNo, detNo, qty, apWt, l, w, h });
+          }
+        }
+
+        if (importedItems.length > 0) {
+          setGrnData(prev => {
+            const newItems = [...prev.items];
+            importedItems.forEach((imp, idx) => {
+              if (newItems[idx]) {
+                newItems[idx].toolNo = imp.toolNo || newItems[idx].toolNo;
+                newItems[idx].detNo = imp.detNo || newItems[idx].detNo;
+                newItems[idx].length = imp.l || newItems[idx].length;
+                newItems[idx].width = imp.w || newItems[idx].width;
+                newItems[idx].height = imp.h || newItems[idx].height;
+                newItems[idx].apWeight = imp.apWt;
+                newItems[idx].acceptedQty = imp.qty;
+                newItems[idx].receivedQty = imp.qty;
+                newItems[idx].totalWeight = imp.apWt * imp.qty;
+                
+                const rate = newItems[idx].actualRate || 0;
+                const basicCost = newItems[idx].totalWeight * rate;
+                newItems[idx].basicCost = basicCost;
+                
+                const gstPercent = 18; 
+                newItems[idx].gst = basicCost * (gstPercent / 100);
+                newItems[idx].total = newItems[idx].basicCost + newItems[idx].gst;
+              }
+            });
+            return { ...prev, items: newItems };
+          });
+          success("GRN Imported", `Successfully imported ${importedItems.length} items from Excel.`);
+        } else {
+          error("GRN Import Failed", "No valid items found in the Excel sheet.");
+        }
+      } catch (err: any) {
+        error("GRN Import Failed", err.message);
+      }
+      if (e.target) e.target.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   const handleExportPO = (po: any) => {
     if (!po) return;
     
-    // Create header data
-    const exportData = po.items.map((item: any) => ({
-      "PO Number": po.poNumber,
-      "Supplier": po.vendor?.vendorName || '-',
-      "Material": `${item.material?.materialCode || ''} - ${item.material?.materialGrade || ''}`,
-      "Ordered Qty": item.orderedQty,
-      "Agreed Rate": item.agreedRate,
-      "Line Value": Number(item.orderedQty) * Number(item.agreedRate),
-      "Received Qty": item.receivedQty,
-      "Status": item.status
-    }));
+    const documentData: any[][] = [];
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
+    documentData.push(["KRUPA TOOLS & STAMPING LTD."]);
+    documentData.push(["                                             GUT NO.23,PLOT NO.45 MIDC WALUJ, AURANGABAD-431136                                                                                                                                                                    "]);
+    documentData.push(["GST NO :  27AAKCK1751B1ZS"]);
+    documentData.push(["Manufacturers of Press Tools,Jig Fixtures,Die sets, Gauge,All Types of Engineering Works"]);
+    documentData.push(["PURCHASE ORDER"]);
+    documentData.push([]);
+    documentData.push([null, "Vendour Name ", po.vendor?.companyName || po.vendor?.vendorName || "NEW ERA METALS", null, null, null, null, null, null, null, "P.O.NO", po.poNumber]);
+    documentData.push([null, " Address", "45B SHREE JI ARCADE, TATA ROAD NO2,MUMBAI", null, null, null, null, null, null, null, "DATE", po.createdAt ? new Date(po.createdAt).toLocaleDateString() : new Date().toLocaleDateString()]);
+    documentData.push([null, "GST NO", po.vendor?.taxId || "27ATGPJ6102R1ZB", null, null, null, null, null, null, null, "REF.", "BY EMAIL"]);
+    documentData.push([null, "Contact Details", po.vendor?.contactEmail || po.vendor?.contactPhone || ""]);
+    documentData.push(["Dear Sir,"]);
+    documentData.push(["Kindly supply the following material / services in accordance with the terms and conditions mentioned below."]);
+    
+    documentData.push(["SR NO","Material Description","HSN","QTY","UOM","Rate / Unit   (INR)","DISC.","Basic Value (INR)","CGST     ",null,"SGST",null,"TOTAL VALUE"]);
+    documentData.push([null,null,null,null,null,null,null,null,"% ","Value (INR)","% ","Value(INR)"]);
+
+    let grandQty = 0;
+    let grandBasic = 0;
+    let grandTotal = 0;
+
+    po.items?.forEach((item: any, idx: number) => {
+      const qty = Number(item.orderedQty || 0);
+      const rate = Number(item.agreedRate || 0);
+      const disc = Number(item.discount || 0);
+      grandQty += qty;
+      
+      const basicVal = (qty * rate) - disc;
+      const gstPercent = Number(item.gstPercent || 18);
+      const cgstVal = basicVal * ((gstPercent/2) / 100);
+      const sgstVal = basicVal * ((gstPercent/2) / 100);
+      const totalVal = basicVal + cgstVal + sgstVal;
+
+      grandBasic += basicVal;
+      grandTotal += totalVal;
+
+      documentData.push([
+        idx + 1,
+        `${item.material?.materialCode || ''} ${item.dimensions ? item.dimensions : ''}`,
+        item.hsnCode || "",
+        qty,
+        item.uom || "NOS",
+        rate,
+        disc,
+        basicVal,
+        (gstPercent/2) / 100, // 0.09
+        cgstVal,
+        (gstPercent/2) / 100, // 0.09
+        sgstVal,
+        totalVal
+      ]);
+    });
+
+    documentData.push([]);
+    documentData.push([]);
+    documentData.push([]);
+    documentData.push([null,null,null,null,null,null,null,null,null,null,null,null, grandTotal]);
+    documentData.push([null,null,`Rs. ${grandTotal} /-`]);
+    documentData.push(["Purchase Order value (INR)", null, "TOTAL IN WORDS CALCULATED HERE"]);
+    documentData.push([]);
+    documentData.push([null, "*TERMS & CONDITIONS ", null, null, null, null, null, null, "*COMMERCIAL INFORMATION :"]);
+    documentData.push([null, "*Delivery schedule :-  2-3 DAY"]);
+
+    const ws = XLSX.utils.aoa_to_sheet(documentData);
+    
+    // Add structural cell merges for visual replication of the PO Template
+    ws['!merges'] = [
+      // Top Headers (Rows 0-4)
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } }, // KRUPA TOOLS
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } }, // Address
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 12 } }, // GST NO
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 12 } }, // Manufacturers of...
+      { s: { r: 4, c: 0 }, e: { r: 4, c: 12 } }, // PURCHASE ORDER
+      
+      // Vendor Details Block (Rows 6-9)
+      { s: { r: 6, c: 2 }, e: { r: 6, c: 8 } }, // Vendor Name value
+      { s: { r: 6, c: 11 }, e: { r: 6, c: 12 } }, // P.O.NO value
+      
+      { s: { r: 7, c: 2 }, e: { r: 7, c: 8 } }, // Address value
+      { s: { r: 7, c: 11 }, e: { r: 7, c: 12 } }, // Date value
+      
+      { s: { r: 8, c: 2 }, e: { r: 8, c: 8 } }, // GST value
+      { s: { r: 8, c: 11 }, e: { r: 8, c: 12 } }, // REF value
+      
+      { s: { r: 9, c: 2 }, e: { r: 9, c: 8 } }, // Contact Details value
+
+      // Salutations (Rows 10-11)
+      { s: { r: 10, c: 0 }, e: { r: 10, c: 12 } }, // Dear Sir
+      { s: { r: 11, c: 0 }, e: { r: 11, c: 12 } }, // Kindly supply...
+
+      // Table Headers (Row 12 - 13)
+      { s: { r: 12, c: 0 }, e: { r: 13, c: 0 } }, // SR NO (vertical merge)
+      { s: { r: 12, c: 1 }, e: { r: 13, c: 1 } }, // Material Description (vertical merge)
+      { s: { r: 12, c: 2 }, e: { r: 13, c: 2 } }, // HSN (vertical merge)
+      { s: { r: 12, c: 3 }, e: { r: 13, c: 3 } }, // QTY (vertical merge)
+      { s: { r: 12, c: 4 }, e: { r: 13, c: 4 } }, // UOM (vertical merge)
+      { s: { r: 12, c: 5 }, e: { r: 13, c: 5 } }, // Rate (vertical merge)
+      { s: { r: 12, c: 6 }, e: { r: 13, c: 6 } }, // DISC (vertical merge)
+      { s: { r: 12, c: 7 }, e: { r: 13, c: 7 } }, // Basic Value (vertical merge)
+      
+      { s: { r: 12, c: 8 }, e: { r: 12, c: 9 } }, // CGST (horizontal merge)
+      { s: { r: 12, c: 10 }, e: { r: 12, c: 11 } }, // SGST (horizontal merge)
+      
+      { s: { r: 12, c: 12 }, e: { r: 13, c: 12 } }, // TOTAL VALUE (vertical merge)
+    ];
+
+    const wscols = [
+      { wch: 8 },  { wch: 35 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, 
+      { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 8 }, { wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 15 }
+    ];
+    ws['!cols'] = wscols;
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Purchase Order");
+    XLSX.utils.book_append_sheet(wb, ws, "PO NO-34");
     
     XLSX.writeFile(wb, `PO_${po.poNumber}.xlsx`);
+  };
+
+  const handleExportGRN = (po: any) => {
+    if (!po) return;
+    
+    const documentData: any[][] = [];
+
+    documentData.push(["KRUPA TOOLS & STAMPINGS LTD."]);
+    documentData.push(["GUT NO.23 PLOT NO.45 KAMLAPUR MIDC, WALUJ AURANAGABAD."]);
+    documentData.push([]);
+    documentData.push(["VENDOR NAME & ADDRESS", po.vendor?.companyName || po.vendor?.vendorName || "STEEL HUB", null, null, null, null, null, null, null, "RM SLIP NO", po.customFields?.rmSlipNo || "PUR/26-27/0035"]);
+    documentData.push([null, po.vendor?.address || "WALUJ", null, null, null, null, null, null, null, "DATE", po.createdAt ? new Date(po.createdAt).toLocaleDateString() : new Date().toLocaleDateString()]);
+    documentData.push([]);
+    documentData.push(["KINDLY SUPPLY THE FOLLOWING ITEMS AS PER TERMS & CONDITIONS MENTIONED BELOW."]);
+    
+    const headers = ["SR.NO","TOOL NO","DET NO","L","W","H","MATERIAL","QTY","AP WT.","TOTAL WT","RATE","BASIC COST","GST ","TOTAL"];
+    documentData.push(headers);
+
+    let grandQty = 0;
+    let grandTotalWt = 0;
+    let grandBasicCost = 0;
+    let grandGst = 0;
+    let grandTotal = 0;
+
+    po.items?.forEach((item: any, idx: number) => {
+      const grnItem = item.goodsReceiptItems?.[0]; 
+      
+      const qty = grnItem ? Number(grnItem.acceptedQty) : Number(item.orderedQty);
+      const rate = Number(item.agreedRate || 0);
+      
+      const apWt = Number(grnItem?.apWeight || 0);
+      const totalWt = Number(grnItem?.totalWeight || (apWt * qty) || 0);
+      
+      const basicCost = Number(grnItem?.basicCost || (totalWt * rate) || 0);
+      const gstPercent = Number(item.gstPercent || 18);
+      const gst = Number(grnItem?.gst || (basicCost * (gstPercent / 100)) || 0);
+      const total = Number(grnItem?.total || (basicCost + gst) || 0);
+
+      grandQty += qty;
+      grandTotalWt += totalWt;
+      grandBasicCost += basicCost;
+      grandGst += gst;
+      grandTotal += total;
+
+      documentData.push([
+        idx + 1,
+        grnItem?.toolNo || po.customFields?.toolNo || "-",
+        grnItem?.detNo || "-",
+        grnItem?.length || "-",
+        grnItem?.width || "-",
+        grnItem?.height || "-",
+        item.material?.materialCode || "",
+        qty,
+        apWt > 0 ? apWt : "",
+        totalWt > 0 ? totalWt : "",
+        rate,
+        basicCost,
+        gst,
+        total
+      ]);
+    });
+
+    documentData.push([
+      null, null, null, null, null, null, null, 
+      grandQty, 
+      null, 
+      grandTotalWt, 
+      null, 
+      grandBasicCost, 
+      grandGst, 
+      grandTotal
+    ]);
+
+    const ws = XLSX.utils.aoa_to_sheet(documentData);
+    
+    // Apply exact template merges for RM Slip
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } }, // KRUPA TOOLS
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } }, // Address
+      
+      { s: { r: 3, c: 1 }, e: { r: 3, c: 8 } }, // Vendor Name value
+      { s: { r: 4, c: 1 }, e: { r: 4, c: 8 } }, // Address value
+      
+      { s: { r: 6, c: 0 }, e: { r: 6, c: 13 } }, // KINDLY SUPPLY...
+    ];
+
+    const wscols = [
+      { wch: 6 },  { wch: 15 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, 
+      { wch: 15 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 8 }, { wch: 15 }, { wch: 12 }, { wch: 15 }
+    ];
+    ws['!cols'] = wscols;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "MS");
+    
+    XLSX.writeFile(wb, `RMSlip_${po.poNumber}.xlsx`);
   };
 
   const handleIssuePO = async (poId: string) => {
@@ -354,7 +820,6 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
         title={editingPoId ? "Edit Purchase Order" : "Create Purchase Order"}
         subtitle={editingPoId ? "Modify PO details" : "Generate a new vendor PO for raw materials"}
         width="2xl"
-        showToolbar={false}
       >
         <form onSubmit={handleSavePo} className="flex flex-col space-y-6 h-full p-6">
           <div className="grid grid-cols-2 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
@@ -381,102 +846,135 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
           </div>
           
           <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Order Lines</h4>
-            <div className="grid grid-cols-12 gap-4 mb-3">
-              <div className="col-span-12 md:col-span-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Material</div>
-              <div className="col-span-6 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Dimensions</div>
-              <div className="col-span-6 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">HSN Code</div>
-              <div className="col-span-6 md:col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Qty</div>
-              <div className="col-span-5 md:col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Rate</div>
-              <div className="col-span-5 md:col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">GST %</div>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Order Lines</h4>
+              <label className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors cursor-pointer">
+                <Upload className="w-3.5 h-3.5" />
+                <span>Import PO</span>
+                <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportPO} />
+              </label>
+            </div>
+            <div className="grid grid-cols-12 gap-2 mb-3">
+              <div className="col-span-12 md:col-span-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Material</div>
+              <div className="col-span-6 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dim</div>
+              <div className="col-span-6 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">HSN</div>
+              <div className="col-span-6 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">UOM</div>
+              <div className="col-span-6 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Qty</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rate</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Disc</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Basic</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">GST%</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Value</div>
               <div className="col-span-1"></div>
             </div>
             
             <div className="space-y-3">
-              {poItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-4 items-center bg-white/[0.02] p-3 rounded-xl border border-white/5">
-                  <div className="col-span-12 md:col-span-3">
-                    <Select
-                      value={item.materialId}
-                      onChange={(e) => {
-                         const val = e.target.value;
-                         const mat = materials?.find((m: any) => m.id === val);
-                         const newItems = [...poItems];
-                         newItems[index].materialId = val;
-                         if (mat) {
-                            newItems[index].hsnCode = mat.hsnCode || "";
-                            newItems[index].gstPercent = mat.gstPercent ? Number(mat.gstPercent) : 18;
-                         }
-                         setPoItems(newItems);
-                      }}
-                      options={(materials || []).map((m: any) => ({ value: m.id, label: `${m.materialCode} (${m.materialGrade})` }))}
-                    />
+              {poItems.map((item, index) => {
+                const basicVal = (Number(item.orderedQty || 0) * Number(item.agreedRate || 0)) - Number(item.discount || 0);
+                const gstVal = basicVal * (Number(item.gstPercent || 0) / 100);
+                const totalVal = basicVal + gstVal;
+
+                return (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center bg-white/[0.02] p-2 rounded-xl border border-white/5">
+                    <div className="col-span-12 md:col-span-2">
+                      <Select
+                        value={item.materialId}
+                        onChange={(e) => {
+                           const val = e.target.value;
+                           const mat = materials?.find((m: any) => m.id === val);
+                           const newItems = [...poItems];
+                           newItems[index].materialId = val;
+                           if (mat) {
+                              newItems[index].hsnCode = mat.hsnCode || "";
+                              newItems[index].gstPercent = mat.gstPercent ? Number(mat.gstPercent) : 18;
+                           }
+                           setPoItems(newItems);
+                        }}
+                        options={(materials || []).map((m: any) => ({ value: m.id, label: `${m.materialCode}` }))}
+                      />
+                    </div>
+                    <div className="col-span-6 md:col-span-1">
+                      <input
+                        type="text"
+                        placeholder="Dim"
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
+                        value={item.dimensions || ""}
+                        onChange={(e) => updatePoItem(index, 'dimensions', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-6 md:col-span-1">
+                      <input
+                        type="text"
+                        placeholder="HSN"
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        value={item.hsnCode || ""}
+                        onChange={(e) => updatePoItem(index, 'hsnCode', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-6 md:col-span-1">
+                      <input
+                        type="text"
+                        placeholder="UOM"
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        value={item.uom || "NOS"}
+                        onChange={(e) => updatePoItem(index, 'uom', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-6 md:col-span-1">
+                      <input
+                        type="number" min="1" step="0.01" required placeholder="Qty"
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        value={item.orderedQty}
+                        onChange={(e) => updatePoItem(index, 'orderedQty', Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="col-span-5 md:col-span-1">
+                      <input
+                        type="number" min="0" step="0.01" required placeholder="Rate"
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        value={item.agreedRate}
+                        onChange={(e) => updatePoItem(index, 'agreedRate', Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="col-span-5 md:col-span-1">
+                      <input
+                        type="number" min="0" step="0.01" placeholder="Disc"
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        value={item.discount || 0}
+                        onChange={(e) => updatePoItem(index, 'discount', Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="col-span-5 md:col-span-1">
+                      <div className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-2 text-xs text-slate-300 font-mono flex items-center h-[34px]">
+                        {basicVal.toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="col-span-5 md:col-span-1">
+                      <input
+                        type="number" min="0" step="0.01" placeholder="GST%"
+                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        value={item.gstPercent || ''}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          updatePoItem(index, 'gstPercent', val);
+                          updatePoItem(index, 'cgst', val / 2);
+                          updatePoItem(index, 'sgst', val / 2);
+                        }}
+                      />
+                    </div>
+                    <div className="col-span-5 md:col-span-1 flex justify-end items-center h-[34px]">
+                       <span className="text-amber-400 font-bold text-xs font-mono">
+                         {totalVal.toFixed(1)}
+                       </span>
+                    </div>
+                    <div className="col-span-1 flex justify-center">
+                      <button type="button" onClick={() => removePoItemRow(index)} className="w-8 h-8 rounded-lg bg-white/[0.02] border border-white/[0.05] text-red-400 flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/30 transition-all" disabled={poItems.length === 1}>
+                        &times;
+                      </button>
+                    </div>
                   </div>
-                  <div className="col-span-6 md:col-span-2">
-                    <input
-                      type="text"
-                      placeholder="Dim (LxWxH)"
-                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
-                      value={item.dimensions || ""}
-                      onChange={(e) => updatePoItem(index, 'dimensions', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-6 md:col-span-2">
-                    <input
-                      type="text"
-                      placeholder="HSN"
-                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
-                      value={item.hsnCode || ""}
-                      onChange={(e) => updatePoItem(index, 'hsnCode', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-6 md:col-span-1">
-                    <input
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      required
-                      placeholder="Qty"
-                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
-                      value={item.orderedQty}
-                      onChange={(e) => updatePoItem(index, 'orderedQty', Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="col-span-5 md:col-span-1">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      required
-                      placeholder="Rate"
-                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
-                      value={item.agreedRate}
-                      onChange={(e) => updatePoItem(index, 'agreedRate', Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="col-span-5 md:col-span-2">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="GST %"
-                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-3 py-2.5 text-sm text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
-                      value={item.gstPercent || ''}
-                      onChange={(e) => updatePoItem(index, 'gstPercent', Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="col-span-1 flex justify-center">
-                    <button 
-                      type="button" 
-                      onClick={() => removePoItemRow(index)}
-                      className="w-10 h-10 rounded-xl bg-white/[0.02] border border-white/[0.05] text-red-400 flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/30 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all"
-                      disabled={poItems.length === 1}
-                    >
-                      &times;
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             
             <button 
@@ -510,7 +1008,6 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
         title="Goods Receipt Note (GRN)"
         subtitle={`Processing receipt for PO: ${selectedPo?.poNumber}`}
         width="3xl"
-        showToolbar={false}
       >
         <form onSubmit={handleProcessGrn} className="flex flex-col space-y-6 h-full p-6">
           <div className="grid grid-cols-4 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
@@ -549,12 +1046,20 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
           </div>
           
           <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Received Items</h4>
+              <label className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors cursor-pointer">
+                <Upload className="w-3.5 h-3.5" />
+                <span>Import RM Slip</span>
+                <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportGRN} />
+              </label>
+            </div>
             <div className="space-y-6">
               {grnData.items.map((item, index) => {
                 const poItem = selectedPo?.items.find((i: any) => i.id === item.poItemId);
                 return (
                   <div key={index} className="grid grid-cols-6 gap-6 items-end bg-white/[0.02] p-6 rounded-xl border border-white/5">
-                    <div className="col-span-6 border-b border-white/5 pb-3 mb-1 flex justify-between items-center">
+                    <div className="col-span-12 border-b border-white/5 pb-3 mb-1 flex justify-between items-center w-full">
                       <div>
                         <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded text-xs mr-3">ITEM {index + 1}</span>
                         <span className="font-bold text-white text-lg">{poItem?.material?.materialCode} - {poItem?.material?.materialGrade}</span>
@@ -564,68 +1069,47 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       </div>
                     </div>
                     
-                    <div className="col-span-2">
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Heat / Batch Number <span className="text-red-400">*</span></label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="MTC / Batch No."
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(16,185,129,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
-                        value={item.heatNumber}
-                        onChange={(e) => {
-                          const newItems = [...grnData.items];
-                          newItems[index].heatNumber = e.target.value;
-                          setGrnData({ ...grnData, items: newItems });
-                        }}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Incoming</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(16,185,129,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
-                        value={item.receivedQty}
-                        onChange={(e) => {
-                          const newItems = [...grnData.items];
-                          newItems[index].receivedQty = Number(e.target.value);
-                          setGrnData({ ...grnData, items: newItems });
-                        }}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <label className="block text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">Accepted</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-emerald-100 focus:border-emerald-500/50 focus:bg-emerald-500/20 focus:shadow-[0_0_20px_rgba(16,185,129,0.2),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-emerald-500/15"
-                        value={item.acceptedQty}
-                        onChange={(e) => {
-                          const newItems = [...grnData.items];
-                          newItems[index].acceptedQty = Number(e.target.value);
-                          setGrnData({ ...grnData, items: newItems });
-                        }}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Actual Rate (&#8377;)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(16,185,129,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:bg-white/[0.03]"
-                        value={item.actualRate}
-                        onChange={(e) => {
-                          const newItems = [...grnData.items];
-                          newItems[index].actualRate = Number(e.target.value);
-                          setGrnData({ ...grnData, items: newItems });
-                        }}
-                      />
+                    <div className="col-span-12 grid grid-cols-12 gap-2 mt-2 w-full">
+                       <div className="col-span-12 md:col-span-2">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 text-red-400">Heat/Batch No *</label>
+                         <input type="text" required className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.heatNumber} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].heatNumber = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-6 md:col-span-1">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tool No</label>
+                         <input type="text" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.toolNo || ''} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].toolNo = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-6 md:col-span-1">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Det No</label>
+                         <input type="text" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.detNo || ''} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].detNo = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-4 md:col-span-1">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">L</label>
+                         <input type="number" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.length || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].length = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-4 md:col-span-1">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">W</label>
+                         <input type="number" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.width || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].width = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-4 md:col-span-1">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">H</label>
+                         <input type="number" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.height || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].height = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-6 md:col-span-1">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">AP WT.</label>
+                         <input type="number" step="0.01" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.apWeight || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].apWeight = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-6 md:col-span-1">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 text-emerald-400">Acc. Qty</label>
+                         <input type="number" step="0.01" required className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-1.5 text-xs text-emerald-100 outline-none" value={item.acceptedQty} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].acceptedQty = Number(e.target.value); newItems[index].receivedQty = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-6 md:col-span-1">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Total Wt</label>
+                         <input type="number" step="0.01" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.totalWeight || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].totalWeight = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
+                       <div className="col-span-6 md:col-span-2">
+                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Rate</label>
+                         <input type="number" step="0.01" required className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.actualRate} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].actualRate = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                       </div>
                     </div>
                   </div>
                 );
@@ -683,7 +1167,14 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 font-bold text-xs transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Export</span>
+                  <span>PO Export</span>
+                </button>
+                <button 
+                  onClick={() => handleExportGRN(viewingPoDetails)}
+                  className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>RM Slip Export</span>
                 </button>
                 <button 
                   onClick={() => setViewingPoDetails(null)} 
@@ -697,7 +1188,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             {/* Modal Content */}
             <div className="flex-1 overflow-y-auto min-h-0 space-y-6 py-4 pr-1 relative z-10 hide-scrollbar">
               
-              {/* Metadata Grid */}
+              {/* Metadata Grid (RM Slip Header) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Vendor Card */}
@@ -708,20 +1199,20 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   </h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Supplier Name:</span>
-                      <span className="text-white font-bold">{viewingPoDetails.vendor?.vendorName || 'Unknown'}</span>
+                      <span className="text-slate-400">Vendor Name:</span>
+                      <span className="text-white font-bold">{viewingPoDetails.customFields?.vendorName || viewingPoDetails.vendor?.vendorName || 'Unknown'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Supplier Code:</span>
-                      <span className="text-slate-300 font-mono">{viewingPoDetails.vendor?.vendorCode || 'N/A'}</span>
+                      <span className="text-slate-400">Vendor Address:</span>
+                      <span className="text-slate-300">{viewingPoDetails.customFields?.vendorAddress || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Email Address:</span>
-                      <span className="text-slate-300">{viewingPoDetails.vendor?.contactEmail || 'N/A'}</span>
+                      <span className="text-slate-400">Customer Name:</span>
+                      <span className="text-slate-300">{viewingPoDetails.customFields?.customerName || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Contact Number:</span>
-                      <span className="text-slate-300">{viewingPoDetails.vendor?.contactPhone || 'N/A'}</span>
+                      <span className="text-slate-400">Customer Location:</span>
+                      <span className="text-slate-300">{viewingPoDetails.customFields?.customerLocation || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -730,11 +1221,11 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 <div className="p-4 rounded-xl bg-white/[0.01] border border-white/5">
                   <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center">
                     <Activity className="w-3.5 h-3.5 mr-1.5 text-blue-500" />
-                    Order Status & Dates
+                    RM Slip Details
                   </h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">PO Status:</span>
+                      <span className="text-slate-400">Status:</span>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-wider ${
                         viewingPoDetails.status === 'CLOSED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       }`}>
@@ -742,19 +1233,13 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Total Value:</span>
-                      <span className="text-amber-400 font-bold font-mono">&#8377;{Number(viewingPoDetails.totalAmount).toLocaleString()}</span>
+                      <span className="text-slate-400">RM Slip No:</span>
+                      <span className="text-amber-400 font-bold font-mono">{viewingPoDetails.customFields?.rmSlipNo || viewingPoDetails.poNumber}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Expected Delivery:</span>
+                      <span className="text-slate-400">Date:</span>
                       <span className="text-slate-300 font-medium">
-                        {viewingPoDetails.expectedDeliveryDate ? new Date(viewingPoDetails.expectedDeliveryDate).toLocaleDateString() : 'Immediate'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Issued On:</span>
-                      <span className="text-slate-300 font-medium">
-                        {new Date(viewingPoDetails.createdAt).toLocaleDateString()}
+                        {viewingPoDetails.customFields?.date ? new Date(viewingPoDetails.customFields.date).toLocaleDateString() : new Date(viewingPoDetails.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -762,59 +1247,71 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
 
               </div>
 
-              {/* Items Fulfillment Grid */}
+              {/* Items Table (RM Slip Format) */}
               <div className="space-y-3">
                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center">
                   <Info className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
-                  Line Items & Delivery Progress
+                  Line Items
                 </h4>
                 
-                <div className="bg-white/[0.01] border border-white/5 rounded-xl overflow-hidden">
-                  <div className="grid grid-cols-12 gap-2 px-4 py-2.5 text-[9px] font-black text-slate-500 uppercase tracking-wider bg-black/40 border-b border-white/5">
-                    <div className="col-span-4">Material Item</div>
-                    <div className="col-span-2 text-right">Unit Rate</div>
-                    <div className="col-span-1 text-right">GST %</div>
-                    <div className="col-span-3 px-2">Fulfillment Progress</div>
-                    <div className="col-span-2 text-right">Line Total</div>
-                  </div>
-                  <div className="divide-y divide-white/5">
-                    {viewingPoDetails.items?.map((item: any) => {
-                      const ordered = Number(item.orderedQty || 0);
-                      const received = Number(item.receivedQty || 0);
-                      const progress = Math.min(100, Math.max(0, (received / ordered) * 100));
-                      
-                      return (
-                        <div key={item.id} className="grid grid-cols-12 gap-2 px-4 py-3 text-xs text-slate-300 hover:bg-white/[0.01] transition-colors items-center">
-                          <div className="col-span-4 font-semibold text-white">
-                            {item.material?.materialName || 'Raw Material'}
-                          </div>
-                          <div className="col-span-2 text-right font-mono font-medium">
-                            &#8377;{Number(item.agreedRate).toLocaleString()}
-                          </div>
-                          <div className="col-span-1 text-right font-mono font-medium text-slate-400">
-                            {item.gstPercent ? `${item.gstPercent}%` : '-'}
-                          </div>
-                          <div className="col-span-3 px-2 flex flex-col space-y-1">
-                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                              <span>{received} / {ordered} units</span>
-                              <span>{progress.toFixed(0)}%</span>
-                            </div>
-                            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full rounded-full transition-all duration-500 ${
-                                  progress >= 100 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-                                }`}
-                                style={{ width: `${progress}%` }}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-span-2 text-right font-mono font-bold text-slate-200">
-                            &#8377;{Number(item.lineTotal).toLocaleString()}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                <div className="bg-white/[0.01] border border-white/5 rounded-xl overflow-x-auto hide-scrollbar">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="text-[9px] font-black text-slate-500 uppercase tracking-wider bg-black/40 border-b border-white/5 whitespace-nowrap">
+                        <th className="px-4 py-3">Sr. No</th>
+                        <th className="px-4 py-3">Tool No</th>
+                        <th className="px-4 py-3">Det No</th>
+                        <th className="px-4 py-3">L</th>
+                        <th className="px-4 py-3">W</th>
+                        <th className="px-4 py-3">H</th>
+                        <th className="px-4 py-3">Material</th>
+                        <th className="px-4 py-3 text-right">Qty</th>
+                        <th className="px-4 py-3 text-right">AP WT.</th>
+                        <th className="px-4 py-3 text-right">Total WT</th>
+                        <th className="px-4 py-3 text-right">Rate</th>
+                        <th className="px-4 py-3 text-right">Basic Cost</th>
+                        <th className="px-4 py-3 text-right">GST</th>
+                        <th className="px-4 py-3 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {viewingPoDetails.items?.map((item: any, i: number) => {
+                        const cf = item.customFields || {};
+                        return (
+                          <tr key={item.id} className="text-xs text-slate-300 hover:bg-white/[0.01] transition-colors">
+                            <td className="px-4 py-3">{cf.srNo || (i + 1)}</td>
+                            <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">{cf.toolNo || '-'}</td>
+                            <td className="px-4 py-3">{cf.detNo || (i + 1)}</td>
+                            <td className="px-4 py-3">{cf.L || '-'}</td>
+                            <td className="px-4 py-3">{cf.W || '-'}</td>
+                            <td className="px-4 py-3">{cf.H || '-'}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">{cf.material || item.material?.materialGrade || item.material?.materialName || '-'}</td>
+                            <td className="px-4 py-3 text-right">{cf.qty || Number(item.orderedQty)}</td>
+                            <td className="px-4 py-3 text-right font-mono">{cf.apWt ? Number(cf.apWt).toFixed(2) : '-'}</td>
+                            <td className="px-4 py-3 text-right font-mono">{cf.totalWt ? Number(cf.totalWt).toFixed(2) : '-'}</td>
+                            <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.rate || item.agreedRate).toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.basicCost || item.lineTotal).toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.gst || 0).toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right font-mono font-bold text-white">&#8377;{Number(cf.total || item.lineTotal).toLocaleString()}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    
+                    {/* Per Tool Summary Footer */}
+                    <tfoot className="bg-amber-500/5 border-t-2 border-amber-500/20">
+                      <tr className="text-xs font-bold text-amber-400">
+                        <td colSpan={7} className="px-4 py-3 text-right uppercase tracking-wider text-[10px]">Per Tool Summary</td>
+                        <td className="px-4 py-3 text-right">{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.qty) || it.orderedQty || 0), 0)}</td>
+                        <td className="px-4 py-3"></td>
+                        <td className="px-4 py-3 text-right font-mono">{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.totalWt) || 0), 0).toFixed(2)}</td>
+                        <td className="px-4 py-3"></td>
+                        <td className="px-4 py-3 text-right font-mono">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.basicCost) || it.lineTotal || 0), 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right font-mono">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.gst) || 0), 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right font-mono font-black text-amber-500">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.total) || it.lineTotal || 0), 0).toLocaleString()}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               </div>
 

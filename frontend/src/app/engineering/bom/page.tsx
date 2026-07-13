@@ -6,7 +6,6 @@ import { SmartTable } from "@/components/ui/SmartTable";
 import { PremiumDrawer } from "@/components/ui/PremiumDrawer";
 import { useProjects } from "@/hooks/useProjects";
 import { useMasterData } from "@/hooks/useMasterData";
-import { useToolbarStore } from "@/store/useToolbarStore";
 import { BomConverter } from "@/components/engineering/BomConverter";
 import { useUpdateBOM } from "@/hooks/useEngineering";
 import { useToast } from "@/components/ui/Toast";
@@ -16,18 +15,7 @@ export default function GlobalBomPage() {
   const { data: materials } = useMasterData('materials');
   const { success, error } = useToast();
   
-  const { mountFeature, unmountFeature } = useToolbarStore();
-
   const [selectedProject, setSelectedProject] = useState<any>(null);
-
-  // Setup toolbar
-  useEffect(() => {
-    mountFeature('global-bom', { export: true }, {
-      export: () => console.log("Export"),
-    });
-    return () => unmountFeature('global-bom');
-  }, [mountFeature, unmountFeature]);
-
   const activeProjects = projects?.filter((p: any) => p.status !== 'CLOSED' && p.status !== 'CANCELLED') || [];
 
   const columns = [
@@ -111,7 +99,19 @@ function BomWrapper({ project, materials, onClose, onSuccess, onError }: any) {
         calculatedWeight: r.totalWeight || r.calculatedWeight || 0,
         dimensions: r.length && r.width && r.height ? `${r.length}x${r.width}x${r.height}` : undefined,
         hsnCode: r.hsnCode || undefined,
-        gstPercent: r.gstPercent || undefined
+        gstPercent: r.gstPercent || undefined,
+        customFields: {
+          srNo: r.srNo,
+          partName: r.partName,
+          finishSize: r.finishSize,
+          rawMaterialSize: r.rawMaterialSize,
+          length: r.length,
+          width: r.width,
+          height: r.height,
+          apWeight: r.apWeight,
+          totalWeight: r.totalWeight,
+          basicCost: r.basicCost
+        }
       }));
       await updateBOMMutation.mutateAsync({ items });
       onSuccess();

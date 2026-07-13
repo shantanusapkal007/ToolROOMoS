@@ -137,7 +137,7 @@ export default function ProjectLayout({
         <div className="flex-1 h-full flex flex-col animate-slide-up min-h-0 overflow-hidden">
             
           {/* Premium Ultra-Dense Context Header */}
-          <header className="relative flex items-center justify-between shrink-0 px-6 py-3 bg-white/[0.02] backdrop-blur-2xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] z-20">
+          <header className="relative flex items-center justify-between shrink-0 px-6 py-3 bg-white/[0.02] backdrop-blur-2xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] z-20 hide-on-print">
             {/* Ambient Top Glow */}
             <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent blur-[1px]" />
             
@@ -193,7 +193,7 @@ export default function ProjectLayout({
           </header>
 
           {/* Project Navigation Tabs */}
-          <div className="flex space-x-6 border-b border-white/5 px-6 pt-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar">
+          <div className="flex space-x-6 border-b border-white/5 px-6 pt-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar hide-on-print">
             <Link href={`/projects/${project.id}/overview`} className={getTabClass('/overview')}>Overview</Link>
             <Link href={`/projects/${project.id}/tasks`} className={getTabClass('/tasks')}>Tasks & WBS</Link>
             <Link href={`/projects/${project.id}/engineering`} className={getTabClass('/engineering')}>Engineering</Link>

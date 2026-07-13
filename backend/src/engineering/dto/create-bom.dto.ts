@@ -7,6 +7,13 @@ export class CreateBomDto {
   @IsOptional()
   documentNumber?: string;
 
+  @IsString()
+  @IsOptional()
+  remarks?: string;
+
+  @IsOptional()
+  customFields?: any;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateBomItemDto)
