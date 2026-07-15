@@ -64,7 +64,7 @@ export const PremiumDrawer: React.FC<PremiumDrawerProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm print:hidden" 
+            className="absolute inset-0 bg-black/5 backdrop-blur-sm print:hidden" 
             onClick={onClose} 
           />
           
@@ -77,13 +77,13 @@ export const PremiumDrawer: React.FC<PremiumDrawerProps> = ({
             className={`relative w-full ${widthClasses[width]} max-h-[90vh] glass-modal flex flex-col overflow-hidden z-10 print:static print:max-h-none print:h-auto print:w-full print:max-w-none print:shadow-none print:border-none print:bg-white print:text-black print:overflow-visible print:rounded-none`}
           >
             {/* Top Header matching MSDR */}
-            <div className="flex-shrink-0 p-6 border-b border-white/5 bg-white/[0.01] flex justify-between items-center relative overflow-hidden hide-on-print print:hidden">
+            <div className="flex-shrink-0 p-6 border-b border-black/5 bg-white/[0.01] flex justify-between items-center relative overflow-hidden hide-on-print print:hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-50"></div>
               <div className="relative">
-                <h2 className="text-2xl font-semibold text-white tracking-tight flex items-center gap-3">
+                <h2 className="text-2xl font-semibold text-zinc-900 tracking-tight flex items-center gap-3">
                   {title}
                 </h2>
-                {subtitle && <p className="text-sm text-slate-400 mt-1">{subtitle}</p>}
+                {subtitle && <p className="text-sm text-zinc-500 mt-1">{subtitle}</p>}
               </div>
               
               <div className="flex items-center gap-4 ml-4 relative z-10">
@@ -91,7 +91,7 @@ export const PremiumDrawer: React.FC<PremiumDrawerProps> = ({
                   whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.05)' }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onClose}
-                  className="p-2 rounded-xl text-slate-400 hover:text-white transition-colors focus:outline-none"
+                  className="p-2 rounded-xl text-zinc-500 hover:text-zinc-900 transition-colors focus:outline-none"
                   title="Close (Esc)"
                 >
                   <X className="h-5 w-5" />

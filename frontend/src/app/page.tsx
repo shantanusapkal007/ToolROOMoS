@@ -13,7 +13,7 @@ export default function Home() {
   const router = useRouter();
 
   return (
-    <div className="flex h-screen w-full overflow-hidden text-white font-sans mission-control-bg">
+    <div className="flex h-screen w-full overflow-hidden text-zinc-900 font-sans mission-control-bg">
       <Sidebar />
       <main className="flex-1 h-screen overflow-hidden flex flex-col relative z-0 pl-[5.5rem]">
         <MissionControl 

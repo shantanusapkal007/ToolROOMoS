@@ -20,7 +20,7 @@ export default function MaintenancePage() {
   const activeLoto = tickets?.filter((t: any) => t.lotoApplied && t.status !== 'RESOLVED' && t.status !== 'CLOSED')?.length || 0;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-white font-sans bg-[#05070A]">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#05070A]">
       <Sidebar />
       <div className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] pr-8 animate-fade-in py-8 overflow-y-auto hide-scrollbar">
         
@@ -36,7 +36,7 @@ export default function MaintenancePage() {
           actions={
             <button 
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-elevation transition-all"
             >
               <Plus className="w-4 h-4" />
               Report Breakdown
@@ -46,31 +46,31 @@ export default function MaintenancePage() {
 
         {/* Top KPI Cards */}
         <div className="grid grid-cols-3 gap-6 mt-6 mb-8">
-          <div className="spotlight-card p-6 border border-white/5 bg-[#0a0a0c] rounded-2xl flex items-center gap-5">
+          <div className="spotlight-card p-6 border border-black/5 bg-white/70 rounded-2xl flex items-center gap-5">
             <div className="p-4 rounded-xl bg-red-500/10 text-red-500 shadow-[inset_0_0_20px_rgba(239,68,68,0.1)] border border-red-500/20">
               <AlertTriangle className="w-8 h-8" />
             </div>
             <div>
               <p className="text-zinc-500 font-medium text-sm">Active Breakdowns</p>
-              <h2 className="text-3xl font-bold text-white mt-1">{openTickets.length}</h2>
+              <h2 className="text-3xl font-bold text-zinc-900 mt-1">{openTickets.length}</h2>
             </div>
           </div>
-          <div className="spotlight-card p-6 border border-white/5 bg-[#0a0a0c] rounded-2xl flex items-center gap-5">
+          <div className="spotlight-card p-6 border border-black/5 bg-white/70 rounded-2xl flex items-center gap-5">
             <div className="p-4 rounded-xl bg-orange-500/10 text-orange-500 shadow-[inset_0_0_20px_rgba(249,115,22,0.1)] border border-orange-500/20">
               <AlertTriangle className="w-8 h-8" />
             </div>
             <div>
               <p className="text-zinc-500 font-medium text-sm">Machines under LOTO</p>
-              <h2 className="text-3xl font-bold text-white mt-1">{activeLoto}</h2>
+              <h2 className="text-3xl font-bold text-zinc-900 mt-1">{activeLoto}</h2>
             </div>
           </div>
-          <div className="spotlight-card p-6 border border-white/5 bg-[#0a0a0c] rounded-2xl flex items-center gap-5">
+          <div className="spotlight-card p-6 border border-black/5 bg-white/70 rounded-2xl flex items-center gap-5">
             <div className="p-4 rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/20">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div>
               <p className="text-zinc-500 font-medium text-sm">Recently Resolved</p>
-              <h2 className="text-3xl font-bold text-white mt-1">{resolvedTickets.length}</h2>
+              <h2 className="text-3xl font-bold text-zinc-900 mt-1">{resolvedTickets.length}</h2>
             </div>
           </div>
         </div>
@@ -79,9 +79,9 @@ export default function MaintenancePage() {
         <div className="flex-1 flex gap-6 min-h-0">
           
           {/* Active Tickets Column */}
-          <div className="flex-1 flex flex-col min-h-0 bg-white/[0.02] rounded-3xl border border-white/5 p-6 shadow-inner">
+          <div className="flex-1 flex flex-col min-h-0 bg-black/[0.02] rounded-3xl border border-black/5 p-6 shadow-inner">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-400" />
                 Active Work Orders
                 <span className="ml-2 bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full text-xs">{openTickets.length}</span>
@@ -92,7 +92,7 @@ export default function MaintenancePage() {
                 {isLoading ? (
                   <div className="animate-pulse space-y-4">
                     {[1, 2, 3].map(i => (
-                      <div key={i} className="h-32 bg-white/5 rounded-2xl" />
+                      <div key={i} className="h-32 bg-black/5 rounded-2xl" />
                     ))}
                   </div>
                 ) : openTickets.length === 0 ? (
@@ -111,7 +111,7 @@ export default function MaintenancePage() {
                       className={`spotlight-card p-5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.01] ${
                         ticket.lotoApplied 
                           ? 'border-red-500/30 bg-red-500/5' 
-                          : 'border-white/5 bg-[#111] hover:bg-[#161616]'
+                          : 'border-black/5 bg-[#F4F4F6] hover:bg-[#161616]'
                       }`}
                     >
                       <div className="flex justify-between items-start mb-3">
@@ -131,8 +131,8 @@ export default function MaintenancePage() {
                           {ticket.priority}
                         </span>
                       </div>
-                      <h4 className="text-base font-bold text-white mb-2 line-clamp-1">{ticket.machine?.machineName}</h4>
-                      <p className="text-sm text-zinc-400 line-clamp-2">{ticket.issueDescription}</p>
+                      <h4 className="text-base font-bold text-zinc-900 mb-2 line-clamp-1">{ticket.machine?.machineName}</h4>
+                      <p className="text-sm text-zinc-500 line-clamp-2">{ticket.issueDescription}</p>
                     </motion.div>
                   ))
                 )}
@@ -141,9 +141,9 @@ export default function MaintenancePage() {
           </div>
 
           {/* Resolved Tickets Column */}
-          <div className="flex-1 flex flex-col min-h-0 bg-white/[0.02] rounded-3xl border border-white/5 p-6 shadow-inner">
+          <div className="flex-1 flex flex-col min-h-0 bg-black/[0.02] rounded-3xl border border-black/5 p-6 shadow-inner">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 Resolved (Waiting Closure)
                 <span className="ml-2 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-xs">{resolvedTickets.length}</span>
@@ -166,8 +166,8 @@ export default function MaintenancePage() {
                         RESOLVED
                       </span>
                     </div>
-                    <h4 className="text-base font-bold text-white mb-2 line-clamp-1">{ticket.machine?.machineName}</h4>
-                    <p className="text-sm text-zinc-400 line-clamp-2">{ticket.issueDescription}</p>
+                    <h4 className="text-base font-bold text-zinc-900 mb-2 line-clamp-1">{ticket.machine?.machineName}</h4>
+                    <p className="text-sm text-zinc-500 line-clamp-2">{ticket.issueDescription}</p>
                   </motion.div>
                 ))}
               </AnimatePresence>

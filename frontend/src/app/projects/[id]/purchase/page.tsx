@@ -665,14 +665,14 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
   };
 
   return (
-    <div className="flex-1 h-full flex flex-col animate-fade-in min-h-0">
+    <div className="flex-1 h-full flex flex-col animate-fade-in min-h-0 max-w-7xl mx-auto w-full px-2">
       
-      <div className="flex justify-between items-center shrink-0 mb-6 bg-white/[0.01] border border-white/5 rounded-xl p-3">
+      <div className="flex justify-between items-center shrink-0 mb-6 bg-white border border-black/5 rounded-xl p-3">
         <div className="flex items-center">
-          <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 mr-3 text-amber-400">
+          <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 mr-3 text-amber-700 shadow-sm">
             <ShoppingCart className="w-4 h-4" />
           </div>
-          <h2 className="text-lg font-bold text-white tracking-tight">Procurement & Sourcing</h2>
+          <h2 className="text-lg font-bold text-zinc-900 tracking-tight">Procurement & Sourcing</h2>
         </div>
         <button 
           onClick={() => {
@@ -682,9 +682,9 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
             setShowPoModal(true);
           }} 
-          className="group relative px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(245,158,11,0.1)] hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+          className="group relative px-4 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-all duration-300 shadow-elevation hover:shadow-elevation"
         >
-          <span className="relative z-10 flex items-center text-amber-400 font-bold text-sm">
+          <span className="relative z-10 flex items-center text-amber-700 font-black tracking-widest text-sm">
             <Plus className="w-4 h-4 mr-2" />
             Generate Vendor PO
           </span>
@@ -700,64 +700,64 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 key={po.id} 
-                className="group relative rounded-2xl bg-white/[0.01] border border-white/5 p-4 backdrop-blur-xl flex flex-col overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-0.5"
+                className="group relative rounded-2xl bg-white border border-zinc-200 p-4 flex flex-col overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-0.5"
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:bg-amber-500/20 transition-all duration-500" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full blur-[20px] -mr-10 -mt-10 pointer-events-none group-hover:bg-amber-500/20 transition-all duration-500" />
                 
                 <div className="flex justify-between items-start mb-4 relative z-10">
                   <div>
                     <div className="flex items-center space-x-3 mb-1.5">
-                      <h3 className="text-sm font-bold text-white tracking-tight">{po.poNumber}</h3>
+                      <h3 className="text-sm font-bold text-zinc-900 tracking-tight">{po.poNumber}</h3>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-widest ${
-                        po.status === 'CLOSED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        po.status === 'CLOSED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
                       }`}>
                         {po.status === 'CLOSED' ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
                         {po.status}
                       </span>
                     </div>
-                    <p className="text-slate-400 text-xs flex items-center">
+                    <p className="text-zinc-500 text-xs flex items-center">
                       <Package className="w-3 h-3 mr-1.5 opacity-50" />
                       {po.vendor?.vendorName || 'Unknown Vendor'}
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Value</div>
-                    <div className="text-lg text-amber-400 font-bold tracking-tight font-mono">&#8377;{Number(po.totalAmount).toLocaleString()}</div>
+                    <div className="font-black text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Total Value</div>
+                    <div className="text-lg text-amber-700 font-black tracking-widest tracking-tight font-mono">&#8377;{Number(po.totalAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                   </div>
                 </div>
 
-                <div className="flex-1 bg-black/40 rounded-xl p-3 border border-white/5 mb-4 relative z-10">
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center">
+                <div className="flex-1 bg-zinc-50 rounded-xl p-3 border border-zinc-200 mb-4 relative z-10">
+                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center">
                     <FileText className="w-3 h-3 mr-1.5" />
                     Order Items
                   </h4>
                   <div className="space-y-2">
                     {po.items?.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center group/item bg-white/[0.01] p-2 rounded-lg border border-white/[0.02]">
+                      <div key={item.id} className="flex justify-between items-center group/item bg-white p-2 rounded-lg border border-zinc-100 shadow-sm">
                         <div className="flex flex-col">
-                          <span className="text-xs font-medium text-slate-200">{item.material?.materialName}</span>
-                          <span className="text-[10px] text-slate-500 mt-0.5 font-bold">{item.orderedQty} units ordered</span>
+                          <span className="text-xs font-medium text-zinc-700">{item.material?.materialName}</span>
+                          <span className="text-[10px] text-slate-500 mt-0.5 font-bold">{Number(item.orderedQty).toLocaleString(undefined, {maximumFractionDigits:2})} {Number(item.orderedQty) === 1 ? "unit" : "units"} ordered</span>
                         </div>
                         <div className="text-right flex flex-col">
-                          <span className="text-xs text-slate-300 font-mono font-bold">&#8377;{Number(item.lineTotal).toLocaleString()}</span>
-                          <span className="text-[10px] text-slate-500 mt-0.5 font-mono">@ &#8377;{item.agreedRate}</span>
+                          <span className="text-xs text-zinc-600 font-mono font-bold">&#8377;{Number(item.lineTotal || (item.orderedQty * item.agreedRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                          <span className="text-[10px] text-slate-500 mt-0.5 font-mono">@ &#8377;{Number(item.agreedRate).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="mt-auto pt-4 border-t border-white/5 relative z-10 flex gap-2">
+                <div className="mt-auto pt-4 border-t border-black/5 relative z-10 flex gap-2">
                   <button
                     onClick={() => setViewingPoDetails(po)}
-                    className={`font-bold text-xs py-2.5 rounded-xl transition-all duration-300 border border-white/10 hover:bg-white/5 hover:border-white/20 text-white flex-1`}
+                    className={`font-bold text-xs py-2.5 rounded-xl transition-all duration-300 bg-white border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 text-zinc-900 shadow-sm flex-1`}
                   >
                     View Details
                   </button>
                   {po.status === 'DRAFT' && (
                     <button
                       onClick={() => handleIssuePO(po.id)}
-                      className="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 py-2.5 rounded-xl transition-all duration-300 border border-blue-500/20 hover:border-blue-500/30 font-bold text-xs flex items-center justify-center space-x-1"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-md border border-transparent font-bold text-xs flex items-center justify-center space-x-1"
                     >
                       <span>Issue PO</span>
                     </button>
@@ -765,7 +765,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   {(po.status === 'ISSUED' || po.status === 'PARTIAL') && (
                     <button
                       onClick={() => openGrnModal(po)}
-                      className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2.5 rounded-xl transition-all duration-300 border border-emerald-500/20 hover:border-emerald-500/30 font-bold text-xs flex items-center justify-center space-x-1"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md border border-transparent font-bold text-xs flex items-center justify-center space-x-1"
                     >
                       <span>Process GRN</span>
                     </button>
@@ -773,7 +773,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
                     <button
                       onClick={() => openEditPoModal(po)}
-                      className="px-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 py-2.5 rounded-xl transition-all duration-300 border border-blue-500/20 hover:border-blue-500/30 flex items-center justify-center"
+                      className="px-3 bg-blue-600 hover:bg-blue-700 text-white shadow-md border border-transparent flex items-center justify-center"
                       title="Edit Purchase Order"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -782,7 +782,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
                     <button
                       onClick={() => handleDeletePO(po.id)}
-                      className="px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 rounded-xl transition-all duration-300 border border-red-500/20 hover:border-red-500/30 flex items-center justify-center"
+                      className="px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 shadow-sm flex items-center justify-center"
                       title="Delete Purchase Order"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -793,15 +793,15 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-32 px-4 rounded-[2rem] border border-dashed border-white/10 bg-white/[0.01]">
-            <div className="w-24 h-24 mb-6 rounded-3xl bg-gradient-to-br from-amber-500/20 to-orange-500/5 border border-amber-500/20 flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center py-32 px-4 rounded-[2rem] border border-dashed border-black/10 bg-white">
+            <div className="w-24 h-24 mb-6 rounded-3xl bg-amber-50 border border-amber-200 shadow-md flex items-center justify-center">
               <ShoppingCart className="w-10 h-10 text-amber-400 opacity-80" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">No Purchase Orders Yet</h3>
-            <p className="text-slate-400 max-w-md text-center mb-8">Generate a purchase order to begin procuring raw materials and components for this project.</p>
+            <h3 className="text-2xl font-bold text-zinc-900 mb-3 tracking-tight">No Purchase Orders Yet</h3>
+            <p className="text-zinc-500 max-w-md text-center mb-8">Generate a purchase order to begin procuring raw materials and components for this project.</p>
             <button 
               onClick={() => setShowPoModal(true)}
-              className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl shadow-[0_0_30px_rgba(245,158,11,0.3)] transition-all hover:scale-105 active:scale-95"
+              className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl shadow-elevation transition-all hover:scale-105 active:scale-95"
             >
               Create First PO
             </button>
@@ -824,7 +824,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
         width="2xl"
       >
         <form onSubmit={handleSavePo} className="flex flex-col space-y-6 h-full p-6">
-          <div className="grid grid-cols-2 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
+          <div className="grid grid-cols-2 gap-6 shrink-0 bg-black/[0.02] p-6 rounded-2xl border border-black/5">
             <Input
               label="PO Number (Auto-generated if empty)"
               value={poNum}
@@ -832,7 +832,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
               placeholder="Leave blank to auto-generate"
             />
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Vendor</label>
+              <label className="block text-xs font-medium text-zinc-500 mb-2 uppercase tracking-wider">Vendor</label>
               <Select
                 value={selectedVendorId}
                 onChange={(e) => setSelectedVendorId(e.target.value)}
@@ -847,9 +847,9 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             />
           </div>
           
-          <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
+          <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/5 p-6 rounded-2xl border border-black/5">
             <div className="flex justify-between items-center mb-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Order Lines</h4>
+              <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Order Lines</h4>
               <label className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors cursor-pointer">
                 <Upload className="w-3.5 h-3.5" />
                 <span>Import PO</span>
@@ -857,16 +857,16 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
               </label>
             </div>
             <div className="grid grid-cols-12 gap-2 mb-3">
-              <div className="col-span-12 md:col-span-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Material</div>
-              <div className="col-span-6 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dim</div>
-              <div className="col-span-6 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">HSN</div>
-              <div className="col-span-6 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">UOM</div>
-              <div className="col-span-6 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Qty</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rate</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Disc</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Basic</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">GST%</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Value</div>
+              <div className="col-span-12 md:col-span-2 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Material</div>
+              <div className="col-span-6 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Dim</div>
+              <div className="col-span-6 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">HSN</div>
+              <div className="col-span-6 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">UOM</div>
+              <div className="col-span-6 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Qty</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Rate</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Disc</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Basic</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">GST%</div>
+              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider text-right">Value</div>
               <div className="col-span-1"></div>
             </div>
             
@@ -877,7 +877,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 const totalVal = basicVal + gstVal;
 
                 return (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-center bg-white/[0.02] p-2 rounded-xl border border-white/5">
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center bg-black/[0.02] p-2 rounded-xl border border-black/5">
                     <div className="col-span-12 md:col-span-2">
                       <Select
                         value={item.materialId}
@@ -899,7 +899,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       <input
                         type="text"
                         placeholder="Dim"
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-[0_0_20px_rgba(245,158,11,0.15),_inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
+                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-elevation transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
                         value={item.dimensions || ""}
                         onChange={(e) => updatePoItem(index, 'dimensions', e.target.value)}
                       />
@@ -908,7 +908,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       <input
                         type="text"
                         placeholder="HSN"
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
                         value={item.hsnCode || ""}
                         onChange={(e) => updatePoItem(index, 'hsnCode', e.target.value)}
                       />
@@ -917,7 +917,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       <input
                         type="text"
                         placeholder="UOM"
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
                         value={item.uom || "NOS"}
                         onChange={(e) => updatePoItem(index, 'uom', e.target.value)}
                       />
@@ -925,7 +925,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                     <div className="col-span-6 md:col-span-1">
                       <input
                         type="number" min="1" step="0.01" required placeholder="Qty"
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
                         value={item.orderedQty}
                         onChange={(e) => updatePoItem(index, 'orderedQty', Number(e.target.value))}
                       />
@@ -933,7 +933,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                     <div className="col-span-5 md:col-span-1">
                       <input
                         type="number" min="0" step="0.01" required placeholder="Rate"
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
                         value={item.agreedRate}
                         onChange={(e) => updatePoItem(index, 'agreedRate', Number(e.target.value))}
                       />
@@ -941,20 +941,20 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                     <div className="col-span-5 md:col-span-1">
                       <input
                         type="number" min="0" step="0.01" placeholder="Disc"
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
                         value={item.discount || 0}
                         onChange={(e) => updatePoItem(index, 'discount', Number(e.target.value))}
                       />
                     </div>
                     <div className="col-span-5 md:col-span-1">
-                      <div className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-2 text-xs text-slate-300 font-mono flex items-center h-[34px]">
+                      <div className="w-full bg-black/5 border border-black/5 rounded-lg px-2 py-2 text-xs text-zinc-600 font-mono flex items-center h-[34px]">
                         {basicVal.toFixed(1)}
                       </div>
                     </div>
                     <div className="col-span-5 md:col-span-1">
                       <input
                         type="number" min="0" step="0.01" placeholder="GST%"
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-2 text-xs text-white focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
+                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
                         value={item.gstPercent || ''}
                         onChange={(e) => {
                           const val = Number(e.target.value);
@@ -965,12 +965,12 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       />
                     </div>
                     <div className="col-span-5 md:col-span-1 flex justify-end items-center h-[34px]">
-                       <span className="text-amber-400 font-bold text-xs font-mono">
+                       <span className="text-amber-700 font-black tracking-widest text-xs font-mono">
                          {totalVal.toFixed(1)}
                        </span>
                     </div>
                     <div className="col-span-1 flex justify-center">
-                      <button type="button" onClick={() => removePoItemRow(index)} className="w-8 h-8 rounded-lg bg-white/[0.02] border border-white/[0.05] text-red-400 flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/30 transition-all" disabled={poItems.length === 1}>
+                      <button type="button" onClick={() => removePoItemRow(index)} className="w-8 h-8 rounded-lg bg-black/[0.02] border border-black/10/[0.05] text-red-400 flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/30 transition-all" disabled={poItems.length === 1}>
                         &times;
                       </button>
                     </div>
@@ -988,15 +988,15 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             </button>
           </div>
 
-          <div className="flex space-x-4 pt-4 shrink-0 border-t border-white/10 mt-auto">
+          <div className="flex space-x-4 pt-4 shrink-0 border-t border-black/10 mt-auto">
             <button type="button" onClick={() => {
               setShowPoModal(false);
               setEditingPoId(null);
               setPoNum("");
               setSelectedVendorId("");
               setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18 }]);
-            }} className="flex-1 px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 font-bold text-white shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all">
+            }} className="flex-1 px-6 py-4 rounded-xl bg-black/5 hover:bg-black/10 font-bold text-zinc-900 transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 font-bold text-zinc-900 shadow-elevation transition-all">
               {editingPoId ? "Save Changes" : "Generate Purchase Order"}
             </button>
           </div>
@@ -1012,7 +1012,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
         width="3xl"
       >
         <form onSubmit={handleProcessGrn} className="flex flex-col space-y-6 h-full p-6">
-          <div className="grid grid-cols-4 gap-6 shrink-0 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
+          <div className="grid grid-cols-4 gap-6 shrink-0 bg-black/[0.02] p-6 rounded-2xl border border-black/5">
             <Input
               label="GRN Number"
               value={grnData.grnNumber}
@@ -1026,15 +1026,15 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
               required
             />
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Warehouse</label>
+              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Target Warehouse</label>
               <select 
-                className="w-full bg-[#050A14] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all appearance-none" 
+                className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg p-3 text-sm text-zinc-900 focus:outline-none focus:border-emerald-500/50 transition-all appearance-none" 
                 value={grnData.warehouseId}
                 onChange={e => setGrnData({...grnData, warehouseId: e.target.value})}
                 required
               >
                 {warehouses?.map((w: any) => (
-                  <option key={w.id} value={w.id} className="bg-[#0B1018] text-white">
+                  <option key={w.id} value={w.id} className="bg-[#F4F4F6] text-zinc-900">
                     {w.warehouseName}
                   </option>
                 ))}
@@ -1047,9 +1047,9 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             />
           </div>
           
-          <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/40 p-6 rounded-2xl border border-white/5">
+          <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/5 p-6 rounded-2xl border border-black/5">
             <div className="flex justify-between items-center mb-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Received Items</h4>
+              <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Received Items</h4>
               <label className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors cursor-pointer">
                 <Upload className="w-3.5 h-3.5" />
                 <span>Import RM Slip</span>
@@ -1060,57 +1060,57 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
               {grnData.items.map((item, index) => {
                 const poItem = selectedPo?.items.find((i: any) => i.id === item.poItemId);
                 return (
-                  <div key={index} className="grid grid-cols-6 gap-6 items-end bg-white/[0.02] p-6 rounded-xl border border-white/5">
-                    <div className="col-span-12 border-b border-white/5 pb-3 mb-1 flex justify-between items-center w-full">
+                  <div key={index} className="grid grid-cols-6 gap-6 items-end bg-black/[0.02] p-6 rounded-xl border border-black/5">
+                    <div className="col-span-12 border-b border-black/5 pb-3 mb-1 flex justify-between items-center w-full">
                       <div>
                         <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded text-xs mr-3">ITEM {index + 1}</span>
-                        <span className="font-bold text-white text-lg">{poItem?.material?.materialCode} - {poItem?.material?.materialGrade}</span>
+                        <span className="font-bold text-zinc-900 text-lg">{poItem?.material?.materialCode} - {poItem?.material?.materialGrade}</span>
                       </div>
-                      <div className="text-sm text-slate-400 bg-black/50 px-3 py-1.5 rounded-lg">
-                        Ordered: <strong className="text-white">{poItem?.orderedQty}</strong> <span className="mx-2 opacity-50">|</span> Rate: <strong className="text-white">&#8377;{poItem?.agreedRate}</strong>
+                      <div className="text-sm text-zinc-500 bg-black/5 px-3 py-1.5 rounded-lg">
+                        Ordered: <strong className="text-zinc-900">{poItem?.orderedQty}</strong> <span className="mx-2 opacity-50">|</span> Rate: <strong className="text-zinc-900">&#8377;{poItem?.agreedRate}</strong>
                       </div>
                     </div>
                     
                     <div className="col-span-12 grid grid-cols-12 gap-2 mt-2 w-full">
                        <div className="col-span-12 md:col-span-2">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 text-red-400">Heat/Batch No *</label>
-                         <input type="text" required className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.heatNumber} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].heatNumber = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 text-red-400">Heat/Batch No *</label>
+                         <input type="text" required className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.heatNumber} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].heatNumber = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tool No</label>
-                         <input type="text" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.toolNo || ''} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].toolNo = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Tool No</label>
+                         <input type="text" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.toolNo || ''} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].toolNo = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Det No</label>
-                         <input type="text" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.detNo || ''} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].detNo = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Det No</label>
+                         <input type="text" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.detNo || ''} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].detNo = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-4 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">L</label>
-                         <input type="number" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.length || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].length = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">L</label>
+                         <input type="number" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.length || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].length = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-4 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">W</label>
-                         <input type="number" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.width || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].width = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">W</label>
+                         <input type="number" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.width || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].width = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-4 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">H</label>
-                         <input type="number" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.height || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].height = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">H</label>
+                         <input type="number" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.height || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].height = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">AP WT.</label>
-                         <input type="number" step="0.01" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.apWeight || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].apWeight = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">AP WT.</label>
+                         <input type="number" step="0.01" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.apWeight || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].apWeight = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 text-emerald-400">Acc. Qty</label>
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 text-emerald-400">Acc. Qty</label>
                          <input type="number" step="0.01" required className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-1.5 text-xs text-emerald-100 outline-none" value={item.acceptedQty} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].acceptedQty = Number(e.target.value); newItems[index].receivedQty = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Total Wt</label>
-                         <input type="number" step="0.01" className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.totalWeight || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].totalWeight = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Total Wt</label>
+                         <input type="number" step="0.01" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.totalWeight || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].totalWeight = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                        <div className="col-span-6 md:col-span-2">
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Rate</label>
-                         <input type="number" step="0.01" required className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-2 py-1.5 text-xs text-white outline-none" value={item.actualRate} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].actualRate = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
+                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Rate</label>
+                         <input type="number" step="0.01" required className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.actualRate} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].actualRate = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
                        </div>
                     </div>
                   </div>
@@ -1119,32 +1119,32 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             </div>
           </div>
 
-          <div className="flex space-x-4 pt-4 shrink-0 border-t border-white/10 mt-auto">
-            <button type="button" onClick={() => setShowGrnModal(false)} className="flex-1 px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 font-bold text-white transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 font-bold text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all">Complete Goods Receipt</button>
+          <div className="flex space-x-4 pt-4 shrink-0 border-t border-black/10 mt-auto">
+            <button type="button" onClick={() => setShowGrnModal(false)} className="flex-1 px-6 py-4 rounded-xl bg-black/5 hover:bg-black/10 font-bold text-zinc-900 transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 font-bold text-white shadow-elevation transition-all">Complete Goods Receipt</button>
           </div>
         </form>
       </PremiumDrawer>
       {/* View PO Details Modal */}
       {viewingPoDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
-          <div className="glass-modal w-full max-w-4xl p-6 animate-slide-up border border-white/10 relative overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/10 backdrop-blur-xl animate-fade-in">
+          <div className="glass-modal w-full max-w-4xl p-6 animate-slide-up border border-black/10 relative overflow-hidden flex flex-col max-h-[90vh]">
             {/* Ambient decorative glow */}
             <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-[90px] -mr-32 -mt-32 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/5 rounded-full blur-[90px] -ml-32 -mb-32 pointer-events-none" />
 
             {/* Modal Header */}
-            <div className="flex justify-between items-center pb-4 border-b border-white/10 shrink-0 relative z-10">
+            <div className="flex justify-between items-center pb-4 border-b border-black/10 shrink-0 relative z-10">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
                   <ShoppingCart className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+                  <h3 className="text-base font-bold text-zinc-900 tracking-tight flex items-center space-x-2">
                     <span>Purchase Order Details</span>
                     <span className="text-xs text-slate-500 font-mono">({viewingPoDetails.poNumber})</span>
                   </h3>
-                  <p className="text-[10px] text-slate-400 font-medium">Detailed fulfillment ledger & audit logs</p>
+                  <p className="text-[10px] text-zinc-500 font-medium">Detailed fulfillment ledger & audit logs</p>
                 </div>
               </div>
               <div className="flex space-x-2">
@@ -1180,7 +1180,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 </button>
                 <button 
                   onClick={() => setViewingPoDetails(null)} 
-                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-lg bg-black/5 hover:bg-black/10 text-zinc-500 hover:text-zinc-900 flex items-center justify-center transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1194,53 +1194,53 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Vendor Card */}
-                <div className="p-4 rounded-xl bg-white/[0.01] border border-white/5">
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center">
+                <div className="p-4 rounded-xl bg-white border border-black/5">
+                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center">
                     <Package className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
                     Supplier Information
                   </h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Vendor Name:</span>
-                      <span className="text-white font-bold">{viewingPoDetails.customFields?.vendorName || viewingPoDetails.vendor?.vendorName || 'Unknown'}</span>
+                      <span className="text-zinc-500">Vendor Name:</span>
+                      <span className="text-zinc-900 font-bold">{viewingPoDetails.customFields?.vendorName || viewingPoDetails.vendor?.vendorName || 'Unknown'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Vendor Address:</span>
-                      <span className="text-slate-300">{viewingPoDetails.customFields?.vendorAddress || 'N/A'}</span>
+                      <span className="text-zinc-500">Vendor Address:</span>
+                      <span className="text-zinc-600">{viewingPoDetails.customFields?.vendorAddress || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Customer Name:</span>
-                      <span className="text-slate-300">{viewingPoDetails.customFields?.customerName || 'N/A'}</span>
+                      <span className="text-zinc-500">Customer Name:</span>
+                      <span className="text-zinc-600">{viewingPoDetails.customFields?.customerName || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Customer Location:</span>
-                      <span className="text-slate-300">{viewingPoDetails.customFields?.customerLocation || 'N/A'}</span>
+                      <span className="text-zinc-500">Customer Location:</span>
+                      <span className="text-zinc-600">{viewingPoDetails.customFields?.customerLocation || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* PO Stats Card */}
-                <div className="p-4 rounded-xl bg-white/[0.01] border border-white/5">
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center">
+                <div className="p-4 rounded-xl bg-white border border-black/5">
+                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center">
                     <Activity className="w-3.5 h-3.5 mr-1.5 text-blue-500" />
                     RM Slip Details
                   </h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">Status:</span>
+                      <span className="text-zinc-500">Status:</span>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-wider ${
-                        viewingPoDetails.status === 'CLOSED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        viewingPoDetails.status === 'CLOSED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
                       }`}>
                         {viewingPoDetails.status}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">RM Slip No:</span>
-                      <span className="text-amber-400 font-bold font-mono">{viewingPoDetails.customFields?.rmSlipNo || viewingPoDetails.poNumber}</span>
+                      <span className="text-zinc-500">RM Slip No:</span>
+                      <span className="text-amber-700 font-black tracking-widest font-mono">{viewingPoDetails.customFields?.rmSlipNo || viewingPoDetails.poNumber}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Date:</span>
-                      <span className="text-slate-300 font-medium">
+                      <span className="text-zinc-500">Date:</span>
+                      <span className="text-zinc-600 font-medium">
                         {viewingPoDetails.customFields?.date ? new Date(viewingPoDetails.customFields.date).toLocaleDateString() : new Date(viewingPoDetails.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -1251,15 +1251,15 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
 
               {/* Items Table (RM Slip Format) */}
               <div className="space-y-3">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center">
                   <Info className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
                   Line Items
                 </h4>
                 
-                <div className="bg-white/[0.01] border border-white/5 rounded-xl overflow-x-auto hide-scrollbar">
+                <div className="bg-white border border-black/5 rounded-xl overflow-x-auto hide-scrollbar">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="text-[9px] font-black text-slate-500 uppercase tracking-wider bg-black/40 border-b border-white/5 whitespace-nowrap">
+                      <tr className="text-[9px] font-black text-slate-500 uppercase tracking-wider bg-black/5 border-b border-black/5 whitespace-nowrap">
                         <th className="px-4 py-3">Sr. No</th>
                         <th className="px-4 py-3">Tool No</th>
                         <th className="px-4 py-3">Det No</th>
@@ -1280,9 +1280,9 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                       {viewingPoDetails.items?.map((item: any, i: number) => {
                         const cf = item.customFields || {};
                         return (
-                          <tr key={item.id} className="text-xs text-slate-300 hover:bg-white/[0.01] transition-colors">
+                          <tr key={item.id} className="text-xs text-zinc-600 hover:bg-white transition-colors">
                             <td className="px-4 py-3">{cf.srNo || (i + 1)}</td>
-                            <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">{cf.toolNo || '-'}</td>
+                            <td className="px-4 py-3 font-semibold text-zinc-900 whitespace-nowrap">{cf.toolNo || '-'}</td>
                             <td className="px-4 py-3">{cf.detNo || (i + 1)}</td>
                             <td className="px-4 py-3">{cf.L || '-'}</td>
                             <td className="px-4 py-3">{cf.W || '-'}</td>
@@ -1294,7 +1294,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                             <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.rate || item.agreedRate).toLocaleString()}</td>
                             <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.basicCost || item.lineTotal).toLocaleString()}</td>
                             <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.gst || 0).toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right font-mono font-bold text-white">&#8377;{Number(cf.total || item.lineTotal).toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right font-mono font-bold text-zinc-900">&#8377;{Number(cf.total || item.lineTotal).toLocaleString()}</td>
                           </tr>
                         );
                       })}
@@ -1319,7 +1319,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
 
               {/* Goods Receipts Audit Timeline */}
               <div className="space-y-3">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center">
                   <Calendar className="w-3.5 h-3.5 mr-1.5 text-emerald-500" />
                   Goods Receipt Notes (GRN) History
                 </h4>
@@ -1327,29 +1327,29 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 {viewingPoDetails.goodsReceiptHeaders && viewingPoDetails.goodsReceiptHeaders.length > 0 ? (
                   <div className="space-y-3">
                     {viewingPoDetails.goodsReceiptHeaders.map((grn: any) => (
-                      <div key={grn.id} className="p-4 rounded-xl bg-black/30 border border-white/5 space-y-3 relative overflow-hidden group/grn">
+                      <div key={grn.id} className="p-4 rounded-xl bg-black/30 border border-black/5 space-y-3 relative overflow-hidden group/grn">
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="flex items-center space-x-2">
                               <span className="text-xs font-bold text-emerald-400 font-mono">{grn.grnNumber}</span>
-                              <span className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-400 uppercase">Received</span>
+                              <span className="text-[9px] font-bold bg-black/5 border border-black/10 px-2 py-0.5 rounded text-zinc-500 uppercase">Received</span>
                             </div>
                             <p className="text-[10px] text-slate-500 mt-1">Processed: {new Date(grn.receiptDate).toLocaleDateString()}</p>
                           </div>
                           {grn.remarks && (
-                            <div className="text-[10px] bg-white/5 text-slate-400 px-2 py-1 rounded max-w-xs truncate border border-white/5">
+                            <div className="text-[10px] bg-black/5 text-zinc-500 px-2 py-1 rounded max-w-xs truncate border border-black/5">
                               {grn.remarks}
                             </div>
                           )}
                         </div>
 
                         {/* Received items checklist */}
-                        <div className="space-y-1.5 pt-2 border-t border-white/[0.03]">
+                        <div className="space-y-1.5 pt-2 border-t border-black/10/[0.03]">
                           {grn.items?.map((gItem: any) => (
-                            <div key={gItem.id} className="flex justify-between text-xs py-1 px-2 bg-white/[0.01] rounded">
-                              <span className="text-slate-400">{gItem.poItem?.material?.materialName}</span>
-                              <div className="space-x-3 font-semibold text-slate-300">
-                                <span>Rcvd: <span className="font-mono text-white">{Number(gItem.receivedQty)}</span></span>
+                            <div key={gItem.id} className="flex justify-between text-xs py-1 px-2 bg-white rounded">
+                              <span className="text-zinc-500">{gItem.poItem?.material?.materialName}</span>
+                              <div className="space-x-3 font-semibold text-zinc-600">
+                                <span>Rcvd: <span className="font-mono text-zinc-900">{Number(gItem.receivedQty)}</span></span>
                                 <span className="text-emerald-500">Accpt: <span className="font-mono text-emerald-400">{Number(gItem.acceptedQty)}</span></span>
                                 {Number(gItem.rejectedQty) > 0 && (
                                   <span className="text-red-500">Rej: <span className="font-mono text-red-400">{Number(gItem.rejectedQty)}</span></span>
@@ -1362,7 +1362,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-6 bg-white/[0.01] rounded-xl border border-white/5 border-dashed text-xs text-slate-500 italic">
+                  <div className="text-center py-6 bg-white rounded-xl border border-black/5 border-dashed text-xs text-slate-500 italic">
                     No Goods Receipt Notes processed yet. Delivery is pending.
                   </div>
                 )}
@@ -1371,11 +1371,11 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             </div>
 
             {/* Modal Footer */}
-            <div className="pt-4 border-t border-white/10 shrink-0 flex justify-end relative z-10">
+            <div className="pt-4 border-t border-black/10 shrink-0 flex justify-end relative z-10">
               <button 
                 type="button" 
                 onClick={() => setViewingPoDetails(null)} 
-                className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-black/5 hover:bg-black/10 text-xs font-bold text-zinc-900 transition-colors"
               >
                 Close details
               </button>

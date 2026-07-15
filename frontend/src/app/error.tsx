@@ -15,15 +15,15 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] w-full bg-[#050A14] text-white rounded-xl border border-red-900/30 p-8">
+    <div className="flex flex-col items-center justify-center h-full min-h-[400px] w-full bg-[#FBFBFC] text-zinc-900 rounded-xl border border-red-900/30 p-8">
       <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
       <h2 className="text-xl font-bold mb-2">Module Error</h2>
-      <p className="text-slate-400 mb-6 text-center">
+      <p className="text-zinc-500 mb-6 text-center">
         Something went wrong while loading this module.
       </p>
       <button
         onClick={() => reset()}
-        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-medium transition-colors border border-slate-700 text-sm text-white"
+        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-medium transition-colors border border-slate-700 text-sm text-zinc-900"
       >
         Try again
       </button>

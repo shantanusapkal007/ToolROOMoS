@@ -68,19 +68,16 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
     <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col min-h-0">
       
       {/* Project Workflow Controller */}
-      <div className="bg-white/[0.01] border border-white/5 rounded-2xl mb-4 relative overflow-hidden group shrink-0" style={{ padding: '0' }}>
-        {/* Ambient glow */}
-        <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500/8 rounded-full blur-[80px] -mr-16 -mt-16 pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-blue-500/5 rounded-full blur-[60px] pointer-events-none" />
+      <div className="glass-panel spotlight-card mb-4 relative overflow-hidden group shrink-0" style={{ padding: '0' }}>
         
         {/* Header bar */}
-        <div className="flex items-center justify-between px-5 pt-3 pb-3 border-b border-white/5 relative z-10 bg-black/20">
+        <div className="flex items-center justify-between px-5 pt-3 pb-3 border-b border-black/5 relative z-10 bg-white/50 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500/30 to-blue-500/20 border border-purple-500/40 flex items-center justify-center shadow-[0_0_12px_rgba(168,85,247,0.2)]">
+            <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500/30 to-blue-500/20 border border-purple-500/40 flex items-center justify-center shadow-elevation">
               <Target className="w-3 h-3 text-purple-400" />
             </div>
             <div>
-              <h3 className="text-xs font-black text-white tracking-widest uppercase">Project Workflow Controller</h3>
+              <h3 className="text-xs font-black text-zinc-900 tracking-widest uppercase">Project Workflow Controller</h3>
               <p className="text-[10px] text-slate-500 font-medium mt-0.5">Stage Gate Progression</p>
             </div>
           </div>
@@ -99,7 +96,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
             {project.currentStage !== 'CLOSED' && project.currentStage !== 'CANCELLED' && (
               <button 
                 onClick={() => setShowCloseModal(true)}
-                className="group/btn relative inline-flex items-center gap-1.5 font-bold text-xs transition-all outline-none px-3.5 py-2 rounded-lg bg-slate-500/10 text-slate-300 border border-slate-500/20 hover:bg-slate-500/20 hover:border-slate-400/40 hover:text-white"
+                className="group/btn relative inline-flex items-center gap-1.5 font-bold text-xs transition-all outline-none px-3.5 py-2 rounded-lg bg-slate-500/10 text-zinc-600 border border-slate-500/20 hover:bg-slate-500/20 hover:border-slate-400/40 hover:text-white"
               >
                 Close Project
               </button>
@@ -110,7 +107,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               className="group/btn relative inline-flex items-center gap-1.5 font-bold text-xs transition-all outline-none disabled:opacity-40 disabled:pointer-events-none px-3.5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 text-white border border-purple-400/40 hover:border-purple-300/60 overflow-hidden"
               style={{ boxShadow: '0 0 14px rgba(168,85,247,0.3)' }}
             >
-              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-150 pointer-events-none" />
+              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-150 pointer-events-none" />
               <span className="relative z-10 tracking-wide">Advance Stage</span>
               <ChevronRight className="w-3.5 h-3.5 relative z-10 group-hover/btn:translate-x-0.5 transition-transform" />
             </button>
@@ -120,7 +117,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
         {/* Stage Rail */}
         <div className="relative px-5 pt-3 pb-4 overflow-x-auto hide-scrollbar">
           {/* Background track */}
-          <div className="absolute left-5 right-5 top-[calc(0.75rem+10px)] h-0.5 bg-white/5 rounded-full" />
+          <div className="absolute left-5 right-5 top-[calc(0.75rem+10px)] h-0.5 bg-black/5 rounded-full" />
           
           <div className="relative flex items-start justify-between min-w-[800px]">
             {PROJECT_STAGES.map((stage, idx) => {
@@ -128,20 +125,19 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                const isPast = idx < currentIdx;
                const isCurrent = idx === currentIdx;
                
-               // Stage-specific accent colors
                const stageColors: Record<string, { border: string; glow: string; text: string; bg: string; lineFrom: string; lineTo: string }> = {
-                 'CREATED':          { border: '#6366f1', glow: 'rgba(99,102,241,0.7)',  text: '#a5b4fc', bg: 'rgba(99,102,241,0.15)',  lineFrom: '#6366f1', lineTo: '#818cf8' },
-                 'ENGINEERING':      { border: '#3b82f6', glow: 'rgba(59,130,246,0.7)',  text: '#93c5fd', bg: 'rgba(59,130,246,0.15)',  lineFrom: '#3b82f6', lineTo: '#60a5fa' },
-                 'PROCUREMENT':      { border: '#f59e0b', glow: 'rgba(245,158,11,0.7)',  text: '#fcd34d', bg: 'rgba(245,158,11,0.15)',  lineFrom: '#f59e0b', lineTo: '#fbbf24' },
-                 'MATERIAL_AVAILABLE':{ border: '#10b981', glow: 'rgba(16,185,129,0.7)', text: '#6ee7b7', bg: 'rgba(16,185,129,0.15)', lineFrom: '#10b981', lineTo: '#34d399' },
-                 'PRODUCTION':       { border: '#8b5cf6', glow: 'rgba(139,92,246,0.7)',  text: '#c4b5fd', bg: 'rgba(139,92,246,0.15)',  lineFrom: '#8b5cf6', lineTo: '#a78bfa' },
-                 'INSPECTION':       { border: '#06b6d4', glow: 'rgba(6,182,212,0.7)',   text: '#67e8f9', bg: 'rgba(6,182,212,0.15)',   lineFrom: '#06b6d4', lineTo: '#22d3ee' },
-                 'DISPATCH_READY':   { border: '#f97316', glow: 'rgba(249,115,22,0.7)',  text: '#fdba74', bg: 'rgba(249,115,22,0.15)',  lineFrom: '#f97316', lineTo: '#fb923c' },
-                 'DISPATCHED':       { border: '#ec4899', glow: 'rgba(236,72,153,0.7)',  text: '#f9a8d4', bg: 'rgba(236,72,153,0.15)',  lineFrom: '#ec4899', lineTo: '#f472b6' },
-                 'INVOICED':         { border: '#22c55e', glow: 'rgba(34,197,94,0.7)',   text: '#86efac', bg: 'rgba(34,197,94,0.15)',   lineFrom: '#22c55e', lineTo: '#4ade80' },
-                 'PAYMENT_PENDING':  { border: '#eab308', glow: 'rgba(234,179,8,0.7)',   text: '#fde047', bg: 'rgba(234,179,8,0.15)',   lineFrom: '#eab308', lineTo: '#facc15' },
-                 'CLOSED':           { border: '#64748b', glow: 'rgba(100,116,139,0.5)', text: '#94a3b8', bg: 'rgba(100,116,139,0.1)',  lineFrom: '#64748b', lineTo: '#94a3b8' },
-                 'CANCELLED':        { border: '#ef4444', glow: 'rgba(239,68,68,0.6)',   text: '#fca5a5', bg: 'rgba(239,68,68,0.1)',    lineFrom: '#ef4444', lineTo: '#f87171' },
+                 'CREATED':          { border: '#6366f1', glow: 'rgba(99,102,241,0.2)',  text: '#4f46e5', bg: 'rgba(99,102,241,0.1)',  lineFrom: '#c7d2fe', lineTo: '#818cf8' },
+                 'ENGINEERING':      { border: '#3b82f6', glow: 'rgba(59,130,246,0.2)',  text: '#2563eb', bg: 'rgba(59,130,246,0.1)',  lineFrom: '#bfdbfe', lineTo: '#60a5fa' },
+                 'PROCUREMENT':      { border: '#f59e0b', glow: 'rgba(245,158,11,0.2)',  text: '#d97706', bg: 'rgba(245,158,11,0.1)',  lineFrom: '#fde68a', lineTo: '#fbbf24' },
+                 'MATERIAL_AVAILABLE':{ border: '#10b981', glow: 'rgba(16,185,129,0.2)', text: '#059669', bg: 'rgba(16,185,129,0.1)', lineFrom: '#a7f3d0', lineTo: '#34d399' },
+                 'PRODUCTION':       { border: '#8b5cf6', glow: 'rgba(139,92,246,0.2)',  text: '#7c3aed', bg: 'rgba(139,92,246,0.1)',  lineFrom: '#ddd6fe', lineTo: '#a78bfa' },
+                 'INSPECTION':       { border: '#06b6d4', glow: 'rgba(6,182,212,0.2)',   text: '#0891b2', bg: 'rgba(6,182,212,0.1)',   lineFrom: '#a5f3fc', lineTo: '#22d3ee' },
+                 'DISPATCH_READY':   { border: '#f97316', glow: 'rgba(249,115,22,0.2)',  text: '#ea580c', bg: 'rgba(249,115,22,0.1)',  lineFrom: '#fed7aa', lineTo: '#fb923c' },
+                 'DISPATCHED':       { border: '#ec4899', glow: 'rgba(236,72,153,0.2)',  text: '#db2777', bg: 'rgba(236,72,153,0.1)',  lineFrom: '#fbcfe8', lineTo: '#f472b6' },
+                 'INVOICED':         { border: '#22c55e', glow: 'rgba(34,197,94,0.2)',   text: '#16a34a', bg: 'rgba(34,197,94,0.1)',   lineFrom: '#bbf7d0', lineTo: '#4ade80' },
+                 'PAYMENT_PENDING':  { border: '#eab308', glow: 'rgba(234,179,8,0.2)',   text: '#ca8a04', bg: 'rgba(234,179,8,0.1)',   lineFrom: '#fef08a', lineTo: '#facc15' },
+                 'CLOSED':           { border: '#64748b', glow: 'rgba(100,116,139,0.1)', text: '#475569', bg: 'rgba(100,116,139,0.05)',lineFrom: '#e2e8f0', lineTo: '#cbd5e1' },
+                 'CANCELLED':        { border: '#ef4444', glow: 'rgba(239,68,68,0.2)',   text: '#dc2626', bg: 'rgba(239,68,68,0.1)',    lineFrom: '#fecaca', lineTo: '#f87171' },
                };
                const color = isCurrent || isPast ? stageColors[stage] || stageColors['CLOSED'] : null;
                const label = stage.replace(/_/g, '\n');
@@ -156,7 +152,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                          left: 'calc(50% + 13px)',
                          right: 'calc(-50% + 13px)',
                          height: '2px',
-                         background: 'rgba(255,255,255,0.06)',
+                         background: 'rgba(15,15,20,0.06)',
                          zIndex: 0
                        }}
                      >
@@ -191,8 +187,8 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                        width: 20,
                        height: 20,
                        borderRadius: '50%',
-                       border: `2px solid ${isCurrent || isPast ? color?.border : 'rgba(255,255,255,0.1)'}`,
-                       background: isCurrent || isPast ? color?.bg : 'rgba(255,255,255,0.02)',
+                       border: `2px solid ${isCurrent || isPast ? color?.border : 'rgba(15,15,20,0.1)'}`,
+                       background: isCurrent || isPast ? color?.bg : 'rgba(15,15,20,0.02)',
                        color: isCurrent || isPast ? color?.text : 'rgba(100,116,139,1)',
                        boxShadow: isCurrent ? `0 0 14px ${color?.glow}, inset 0 0 6px rgba(255,255,255,0.05)` : 'none',
                        transform: isCurrent ? 'scale(1.2)' : 'scale(1)',
@@ -235,7 +231,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
       {/* Top KPI Row */}
       <div className="grid grid-cols-3 gap-4 mb-4 shrink-0">
         
-        <div className="bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.05)] hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 shadow-elevation hover:shadow-elevation">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:bg-emerald-500/20 transition-all duration-500"></div>
           <div className="flex justify-between items-start relative z-10 mb-2">
             <div>
@@ -253,28 +249,28 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+        <div className="glass-panel spotlight-card p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-xl -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="flex justify-between items-start relative z-10 mb-2">
             <div>
               <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-0.5">Total Cost</p>
-              <h3 className="text-xl font-bold text-white tracking-tight font-mono">{formatCurrency(totalCost)}</h3>
+              <h3 className="text-xl font-bold text-zinc-900 tracking-tight font-mono">{formatCurrency(totalCost)}</h3>
             </div>
             <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400">
               <DollarSign className="h-4 w-4" />
             </div>
           </div>
           <div className="relative z-10">
-             <span className="text-xs text-slate-400 font-medium">Accumulated Expenses</span>
+             <span className="text-xs text-zinc-500 font-medium">Accumulated Expenses</span>
           </div>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+        <div className="glass-panel spotlight-card p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <div className="absolute top-0 right-0 w-20 h-20 bg-orange-500/10 rounded-full blur-xl -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="flex justify-between items-start relative z-10 mb-2">
             <div>
               <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-0.5">Delivery Date</p>
-              <h3 className="text-lg font-bold text-white tracking-tight mt-0.5">
+              <h3 className="text-lg font-bold text-zinc-900 tracking-tight mt-0.5">
                 {formatDate(project.deliveryDate)}
               </h3>
             </div>
@@ -283,7 +279,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
             </div>
           </div>
           <div className="relative z-10">
-             <span className="text-xs text-slate-400 font-medium">Target Deadline</span>
+             <span className="text-xs text-zinc-500 font-medium">Target Deadline</span>
           </div>
         </div>
 
@@ -295,12 +291,11 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
         <div className="col-span-2 space-y-4">
           
           {/* Engineering & Documents */}
-          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 relative overflow-hidden">
-             <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-3xl blur-2xl pointer-events-none"></div>
+          <div className="glass-panel spotlight-card p-5 relative overflow-hidden">
              
              <div className="flex justify-between items-end mb-4 relative z-10">
                <div>
-                  <h3 className="text-base font-bold text-white flex items-center">
+                  <h3 className="text-base font-bold text-zinc-900 flex items-center">
                     <FileText className="w-4 h-4 mr-2 text-blue-400" />
                     Engineering Documents
                   </h3>
@@ -311,20 +306,20 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               {project.billOfMaterialHeaders && project.billOfMaterialHeaders.length > 0 && (
                 <div 
                   onClick={() => router.push(`/projects/${project.id}/engineering`)}
-                  className="p-4 rounded-xl bg-[#0B1018]/60 border border-white/10 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-pointer group flex flex-col justify-between"
+                  className="p-4 rounded-xl bg-[#F4F4F6]/60 border border-black/10 hover:border-blue-500/40 hover:bg-black/5 transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div>
                     <div className="bg-blue-500/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                       <FileText className="h-5 w-5 text-blue-400" />
                     </div>
-                    <p className="font-semibold text-white text-xs tracking-wide mb-2">{project.billOfMaterialHeaders[0].documentNumber || 'Bill of Materials'}</p>
+                    <p className="font-semibold text-zinc-900 text-xs tracking-wide mb-2">{project.billOfMaterialHeaders[0].documentNumber || 'Bill of Materials'}</p>
                   </div>
                   <div>
                     <div className="flex justify-between items-center mt-2 text-[10px]">
                       <span className="font-bold text-slate-500 uppercase">Rev {project.billOfMaterialHeaders[0].revision}</span>
                       <span className="text-blue-400 font-bold uppercase">{project.billOfMaterialHeaders[0].status}</span>
                     </div>
-                    <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="mt-3 pt-2 border-t border-black/5 flex items-center justify-between text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       <span className="text-[10px] font-bold uppercase">View Details</span>
                       <ChevronRight className="w-3 h-3" />
                     </div>
@@ -335,20 +330,20 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               {project.routingHeaders && project.routingHeaders.length > 0 && (
                 <div 
                   onClick={() => router.push(`/projects/${project.id}/engineering`)}
-                  className="p-4 rounded-xl bg-[#0B1018]/60 border border-white/10 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-pointer group flex flex-col justify-between"
+                  className="p-4 rounded-xl bg-[#F4F4F6]/60 border border-black/10 hover:border-blue-500/40 hover:bg-black/5 transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div>
                     <div className="bg-blue-500/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                       <FileText className="h-5 w-5 text-blue-400" />
                     </div>
-                    <p className="font-semibold text-white text-xs tracking-wide mb-2">{project.routingHeaders[0].documentNumber || 'Routing Operations'}</p>
+                    <p className="font-semibold text-zinc-900 text-xs tracking-wide mb-2">{project.routingHeaders[0].documentNumber || 'Routing Operations'}</p>
                   </div>
                   <div>
                     <div className="flex justify-between items-center mt-2 text-[10px]">
                       <span className="font-bold text-slate-500 uppercase">Rev {project.routingHeaders[0].revision}</span>
                       <span className="text-blue-400 font-bold uppercase">{project.routingHeaders[0].status}</span>
                     </div>
-                    <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="mt-3 pt-2 border-t border-black/5 flex items-center justify-between text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       <span className="text-[10px] font-bold uppercase">View Details</span>
                       <ChevronRight className="w-3 h-3" />
                     </div>
@@ -357,21 +352,20 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               )}
 
               {(!project.billOfMaterialHeaders?.length && !project.routingHeaders?.length) && (
-                <div className="col-span-2 text-center py-6 bg-white/5 rounded-xl border border-white/5 border-dashed">
+                <div className="col-span-2 text-center py-6 bg-black/5 rounded-xl border border-black/5 border-dashed">
                   <FileText className="h-7 w-7 text-slate-600 mx-auto mb-2" />
-                  <p className="text-slate-400 text-xs">No planning documents initialized yet.</p>
+                  <p className="text-zinc-500 text-xs">No planning documents initialized yet.</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Pending Approvals & Action Items */}
-          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 relative overflow-hidden">
-            <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/5 to-orange-500/5 rounded-3xl blur-2xl pointer-events-none"></div>
+          <div className="glass-panel spotlight-card p-5 relative overflow-hidden">
             
             <div className="flex justify-between items-end mb-4 relative z-10">
               <div>
-                 <h3 className="text-base font-bold text-white flex items-center">
+                 <h3 className="text-base font-bold text-zinc-900 flex items-center">
                    <Target className="w-4 h-4 mr-2 text-amber-400" />
                    Pending Approvals
                  </h3>
@@ -380,25 +374,25 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
 
             <div className="grid grid-cols-1 gap-3 relative z-10">
               {pendingApprovals.length > 0 ? pendingApprovals.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 transition-colors group cursor-default shadow-sm">
+                <div key={idx} className="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors group cursor-default shadow-sm">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/30 group-hover:scale-110 transition-transform shadow-[0_0_10px_rgba(245,158,11,0.2)]">
-                      <CheckCircle2 className="w-5 h-5 text-amber-400 animate-pulse" />
+                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center border border-amber-200 group-hover:scale-110 transition-transform shadow-elevation">
+                      <CheckCircle2 className="w-5 h-5 text-amber-600 animate-pulse" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-amber-100 text-sm">{item.title}</h4>
-                      <p className="text-xs text-amber-400/80 font-medium tracking-wide mt-0.5">{item.desc}</p>
+                      <h4 className="font-bold text-amber-900 text-sm">{item.title}</h4>
+                      <p className="text-xs text-amber-700 font-medium tracking-wide mt-0.5">{item.desc}</p>
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/40 border border-amber-500/40 rounded-lg text-xs font-bold text-amber-200 uppercase tracking-widest transition-colors opacity-0 group-hover:opacity-100 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                  <button className="px-4 py-2 bg-amber-200 hover:bg-amber-300 border border-amber-300 rounded-lg text-xs font-bold text-amber-800 uppercase tracking-widest transition-colors opacity-0 group-hover:opacity-100 shadow-elevation">
                     Review
                   </button>
                 </div>
               )) : (
-                <div className="flex items-center justify-center p-6 bg-white/[0.02] border border-white/5 rounded-xl border-dashed">
+                <div className="flex items-center justify-center p-6 bg-black/[0.02] border border-black/5 rounded-xl border-dashed">
                   <div className="text-center">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500/50 mx-auto mb-2" />
-                    <p className="text-slate-400 text-xs font-medium">All approvals are up to date.</p>
+                    <p className="text-zinc-500 text-xs font-medium">All approvals are up to date.</p>
                   </div>
                 </div>
               )}
@@ -406,10 +400,10 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
           </div>
 
           {/* Premium Activity Feed */}
-          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4 relative overflow-hidden group/feed transition-all duration-500 hover:border-white/10 hover:shadow-[0_0_30px_rgba(16,185,129,0.05)]">
+          <div className="glass-panel spotlight-card p-4 relative overflow-hidden group/feed transition-all duration-500">
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-[50px] -mr-24 -mt-24 pointer-events-none opacity-50 group-hover/feed:opacity-100 group-hover/feed:bg-emerald-500/10 transition-all duration-700" />
             
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center mb-5 relative z-10">
+            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center mb-5 relative z-10">
               <Activity className="w-3.5 h-3.5 mr-2 text-emerald-400 animate-pulse" />
               Live Activity Feed
             </h3>
@@ -418,21 +412,21 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               {(project.projectActivities && project.projectActivities.length > 0) ? project.projectActivities.map((act: any, idx: number) => (
                 <div key={act.id} className="relative group cursor-default" style={{ animation: `slideUp 0.3s ease-out ${idx * 0.05}s forwards`, opacity: mounted ? 1 : 0 }}>
                   {/* Glassmorphic Activity Card */}
-                  <div className="bg-white/[0.01] border border-white/5 p-3.5 rounded-xl group-hover:bg-white/[0.03] group-hover:border-emerald-500/20 transition-all duration-300 shadow-sm group-hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)] group-hover:-translate-y-0.5 relative overflow-hidden">
+                  <div className="bg-white/40 backdrop-blur-md border border-black/5 p-3.5 rounded-xl group-hover:bg-white/60 group-hover:border-emerald-500/20 transition-all duration-300 shadow-sm group-hover:shadow-floating group-hover:-translate-y-0.5 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-transparent group-hover:via-emerald-500/5 transition-all duration-500 translate-x-[-100%] group-hover:translate-x-[100%]"></div>
                     
                     <div className="flex justify-between items-start mb-1.5 relative z-10">
-                      <span className="font-bold text-white text-xs tracking-wide">{act.action}</span>
-                      <span className="text-[9px] font-bold text-slate-500 font-mono uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded shadow-inner border border-white/5 group-hover:text-emerald-400/80 transition-colors">
+                      <span className="font-bold text-zinc-900 text-xs tracking-wide">{act.action}</span>
+                      <span className="text-[9px] font-bold text-slate-500 font-mono uppercase tracking-widest bg-black/5 px-2 py-0.5 rounded shadow-inner border border-black/5 group-hover:text-emerald-400/80 transition-colors">
                         {new Date(act.performedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed font-medium relative z-10 group-hover:text-slate-300 transition-colors">{act.description}</p>
+                    <p className="text-[11px] text-zinc-500 leading-relaxed font-medium relative z-10 group-hover:text-zinc-600 transition-colors">{act.description}</p>
                   </div>
                 </div>
               )) : (
                 <div className="pl-8 py-4 flex items-center space-x-3 text-slate-500">
-                  <div className="w-2 h-2 rounded-full bg-white/10 animate-pulse"></div>
+                  <div className="w-2 h-2 rounded-full bg-black/10 animate-pulse"></div>
                   <p className="text-xs italic tracking-wide">Awaiting project activity...</p>
                 </div>
               )}
@@ -443,9 +437,9 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
 
         {/* Right Sidebar - Cost Ledger Pipeline */}
         <div className="col-span-1">
-          <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 sticky top-4">
+          <div className="glass-panel spotlight-card p-5 sticky top-4">
             <div className="flex justify-between items-center mb-5">
-              <h3 className="text-base font-bold text-white flex items-center">
+              <h3 className="text-base font-bold text-zinc-900 flex items-center">
                 <BarChart2 className="w-4 h-4 mr-2 text-purple-400" />
                 Cost Ledger
               </h3>
@@ -462,27 +456,27 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               {/* Pipeline Nodes */}
               {[
                 { label: 'Estimated Material', value: project.projectCostSummary?.estimatedMaterialCost, color: 'bg-slate-500', shadow: '' },
-                { label: 'Sourced Cost', value: project.projectCostSummary?.actualMaterialCost, color: 'bg-blue-500', shadow: 'shadow-[0_0_10px_rgba(59,130,246,0.5)]' },
-                { label: 'Machine Prod.', value: project.projectCostSummary?.machineCost, color: 'bg-purple-500', shadow: 'shadow-[0_0_10px_rgba(168,85,247,0.5)]' },
-                { label: 'Outside Process', value: project.projectCostSummary?.subcontractCost, color: 'bg-orange-500', shadow: 'shadow-[0_0_10px_rgba(249,115,22,0.5)]' },
-                { label: 'Logistics', value: project.projectCostSummary?.logisticsCost, color: 'bg-pink-500', shadow: 'shadow-[0_0_10px_rgba(236,72,153,0.5)]' }
+                { label: 'Sourced Cost', value: project.projectCostSummary?.actualMaterialCost, color: 'bg-blue-500', shadow: 'shadow-elevation' },
+                { label: 'Machine Prod.', value: project.projectCostSummary?.machineCost, color: 'bg-purple-500', shadow: 'shadow-elevation' },
+                { label: 'Outside Process', value: project.projectCostSummary?.subcontractCost, color: 'bg-orange-500', shadow: 'shadow-elevation' },
+                { label: 'Logistics', value: project.projectCostSummary?.logisticsCost, color: 'bg-pink-500', shadow: 'shadow-elevation' }
               ].map((node, i) => (
                 <div key={i} className="relative flex items-center justify-between group">
                   <div className="flex items-center">
                     <div className={`h-6 w-6 rounded-full border-4 border-[#0B1018] ${node.color} ${node.shadow} mr-4 relative z-10 group-hover:scale-125 transition-transform`}></div>
-                    <span className="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">{node.label}</span>
+                    <span className="text-sm font-semibold text-zinc-600 group-hover:text-zinc-900 transition-colors">{node.label}</span>
                   </div>
-                  <span className="font-mono text-sm text-slate-400">{formatCurrency(Number(node.value || 0))}</span>
+                  <span className="font-mono text-sm text-zinc-500">{formatCurrency(Number(node.value || 0))}</span>
                 </div>
               ))}
               
             </div>
 
-            <div className="mt-6 pt-5 border-t border-white/5">
-               <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl relative overflow-hidden shadow-inner">
-                 <div className="absolute -right-4 -top-4 w-16 h-16 bg-emerald-500/20 rounded-full blur-xl pointer-events-none"></div>
-                 <p className="text-[10px] font-bold text-emerald-500 tracking-widest uppercase mb-0.5">Total Actual Cost</p>
-                 <p className="text-2xl font-bold text-emerald-400 tracking-tight font-mono">
+            <div className="mt-6 pt-5 border-t border-black/5">
+               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl relative overflow-hidden shadow-inner">
+                 <div className="absolute -right-4 -top-4 w-16 h-16 bg-emerald-100 rounded-full blur-xl pointer-events-none"></div>
+                 <p className="text-[10px] font-bold text-emerald-600 tracking-widest uppercase mb-0.5">Total Actual Cost</p>
+                 <p className="text-2xl font-bold text-emerald-600 tracking-tight font-mono">
                    {formatCurrency(totalCost)}
                  </p>
                </div>
@@ -495,14 +489,14 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
 
       {/* Update Status Modal */}
       {showStatusModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#0A0F1C] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-white/5">
-              <h3 className="text-lg font-bold text-white flex items-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white/95 backdrop-blur-3xl border border-black/5 rounded-2xl w-full max-w-md shadow-floating overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-black/5">
+              <h3 className="text-lg font-bold text-zinc-900 flex items-center">
                 <Activity className="w-5 h-5 mr-2 text-purple-400" />
                 Advance Project Stage
               </h3>
-              <button onClick={() => setShowStatusModal(false)} className="text-slate-400 hover:text-white transition-colors">
+              <button onClick={() => setShowStatusModal(false)} className="text-zinc-500 hover:text-zinc-900 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -510,12 +504,12 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
             <form action="/api/projects/advance-stage" method="POST" className="p-6 space-y-5">
               <input type="hidden" name="projectId" value={project.id} />
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">New Stage</label>
+                <label className="block text-xs font-medium text-zinc-500 mb-1">New Stage</label>
                 <select 
                   name="stage"
                   value={newStatus}
                   onChange={e => setNewStatus(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none"
+                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2.5 text-zinc-900 text-sm focus:outline-none focus:border-purple-500 appearance-none"
                   required
                 >
                   {PROJECT_STAGES.map(stage => (
@@ -528,12 +522,12 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               </div>
               
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Transition Remarks (Optional)</label>
+                <label className="block text-xs font-medium text-zinc-500 mb-1">Transition Remarks (Optional)</label>
                 <textarea 
                   name="remarks"
                   value={statusRemarks}
                   onChange={e => setStatusRemarks(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 min-h-[80px]"
+                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-purple-500 min-h-[80px]"
                   placeholder="e.g. BOM approved, ready for procurement"
                 />
               </div>
@@ -542,7 +536,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                 <button 
                   type="button"
                   onClick={() => setShowStatusModal(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-black/5 transition-colors"
                 >
                   Cancel
                 </button>
@@ -558,18 +552,18 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
         </div>
       )}
       {showReopenModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-slate-900/90 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
+          <div className="bg-white/95 backdrop-blur-3xl border border-black/5 rounded-2xl p-6 w-full max-w-md shadow-floating relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/10 rounded-full blur-[40px] pointer-events-none" />
             
-            <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
+            <div className="flex items-center justify-between pb-4 border-b border-black/5 mb-4">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-400" />
-                <h3 className="text-sm font-black text-white uppercase tracking-wider">Engineering Revision Rollback</h3>
+                <h3 className="text-sm font-black text-zinc-900 uppercase tracking-wider">Engineering Revision Rollback</h3>
               </div>
               <button 
                 onClick={() => setShowReopenModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5"
+                className="text-zinc-500 hover:text-zinc-900 p-1 rounded-lg hover:bg-black/5"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -584,19 +578,19 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                 <div className="pt-4 flex justify-end">
                   <button 
                     onClick={() => setShowReopenModal(false)}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                    className="px-4 py-2 rounded-lg text-xs font-semibold bg-black/5 border border-black/10 text-zinc-900 hover:bg-black/10"
                   >
                     Close
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 text-xs text-slate-300">
-                <p className="text-slate-400">
-                  Reopening the engineering stage will revert the project to <strong className="text-white">ENGINEERING</strong> stage. Review the impact analysis below:
+              <div className="space-y-4 text-xs text-zinc-600">
+                <p className="text-zinc-500">
+                  Reopening the engineering stage will revert the project to <strong className="text-zinc-900">ENGINEERING</strong> stage. Review the impact analysis below:
                 </p>
 
-                <div className="p-4 bg-black/40 border border-white/5 rounded-xl space-y-2 font-medium">
+                <div className="p-4 bg-black/5 border border-black/5 rounded-xl space-y-2 font-medium">
                   <div className="flex justify-between">
                     <span>Affected Purchase Orders:</span>
                     <span className="text-red-400 font-bold">{reopenImpact?.data?.affectedPOs || 0} (Placed ON HOLD)</span>
@@ -621,7 +615,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
                 <div className="pt-4 flex justify-end space-x-3">
                   <button 
                     onClick={() => setShowReopenModal(false)}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5"
+                    className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 hover:text-zinc-900 hover:bg-black/5"
                   >
                     Cancel
                   </button>
@@ -645,32 +639,32 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
       )}
 
       {showCloseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-slate-900/90 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
+          <div className="bg-white/95 backdrop-blur-3xl border border-black/5 rounded-2xl p-6 w-full max-w-md shadow-floating relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />
             
-            <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
+            <div className="flex items-center justify-between pb-4 border-b border-black/5 mb-4">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-black text-white uppercase tracking-wider">Close Project</h3>
+                <h3 className="text-sm font-black text-zinc-900 uppercase tracking-wider">Close Project</h3>
               </div>
               <button 
                 onClick={() => setShowCloseModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5"
+                className="text-zinc-500 hover:text-zinc-900 p-1 rounded-lg hover:bg-black/5"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs text-slate-300">
-              <p className="text-slate-400">
-                You are about to officially close <strong className="text-white">{project.projectNumber}</strong>.
+            <div className="space-y-4 text-xs text-zinc-600">
+              <p className="text-zinc-500">
+                You are about to officially close <strong className="text-zinc-900">{project.projectNumber}</strong>.
               </p>
 
-              <div className="p-4 bg-black/40 border border-white/5 rounded-xl space-y-2 font-medium">
+              <div className="p-4 bg-black/5 border border-black/5 rounded-xl space-y-2 font-medium">
                 <div className="flex justify-between items-center">
                   <span>Current Stage:</span>
-                  <span className="text-white font-bold bg-white/10 px-2 py-0.5 rounded">{project.currentStage}</span>
+                  <span className="text-zinc-900 font-bold bg-black/10 px-2 py-0.5 rounded">{project.currentStage}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Project Progress:</span>
@@ -698,7 +692,7 @@ export default function OverviewTab({ params }: { params: Promise<{ id: string }
               <div className="pt-4 flex justify-end space-x-3">
                 <button 
                   onClick={() => setShowCloseModal(false)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 hover:text-zinc-900 hover:bg-black/5"
                 >
                   Cancel
                 </button>

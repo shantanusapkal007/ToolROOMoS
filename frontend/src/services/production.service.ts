@@ -6,8 +6,9 @@ export const ProductionService = {
     return res.data;
   },
 
-  getMSDRs: async (projectId: string): Promise<any> => {
-    const res = await api.get(`projects/${projectId}/machine-shop-reports`);
+  getMSDRs: async (projectId: string, section?: string): Promise<any> => {
+    const params = section ? { section } : {};
+    const res = await api.get(`projects/${projectId}/machine-shop-reports`, { params });
     return res.data;
   },
 

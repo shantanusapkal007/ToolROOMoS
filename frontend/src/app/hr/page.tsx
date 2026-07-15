@@ -100,7 +100,7 @@ export default function HrDashboard() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-white font-sans bg-[#05070A]">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#05070A]">
       <Sidebar />
       <div className="flex-1 overflow-y-auto px-8 py-8 pl-[5.5rem] pb-32 relative z-0 animate-fade-in">
         <PageHeader
@@ -118,16 +118,16 @@ export default function HrDashboard() {
         />
 
         {/* Tab Selection */}
-        <div className="flex space-x-6 border-b border-white/5 mb-6">
+        <div className="flex space-x-6 border-b border-black/5 mb-6">
           <button 
             onClick={() => setActiveTab('workforce')}
-            className={`pb-3 text-sm font-bold tracking-wider uppercase transition-colors relative ${activeTab === 'workforce' ? 'text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-white'}`}
+            className={`pb-3 text-sm font-bold tracking-wider uppercase transition-colors relative ${activeTab === 'workforce' ? 'text-zinc-900 border-b-2 border-orange-500' : 'text-zinc-500 hover:text-zinc-900'}`}
           >
             Workforce Directory
           </button>
           <button 
             onClick={() => setActiveTab('directory')}
-            className={`pb-3 text-sm font-bold tracking-wider uppercase transition-colors relative ${activeTab === 'directory' ? 'text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-white'}`}
+            className={`pb-3 text-sm font-bold tracking-wider uppercase transition-colors relative ${activeTab === 'directory' ? 'text-zinc-900 border-b-2 border-orange-500' : 'text-zinc-500 hover:text-zinc-900'}`}
           >
             Hourly Rates Consolidated
           </button>
@@ -135,15 +135,15 @@ export default function HrDashboard() {
 
         {loading ? (
           <div className="animate-pulse flex flex-col space-y-4">
-            <div className="h-32 bg-white/5 rounded-xl"></div>
-            <div className="h-64 bg-white/5 rounded-xl"></div>
+            <div className="h-32 bg-black/5 rounded-xl"></div>
+            <div className="h-64 bg-black/5 rounded-xl"></div>
           </div>
         ) : activeTab === 'workforce' ? (
           <div className="space-y-8">
             
             {/* Internal Staff */}
             <div>
-              <h2 className="text-lg font-bold text-white mb-4 flex items-center">
+              <h2 className="text-lg font-bold text-zinc-900 mb-4 flex items-center">
                 <Users className="h-5 w-5 mr-2 text-blue-400" />
                 Internal Workforce ({internal.length})
               </h2>
@@ -157,7 +157,7 @@ export default function HrDashboard() {
 
             {/* Outside Subcontractors / Temporary */}
             <div>
-              <h2 className="text-lg font-bold text-white mb-4 flex items-center">
+              <h2 className="text-lg font-bold text-zinc-900 mb-4 flex items-center">
                 <Briefcase className="h-5 w-5 mr-2 text-purple-400" />
                 Outside / Contract Workers ({external.length})
               </h2>
@@ -182,77 +182,77 @@ export default function HrDashboard() {
 
       {/* Add Worker Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#0A0F1C] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-white/5">
-              <h3 className="text-lg font-bold text-white">Add New Worker</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#0A0F1C] border border-black/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-black/5">
+              <h3 className="text-lg font-bold text-zinc-900">Add New Worker</h3>
+              <button onClick={() => setIsAddModalOpen(false)} className="text-zinc-500 hover:text-zinc-900 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Employee Code</label>
+                <label className="block text-xs font-medium text-zinc-500 mb-1">Employee Code</label>
                 <input 
                   type="text" 
                   value={newWorker.employeeCode}
                   onChange={e => setNewWorker({...newWorker, employeeCode: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
                   placeholder="e.g. EMP-001"
                 />
               </div>
               
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Full Name</label>
+                <label className="block text-xs font-medium text-zinc-500 mb-1">Full Name</label>
                 <input 
                   type="text" 
                   value={newWorker.name}
                   onChange={e => setNewWorker({...newWorker, name: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
                   placeholder="e.g. John Doe"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">Type</label>
                   <select 
                     value={newWorker.employeeType}
                     onChange={e => setNewWorker({...newWorker, employeeType: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 appearance-none"
+                    className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500 appearance-none"
                   >
                     <option value="INTERNAL">Internal</option>
                     <option value="EXTERNAL">External / Contract</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Hourly Rate (&#8377;)</label>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">Hourly Rate (&#8377;)</label>
                   <input 
                     type="number" 
                     value={newWorker.hourlyRate}
                     onChange={e => setNewWorker({...newWorker, hourlyRate: Number(e.target.value)})}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Designation</label>
+                <label className="block text-xs font-medium text-zinc-500 mb-1">Designation</label>
                 <input 
                   type="text" 
                   value={newWorker.designation}
                   onChange={e => setNewWorker({...newWorker, designation: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
                   placeholder="e.g. CNC Operator"
                 />
               </div>
             </div>
 
-            <div className="p-6 border-t border-white/5 flex justify-end space-x-3 bg-white/[0.02]">
+            <div className="p-6 border-t border-black/5 flex justify-end space-x-3 bg-black/[0.02]">
               <button 
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-black/5 transition-colors"
               >
                 Cancel
               </button>
@@ -289,7 +289,7 @@ function WorkerCard({ worker, isExternal = false }: { worker: any, isExternal?: 
   };
 
   return (
-    <div className={`p-5 rounded-2xl border ${isExternal ? 'bg-purple-900/10 border-purple-500/20' : 'bg-white/5 border-white/10'} shadow-sm relative overflow-hidden group`}>
+    <div className={`p-5 rounded-2xl border ${isExternal ? 'bg-purple-900/10 border-purple-500/20' : 'bg-black/5 border-black/10'} shadow-sm relative overflow-hidden group`}>
       <div className="absolute top-0 right-0 p-4">
         <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${isExternal ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300'}`}>
           {worker.employeeType}
@@ -297,35 +297,35 @@ function WorkerCard({ worker, isExternal = false }: { worker: any, isExternal?: 
       </div>
       
       <div className="flex items-center space-x-4 mb-4">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-white font-bold text-lg border border-white/10">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-zinc-900 font-bold text-lg border border-black/10">
           {worker.name.substring(0, 2).toUpperCase()}
         </div>
         <div>
-          <h3 className="font-bold text-white text-lg">{worker.name}</h3>
-          <p className="text-sm text-slate-400">{worker.designation || 'Worker'}</p>
+          <h3 className="font-bold text-zinc-900 text-lg">{worker.name}</h3>
+          <p className="text-sm text-zinc-500">{worker.designation || 'Worker'}</p>
         </div>
       </div>
 
-      <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+      <div className="pt-4 border-t border-black/5 flex items-center justify-between">
         <div>
           <p className="text-xs text-slate-500 mb-1">Base Hourly Charge</p>
           {editingRate ? (
             <div className="flex items-center space-x-2">
-              <span className="text-white">&#8377;</span>
+              <span className="text-zinc-900">&#8377;</span>
               <input 
                 type="number" 
                 value={newRate}
                 onChange={(e) => setNewRate(e.target.value)}
-                className="w-20 bg-black/50 border border-white/20 rounded px-2 py-1 text-white text-sm"
+                className="w-20 bg-black/5 border border-black/20 rounded px-2 py-1 text-zinc-900 text-sm"
               />
               <button onClick={handleUpdateRate} className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Save</button>
-              <button onClick={() => setEditingRate(false)} className="text-xs text-slate-400 hover:text-white">Cancel</button>
+              <button onClick={() => setEditingRate(false)} className="text-xs text-zinc-500 hover:text-zinc-900">Cancel</button>
             </div>
           ) : (
             <div className="flex items-center space-x-2">
-              <p className="font-bold text-white">&#8377;{worker.hourlyRate} <span className="text-slate-500 font-normal text-sm">/ hr</span></p>
-              <button onClick={() => setEditingRate(true)} className="p-1 hover:bg-white/10 rounded-md transition-colors">
-                <Edit2 className="w-3 h-3 text-slate-400" />
+              <p className="font-bold text-zinc-900">&#8377;{worker.hourlyRate} <span className="text-slate-500 font-normal text-sm">/ hr</span></p>
+              <button onClick={() => setEditingRate(true)} className="p-1 hover:bg-black/10 rounded-md transition-colors">
+                <Edit2 className="w-3 h-3 text-zinc-500" />
               </button>
             </div>
           )}
@@ -432,15 +432,15 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
   };
 
   return (
-    <div className="bg-[#0B1018]/50 border border-white/10 rounded-2xl p-6 relative overflow-hidden shadow-2xl backdrop-blur-2xl">
+    <div className="bg-[#F4F4F6]/50 border border-black/10 rounded-2xl p-6 relative overflow-hidden shadow-2xl backdrop-blur-2xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center border border-orange-500/20">
             <DollarSign className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">Consolidated Hourly Rates</h3>
-            <p className="text-xs text-slate-400">View and update billing rates for all personnel, machines, and administrative owners.</p>
+            <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Consolidated Hourly Rates</h3>
+            <p className="text-xs text-zinc-500">View and update billing rates for all personnel, machines, and administrative owners.</p>
           </div>
         </div>
         
@@ -452,13 +452,13 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
               placeholder="Search resource..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white text-xs focus:outline-none focus:border-orange-500 transition-colors"
+              className="w-full bg-black/5 border border-black/10 rounded-lg pl-9 pr-4 py-2 text-zinc-900 text-xs focus:outline-none focus:border-orange-500 transition-colors"
             />
           </div>
           <select
             value={filterCategory}
             onChange={e => setFilterCategory(e.target.value)}
-            className="bg-[#0B1018] border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-orange-500"
+            className="bg-[#F4F4F6] border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-xs focus:outline-none focus:border-orange-500"
           >
             <option value="ALL">All Categories</option>
             <option value="Labour">Labours</option>
@@ -468,9 +468,9 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-white/5">
+      <div className="overflow-x-auto rounded-xl border border-black/5">
         <table className="w-full text-left text-xs whitespace-nowrap">
-          <thead className="bg-white/5 text-slate-400 border-b border-white/5 font-bold uppercase tracking-wider text-[10px]">
+          <thead className="bg-black/5 text-zinc-500 border-b border-black/5 font-bold uppercase tracking-wider text-[10px]">
             <tr>
               <th className="px-6 py-4">Resource Code</th>
               <th className="px-6 py-4">Resource Name</th>
@@ -489,9 +489,9 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
             ) : filtered.map(item => {
               const isEditing = editingId === item.id;
               return (
-                <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="px-6 py-4 font-mono font-bold text-slate-400">{item.code}</td>
-                  <td className="px-6 py-4 font-semibold text-white">{item.name}</td>
+                <tr key={item.id} className="hover:bg-black/[0.02] transition-colors group">
+                  <td className="px-6 py-4 font-mono font-bold text-zinc-500">{item.code}</td>
+                  <td className="px-6 py-4 font-semibold text-zinc-900">{item.name}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
                       item.category === 'Labour' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
@@ -501,21 +501,21 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
                       {item.category}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-slate-400 font-medium">{item.type}</td>
-                  <td className="px-6 py-4 text-slate-400">{item.designation}</td>
+                  <td className="px-6 py-4 text-zinc-500 font-medium">{item.type}</td>
+                  <td className="px-6 py-4 text-zinc-500">{item.designation}</td>
                   <td className="px-6 py-4">
                     {isEditing ? (
                       <div className="flex items-center space-x-2">
-                        <span className="text-white text-xs">₹</span>
+                        <span className="text-zinc-900 text-xs">₹</span>
                         <input 
                           type="number" 
                           value={editingRate}
                           onChange={e => setEditingRate(Number(e.target.value))}
-                          className="w-20 bg-black/50 border border-white/20 rounded px-2 py-1 text-white text-xs font-bold font-mono focus:outline-none focus:border-orange-500"
+                          className="w-20 bg-black/5 border border-black/20 rounded px-2 py-1 text-zinc-900 text-xs font-bold font-mono focus:outline-none focus:border-orange-500"
                         />
                       </div>
                     ) : (
-                      <span className="font-mono font-bold text-white text-xs">₹{item.rate.toFixed(2)}</span>
+                      <span className="font-mono font-bold text-zinc-900 text-xs">₹{item.rate.toFixed(2)}</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -530,7 +530,7 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
                         </button>
                         <button 
                           onClick={() => setEditingId(null)} 
-                          className="text-xs text-slate-400 hover:text-white px-1"
+                          className="text-xs text-zinc-500 hover:text-zinc-900 px-1"
                         >
                           Cancel
                         </button>
@@ -538,10 +538,10 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
                     ) : (
                       <button 
                         onClick={() => handleEditRate(item)}
-                        className="p-1.5 hover:bg-white/10 rounded-md transition-colors inline-flex items-center"
+                        className="p-1.5 hover:bg-black/10 rounded-md transition-colors inline-flex items-center"
                         title="Edit Hourly Rate"
                       >
-                        <Edit2 className="w-3.5 h-3.5 text-slate-400 group-hover:text-white" />
+                        <Edit2 className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-900" />
                       </button>
                     )}
                   </td>

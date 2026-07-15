@@ -33,13 +33,13 @@ export const SectionCard: React.FC<SectionCardProps> = ({ title, description, ic
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 relative z-10">
           <div className="flex items-center">
             {icon && (
-              <div className="w-10 h-10 mr-4 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shadow-inner">
+              <div className="w-10 h-10 mr-4 rounded-xl bg-blue-500/8 text-blue-600 border border-blue-500/15 flex items-center justify-center shadow-inner">
                 {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'w-5 h-5' })}
               </div>
             )}
             <div>
-              {title && <h2 className="text-title font-semibold text-white tracking-tight">{title}</h2>}
-              {description && <p className="text-sm text-slate-400 mt-0.5 tracking-wide">{description}</p>}
+              {title && <h2 className="text-title font-semibold text-zinc-900 tracking-tight">{title}</h2>}
+              {description && <p className="text-sm text-zinc-500 mt-0.5 tracking-wide">{description}</p>}
             </div>
           </div>
           {actions && <div className="mt-4 sm:mt-0">{actions}</div>}

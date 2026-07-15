@@ -27,6 +27,7 @@ export class ProductionOperationsService {
           employeeId: dto.employeeId,
           reportDate: new Date(dto.reportDate),
           msdrNumber: 'MSDR-' + Date.now(),
+          productionSection: (dto.productionSection as any) || 'MACHINE_SHOP',
           createdBy: userId,
         }
       });
@@ -115,7 +116,7 @@ export class ProductionOperationsService {
         data: {
           projectId,
           action: 'PRODUCTION_LOGGED',
-          description: `MSDR ${header.msdrNumber} recorded with ${(dto.items || []).length} operations. Cost: ₹${(totalMachineCost + totalLabourCost).toFixed(2)}`,
+          description: `MSDR ${header.msdrNumber} (${header.productionSection}) recorded with ${(dto.items || []).length} operations. Cost: ₹${(totalMachineCost + totalLabourCost).toFixed(2)}`,
           performedBy: userId || 'SYSTEM',
         },
       });
@@ -124,9 +125,13 @@ export class ProductionOperationsService {
     });
   }
 
-  async getMachineShopReports(projectId: string) {
+  async getMachineShopReports(projectId: string, section?: string) {
+    const whereClause: any = { projectId };
+    if (section) {
+      whereClause.productionSection = section;
+    }
     return this.prisma.msdrHeader.findMany({
-      where: { projectId },
+      where: whereClause,
       include: { 
         machine: true, 
         employee: true,

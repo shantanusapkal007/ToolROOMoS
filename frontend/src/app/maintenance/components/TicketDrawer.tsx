@@ -81,7 +81,7 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/5 backdrop-blur-sm z-40"
             onClick={onClose}
           />
           <motion.div
@@ -89,17 +89,17 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 bottom-0 w-[500px] bg-[#0A0A0C]/95 backdrop-blur-2xl border-l border-white/10 z-50 flex flex-col shadow-2xl"
+            className="fixed right-0 top-0 bottom-0 w-[500px] bg-white/95 backdrop-blur-2xl border-l border-black/10 z-50 flex flex-col shadow-2xl"
           >
             {/* Header */}
-            <div className="p-6 border-b border-white/10 flex justify-between items-start relative overflow-hidden">
+            <div className="p-6 border-b border-black/10 flex justify-between items-start relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 blur-[80px] pointer-events-none rounded-full" />
               
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-sm text-zinc-400">{ticket.ticketNumber}</span>
+                  <span className="text-sm text-zinc-500">{ticket.ticketNumber}</span>
                 </div>
-                <h2 className="text-xl font-bold text-white relative z-10">{ticket.machine?.machineName} Breakdown</h2>
+                <h2 className="text-xl font-bold text-zinc-900 relative z-10">{ticket.machine?.machineName} Breakdown</h2>
                 
                 {/* Meta information */}
                 <div className="flex flex-wrap items-center gap-3 mt-4">
@@ -128,30 +128,30 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
 
                   {/* Plant / Department (Master Data) */}
                   {ticket.machine?.plant && (
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-zinc-800 text-zinc-400 border border-white/10 flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-500 border border-black/10 flex items-center gap-1">
                       <Factory className="w-3 h-3" /> 
                       {ticket.machine.plant.plantName}
                     </span>
                   )}
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors relative z-10">
-                <X className="w-5 h-5 text-zinc-400" />
+              <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors relative z-10">
+                <X className="w-5 h-5 text-zinc-500" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
               
               {/* LOTO Control */}
-              <div className="spotlight-card p-6 rounded-xl border border-white/5 bg-[#111]">
+              <div className="spotlight-card p-6 rounded-xl border border-black/5 bg-[#F4F4F6]">
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-lg ${ticket.lotoApplied ? 'bg-red-500/20 text-red-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
                       {ticket.lotoApplied ? <Lock className="w-6 h-6" /> : <Unlock className="w-6 h-6" />}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">Lockout / Tagout</h3>
-                      <p className="text-sm text-zinc-400">
+                      <h3 className="font-semibold text-zinc-900">Lockout / Tagout</h3>
+                      <p className="text-sm text-zinc-500">
                         {ticket.lotoApplied ? 'Machine is isolated and locked.' : 'Machine is NOT locked out.'}
                       </p>
                     </div>
@@ -162,8 +162,8 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
                   disabled={toggleLoto.isPending}
                   className={`w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
                     ticket.lotoApplied 
-                      ? 'bg-zinc-800 text-white hover:bg-zinc-700' 
-                      : 'bg-red-600/20 text-red-500 hover:bg-red-600/30 border border-red-500/30 shadow-[0_0_20px_rgba(220,38,38,0.2)]'
+                      ? 'bg-zinc-100 text-zinc-900 hover:bg-zinc-700' 
+                      : 'bg-red-600/20 text-red-500 hover:bg-red-600/30 border border-red-500/30 shadow-elevation'
                   }`}
                 >
                   {ticket.lotoApplied ? (
@@ -176,34 +176,34 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
 
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-zinc-300 mb-2 uppercase tracking-wider">Issue Description</h3>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-zinc-300 text-sm leading-relaxed">
+                  <h3 className="text-sm font-semibold text-zinc-600 mb-2 uppercase tracking-wider">Issue Description</h3>
+                  <div className="p-4 bg-black/5 rounded-xl border border-black/5 text-zinc-600 text-sm leading-relaxed">
                     {ticket.issueDescription}
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                  <div className="p-4 bg-black/5 rounded-xl border border-black/5">
                     <p className="text-xs text-zinc-500 mb-1 uppercase tracking-wider font-semibold">Reported By</p>
-                    <p className="text-sm text-white font-medium">{ticket.reportedBy?.name || ticket.reportedBy?.email || ticket.reportedById}</p>
+                    <p className="text-sm text-zinc-900 font-medium">{ticket.reportedBy?.name || ticket.reportedBy?.email || ticket.reportedById}</p>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                  <div className="p-4 bg-black/5 rounded-xl border border-black/5">
                     <p className="text-xs text-zinc-500 mb-1 uppercase tracking-wider font-semibold">Assigned To</p>
-                    <p className="text-sm text-white font-medium">{ticket.assignedTo ? (ticket.assignedTo.name || ticket.assignedTo.email) : 'Unassigned'}</p>
+                    <p className="text-sm text-zinc-900 font-medium">{ticket.assignedTo ? (ticket.assignedTo.name || ticket.assignedTo.email) : 'Unassigned'}</p>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                  <div className="p-4 bg-black/5 rounded-xl border border-black/5">
                     <p className="text-xs text-zinc-500 mb-1 uppercase tracking-wider font-semibold">Ticket Created</p>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-zinc-400" />
-                      <span className="text-sm text-white font-medium">{formatDate(ticket.createdAt)}</span>
+                      <Clock className="w-4 h-4 text-zinc-500" />
+                      <span className="text-sm text-zinc-900 font-medium">{formatDate(ticket.createdAt)}</span>
                     </div>
                   </div>
                   {ticket.downtimeStartedAt && (
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                    <div className="p-4 bg-black/5 rounded-xl border border-black/5">
                       <p className="text-xs text-zinc-500 mb-1 uppercase tracking-wider font-semibold">Downtime Started</p>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-orange-400" />
-                        <span className="text-sm text-white font-medium">{formatDate(ticket.downtimeStartedAt)}</span>
+                        <span className="text-sm text-zinc-900 font-medium">{formatDate(ticket.downtimeStartedAt)}</span>
                       </div>
                     </div>
                   )}
@@ -212,16 +212,16 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
 
               {/* Activity Logs */}
               <div>
-                <h3 className="text-sm font-semibold text-zinc-300 mb-3 uppercase tracking-wider">Maintenance Logs</h3>
+                <h3 className="text-sm font-semibold text-zinc-600 mb-3 uppercase tracking-wider">Maintenance Logs</h3>
                 
                 <div className="space-y-4 mb-6">
                   {ticket.logs?.length === 0 ? (
                     <p className="text-sm text-zinc-500 italic">No maintenance logs yet.</p>
                   ) : (
                     ticket.logs?.map((log: any) => (
-                      <div key={log.id} className="relative pl-4 border-l-2 border-white/10">
+                      <div key={log.id} className="relative pl-4 border-l-2 border-black/10">
                         <div className="absolute w-2 h-2 bg-blue-500 rounded-full -left-[5px] top-1.5" />
-                        <p className="text-sm text-white mb-1">{log.actionTaken}</p>
+                        <p className="text-sm text-zinc-900 mb-1">{log.actionTaken}</p>
                         <div className="flex gap-4 text-xs text-zinc-500">
                           <span>{log.loggedBy?.name}</span>
                           <span>{formatDate(log.createdAt)}</span>
@@ -237,22 +237,22 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
                 </div>
 
                 {/* Add Log Form */}
-                <div className="p-4 bg-[#111] rounded-xl border border-white/5 space-y-3">
+                <div className="p-4 bg-[#F4F4F6] rounded-xl border border-black/5 space-y-3">
                   <textarea 
                     value={newLog}
                     onChange={(e) => setNewLog(e.target.value)}
                     placeholder="Describe actions taken..."
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm text-white placeholder-zinc-500 focus:border-blue-500 outline-none h-24 resize-none"
+                    className="w-full bg-black/5 border border-black/10 rounded-lg p-3 text-sm text-zinc-900 placeholder-zinc-500 focus:border-blue-500 outline-none h-24 resize-none"
                   />
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 flex-1">
-                      <Clock className="w-4 h-4 text-zinc-400" />
+                      <Clock className="w-4 h-4 text-zinc-500" />
                       <input 
                         type="number" 
                         value={timeSpent}
                         onChange={(e) => setTimeSpent(Number(e.target.value))}
                         placeholder="Hours"
-                        className="w-24 bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white outline-none focus:border-blue-500"
+                        className="w-24 bg-black/5 border border-black/10 rounded-lg p-2 text-sm text-zinc-900 outline-none focus:border-blue-500"
                         min="0"
                         step="0.5"
                       />
@@ -270,17 +270,17 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
 
               {/* Spare Parts Section */}
               <div>
-                <h3 className="text-sm font-semibold text-zinc-300 mb-3 uppercase tracking-wider">Spare Parts Consumed</h3>
+                <h3 className="text-sm font-semibold text-zinc-600 mb-3 uppercase tracking-wider">Spare Parts Consumed</h3>
                 <div className="space-y-4 mb-6">
                   {ticket.spareParts?.length === 0 ? (
                     <p className="text-sm text-zinc-500 italic">No spare parts consumed.</p>
                   ) : (
                     ticket.spareParts?.map((sp: any) => (
-                      <div key={sp.id} className="p-3 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center">
+                      <div key={sp.id} className="p-3 bg-black/5 border border-black/5 rounded-xl flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                          <Package className="w-4 h-4 text-zinc-400" />
+                          <Package className="w-4 h-4 text-zinc-500" />
                           <div>
-                            <p className="text-sm text-white font-medium">{sp.material?.materialCode}</p>
+                            <p className="text-sm text-zinc-900 font-medium">{sp.material?.materialCode}</p>
                             <p className="text-xs text-zinc-500">Qty: {sp.quantityConsumed}</p>
                           </div>
                         </div>
@@ -292,7 +292,7 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
                   )}
                 </div>
 
-                <div className="p-4 bg-[#111] rounded-xl border border-white/5 flex flex-col gap-3">
+                <div className="p-4 bg-[#F4F4F6] rounded-xl border border-black/5 flex flex-col gap-3">
                   <Combobox 
                     options={materials?.map((m: any) => ({ value: m.id, label: m.materialCode + ' - ' + m.description })) || []}
                     value={selectedMaterial}
@@ -304,7 +304,7 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
                       type="number" 
                       value={quantity}
                       onChange={(e) => setQuantity(Number(e.target.value))}
-                      className="w-20 bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white outline-none focus:border-blue-500"
+                      className="w-20 bg-black/5 border border-black/10 rounded-lg p-2 text-sm text-zinc-900 outline-none focus:border-blue-500"
                       min="1"
                       placeholder="Qty"
                     />
@@ -321,11 +321,11 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-white/10 bg-black/40">
+            <div className="p-6 border-t border-black/10 bg-black/5">
               
               {/* Financial Summary */}
-              <div className="flex justify-between items-center mb-4 p-4 rounded-xl bg-zinc-900 border border-white/10">
-                <span className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Total Cost Incurred</span>
+              <div className="flex justify-between items-center mb-4 p-4 rounded-xl bg-zinc-50 border border-black/10">
+                <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Total Cost Incurred</span>
                 <span className="text-lg font-mono text-emerald-400 font-bold">${Number(ticket.totalCost || 0).toFixed(2)}</span>
               </div>
 
@@ -335,7 +335,7 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
                   onClick={handleResolve}
                   disabled={updateTicket.isPending || ticket.lotoApplied}
                   title={ticket.lotoApplied ? "Remove LOTO before resolving" : "Mark as Resolved"}
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-elevation transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle className="w-5 h-5" /> Mark as Resolved
                 </button>

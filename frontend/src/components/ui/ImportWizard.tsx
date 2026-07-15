@@ -146,19 +146,19 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
       <div className="glass-panel w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+        <div className="flex items-center justify-between p-6 border-b border-black/10 bg-black/5">
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center">
+            <h2 className="text-xl font-bold text-zinc-900 flex items-center">
               <FileSpreadsheet className="w-5 h-5 mr-2 text-blue-400" />
               Import {registry.pluralName}
             </h2>
-            <p className="text-sm text-slate-400 mt-1">Bulk upload records via CSV</p>
+            <p className="text-sm text-zinc-500 mt-1">Bulk upload records via CSV</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-zinc-500 hover:text-zinc-900 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -175,11 +175,11 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
             ].map(s => (
               <div key={s.num} className={`flex flex-col items-center ${step >= s.num ? 'opacity-100' : 'opacity-50'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-2 transition-colors ${
-                  step >= s.num ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'bg-slate-800 text-slate-400'
+                  step >= s.num ? 'bg-blue-500 text-white shadow-elevation' : 'bg-slate-800 text-zinc-500'
                 }`}>
                   {s.num}
                 </div>
-                <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{s.label}</span>
+                <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">{s.label}</span>
               </div>
             ))}
           </div>
@@ -189,8 +189,8 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
               <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Download className="w-8 h-8 text-blue-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Download CSV Template</h3>
-              <p className="text-slate-400 mb-8 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-zinc-900 mb-2">Download CSV Template</h3>
+              <p className="text-zinc-500 mb-8 max-w-md mx-auto">
                 Start by downloading the official template. It contains all the required column headers for {registry.pluralName}.
               </p>
               <button 
@@ -207,8 +207,8 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
               <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Upload className="w-8 h-8 text-blue-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Upload Data</h3>
-              <p className="text-slate-400 mb-8 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-zinc-900 mb-2">Upload Data</h3>
+              <p className="text-zinc-500 mb-8 max-w-md mx-auto">
                 Upload your completed CSV file. We'll validate the data before importing.
               </p>
               
@@ -221,7 +221,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
               />
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-lg border border-slate-700 font-medium transition-colors"
+                className="bg-slate-800 hover:bg-slate-700 text-zinc-900 px-6 py-3 rounded-lg border border-slate-700 font-medium transition-colors"
               >
                 Select CSV File
               </button>
@@ -231,8 +231,8 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
           {step === 3 && (
             <div className="animate-fade-in">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Validation Results</h3>
-                <span className="px-3 py-1 bg-slate-800 rounded-full text-sm text-slate-300 border border-slate-700">
+                <h3 className="text-lg font-semibold text-zinc-900">Validation Results</h3>
+                <span className="px-3 py-1 bg-slate-800 rounded-full text-sm text-zinc-600 border border-slate-700">
                   {parsedData.length} records found
                 </span>
               </div>
@@ -272,7 +272,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
               <div className="border border-slate-800 rounded-lg overflow-hidden">
                 <div className="overflow-x-auto max-h-64 custom-scrollbar">
                   <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-slate-800/50 text-slate-400 sticky top-0 backdrop-blur-md">
+                    <thead className="bg-slate-800/50 text-zinc-500 sticky top-0 backdrop-blur-md">
                       <tr>
                         <th className="px-4 py-3 font-medium">Row</th>
                         {registry.fields.map(f => (
@@ -282,7 +282,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {parsedData.slice(0, 5).map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-800/30 text-slate-300">
+                        <tr key={i} className="hover:bg-slate-800/30 text-zinc-600">
                           <td className="px-4 py-2 font-mono text-slate-500">{i + 2}</td>
                           {registry.fields.map(f => (
                             <td key={f.name} className="px-4 py-2">{row[f.name]}</td>
@@ -303,11 +303,11 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/10 bg-white/5 flex justify-end gap-3">
+        <div className="p-6 border-t border-black/10 bg-black/5 flex justify-end gap-3">
           <button 
             onClick={onClose}
             disabled={isImporting}
-            className="px-5 py-2.5 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+            className="px-5 py-2.5 rounded-lg font-medium text-zinc-600 hover:text-zinc-900 hover:bg-slate-800 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>

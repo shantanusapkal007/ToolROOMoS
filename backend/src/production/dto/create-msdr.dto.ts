@@ -52,6 +52,10 @@ export class CreateMsdrDto {
   @IsNotEmpty()
   reportDate: string;
 
+  @IsString()
+  @IsOptional()
+  productionSection?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateMsdrItemDto)

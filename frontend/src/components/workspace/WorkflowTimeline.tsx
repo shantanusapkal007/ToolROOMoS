@@ -9,14 +9,14 @@ interface WorkflowTimelineProps {
 
 export function WorkflowTimeline({ currentStage }: WorkflowTimelineProps) {
   const stages = [
-    { id: "CREATED", label: "Project", color: "text-zinc-400", hex: "#a1a1aa" },
-    { id: "ENGINEERING", label: "Engineering", color: "text-blue-400", hex: "#60a5fa" },
-    { id: "PROCUREMENT", label: "Purchase", color: "text-amber-400", hex: "#fbbf24" },
-    { id: "MATERIAL_AVAILABLE", label: "Inventory", color: "text-emerald-400", hex: "#34d399" },
-    { id: "PRODUCTION", label: "Production", color: "text-purple-400", hex: "#c084fc" },
-    { id: "INSPECTION", label: "Quality", color: "text-cyan-400", hex: "#22d3ee" },
-    { id: "DISPATCH_READY", label: "Dispatch", color: "text-orange-400", hex: "#fb923c" },
-    { id: "INVOICED", label: "Finance", color: "text-green-400", hex: "#4ade80" },
+    { id: "CREATED", label: "Project", color: "text-zinc-600", hex: "#52525b" },
+    { id: "ENGINEERING", label: "Engineering", color: "text-blue-600", hex: "#2563eb" },
+    { id: "PROCUREMENT", label: "Purchase", color: "text-amber-600", hex: "#d97706" },
+    { id: "MATERIAL_AVAILABLE", label: "Inventory", color: "text-emerald-600", hex: "#059669" },
+    { id: "PRODUCTION", label: "Production", color: "text-purple-600", hex: "#9333ea" },
+    { id: "INSPECTION", label: "Quality", color: "text-cyan-600", hex: "#0891b2" },
+    { id: "DISPATCH_READY", label: "Dispatch", color: "text-orange-600", hex: "#ea580c" },
+    { id: "INVOICED", label: "Finance", color: "text-green-600", hex: "#16a34a" },
   ];
 
   const currentIndex = stages.findIndex(s => s.id === currentStage);
@@ -43,19 +43,16 @@ export function WorkflowTimeline({ currentStage }: WorkflowTimelineProps) {
                 className="relative flex flex-col items-center justify-center z-10 cursor-pointer"
               >
                 {/* Node Hover Glow */}
-                <div className="absolute inset-0 bg-white/5 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-black/5 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
 
                 <motion.div 
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`h-12 w-12 rounded-full flex items-center justify-center transition-all duration-500 z-10 relative overflow-hidden backdrop-blur-md ${
-                    isPast ? `bg-white/5 border border-white/10 ${stage.color}` : 
-                    isCurrent ? `${stage.color} bg-black/40 border border-current shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]` : 
-                    "bg-black/20 text-zinc-600 border border-white/5"
+                  className={`h-12 w-12 rounded-full flex items-center justify-center transition-all duration-500 z-10 relative overflow-hidden bg-white ${
+                    isPast ? `border border-black/10 ${stage.color}` : 
+                    isCurrent ? `${stage.color} border-2 border-current shadow-md` : 
+                    "text-zinc-400 border border-black/5"
                   }`}
-                  style={{
-                    boxShadow: isCurrent ? `0 0 30px -5px ${stage.hex}60` : 'none'
-                  }}
                 >
                   {isPast && (
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={springConfig}>
@@ -80,11 +77,10 @@ export function WorkflowTimeline({ currentStage }: WorkflowTimelineProps) {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 + 0.1 }}
-                  className={`absolute top-16 text-micro font-bold uppercase tracking-widest whitespace-nowrap transition-all duration-300 ${
-                    isCurrent ? `text-white` : 
-                    isPast ? "text-zinc-400" : "text-zinc-600"
+                  className={`absolute top-16 text-micro font-black uppercase tracking-widest whitespace-nowrap transition-all duration-300 ${
+                    isCurrent ? `text-zinc-900` : 
+                    isPast ? "text-zinc-500" : "text-zinc-400"
                   }`}
-                  style={{ textShadow: isCurrent ? `0 0 10px ${stage.hex}40` : 'none' }}
                 >
                   {stage.label}
                 </motion.span>
@@ -92,12 +88,12 @@ export function WorkflowTimeline({ currentStage }: WorkflowTimelineProps) {
 
               {/* Connecting Line */}
               {idx < stages.length - 1 && (
-                <div className="w-24 h-[2px] mx-2 relative overflow-hidden bg-black/20 rounded-full">
+                <div className="w-24 h-[2px] mx-2 relative overflow-hidden bg-black/5 rounded-full">
                   <motion.div 
                     initial={{ scaleX: 0, transformOrigin: "left" }}
                     animate={{ scaleX: isPast ? 1 : 0 }}
                     transition={{ delay: idx * 0.1 + 0.2, duration: 0.5, ease: "easeInOut" }}
-                    className="absolute inset-0 h-full bg-gradient-to-r from-white/10 to-white/30"
+                    className="absolute inset-0 h-full bg-zinc-400"
                   />
                   {/* Current Active Line Pulse */}
                   {isCurrent && (

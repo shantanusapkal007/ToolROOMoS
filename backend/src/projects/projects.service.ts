@@ -143,6 +143,15 @@ export class ProjectsService {
       where: { createdAt: { gte: firstDayOfMonth } }
     });
     const mtdRevenue = mtdInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const mtdSalesWithoutGst = mtdInvoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
+
+    // Management Indicators
+    const monthlyTarget = 15000000; // 15M INR (Mock target)
+    const monthlyRemaining = Math.max(0, monthlyTarget - mtdRevenue);
+    
+    // Yearly Projected Revenue (extrapolated based on current month + base pipeline)
+    const currentMonth = now.getMonth() + 1;
+    const yearlyProjectedRevenue = (mtdRevenue * 12) + 85000000; // Mock base pipeline
     
     // Open Invoices - Sum of all unpaid InvoiceHeaders
     const openInvoicesList = await this.prisma.invoiceHeader.findMany({
@@ -208,7 +217,11 @@ export class ProjectsService {
       overallYield,
       yieldTrend,
       revenueTrend,
-      revenueHistory
+      revenueHistory,
+      mtdSalesWithoutGst,
+      monthlyTarget,
+      monthlyRemaining,
+      yearlyProjectedRevenue
     };
   }
 

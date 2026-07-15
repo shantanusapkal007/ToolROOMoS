@@ -18,7 +18,7 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
   const pathname = usePathname();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans mission-control-bg">
       <Sidebar />
       <div className="flex-1 h-full flex flex-col relative z-0 pl-24 pr-6 animate-fade-in py-6 max-h-screen">
         <PageHeader 
@@ -45,7 +45,7 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
                   className={`relative group flex items-center w-full p-3 rounded-xl transition-all duration-300 text-left overflow-hidden border ${
                     isActive 
                       ? 'bg-amber-500/10 border-amber-500/30 shadow-[0_4px_20px_rgba(245,158,11,0.2)]' 
-                      : 'bg-[#050505] border-white/5 hover:border-amber-500/20 hover:bg-[#0a0a0c] spotlight-card'
+                      : 'bg-black/5 border-black/5 hover:border-amber-500/20 hover:bg-white spotlight-card'
                   }`}
                 >
                   <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-[0.98]" />
@@ -60,7 +60,7 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
                       />
                       <motion.div 
                         layoutId="engActiveBar"
-                        className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 shadow-[0_0_15px_rgba(245,158,11,1)]" 
+                        className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 shadow-elevation" 
                         initial={false}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       />
@@ -70,13 +70,13 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
                   <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 relative z-10 ${
                     isActive 
                       ? 'bg-amber-500/20 text-amber-400 shadow-[inset_0_0_10px_rgba(245,158,11,0.4)]' 
-                      : 'bg-[#111] text-slate-400 group-hover:bg-amber-500/10 group-hover:text-amber-300 border border-white/5 group-hover:border-amber-500/20'
+                      : 'bg-[#F4F4F6] text-zinc-500 group-hover:bg-amber-500/10 group-hover:text-amber-300 border border-black/5 group-hover:border-amber-500/20'
                   }`}>
                     {React.cloneElement(item.icon as React.ReactElement<{className?: string}>, { className: 'w-4 h-4' })}
                   </div>
                   
                   <div className="ml-3 flex-1 relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-                    <h3 className={`text-xs font-bold tracking-wide transition-colors ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
+                    <h3 className={`text-xs font-bold tracking-wide transition-colors ${isActive ? 'text-zinc-900' : 'text-zinc-600 group-hover:text-zinc-900'}`}>
                       {item.label}
                     </h3>
                     <p className="text-[10px] text-slate-500 mt-0.5 font-medium group-hover:text-amber-500/70 transition-colors uppercase tracking-wider">{item.desc}</p>
@@ -87,7 +87,7 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
           </div>
 
           {/* Page Content */}
-          <div className="flex-1 bg-black/40 backdrop-blur-2xl border border-white/5 rounded-3xl overflow-y-auto shadow-2xl relative z-10 flex flex-col min-h-0">
+          <div className="flex-1 bg-black/5 backdrop-blur-2xl border border-black/5 rounded-3xl overflow-y-auto shadow-2xl relative z-10 flex flex-col min-h-0">
              {children}
           </div>
         </div>

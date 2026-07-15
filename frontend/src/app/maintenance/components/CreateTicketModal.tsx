@@ -94,32 +94,32 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/5 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative w-full max-w-lg bg-[#0A0A0C] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-lg bg-[#FBFBFC] border border-black/10 rounded-2xl shadow-2xl overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 blur-[80px] pointer-events-none rounded-full" />
             
-            <div className="p-6 border-b border-white/10 flex justify-between items-center relative z-10">
+            <div className="p-6 border-b border-black/10 flex justify-between items-center relative z-10">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-500/10 rounded-lg border border-red-500/20 text-red-500">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl font-bold text-white">Report Breakdown</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Report Breakdown</h2>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors">
-                <X className="w-5 h-5 text-zinc-400" />
+              <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                <X className="w-5 h-5 text-zinc-500" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-5 relative z-10">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wider">
                   Select Machine <span className="text-red-500">*</span>
                 </label>
                 <Combobox
@@ -131,7 +131,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
               </div>
               
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wider">
                   Related Project (Optional)
                 </label>
                 <Combobox
@@ -144,7 +144,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                  <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wider">
                     Assignee (Optional)
                   </label>
                   <Combobox
@@ -155,7 +155,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                  <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wider">
                     Category (Optional)
                   </label>
                   <Combobox
@@ -174,20 +174,20 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wider">
                   Downtime Started At (Optional)
                 </label>
                 <input
                   type="datetime-local"
                   value={downtimeStartedAt}
                   onChange={(e) => setDowntimeStartedAt(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none"
+                  className="w-full bg-black/5 border border-black/10 rounded-lg p-3 text-sm text-zinc-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none"
                   style={{ colorScheme: 'dark' }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1.5">Priority</label>
+                <label className="block text-sm font-medium text-zinc-500 mb-1.5">Priority</label>
                 <div className="grid grid-cols-3 gap-3">
                   {['NORMAL', 'HIGH', 'CRITICAL'].map((p) => (
                     <button
@@ -199,7 +199,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
                           ? p === 'CRITICAL' ? 'bg-red-500/20 border-red-500/50 text-red-400' 
                             : p === 'HIGH' ? 'bg-orange-500/20 border-orange-500/50 text-orange-400'
                             : 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-                          : 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10 hover:text-zinc-300'
+                          : 'bg-black/5 border-black/10 text-zinc-500 hover:bg-black/10 hover:text-zinc-600'
                       }`}
                     >
                       {p}
@@ -209,28 +209,28 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1.5">Issue Description *</label>
+                <label className="block text-sm font-medium text-zinc-500 mb-1.5">Issue Description *</label>
                 <textarea 
                   value={issueDescription}
                   onChange={(e) => setIssueDescription(e.target.value)}
                   required
                   placeholder="Describe the breakdown, symptoms, and potential hazards..."
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm text-white placeholder-zinc-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 h-32 resize-none"
+                  className="w-full bg-black/5 border border-black/10 rounded-lg p-3 text-sm text-zinc-900 placeholder-zinc-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 h-32 resize-none"
                 />
               </div>
 
-              <div className="pt-4 border-t border-white/10 flex justify-end gap-3">
+              <div className="pt-4 border-t border-black/10 flex justify-end gap-3">
                 <button 
                   type="button" 
                   onClick={onClose}
-                  className="px-5 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:text-zinc-900 hover:bg-black/5 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
                   disabled={createTicket.isPending || !machineId || !issueDescription.trim()}
-                  className="px-6 py-2.5 rounded-lg text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all"
+                  className="px-6 py-2.5 rounded-lg text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-elevation transition-all"
                 >
                   {createTicket.isPending ? 'Reporting...' : 'Submit Ticket'}
                 </button>

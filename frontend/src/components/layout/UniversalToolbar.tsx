@@ -151,10 +151,10 @@ function ToolbarButton({
 
   if (primary) {
     return (
-      <button onClick={onClick} className={`${base} bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-white border border-indigo-500/20 hover:border-indigo-500/40 hover:shadow-[0_0_15px_rgba(79,70,229,0.2)]`} title={label} aria-label={label}>
+      <button onClick={onClick} className={`${base} bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-white border border-indigo-500/20 hover:border-indigo-500/40 hover:shadow-elevation`} title={label} aria-label={label}>
         {icon}
         {/* Tooltip */}
-        <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/80 backdrop-blur-md text-white text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-white/10 shadow-xl z-50">
+        <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/10 backdrop-blur-md text-zinc-900 text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-black/10 shadow-xl z-50">
           {label}
         </span>
       </button>
@@ -163,9 +163,9 @@ function ToolbarButton({
 
   if (danger) {
     return (
-      <button onClick={onClick} className={`${base} text-zinc-400 hover:text-red-400 hover:bg-red-500/10 hover:shadow-[0_0_15px_rgba(239,68,68,0.15)]`} title={label} aria-label={label}>
+      <button onClick={onClick} className={`${base} text-zinc-500 hover:text-red-400 hover:bg-red-500/10 hover:shadow-elevation`} title={label} aria-label={label}>
         {icon}
-        <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/80 backdrop-blur-md text-white text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-white/10 shadow-xl z-50">
+        <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/10 backdrop-blur-md text-zinc-900 text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-black/10 shadow-xl z-50">
           {label}
         </span>
       </button>
@@ -173,9 +173,9 @@ function ToolbarButton({
   }
 
   return (
-    <button onClick={onClick} className={`${base} text-zinc-400 hover:text-white hover:bg-white/[0.05] hover:border hover:border-white/10 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] ${glowing ? 'text-indigo-400 shadow-[0_0_15px_rgba(79,70,229,0.3)] bg-indigo-500/10' : ''}`} title={label} aria-label={label}>
+    <button onClick={onClick} className={`${base} text-zinc-500 hover:text-white hover:bg-white/[0.05] hover:border hover:border-black/10 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] ${glowing ? 'text-indigo-400 shadow-elevation bg-indigo-500/10' : ''}`} title={label} aria-label={label}>
       {icon}
-      <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/80 backdrop-blur-md text-white text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-white/10 shadow-xl z-50">
+      <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/10 backdrop-blur-md text-zinc-900 text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-black/10 shadow-xl z-50">
         {label}
       </span>
     </button>

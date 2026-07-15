@@ -65,11 +65,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   };
 
   const variantClasses = {
-    primary: "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] border border-blue-500/50",
-    secondary: "bg-zinc-800 text-white border border-white/10 hover:bg-zinc-700 shadow-elevation",
-    glass: "glass-button text-white",
-    danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
-    ghost: "bg-transparent text-zinc-400 hover:text-white hover:bg-white/5",
+    primary: "bg-[#0A0A0C] text-white shadow-[0_4px_14px_rgba(10,10,12,0.18)] hover:shadow-[0_6px_20px_rgba(10,10,12,0.26)] border border-[#0A0A0C]/90",
+    secondary: "bg-white text-[#0A0A0C] border border-zinc-900/10 hover:bg-zinc-50 shadow-elevation",
+    glass: "glass-button text-[#0A0A0C]",
+    danger: "bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/20",
+    ghost: "bg-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50/5",
   };
 
   return (
@@ -84,11 +84,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
       {...props}
     >
       {/* Interactive Hover Glow (Apple Style) */}
-      <div className="absolute inset-0 bg-gradient-to-t from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/0 to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       
       <span className="relative z-10 flex items-center gap-2">
         {isLoading ? (
-          <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+          <div className="w-4 h-4 rounded-full border-2 border-current/30 border-t-current animate-spin"></div>
         ) : (icon || leftIcon) ? (
           <span className="flex-shrink-0">{icon || leftIcon}</span>
         ) : null}

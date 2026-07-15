@@ -461,6 +461,7 @@ model Project {
   projectTeams           ProjectTeam[]
   accountEntries         AccountEntry[]
   assemblyHeaders        AssemblyHeader[]
+  projectTrials          ProjectTrial[]
   maintenanceTickets     MaintenanceTicket[]
 
   @@map("projects")
@@ -1565,6 +1566,13 @@ enum SystemRole {
   FINANCE
 }
 
+enum ProductionSection {
+  MACHINE_SHOP
+  PRESS_SHOP
+  FABRICATION_INDIAN
+  FABRICATION_EXPORT
+}
+
 model PlanningRun {
   id        String   @id @default(uuid())
   projectId String
@@ -1723,14 +1731,15 @@ model PurchaseReturnItem {
 }
 
 model MsdrHeader {
-  id         String          @id @default(uuid())
-  projectId  String
-  msdrNumber String?
-  status     String          @default("DRAFT")
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  createdBy  String?
-  operations MsdrOperation[]
+  id                String             @id @default(uuid())
+  projectId         String
+  msdrNumber        String?
+  productionSection ProductionSection  @default(MACHINE_SHOP)
+  status            String             @default("DRAFT")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  createdBy         String?
+  operations        MsdrOperation[]
 
   machineId String?
 
@@ -1837,18 +1846,39 @@ model AccountEntry {
 }
 
 model AssemblyHeader {
-  id             String              @id @default(uuid())
-  projectId      String
-  assemblyNumber String              @unique
-  status         String              @default("DRAFT")
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  project        Project             @relation(fields: [projectId], references: [id])
-  components     AssemblyComponent[]
+  id               String              @id @default(uuid())
+  projectId        String
+  assemblyNumber   String              @unique
+  status           String              @default("DRAFT")
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  project          Project             @relation(fields: [projectId], references: [id])
+  components       AssemblyComponent[]
 
-  assemblyName String?
+  assemblyName     String?
+  parentAssemblyId String?
+  parentAssembly   AssemblyHeader?     @relation("AssemblyHierarchy", fields: [parentAssemblyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subAssemblies    AssemblyHeader[]    @relation("AssemblyHierarchy")
 
   @@map("assembly_headers")
+}
+
+model ProjectTrial {
+  id              String   @id @default(uuid())
+  projectId       String
+  trialNumber     String
+  trialDate       DateTime?
+  status          String   @default("PENDING") // PENDING, PASSED, FAILED, PASSED_WITH_DEVIATION
+  remarks         String?
+  customerSignoff Boolean  @default(false)
+  signoffDate     DateTime?
+  signoffBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("project_trials")
 }
 
 model AssemblyComponent {

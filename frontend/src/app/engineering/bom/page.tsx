@@ -37,24 +37,24 @@ export default function GlobalBomPage() {
   ];
 
   if (isLoading) {
-    return <div className="p-6 text-white text-center">Loading BOM registry...</div>;
+    return <div className="p-6 text-zinc-900 text-center">Loading BOM registry...</div>;
   }
 
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center">
+          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight flex items-center">
             <Layers className="w-6 h-6 mr-3 text-amber-500" />
             Bill of Materials
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-zinc-500 mt-1">
             Manage material requirements across all active projects
           </p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-xl">
+      <div className="bg-black/5 border border-black/5 rounded-2xl overflow-hidden backdrop-blur-xl">
         <SmartTable 
           data={activeProjects}
           columns={columns}

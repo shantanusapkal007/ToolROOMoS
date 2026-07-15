@@ -43,30 +43,30 @@ export const ProjectGanttChart = () => {
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'PRODUCTION': return 'bg-purple-500 border-purple-400 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.4)]';
-      case 'ENGINEERING': return 'bg-blue-500 border-blue-400 text-blue-200 shadow-[0_0_15px_rgba(59,130,246,0.4)]';
-      case 'DISPATCH_READY': return 'bg-emerald-500 border-emerald-400 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.4)]';
-      default: return 'bg-slate-500 border-slate-400 text-slate-200';
+      case 'PRODUCTION': return 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm';
+      case 'ENGINEERING': return 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm';
+      case 'DISPATCH_READY': return 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm';
+      default: return 'bg-zinc-50 border-zinc-200 text-zinc-700 shadow-sm';
     }
   };
 
   return (
-    <div className="bg-[#0B1018]/50 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden flex flex-col h-[400px]">
-      <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center shrink-0">
-        <h2 className="text-sm font-bold text-white tracking-widest uppercase flex items-center">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span>
+    <div className="bg-[#F4F4F6]/50 backdrop-blur-xl border border-black/10 rounded-2xl overflow-hidden flex flex-col h-[400px]">
+      <div className="p-4 border-b border-black/10 bg-black/5 flex justify-between items-center shrink-0">
+        <h2 className="text-sm font-bold text-zinc-900 tracking-widest uppercase flex items-center">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-2"></span>
           Master Production Timeline
         </h2>
       </div>
 
       <div className="flex-1 overflow-auto relative hide-scrollbar" ref={containerRef}>
         {/* Timeline Header (Months) */}
-        <div className="sticky top-0 z-10 flex bg-[#050A14] border-b border-white/10" style={{ width: `${MONTHS.length * DAYS_IN_MONTH * DAY_WIDTH}px` }}>
-          <div className="w-48 shrink-0 sticky left-0 z-20 bg-[#050A14] border-r border-white/10 p-2 font-bold text-xs text-slate-500 flex items-center">
+        <div className="sticky top-0 z-10 flex bg-[#FBFBFC] border-b border-black/10" style={{ width: `${MONTHS.length * DAYS_IN_MONTH * DAY_WIDTH}px` }}>
+          <div className="w-48 shrink-0 sticky left-0 z-20 bg-[#FBFBFC] border-r border-black/10 p-2 font-bold text-xs text-slate-500 flex items-center">
             Project
           </div>
           {MONTHS.map((month, idx) => (
-            <div key={idx} className="flex-shrink-0 text-center text-xs font-bold text-slate-500 uppercase tracking-widest py-2 border-r border-white/5" style={{ width: `${DAYS_IN_MONTH * DAY_WIDTH}px` }}>
+            <div key={idx} className="flex-shrink-0 text-center text-xs font-bold text-slate-500 uppercase tracking-widest py-2 border-r border-black/5" style={{ width: `${DAYS_IN_MONTH * DAY_WIDTH}px` }}>
               {month}
             </div>
           ))}
@@ -77,7 +77,7 @@ export const ProjectGanttChart = () => {
           {/* Grid lines */}
           <div className="absolute inset-0 flex pointer-events-none z-0 ml-48">
              {Array.from({ length: MONTHS.length }).map((_, i) => (
-               <div key={i} className="border-r border-white/[0.03] h-full" style={{ width: `${DAYS_IN_MONTH * DAY_WIDTH}px` }}></div>
+               <div key={i} className="border-r border-black/10/[0.03] h-full" style={{ width: `${DAYS_IN_MONTH * DAY_WIDTH}px` }}></div>
              ))}
           </div>
 
@@ -87,11 +87,11 @@ export const ProjectGanttChart = () => {
               const { left, width } = getPositionAndWidth(project.createdAt, project.targetDeliveryDate);
               
               return (
-                <div key={project.id} className="flex group border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors relative">
+                <div key={project.id} className="flex group border-b border-black/10/[0.02] hover:bg-black/[0.02] transition-colors relative">
                   
                   {/* Pinned Left Column (Project Name) */}
-                  <div className="w-48 shrink-0 sticky left-0 z-20 bg-[#0B1018]/90 backdrop-blur-sm border-r border-white/10 p-3 flex flex-col justify-center">
-                    <span className="text-xs font-bold text-white truncate group-hover:text-blue-400 transition-colors">{project.projectNumber}</span>
+                  <div className="w-48 shrink-0 sticky left-0 z-20 bg-[#F4F4F6]/90 backdrop-blur-sm border-r border-black/10 p-3 flex flex-col justify-center">
+                    <span className="text-xs font-bold text-zinc-900 truncate group-hover:text-blue-600 transition-colors">{project.projectNumber}</span>
                     <span className="text-[10px] text-slate-500 truncate">{project.partName}</span>
                   </div>
 
@@ -104,11 +104,11 @@ export const ProjectGanttChart = () => {
                       className={`absolute h-8 rounded-lg border flex items-center px-3 overflow-hidden cursor-pointer ${getStatusColor(project.currentStage)}`}
                       style={{ left: `${left}px` }}
                     >
-                      <span className="text-[10px] font-bold truncate z-10 whitespace-nowrap mix-blend-plus-lighter">
+                      <span className="text-[10px] font-black truncate z-10 whitespace-nowrap">
                         {project.currentStage}
                       </span>
                       {/* Glass glare effect inside bar */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent"></div>
                     </motion.div>
                   </div>
                 </div>

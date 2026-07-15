@@ -21,13 +21,13 @@ export const CompanyProfile = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center p-6 border-b border-white/10 shrink-0 bg-white/5">
+      <div className="flex items-center p-6 border-b border-black/10 shrink-0 bg-black/5">
         <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mr-4 border border-blue-500/20">
           <Building2 className="w-5 h-5" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Company Profile</h2>
-          <p className="text-sm text-slate-400">Manage organizational details and branding.</p>
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Company Profile</h2>
+          <p className="text-sm text-zinc-500">Manage organizational details and branding.</p>
         </div>
       </div>
 
@@ -35,7 +35,7 @@ export const CompanyProfile = () => {
         <form onSubmit={handleSave} className="max-w-3xl space-y-8">
           
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">General Information</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-2">General Information</h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="col-span-2">
                 <Input label="Company Name" defaultValue="" required />
@@ -46,7 +46,7 @@ export const CompanyProfile = () => {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">Contact Details</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-2">Contact Details</h3>
             <div className="grid grid-cols-2 gap-6">
               <Input label="Primary Email" type="email" defaultValue="" />
               <Input label="Phone Number" type="tel" defaultValue="" />
@@ -57,7 +57,7 @@ export const CompanyProfile = () => {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">Localization</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-2">Localization</h3>
             <div className="grid grid-cols-2 gap-6">
               <Select 
                 label="Base Currency" 

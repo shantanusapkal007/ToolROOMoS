@@ -22,6 +22,8 @@ export class WorkflowOrchestratorService {
         machineShopReports: true,
         inspectionHeaders: { where: { inspectionType: 'FINAL_PDI', result: 'PASS' } },
         dispatchNotes: true,
+        assemblyHeaders: true,
+        projectTrials: true,
         invoiceHeaders: true,
       },
     });
@@ -57,7 +59,19 @@ export class WorkflowOrchestratorService {
 
     if (nextStage === 'INSPECTION') {
       const hasPassedPdi = project.inspectionHeaders.length > 0;
-      if (hasPassedPdi) nextStage = 'DISPATCH_READY';
+      if (hasPassedPdi) {
+        // Assembly Gate: If the project requires assembly (has assembly headers),
+        // we must not go to DISPATCH_READY until we have a PASSED trial.
+        const requiresAssembly = project.assemblyHeaders.length > 0;
+        if (requiresAssembly) {
+          const hasPassedTrial = project.projectTrials.some(
+            (t: any) => t.status === 'PASSED' && t.customerSignoff
+          );
+          if (hasPassedTrial) nextStage = 'DISPATCH_READY';
+        } else {
+          nextStage = 'DISPATCH_READY';
+        }
+      }
     }
 
     if (nextStage === 'DISPATCH_READY') {

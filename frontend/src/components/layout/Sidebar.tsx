@@ -21,10 +21,10 @@ export function Sidebar() {
       onMouseLeave={() => setIsHovered(false)}
       animate={{ width: isHovered ? "17rem" : "4.5rem" }}
       transition={springConfig}
-      className="fixed left-3 top-3 bottom-3 z-50 glass-sidebar flex flex-col group/sidebar transition-colors hover:border-white/20 hide-on-print"
+      className="fixed left-3 top-3 bottom-3 z-50 glass-sidebar flex flex-col group/sidebar transition-colors hover:border-black/20 hide-on-print"
     >
       {/* Ambient Inner Glow */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-purple-500/5 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-screen" />
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-purple-500/5 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-700 pointer-events-none" />
       <div className="flex-1 flex flex-col h-full w-full py-5 px-3 overflow-y-auto hide-scrollbar relative z-10">
         
         {/* Logo Area */}
@@ -32,9 +32,9 @@ export function Sidebar() {
           <motion.div 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/20 text-blue-400 border border-white/10 shadow-[0_0_20px_rgba(37,99,235,0.3)] group-hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-shadow duration-300 relative overflow-hidden"
+            className="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 text-blue-600 border border-black/5 shadow-elevation group-hover:shadow-elevation transition-shadow duration-300 relative overflow-hidden"
           >
-            <div className="absolute inset-0 bg-blue-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-blue-400/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <Layers className="h-5 w-5 relative z-10" />
           </motion.div>
 
@@ -47,8 +47,8 @@ export function Sidebar() {
                 transition={{ duration: 0.2 }}
                 className="ml-4 whitespace-nowrap overflow-hidden"
               >
-                <span className="text-title tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-                  ToolRoom<span className="text-blue-400">OS</span>
+                <span className="text-title tracking-tight bg-gradient-to-r from-zinc-900 via-zinc-700 to-zinc-500 bg-clip-text text-transparent">
+                  ToolRoom<span className="text-blue-600">OS</span>
                 </span>
               </motion.div>
             )}
@@ -59,7 +59,7 @@ export function Sidebar() {
         <div className="flex flex-col gap-2 w-full flex-1">
           <NavItem 
             href="/"
-            icon={<Command className="h-5 w-5 text-blue-400" />} 
+            icon={<Command className="h-5 w-5 text-blue-600" />} 
             label="Mission Control" 
             active={pathname === "/"} 
             isExpanded={isHovered}
@@ -100,7 +100,7 @@ export function Sidebar() {
             isExpanded={isHovered}
           />
           
-          <div className="mt-auto mb-2 pt-6 border-t border-white/5">
+          <div className="mt-auto mb-2 pt-6 border-t border-black/5">
             <NavItem 
               href="/settings"
               icon={<Settings className="h-5 w-5" />} 
@@ -113,9 +113,9 @@ export function Sidebar() {
 
         {/* User Profile Area */}
         {user && (
-          <div className="mt-4 pt-4 border-t border-white/5 w-full flex items-center shrink-0">
-            <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-zinc-800/50 border border-white/10 flex items-center justify-center overflow-hidden">
-              <UserIcon className="h-5 w-5 text-zinc-400" />
+          <div className="mt-4 pt-4 border-t border-black/5 w-full flex items-center shrink-0">
+            <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-zinc-100 border border-black/5 flex items-center justify-center overflow-hidden">
+              <UserIcon className="h-5 w-5 text-zinc-500" />
             </div>
             
             <AnimatePresence>
@@ -127,14 +127,14 @@ export function Sidebar() {
                   className="ml-3 flex-1 flex items-center justify-between overflow-hidden"
                 >
                   <div className="flex flex-col whitespace-nowrap">
-                    <span className="text-body font-medium text-white truncate">{user.name}</span>
+                    <span className="text-body font-medium text-zinc-900 truncate">{user.name}</span>
                     <span className="text-micro text-zinc-500 truncate">{user.role}</span>
                   </div>
                   <motion.button
                     whileHover={{ scale: 1.1, color: '#ef4444' }}
                     whileTap={{ scale: 0.9 }}
                     onClick={logout}
-                    className="p-2 text-zinc-400 hover:bg-white/5 rounded-lg transition-colors"
+                    className="p-2 text-zinc-500 hover:bg-black/5 rounded-lg transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
                   </motion.button>
@@ -169,20 +169,20 @@ function NavItem({
       {active && (
         <motion.div 
           layoutId="activeNav"
-          className="absolute inset-0 bg-white/[0.04] border border-white/[0.1] rounded-xl pointer-events-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_20px_rgba(255,255,255,0.05)]"
+          className="absolute inset-0 bg-black/[0.04] border border-black/[0.05] rounded-xl pointer-events-none shadow-[inset_0_1px_1px_rgba(0,0,0,0.05)]"
           initial={false}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-          <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-white/[0.02] to-transparent opacity-50 blur-lg"></div>
+          <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-black/[0.02] to-transparent opacity-50 blur-lg"></div>
         </motion.div>
       )}
       
       <div className={`relative z-10 flex items-center h-12 px-3 rounded-xl transition-all duration-300 group-hover:scale-[1.02] ${
         active 
-          ? 'text-white' 
-          : 'text-zinc-400 hover:text-white hover:bg-white/[0.02]'
+          ? 'text-zinc-900' 
+          : 'text-zinc-500 hover:text-zinc-900 hover:bg-black/[0.02]'
       }`}>
-        <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${active ? 'bg-white/10 text-white shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'group-hover:bg-white/5'}`}>
+        <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${active ? 'bg-black/5 text-zinc-900 shadow-elevation' : 'group-hover:bg-black/5'}`}>
           {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
         </div>
         
@@ -202,7 +202,7 @@ function NavItem({
         
         {/* Subtle Indicator dot for collapsed active state */}
         {!isExpanded && active && (
-          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-4 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-4 bg-zinc-50 rounded-full shadow-elevation" />
         )}
       </div>
     </Link>

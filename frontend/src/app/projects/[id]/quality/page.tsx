@@ -87,10 +87,10 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center">
+          <h2 className="text-xl font-bold text-zinc-900 flex items-center">
             <CheckSquare className="w-5 h-5 mr-2 text-emerald-400" /> Quality Assurance
           </h2>
-          <p className="text-slate-400 text-sm mt-1">Manage inspections, NCRs, and quality metrics</p>
+          <p className="text-zinc-500 text-sm mt-1">Manage inspections, NCRs, and quality metrics</p>
         </div>
         <div className="flex gap-3">
           <Button 
@@ -103,12 +103,12 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-white/10 pb-px">
+      <div className="flex gap-4 border-b border-black/10 pb-px">
         {['INSPECTIONS', 'NCRS'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-zinc-500 hover:text-zinc-900'}`}
           >
             {tab.replace('_', ' ')}
           </button>
@@ -116,7 +116,7 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
       </div>
 
       {/* Content */}
-      <div className="bg-black/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-xl">
+      <div className="bg-black/5 border border-black/5 rounded-2xl overflow-hidden backdrop-blur-xl">
         {activeTab === 'INSPECTIONS' && (
           <SmartTable 
             data={inspections}
@@ -143,7 +143,7 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
             columns={[
               { key: 'ncrNumber', label: 'NCR No' },
               { key: 'status', label: 'Status', render: (val) => (
-                  <span className={`px-2 py-1 rounded text-xs font-bold ${val === 'OPEN' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                  <span className={`px-2 py-1 rounded text-xs font-bold ${val === 'OPEN' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-zinc-500'}`}>
                     {val}
                   </span>
               )},

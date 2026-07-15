@@ -46,19 +46,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const getIcon = (type: ToastType) => {
     switch (type) {
-      case 'success': return <CheckCircle2 className="h-5 w-5 text-green-400" />;
-      case 'error': return <AlertCircle className="h-5 w-5 text-red-400" />;
-      case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-400" />;
-      case 'info': return <Info className="h-5 w-5 text-blue-400" />;
+      case 'success': return <CheckCircle2 className="h-5 w-5 text-emerald-600" />;
+      case 'error': return <AlertCircle className="h-5 w-5 text-red-600" />;
+      case 'warning': return <AlertTriangle className="h-5 w-5 text-amber-600" />;
+      case 'info': return <Info className="h-5 w-5 text-blue-600" />;
     }
   };
 
   const getBgClass = (type: ToastType) => {
     switch (type) {
-      case 'success': return 'bg-green-500/10 border-green-500/20';
-      case 'error': return 'bg-red-500/10 border-red-500/20';
-      case 'warning': return 'bg-yellow-500/10 border-yellow-500/20';
-      case 'info': return 'bg-blue-500/10 border-blue-500/20';
+      case 'success': return 'bg-white/95 border-emerald-200';
+      case 'error': return 'bg-white/95 border-red-200';
+      case 'warning': return 'bg-white/95 border-amber-200';
+      case 'info': return 'bg-white/95 border-blue-200';
     }
   };
 
@@ -75,14 +75,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               {getIcon(t.type)}
             </div>
             <div className="flex-1">
-              <h4 className="text-sm font-bold text-white leading-5">{t.title}</h4>
+              <h4 className="text-sm font-bold text-zinc-900 leading-5">{t.title}</h4>
               {t.message && (
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">{t.message}</p>
+                <p className="text-xs text-zinc-600 mt-1 leading-relaxed">{t.message}</p>
               )}
             </div>
             <button
               onClick={() => removeToast(t.id)}
-              className="shrink-0 ml-4 text-slate-400 hover:text-white transition-colors"
+              className="shrink-0 ml-4 text-zinc-500 hover:text-zinc-900 transition-colors"
             >
               <X className="h-4 w-4" />
             </button>

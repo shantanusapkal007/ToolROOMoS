@@ -6,7 +6,7 @@ interface SkeletonProps {
 
 export const Skeleton: React.FC<SkeletonProps> = ({ className = '' }) => {
   return (
-    <div className={`animate-pulse bg-white/10 rounded-md ${className}`} />
+    <div className={`animate-pulse bg-black/10 rounded-md ${className}`} />
   );
 };
 
@@ -31,7 +31,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ type = 'page', m
     case 'table':
       return (
         <div className="glass-panel w-full overflow-hidden">
-          <div className="px-6 py-4 border-b border-white/10 flex justify-between">
+          <div className="px-6 py-4 border-b border-black/10 flex justify-between">
             <Skeleton className="h-6 w-1/4" />
             <Skeleton className="h-8 w-24 rounded-lg" />
           </div>
@@ -53,11 +53,11 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ type = 'page', m
         <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center space-y-6">
           <div className="relative">
             <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center animate-bounce">
-              <div className="w-8 h-8 rounded-full bg-white/20 animate-ping" />
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-black/10 flex items-center justify-center animate-bounce">
+              <div className="w-8 h-8 rounded-full bg-black/20 animate-ping" />
             </div>
           </div>
-          <p className="text-slate-400 font-medium tracking-widest uppercase text-sm animate-pulse">{message || 'Initializing Data Core...'}</p>
+          <p className="text-zinc-500 font-medium tracking-widest uppercase text-sm animate-pulse">{message || 'Initializing Data Core...'}</p>
         </div>
       );
   }

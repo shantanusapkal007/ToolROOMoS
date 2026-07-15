@@ -29,14 +29,14 @@ export const SystemPreferences = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0 bg-white/5">
+      <div className="flex items-center justify-between p-6 border-b border-black/10 shrink-0 bg-black/5">
         <div className="flex items-center">
           <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center mr-4 border border-orange-500/20">
             <Settings className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">System Preferences</h2>
-            <p className="text-sm text-slate-400">Configure global OS behavior and integrations.</p>
+            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">System Preferences</h2>
+            <p className="text-sm text-zinc-500">Configure global OS behavior and integrations.</p>
           </div>
         </div>
       </div>
@@ -44,41 +44,41 @@ export const SystemPreferences = () => {
       <div className="flex-1 overflow-y-auto p-8 hide-scrollbar">
         <div className="max-w-3xl space-y-8">
           
-          <div className="space-y-4 border border-white/10 p-6 rounded-2xl bg-[#0B1018]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
-            <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-4 mb-4">Notifications</h3>
+          <div className="space-y-4 border border-black/10 p-6 rounded-2xl bg-[#F4F4F6]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-4 mb-4">Notifications</h3>
             
             <div className="flex items-center justify-between py-3">
               <div>
-                <p className="font-medium text-white">Email Notifications</p>
-                <p className="text-sm text-slate-400">Send system alerts via email.</p>
+                <p className="font-medium text-zinc-900">Email Notifications</p>
+                <p className="text-sm text-zinc-500">Send system alerts via email.</p>
               </div>
               <Toggle checked={preferences.emailNotifications} onChange={() => togglePref('emailNotifications')} />
             </div>
             
-            <div className="flex items-center justify-between py-3 border-t border-white/5">
+            <div className="flex items-center justify-between py-3 border-t border-black/5">
               <div>
-                <p className="font-medium text-white">Slack Integration</p>
-                <p className="text-sm text-slate-400">Push workflow events to Slack channels.</p>
+                <p className="font-medium text-zinc-900">Slack Integration</p>
+                <p className="text-sm text-zinc-500">Push workflow events to Slack channels.</p>
               </div>
               <Toggle checked={preferences.slackIntegration} onChange={() => togglePref('slackIntegration')} />
             </div>
           </div>
 
-          <div className="space-y-4 border border-white/10 p-6 rounded-2xl bg-[#0B1018]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
-            <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-4 mb-4">System Maintenance</h3>
+          <div className="space-y-4 border border-black/10 p-6 rounded-2xl bg-[#F4F4F6]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-4 mb-4">System Maintenance</h3>
             
             <div className="flex items-center justify-between py-3">
               <div>
-                <p className="font-medium text-white">Automated Backups</p>
-                <p className="text-sm text-slate-400">Run daily database snapshots.</p>
+                <p className="font-medium text-zinc-900">Automated Backups</p>
+                <p className="text-sm text-zinc-500">Run daily database snapshots.</p>
               </div>
               <Toggle checked={preferences.autoBackup} onChange={() => togglePref('autoBackup')} />
             </div>
             
-            <div className="flex items-center justify-between py-3 border-t border-white/5">
+            <div className="flex items-center justify-between py-3 border-t border-black/5">
               <div>
                 <p className="font-medium text-red-400">Maintenance Mode</p>
-                <p className="text-sm text-slate-400">Lock out all non-admin users for system updates.</p>
+                <p className="text-sm text-zinc-500">Lock out all non-admin users for system updates.</p>
               </div>
               <Toggle checked={preferences.maintenanceMode} onChange={() => togglePref('maintenanceMode')} danger />
             </div>

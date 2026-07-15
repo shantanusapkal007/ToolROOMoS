@@ -112,13 +112,13 @@ export default function ProjectLayout({
     return `pb-4 text-sm font-bold tracking-wider uppercase transition-all ${
       isActive 
         ? "text-blue-400 border-b-2 border-blue-400" 
-        : "text-slate-400 hover:text-slate-200"
+        : "text-zinc-500 hover:text-zinc-700"
     }`;
   };
 
   if (loading) {
     return (
-      <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
+      <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans mission-control-bg">
         <Sidebar />
         <main className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem]">
           <LoadingState message="Initializing Project Core..." />
@@ -128,11 +128,11 @@ export default function ProjectLayout({
   }
 
   if (!project) {
-    return <div className="flex items-center justify-center h-screen w-screen bg-[#0B1120] text-white">Project Not Found</div>;
+    return <div className="flex items-center justify-center h-screen w-screen bg-[#0B1120] text-zinc-900">Project Not Found</div>;
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans mission-control-bg">
       <Sidebar />
       <main className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem]">
         <div className="flex-1 h-full flex flex-col animate-slide-up min-h-0 overflow-hidden">
@@ -146,25 +146,24 @@ export default function ProjectLayout({
             breadcrumbs={[{ label: 'Projects', href: '/projects' }, { label: project.projectNumber }]}
             actions={
               <div className="flex items-center space-x-3 z-10">
-                <span className={`flex items-center text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border shadow-[0_0_10px_rgba(0,0,0,0.2)] ${
+                <span className={`flex items-center text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
                   project.currentStage === 'INVOICED' 
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                    : 'bg-blue-50 text-blue-700 border-blue-200'
                 }`}>
-                  <div className={`w-1.5 h-1.5 rounded-full mr-2 ${project.currentStage === 'INVOICED' ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]' : 'bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.8)]'}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full mr-2 ${project.currentStage === 'INVOICED' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
                   {project.currentStage}
                 </span>
 
                 <button 
                   onClick={() => setShowDeliveryModal(true)}
-                  className="group relative flex items-center bg-black/40 hover:bg-black/60 border border-white/10 hover:border-blue-500/50 shadow-inner rounded-xl px-4 py-2 transition-all duration-300"
+                  className="group relative flex items-center bg-white hover:bg-zinc-50 border border-zinc-200 hover:border-blue-300 shadow-sm rounded-full px-4 py-1.5 transition-all duration-300"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-                  <Clock className="h-4 w-4 mr-2.5 text-blue-500 group-hover:text-blue-400 relative z-10" />
-                  <span className={`relative z-10 text-xs font-bold ${project.targetDeliveryDate ? 'text-slate-200' : 'text-slate-500 italic'}`}>
+                  <Clock className="h-3.5 w-3.5 mr-2 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${project.targetDeliveryDate ? 'text-zinc-700' : 'text-zinc-400'}`}>
                     {project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Delivery: Not Set'}
                   </span>
-                  <Edit2 className="h-3.5 w-3.5 ml-3 text-slate-500 group-hover:text-blue-400 transition-colors relative z-10" />
+                  <Edit2 className="h-3 w-3 ml-2.5 text-zinc-300 group-hover:text-blue-500 transition-colors" />
                 </button>
                 
                 {/* Delete Button */}
@@ -181,7 +180,7 @@ export default function ProjectLayout({
 
 
           {/* Project Navigation Tabs */}
-          <div className="flex space-x-6 border-b border-white/5 px-6 pt-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar hide-on-print">
+          <div className="flex space-x-6 border-b border-black/5 px-6 pt-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar hide-on-print">
             <Link href={`/projects/${project.id}/overview`} className={getTabClass('/overview')}>Overview</Link>
             <Link href={`/projects/${project.id}/tasks`} className={getTabClass('/tasks')}>Tasks & WBS</Link>
             <Link href={`/projects/${project.id}/engineering`} className={getTabClass('/engineering')}>Engineering</Link>
@@ -189,6 +188,7 @@ export default function ProjectLayout({
             <Link href={`/projects/${project.id}/inventory`} className={getTabClass('/inventory')}>Inventory</Link>
             <Link href={`/projects/${project.id}/production`} className={getTabClass('/production')}>Production</Link>
             <Link href={`/projects/${project.id}/subcontract`} className={getTabClass('/subcontract')}>Subcontract</Link>
+            <Link href={`/projects/${project.id}/assembly`} className={getTabClass('/assembly')}>Assembly & Trials</Link>
             <Link href={`/projects/${project.id}/quality`} className={getTabClass('/quality')}>Quality</Link>
             <Link href={`/projects/${project.id}/dispatch`} className={getTabClass('/dispatch')}>Dispatch</Link>
             <Link href={`/projects/${project.id}/finance`} className={getTabClass('/finance')}>Finance</Link>
@@ -235,15 +235,15 @@ export default function ProjectLayout({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Customer</label>
+              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Customer</label>
               <select 
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-all appearance-none" 
+                className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-blue-500 transition-all appearance-none" 
                 value={editCustomerId}
                 onChange={e => setEditCustomerId(e.target.value)}
                 required
               >
                 {customers?.map((cust: any) => (
-                  <option key={cust.id} value={cust.id} className="bg-[#0B1018] text-white">
+                  <option key={cust.id} value={cust.id} className="bg-[#F4F4F6] text-zinc-900">
                     {cust.companyName}
                   </option>
                 ))}
@@ -252,32 +252,32 @@ export default function ProjectLayout({
           </div>
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Priority</label>
+              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Priority</label>
               <select 
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-all appearance-none" 
+                className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-blue-500 transition-all appearance-none" 
                 value={editPriority}
                 onChange={e => setEditPriority(e.target.value)}
                 required
               >
-                <option value="LOW" className="bg-[#0B1018]">LOW</option>
-                <option value="NORMAL" className="bg-[#0B1018]">NORMAL</option>
-                <option value="HIGH" className="bg-[#0B1018]">HIGH</option>
-                <option value="CRITICAL" className="bg-[#0B1018]">CRITICAL</option>
+                <option value="LOW" className="bg-[#F4F4F6]">LOW</option>
+                <option value="NORMAL" className="bg-[#F4F4F6]">NORMAL</option>
+                <option value="HIGH" className="bg-[#F4F4F6]">HIGH</option>
+                <option value="CRITICAL" className="bg-[#F4F4F6]">CRITICAL</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Remarks</label>
+              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Remarks</label>
               <textarea 
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500 min-h-[80px] resize-none" 
+                className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2 text-sm text-zinc-900 focus:outline-none focus:border-blue-500 min-h-[80px] resize-none" 
                 value={editRemarks}
                 onChange={(e) => setEditRemarks(e.target.value)}
                 placeholder="Project notes/remarks..."
               />
             </div>
           </div>
-          <div className="flex space-x-3 pt-4 border-t border-white/10 mt-6">
-            <button type="button" onClick={() => setShowDeliveryModal(false)} className="flex-1 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-medium text-white transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all">Save Changes</button>
+          <div className="flex space-x-3 pt-4 border-t border-black/10 mt-6">
+            <button type="button" onClick={() => setShowDeliveryModal(false)} className="flex-1 px-4 py-3 rounded-xl bg-black/5 hover:bg-black/10 font-medium text-zinc-900 transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white shadow-elevation transition-all">Save Changes</button>
           </div>
         </form>
       </Modal>
@@ -292,8 +292,8 @@ export default function ProjectLayout({
             </h4>
             <p>This action will permanently hide the project from the active workspace. It will be marked as DELETED in the database.</p>
           </div>
-          <div className="flex space-x-3 pt-4 border-t border-white/10">
-            <button type="button" onClick={() => setShowDeleteStep1(false)} className="flex-1 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-medium text-white transition-colors">Cancel</button>
+          <div className="flex space-x-3 pt-4 border-t border-black/10">
+            <button type="button" onClick={() => setShowDeleteStep1(false)} className="flex-1 px-4 py-3 rounded-xl bg-black/5 hover:bg-black/10 font-medium text-zinc-900 transition-colors">Cancel</button>
             <button type="button" onClick={handleDeleteProceedStep1} className="flex-1 px-4 py-3 rounded-xl bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 font-bold text-red-400 transition-all">Yes, Proceed</button>
           </div>
         </div>
@@ -304,7 +304,7 @@ export default function ProjectLayout({
         <form onSubmit={handleFinalDelete} className="space-y-4">
           <div className="p-4 bg-red-900/40 border border-red-500/40 rounded-xl text-red-200 text-sm mb-4">
             <p className="mb-3 font-medium">To confirm, please type the project number exactly as it appears below:</p>
-            <div className="bg-black/50 p-2 rounded text-center font-mono font-bold text-lg text-white mb-4 shadow-inner border border-white/10">
+            <div className="bg-black/5 p-2 rounded text-center font-mono font-bold text-lg text-zinc-900 mb-4 shadow-inner border border-black/10">
               {project.projectNumber}
             </div>
             <Input
@@ -316,11 +316,11 @@ export default function ProjectLayout({
             />
           </div>
           <div className="flex space-x-3 pt-2">
-            <button type="button" onClick={() => { setShowDeleteStep2(false); setDeleteConfirmationName(""); }} className="flex-1 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-medium text-white transition-colors">Cancel</button>
+            <button type="button" onClick={() => { setShowDeleteStep2(false); setDeleteConfirmationName(""); }} className="flex-1 px-4 py-3 rounded-xl bg-black/5 hover:bg-black/10 font-medium text-zinc-900 transition-colors">Cancel</button>
             <button 
               type="submit" 
               disabled={deleteConfirmationName !== project.projectNumber || deleteProjectMutation.isPending}
-              className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:hover:bg-red-600 font-bold text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all"
+              className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:hover:bg-red-600 font-bold text-white shadow-elevation transition-all"
             >
               {deleteProjectMutation.isPending ? 'Deleting...' : 'Delete Permanently'}
             </button>

@@ -18,10 +18,10 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div className="flex flex-col items-center justify-center h-screen w-screen bg-[#050A14] text-white">
+        <div className="flex flex-col items-center justify-center h-screen w-screen bg-[#FBFBFC] text-zinc-900">
           <AlertTriangle className="h-16 w-16 text-red-500 mb-6" />
           <h1 className="text-2xl font-bold mb-2">Critical Application Error</h1>
-          <p className="text-slate-400 mb-6 max-w-md text-center">
+          <p className="text-zinc-500 mb-6 max-w-md text-center">
             The application encountered an unrecoverable error. Please try reloading the page or contact system administration.
           </p>
           <div className="flex space-x-4">

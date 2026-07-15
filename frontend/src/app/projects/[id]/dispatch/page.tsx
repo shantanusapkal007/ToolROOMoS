@@ -48,10 +48,10 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center">
+          <h2 className="text-xl font-bold text-zinc-900 flex items-center">
             <Truck className="w-5 h-5 mr-2 text-indigo-400" /> Logistics & Dispatch
           </h2>
-          <p className="text-slate-400 text-sm mt-1">Manage packing slips, dispatch notes, and transport details</p>
+          <p className="text-zinc-500 text-sm mt-1">Manage packing slips, dispatch notes, and transport details</p>
         </div>
         <div className="flex gap-3">
           <button 
@@ -62,7 +62,7 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
               });
               setDrawerMode('CREATE');
             }} 
-            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] text-sm font-medium"
+            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all shadow-elevation text-sm font-medium"
           >
             <Plus className="w-4 h-4 mr-2" /> Log Dispatch
           </button>
@@ -70,7 +70,7 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
       </div>
 
       {/* Content */}
-      <div className="bg-black/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-xl">
+      <div className="bg-black/5 border border-black/5 rounded-2xl overflow-hidden backdrop-blur-xl">
         <SmartTable 
           data={dispatches}
           isLoading={false}
@@ -110,7 +110,7 @@ export default function DispatchTab({ params }: { params: Promise<{ id: string }
           <Input label="Remarks" value={formData.remarks} onChange={e => setFormData({...formData, remarks: e.target.value})} />
           
           <div className="pt-6">
-            <button onClick={handleCreateDispatch} className="w-full py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 hover:border-indigo-500/50 shadow-[0_0_20px_rgba(79,70,229,0.2),_inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-xl text-indigo-300 hover:text-white font-bold text-sm transition-all">
+            <button onClick={handleCreateDispatch} className="w-full py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 hover:border-indigo-500/50 shadow-elevation rounded-xl text-indigo-300 hover:text-white font-bold text-sm transition-all">
               Submit Dispatch Note
             </button>
           </div>

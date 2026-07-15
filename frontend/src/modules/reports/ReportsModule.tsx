@@ -8,20 +8,20 @@ const StatCard = ({ title, value, change, icon, trend }: { title: string, value:
   return (
     <div className="glass-panel p-6 flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300">
+        <div className="w-10 h-10 rounded-xl bg-black/5 border border-black/10 flex items-center justify-center text-zinc-600">
           {icon}
         </div>
-        <div className={`px-2 py-1 rounded-md text-xs font-semibold ${
-          trend === 'up' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-          trend === 'down' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
-          'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+        <div className={`px-2 py-1 rounded-md text-xs font-black tracking-widest uppercase ${
+          trend === 'up' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm' : 
+          trend === 'down' ? 'bg-red-50 text-red-700 border border-red-200 shadow-sm' : 
+          'bg-zinc-50 text-zinc-700 border border-zinc-200 shadow-sm'
         }`}>
           {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '->'} {change}
         </div>
       </div>
       <div>
-        <h3 className="text-3xl font-bold text-white tracking-tight">{value}</h3>
-        <p className="text-sm font-medium text-slate-400 mt-1 uppercase tracking-wider">{title}</p>
+        <h3 className="text-3xl font-bold text-zinc-900 tracking-tight">{value}</h3>
+        <p className="text-sm font-medium text-zinc-500 mt-1 uppercase tracking-wider">{title}</p>
       </div>
     </div>
   );
@@ -33,8 +33,8 @@ export const ReportsModule = () => {
   if (isLoading || !metrics) {
     return (
       <div className="flex-1 h-full flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-        <div className="text-slate-400 mt-4 text-sm font-bold tracking-widest uppercase">Aggregating Metrics...</div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black/10"></div>
+        <div className="text-zinc-500 mt-4 text-sm font-bold tracking-widest uppercase">Aggregating Metrics...</div>
       </div>
     );
   }
@@ -65,8 +65,8 @@ export const ReportsModule = () => {
           {/* Main Chart */}
           <div className="lg:col-span-2 glass-panel p-6 h-96 flex flex-col">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2 text-blue-400" />
+              <h3 className="text-lg font-bold text-zinc-900 flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
                 Cost Trends (Last 6 Months)
               </h3>
               <div className="flex items-center space-x-4 text-xs font-bold uppercase tracking-wider">
@@ -78,7 +78,7 @@ export const ReportsModule = () => {
             <div className="flex-1 relative flex items-end justify-between px-4 pb-4">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-4">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="w-full h-px bg-white/5" />
+                  <div key={i} className="w-full h-px bg-black/5" />
                 ))}
               </div>
               
@@ -94,13 +94,13 @@ export const ReportsModule = () => {
                        <div className="w-full bg-blue-500/80 hover:bg-blue-400 transition-colors" style={{ height: `${prodPct}%` }} />
                        <div className="w-full bg-amber-500/80 hover:bg-amber-400 transition-colors" style={{ height: `${procPct}%` }} />
                     </div>
-                    <span className="absolute bottom-0 text-xs font-medium text-slate-400 mt-2">{trend.month}</span>
+                    <span className="absolute bottom-0 text-xs font-medium text-zinc-500 mt-2">{trend.month}</span>
                     
                     {/* Tooltip */}
-                    <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-xs px-3 py-2 rounded pointer-events-none whitespace-nowrap z-50 shadow-xl border border-white/10">
-                      <div className="font-bold mb-1">Total: ₹{total.toLocaleString()}</div>
-                      <div className="text-blue-400">Prod: ₹{trend.production.toLocaleString()}</div>
-                      <div className="text-amber-400">Proc: ₹{trend.procurement.toLocaleString()}</div>
+                    <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white text-zinc-900 text-xs px-3 py-2 rounded-xl pointer-events-none whitespace-nowrap z-50 shadow-md border border-zinc-200">
+                      <div className="font-black mb-1">Total: ₹{total.toLocaleString()}</div>
+                      <div className="text-blue-600 font-bold">Prod: ₹{trend.production.toLocaleString()}</div>
+                      <div className="text-amber-600 font-bold">Proc: ₹{trend.procurement.toLocaleString()}</div>
                     </div>
                   </div>
                 );
@@ -116,8 +116,8 @@ export const ReportsModule = () => {
 
           {/* Secondary Stats */}
           <div className="glass-panel p-6 h-96 flex flex-col">
-            <h3 className="text-lg font-bold text-white flex items-center mb-6">
-              <BarChart3 className="w-5 h-5 mr-2 text-purple-400" />
+            <h3 className="text-lg font-bold text-zinc-900 flex items-center mb-6">
+              <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
               Machine Utilization
             </h3>
             <div className="flex-1 space-y-6 overflow-y-auto pr-2 hide-scrollbar">
@@ -128,11 +128,11 @@ export const ReportsModule = () => {
                 return (
                   <div key={machine.name}>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-slate-300 font-medium">{machine.name}</span>
-                      <span className="text-white font-bold">{machine.percent}%</span>
+                      <span className="text-zinc-600 font-medium">{machine.name}</span>
+                      <span className="text-zinc-900 font-bold">{machine.percent}%</span>
                     </div>
-                    <div className="w-full h-2 bg-[#0B1018] rounded-full overflow-hidden shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)] border border-white/5">
-                      <div className={`h-full ${color} shadow-[0_0_10px_currentColor] rounded-full transition-all duration-1000`} style={{ width: `${machine.percent}%` }} />
+                    <div className="w-full h-2 bg-[#F4F4F6] rounded-full overflow-hidden shadow-inner border border-black/5">
+                      <div className={`h-full ${color} rounded-full transition-all duration-1000`} style={{ width: `${machine.percent}%` }} />
                     </div>
                   </div>
                 );

@@ -156,7 +156,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
     if (field.type === 'textarea') {
       return (
         <div key={field.name} className={gridClass}>
-          <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+          <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wider">
             {field.label} {field.required && <span className="text-red-500">*</span>}
           </label>
           <textarea
@@ -164,7 +164,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
             placeholder={field.placeholder}
             value={formData[field.name] || ''}
             onChange={(e) => handleChange(field.name, e.target.value)}
-            className="w-full bg-[#050A14]/95 backdrop-blur-md border border-white/10 hover:border-white/20 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 focus:bg-[#050A14] focus:shadow-[0_0_15px_rgba(59,130,246,0.3),_inset_0_2px_4px_rgba(0,0,0,0.3)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.3),_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#050A14]/90 transition-all duration-300 min-h-[100px]"
+            className="w-full bg-white/70 backdrop-blur-xl border border-black/10 hover:border-black/20 rounded-xl px-4 py-2.5 text-zinc-900 placeholder-zinc-500 focus:outline-none focus:ring-0 focus:bg-white focus:border-blue-500/40 focus:shadow-elevation shadow-[0_2px_4px_rgba(15,15,20,0.02)] transition-all duration-300 min-h-[100px]"
           />
         </div>
       );
@@ -174,7 +174,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
       return (
         <div key={field.name} className={`${gridClass} flex items-center h-full pt-6`}>
           <label className="flex items-center space-x-3 cursor-pointer group">
-            <div className="relative flex items-center justify-center w-6 h-6 rounded-md border border-white/10 bg-[#050A14]/95 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md group-hover:border-white/30 group-hover:bg-[#050A14] transition-all duration-300">
+            <div className="relative flex items-center justify-center w-6 h-6 rounded-md border border-black/10 bg-white/70 shadow-[0_2px_4px_rgba(15,15,20,0.02)] backdrop-blur-md group-hover:border-black/30 group-hover:bg-white transition-all duration-300">
               <input
                 type="checkbox"
                 required={field.required}
@@ -183,10 +183,10 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
                 className="absolute opacity-0 w-full h-full cursor-pointer"
               />
               {formData[field.name] && (
-                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
               )}
             </div>
-            <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{field.label} {field.required && <span className="text-red-500">*</span>}</span>
+            <span className="text-sm font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">{field.label} {field.required && <span className="text-red-500">*</span>}</span>
           </label>
         </div>
       );
@@ -195,13 +195,13 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
     if (field.type === 'radio' && field.options) {
       return (
         <div key={field.name} className={gridClass}>
-          <label className="block text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">
+          <label className="block text-xs font-semibold text-zinc-500 mb-3 uppercase tracking-wider">
             {field.label} {field.required && <span className="text-red-500">*</span>}
           </label>
           <div className="flex flex-wrap gap-4">
             {field.options.map(opt => (
               <label key={opt.value} className="flex items-center space-x-2 cursor-pointer group">
-                <div className="relative flex items-center justify-center w-5 h-5 rounded-full border border-white/10 bg-[#050A14]/95 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md group-hover:border-white/30 group-hover:bg-[#050A14] transition-all duration-300">
+                <div className="relative flex items-center justify-center w-5 h-5 rounded-full border border-black/10 bg-white/70 shadow-[0_2px_4px_rgba(15,15,20,0.02)] backdrop-blur-md group-hover:border-black/30 group-hover:bg-white transition-all duration-300">
                   <input
                     type="radio"
                     name={field.name}
@@ -211,10 +211,10 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
                     className="absolute opacity-0 w-full h-full cursor-pointer"
                   />
                   {formData[field.name] === opt.value && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
                   )}
                 </div>
-                <span className="text-sm text-slate-300 group-hover:text-white transition-colors">{opt.label}</span>
+                <span className="text-sm text-zinc-600 group-hover:text-zinc-900 transition-colors">{opt.label}</span>
               </label>
             ))}
           </div>
@@ -255,7 +255,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
         </SectionCard>
       ))}
 
-      <div className="sticky bottom-4 z-50 flex justify-end space-x-3 p-4 bg-[#0a0a0c]/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+      <div className="sticky bottom-4 z-50 flex justify-end space-x-3 p-4 bg-white/80 backdrop-blur-xl border border-black/10 rounded-2xl shadow-[0_24px_48px_-12px_rgba(15,15,20,0.12)]">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel

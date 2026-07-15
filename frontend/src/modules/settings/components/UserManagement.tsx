@@ -27,14 +27,14 @@ export const UserManagement = () => {
 
   return (
     <div className="h-full flex flex-col relative">
-      <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0 bg-white/5">
+      <div className="flex items-center justify-between p-6 border-b border-black/10 shrink-0 bg-black/5">
         <div className="flex items-center">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mr-4 border border-purple-500/20">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center mr-4 border border-purple-200 shadow-sm">
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Users & Roles</h2>
-            <p className="text-sm text-slate-400">Manage access control and team members.</p>
+            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Users & Roles</h2>
+            <p className="text-sm text-zinc-500">Manage access control and team members.</p>
           </div>
         </div>
         <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setShowInviteModal(true)}>
@@ -43,9 +43,9 @@ export const UserManagement = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 hide-scrollbar">
-        <div className="border border-white/10 rounded-xl overflow-hidden bg-[#0B1018]/50">
+        <div className="border border-black/10 rounded-xl overflow-hidden bg-[#F4F4F6]/50">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-white/5 text-slate-400 border-b border-white/10">
+            <thead className="bg-black/5 text-zinc-500 border-b border-black/10">
               <tr>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">User</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Role</th>
@@ -66,15 +66,15 @@ export const UserManagement = () => {
                 </tr>
               )}
               {users.map((user: any) => (
-                <tr key={user.id} className="hover:bg-white/5 transition-colors group">
+                <tr key={user.id} className="hover:bg-black/5 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs mr-3">
                         {user.name ? user.name.charAt(0) : '?'}
                       </div>
                       <div>
-                        <p className="text-white font-medium">{user.name}</p>
-                        <p className="text-slate-400 flex items-center mt-0.5 text-xs">
+                        <p className="text-zinc-900 font-medium">{user.name}</p>
+                        <p className="text-zinc-500 flex items-center mt-0.5 text-xs">
                           <Mail className="w-3 h-3 mr-1" />
                           {user.email || 'N/A'}
                         </p>
@@ -82,26 +82,26 @@ export const UserManagement = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest uppercase bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
                       <Shield className="w-3 h-3 mr-1" />
                       {user.role || 'N/A'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-mono font-bold text-white text-xs">
+                  <td className="px-6 py-4 font-mono font-bold text-zinc-900 text-xs">
                     ₹{Number(user.hourlyRate || 0).toFixed(2)}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${
                       user.status === 'ACTIVE' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                        : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                        : 'bg-zinc-50 text-zinc-700 border border-zinc-200'
                     }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${user.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-slate-400'}`}></div>
+                      <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${user.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
                       {user.status || 'Unknown'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-blue-400 hover:text-blue-300 font-medium text-sm transition-colors">Edit</button>
+                    <button className="text-blue-600 hover:text-blue-700 font-bold text-sm transition-colors">Edit</button>
                   </td>
                 </tr>
               ))}
@@ -111,9 +111,9 @@ export const UserManagement = () => {
       </div>
 
       {showInviteModal && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#0B1018] border border-white/10 w-full max-w-md p-6 rounded-2xl animate-slide-up shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-4">Invite New User</h3>
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#F4F4F6] border border-black/10 w-full max-w-md p-6 rounded-2xl animate-slide-up shadow-2xl">
+            <h3 className="text-lg font-bold text-zinc-900 mb-4">Invite New User</h3>
             <form onSubmit={handleInvite} className="space-y-4">
               <Input label="Full Name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
               <Input label="Email Address" type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
@@ -137,7 +137,7 @@ export const UserManagement = () => {
                 value={formData.hourlyRate} 
                 onChange={(e) => setFormData({...formData, hourlyRate: Number(e.target.value)})} 
               />
-              <div className="flex space-x-3 pt-4 border-t border-white/10">
+              <div className="flex space-x-3 pt-4 border-t border-black/10">
                 <Button type="button" variant="ghost" onClick={() => setShowInviteModal(false)} className="flex-1">Cancel</Button>
                 <Button type="submit" variant="primary" isLoading={createUserMutation.isPending} className="flex-1">Send Invite</Button>
               </div>

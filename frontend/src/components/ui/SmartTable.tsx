@@ -92,9 +92,9 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
       onMouseMove={handleMouseMove}
       className="glass-panel w-full flex flex-col spotlight-card relative z-10"
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 py-4 border-b border-white/5 bg-white/[0.01] gap-4 relative z-20">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 py-4 border-b border-black/5 bg-white/[0.01] gap-4 relative z-20">
         <div className="relative w-full sm:w-72 group">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-600 transition-colors">
             <Search className="h-4 w-4" />
           </div>
           <input
@@ -102,13 +102,13 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
             placeholder="Search all columns..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:bg-black/60 shadow-inner transition-all"
+            className="w-full bg-black/5 border border-black/10 rounded-xl pl-10 pr-4 py-2 text-sm text-zinc-900 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:bg-black/5 shadow-inner transition-all"
           />
         </div>
         {exportable && data && data.length > 0 && (
           <button 
             onClick={handleExport}
-            className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-white/10 transition-colors"
+            className="flex items-center space-x-2 bg-black/5 hover:bg-black/10 text-zinc-900 text-xs font-bold px-3 py-1.5 rounded-lg border border-black/10 transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export to Excel</span>
@@ -118,20 +118,20 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
       <div className="w-full overflow-auto max-h-[600px] pb-4 custom-scrollbar">
         <table className="w-full text-left border-collapse min-w-max">
         <thead className="sticky top-0 z-30">
-          <tr className="border-b border-white/10 bg-[#0a0a0c]/90 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+          <tr className="border-b border-black/10 bg-white/90 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
             {columns.map((col) => (
-              <th key={col.key} className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap relative z-10">
+              <th key={col.key} className="px-3 py-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap relative z-10">
                 {col.label}
               </th>
             ))}
             {(onView || onEdit || onDelete || onHistory) && (
-              <th className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right whitespace-nowrap relative z-10">
+              <th className="px-3 py-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-right whitespace-nowrap relative z-10">
                 Actions
               </th>
             )}
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/5 relative z-10">
+        <tbody className="divide-y divide-zinc-100 relative z-10">
           <AnimatePresence>
             {filteredData.map((row, idx) => (
               <motion.tr 
@@ -140,11 +140,11 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: Math.min(idx * 0.05, 0.5), duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="group hover:bg-white/[0.03] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 relative cursor-default hover:-translate-y-0.5 rounded-lg overflow-hidden"
+                className="group hover:bg-zinc-50 hover:shadow-md transition-all duration-300 relative cursor-default hover:-translate-y-0.5 rounded-lg overflow-hidden"
               >
                 {columns.map((col) => (
-                  <td key={col.key} className="px-3 py-2 text-xs text-white/90 relative z-10 font-medium">
-                    {col.render ? col.render(row[col.key], row) : row[col.key] || <span className="text-white/20">-</span>}
+                  <td key={col.key} className="px-3 py-2 text-xs text-zinc-900/90 relative z-10 font-medium">
+                    {col.render ? col.render(row[col.key], row) : row[col.key] || <span className="text-zinc-900/20">-</span>}
                   </td>
                 ))}
                 
@@ -156,7 +156,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
                           whileHover={{ scale: 1.1, backgroundColor: 'rgba(59,130,246,0.1)' }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => onView(row)}
-                          className="p-1.5 text-slate-400 hover:text-blue-400 rounded transition-colors"
+                          className="p-1.5 text-zinc-500 hover:text-blue-600 rounded transition-colors"
                           title="View Details"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -167,7 +167,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
                           whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.05)' }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => onHistory(row)}
-                          className="p-1.5 text-slate-400 hover:text-white rounded transition-colors"
+                          className="p-1.5 text-zinc-500 hover:text-zinc-900 rounded transition-colors"
                           title="View Audit History"
                         >
                           <History className="h-3.5 w-3.5" />
@@ -178,7 +178,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
                           whileHover={{ scale: 1.1, backgroundColor: 'rgba(16,185,129,0.1)' }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => onEdit(row)}
-                          className="p-1.5 text-slate-400 hover:text-emerald-400 rounded transition-colors"
+                          className="p-1.5 text-zinc-500 hover:text-emerald-600 rounded transition-colors"
                           title="Edit Record"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
@@ -189,7 +189,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
                           whileHover={{ scale: 1.1, backgroundColor: 'rgba(239,68,68,0.1)' }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => onDelete(row)}
-                          className="p-1.5 text-slate-400 hover:text-red-400 rounded transition-colors"
+                          className="p-1.5 text-zinc-500 hover:text-red-600 rounded transition-colors"
                           title="Archive/Delete Record"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

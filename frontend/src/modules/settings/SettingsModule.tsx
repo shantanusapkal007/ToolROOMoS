@@ -22,7 +22,7 @@ export const SettingsModule: React.FC = () => {
 
   if (!isAdmin) {
     return (
-      <div className="flex-1 h-full flex flex-col justify-center items-center relative z-0 animate-fade-in text-slate-400">
+      <div className="flex-1 h-full flex flex-col justify-center items-center relative z-0 animate-fade-in text-zinc-500">
         <SettingsIcon className="w-16 h-16 mb-4 opacity-20" />
         <p>You do not have permission to view System Settings.</p>
       </div>
@@ -48,8 +48,8 @@ export const SettingsModule: React.FC = () => {
                 onClick={() => setActiveSection(item.id)}
                 className={`flex items-center w-full px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   isActive 
-                    ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.2)]' 
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-blue-600 text-white shadow-elevation' 
+                    : 'text-zinc-500 hover:text-zinc-900 hover:bg-black/5'
                 }`}
               >
                 {item.icon}

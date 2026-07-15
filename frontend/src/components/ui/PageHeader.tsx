@@ -21,11 +21,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   
   const statusColors = {
-    success: 'bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]',
-    warning: 'bg-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.8)]',
-    error: 'bg-red-400 shadow-[0_0_12px_rgba(239,68,68,0.8)]',
-    info: 'bg-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.8)]',
-    neutral: 'bg-zinc-400 shadow-[0_0_12px_rgba(161,161,170,0.5)]',
+    success: 'bg-emerald-500 shadow-elevation',
+    warning: 'bg-amber-500 shadow-elevation',
+    error: 'bg-red-500 shadow-elevation',
+    info: 'bg-blue-500 shadow-elevation',
+    neutral: 'bg-zinc-500 shadow-elevation',
   };
 
   return (
@@ -36,8 +36,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       className="glass-panel p-6 mb-6 flex flex-col md:flex-row md:items-end justify-between relative overflow-hidden group"
     >
       {/* Subtle Interactive Lighting */}
-      <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[200%] bg-blue-500/10 blur-[80px] pointer-events-none transition-opacity duration-700 opacity-50 group-hover:opacity-100" />
-      <div className="absolute bottom-[-50%] right-[-10%] w-[40%] h-[150%] bg-purple-500/10 blur-[100px] pointer-events-none transition-opacity duration-700 opacity-30 group-hover:opacity-80" />
+      <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[200%] bg-blue-500/6 blur-[120px] pointer-events-none transition-opacity duration-700 opacity-50 group-hover:opacity-100" />
+      <div className="absolute bottom-[-50%] right-[-10%] w-[40%] h-[150%] bg-purple-500/6 blur-[120px] pointer-events-none transition-opacity duration-700 opacity-30 group-hover:opacity-80" />
 
       <div className="relative z-10 flex items-start gap-6">
         
@@ -58,7 +58,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, duration: 0.4 }}
-              className="flex items-center text-micro text-zinc-400 mb-1"
+              className="flex items-center text-micro text-zinc-500 mb-1"
             >
               {breadcrumbs.map((bc, idx) => (
                 <React.Fragment key={idx}>
@@ -66,7 +66,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     whileHover={{ scale: 1.05, color: '#fff' }}
                     whileTap={{ scale: 0.95 }}
                     onClick={bc.onClick}
-                    className={`transition-colors duration-200 ${bc.onClick ? 'cursor-pointer hover:text-white' : 'text-blue-400 font-bold'}`}
+                    className={`transition-colors duration-200 ${bc.onClick ? 'cursor-pointer hover:text-zinc-900' : 'text-blue-600 font-bold'}`}
                     disabled={!bc.onClick}
                   >
                     {bc.label}
@@ -85,7 +85,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="text-3xl md:text-4xl font-bold tracking-tight text-white m-0"
+              className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 m-0"
             >
               {title}
             </motion.h1>
@@ -94,7 +94,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.25, duration: 0.5 }}
-                className="text-body text-zinc-400 mt-2 max-w-2xl"
+                className="text-body text-zinc-500 mt-2 max-w-2xl"
               >
                 {subtitle}
               </motion.p>

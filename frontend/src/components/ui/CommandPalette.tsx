@@ -47,23 +47,23 @@ export function CommandPalette() {
     {
       title: 'Projects',
       items: [
-        { icon: <Briefcase className="w-4 h-4 text-blue-400" />, label: 'Go to Projects Dashboard', path: '/projects' },
-        { icon: <PlusCircle className="w-4 h-4 text-blue-400" />, label: 'Create New Project', path: '/projects' },
+        { icon: <Briefcase className="w-4 h-4 text-blue-600" />, label: 'Go to Projects Dashboard', path: '/projects' },
+        { icon: <PlusCircle className="w-4 h-4 text-blue-600" />, label: 'Create New Project', path: '/projects' },
       ]
     },
     {
       title: 'Master Data',
       items: [
-        { icon: <Users className="w-4 h-4 text-emerald-400" />, label: 'Manage Customers', path: '/master-data/customers' },
-        { icon: <Factory className="w-4 h-4 text-emerald-400" />, label: 'Manage Vendors', path: '/master-data/vendors' },
-        { icon: <Package className="w-4 h-4 text-emerald-400" />, label: 'Manage Materials', path: '/master-data/materials' },
+        { icon: <Users className="w-4 h-4 text-emerald-600" />, label: 'Manage Customers', path: '/master-data/customers' },
+        { icon: <Factory className="w-4 h-4 text-emerald-600" />, label: 'Manage Vendors', path: '/master-data/vendors' },
+        { icon: <Package className="w-4 h-4 text-emerald-600" />, label: 'Manage Materials', path: '/master-data/materials' },
       ]
     },
     {
       title: 'System',
       items: [
-        { icon: <Settings className="w-4 h-4 text-purple-400" />, label: 'Settings', path: '/settings' },
-        { icon: <FileText className="w-4 h-4 text-purple-400" />, label: 'Form Builder', path: '/settings' },
+        { icon: <Settings className="w-4 h-4 text-purple-600" />, label: 'Settings', path: '/settings' },
+        { icon: <FileText className="w-4 h-4 text-purple-600" />, label: 'Form Builder', path: '/settings' },
       ]
     }
   ];
@@ -76,11 +76,11 @@ export function CommandPalette() {
 
   const getDynamicIcon = (iconStr: string) => {
     switch (iconStr) {
-      case 'Briefcase': return <Briefcase className="w-4 h-4 text-blue-400" />;
-      case 'Package': return <Package className="w-4 h-4 text-emerald-400" />;
-      case 'Users': return <Users className="w-4 h-4 text-orange-400" />;
-      case 'Factory': return <Factory className="w-4 h-4 text-purple-400" />;
-      default: return <Database className="w-4 h-4 text-slate-400" />;
+      case 'Briefcase': return <Briefcase className="w-4 h-4 text-blue-600" />;
+      case 'Package': return <Package className="w-4 h-4 text-emerald-600" />;
+      case 'Users': return <Users className="w-4 h-4 text-orange-600" />;
+      case 'Factory': return <Factory className="w-4 h-4 text-purple-600" />;
+      default: return <Database className="w-4 h-4 text-zinc-500" />;
     }
   };
 
@@ -94,7 +94,7 @@ export function CommandPalette() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/5 backdrop-blur-sm"
           />
 
           {/* Palette */}
@@ -105,22 +105,22 @@ export function CommandPalette() {
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed inset-0 z-[101] flex items-start justify-center pt-[10vh] pointer-events-none"
           >
-            <div className="w-full max-w-2xl bg-[#0B1018]/90 backdrop-blur-3xl border border-white/10 rounded-3xl shadow-[0_30px_100px_rgba(0,0,0,0.8),_inset_0_1px_0_rgba(255,255,255,0.1)] overflow-hidden pointer-events-auto flex flex-col">
+            <div className="w-full max-w-2xl bg-[#F4F4F6]/90 backdrop-blur-3xl border border-black/10 rounded-3xl shadow-[0_30px_100px_rgba(0,0,0,0.8),_inset_0_1px_0_rgba(255,255,255,0.1)] overflow-hidden pointer-events-auto flex flex-col">
               
               {/* Search Header */}
-              <div className="relative flex items-center px-4 border-b border-white/10 shrink-0">
-                <Search className="w-5 h-5 text-slate-400 ml-2" />
+              <div className="relative flex items-center px-4 border-b border-black/10 shrink-0">
+                <Search className="w-5 h-5 text-zinc-500 ml-2" />
                 <input
                   type="text"
                   autoFocus
                   placeholder="What do you need?"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full bg-transparent border-none text-white text-lg placeholder-slate-500 py-5 px-4 focus:outline-none focus:ring-0"
+                  className="w-full bg-transparent border-none text-zinc-900 text-lg placeholder-slate-500 py-5 px-4 focus:outline-none focus:ring-0"
                 />
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="p-1 rounded-md text-slate-500 hover:bg-white/10 hover:text-white transition-colors"
+                  className="p-1 rounded-md text-slate-500 hover:bg-black/10 hover:text-zinc-900 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -181,11 +181,11 @@ export function CommandPalette() {
               </div>
               
               {/* Footer */}
-              <div className="border-t border-white/10 p-3 bg-black/20 flex items-center justify-between shrink-0">
+              <div className="border-t border-black/10 p-3 bg-black/20 flex items-center justify-between shrink-0">
                 <div className="flex items-center space-x-4 text-[10px] font-medium text-slate-500">
-                  <span className="flex items-center"><kbd className="bg-white/10 px-1.5 py-0.5 rounded mr-1">↑↓</kbd> to navigate</span>
-                  <span className="flex items-center"><kbd className="bg-white/10 px-1.5 py-0.5 rounded mr-1">↵</kbd> to select</span>
-                  <span className="flex items-center"><kbd className="bg-white/10 px-1.5 py-0.5 rounded mr-1">esc</kbd> to close</span>
+                  <span className="flex items-center"><kbd className="bg-black/10 px-1.5 py-0.5 rounded mr-1">↑↓</kbd> to navigate</span>
+                  <span className="flex items-center"><kbd className="bg-black/10 px-1.5 py-0.5 rounded mr-1">↵</kbd> to select</span>
+                  <span className="flex items-center"><kbd className="bg-black/10 px-1.5 py-0.5 rounded mr-1">esc</kbd> to close</span>
                 </div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
                   ToolRoom OS
@@ -215,12 +215,12 @@ function CommandItem({ item, onSelect }: { item: any, onSelect: () => void }) {
       onClick={onSelect}
       className="flex items-center px-4 py-3 mx-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-white/[0.08] hover:scale-[0.99] group"
     >
-      <div className="w-8 h-8 rounded-lg bg-black/40 border border-white/5 flex items-center justify-center mr-3 group-hover:bg-white/10 group-hover:border-white/10 transition-colors shadow-inner">
+      <div className="w-8 h-8 rounded-lg bg-black/5 border border-black/5 flex items-center justify-center mr-3 group-hover:bg-black/10 group-hover:border-black/10 transition-colors shadow-inner">
         {item.icon}
       </div>
-      <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{item.label}</span>
+      <span className="text-sm font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">{item.label}</span>
       <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-        <kbd className="bg-white/10 text-slate-400 text-[10px] px-2 py-1 rounded">↵</kbd>
+        <kbd className="bg-black/10 text-zinc-500 text-[10px] px-2 py-1 rounded">↵</kbd>
       </div>
     </div>
   );

@@ -50,10 +50,10 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center">
+          <h2 className="text-xl font-bold text-zinc-900 flex items-center">
             <Package className="w-5 h-5 mr-2 text-purple-400" /> Inventory & Material Control
           </h2>
-          <p className="text-slate-400 text-sm mt-1">Project material ledger, inbound receipts, and shop floor issues</p>
+          <p className="text-zinc-500 text-sm mt-1">Project material ledger, inbound receipts, and shop floor issues</p>
         </div>
         <div className="flex gap-3">
           <button 
@@ -61,7 +61,7 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
               setIssueForm({ issueNumber: `ISS-${Date.now().toString().slice(-6)}`, items: [{ batchId: '', qty: 1 }] });
               setDrawerMode('ISSUE');
             }} 
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-500 transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)] text-sm font-medium"
+            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-500 transition-all shadow-elevation text-sm font-medium"
           >
             <PackageMinus className="w-4 h-4 mr-2" /> Issue Material
           </button>
@@ -69,12 +69,12 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-white/10 pb-px">
+      <div className="flex gap-4 border-b border-black/10 pb-px">
         {['ISSUES', 'GRN'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-purple-500 text-purple-400' : 'border-transparent text-zinc-500 hover:text-zinc-900'}`}
           >
             {tab === 'GRN' ? 'Goods Receipts' : 'Material Issues'}
           </button>
@@ -82,7 +82,7 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
       </div>
 
       {/* Content */}
-      <div className="bg-black/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-xl">
+      <div className="bg-black/5 border border-black/5 rounded-2xl overflow-hidden backdrop-blur-xl">
         {activeTab === 'ISSUES' && (
           <SmartTable 
             data={issues}
@@ -120,7 +120,7 @@ export default function InventoryTab({ params }: { params: Promise<{ id: string 
         <div className="space-y-4 p-1">
           <Input label="Issue Number" value={issueForm.issueNumber} onChange={e => setIssueForm({...issueForm, issueNumber: e.target.value})} />
           {issueForm.items.map((item, idx) => (
-            <div key={idx} className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-4">
+            <div key={idx} className="p-4 bg-black/5 border border-black/10 rounded-xl space-y-4">
               <Select label="Select Batch" value={item.batchId} onChange={e => {
                 const newItems = [...issueForm.items];
                 newItems[idx].batchId = e.target.value;

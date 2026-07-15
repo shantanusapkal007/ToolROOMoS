@@ -81,7 +81,7 @@ export default function ProjectsPage() {
   const spring = { type: "spring" as const, stiffness: 400, damping: 30 };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans mission-control-bg">
       <Sidebar />
       <main className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] pt-4 pr-4 pb-4">
         <div className="flex-1 px-8 py-8 overflow-y-auto hide-scrollbar relative">
@@ -94,7 +94,7 @@ export default function ProjectsPage() {
           >
             <div>
               <h1 className="text-display font-bold tracking-tight mb-2 bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">Active Projects</h1>
-              <p className="text-body-large text-zinc-400">All manufacturing missions currently in progress.</p>
+              <p className="text-body-large text-zinc-500">All manufacturing missions currently in progress.</p>
             </div>
             <div className="flex items-center space-x-4">
               <motion.button 
@@ -167,27 +167,27 @@ export default function ProjectsPage() {
                     className="spotlight-card p-8 cursor-pointer group flex flex-col h-[280px] relative overflow-hidden"
                   >
                     {/* Inner Glass Highlights */}
-                    <div className="absolute inset-0 border border-white/5 rounded-xl pointer-events-none z-20 group-hover:border-white/10 transition-colors" />
+                    <div className="absolute inset-0 border border-black/5 rounded-xl pointer-events-none z-20 group-hover:border-black/10 transition-colors" />
                     
                     {/* Hover Glow Light */}
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/20 blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-full z-0" />
                     
                     <div className="flex-1 z-10 flex flex-col">
                       <div className="flex justify-between items-start mb-6">
-                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-micro text-zinc-300">
+                        <div className="px-3 py-1 rounded-full bg-black/5 border border-black/10 text-micro text-zinc-600">
                           {proj.projectNumber}
                         </div>
                         <ArrowRight className="h-5 w-5 text-zinc-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all duration-300" />
                       </div>
-                      <h3 className="text-heading font-bold text-white mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-blue-200 transition-all">
+                      <h3 className="text-heading font-bold text-zinc-900 mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-blue-200 transition-all">
                         {proj.partName}
                       </h3>
-                      <p className="text-body text-zinc-400">{proj.customer?.companyName || "Customer Pending"}</p>
+                      <p className="text-body text-zinc-500">{proj.customer?.companyName || "Customer Pending"}</p>
                     </div>
 
-                    <div className="mt-auto pt-6 border-t border-white/10 z-10 flex justify-between items-center">
-                      <div className="flex items-center text-caption text-zinc-300">
-                        <div className="h-2 w-2 rounded-full bg-emerald-400 mr-3 shadow-[0_0_12px_rgba(16,185,129,0.8)] animate-pulse"></div>
+                    <div className="mt-auto pt-6 border-t border-black/10 z-10 flex justify-between items-center">
+                      <div className="flex items-center text-caption text-zinc-600">
+                        <div className="h-2 w-2 rounded-full bg-emerald-400 mr-3 shadow-elevation animate-pulse"></div>
                         {proj.currentStage}
                       </div>
                       <span className="text-micro text-zinc-500">{formatDate(proj.targetDeliveryDate)}</span>
@@ -207,7 +207,7 @@ export default function ProjectsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xl"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-xl"
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -218,25 +218,25 @@ export default function ProjectsPage() {
             >
               <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/20 blur-[100px] pointer-events-none rounded-full" />
               
-              <h2 className="text-heading-xl font-bold mb-8 text-white tracking-tight relative z-10">Initialize Mission</h2>
+              <h2 className="text-heading-xl font-bold mb-8 text-zinc-900 tracking-tight relative z-10">Initialize Mission</h2>
               
               <form onSubmit={handleCreateProject} className="space-y-6 relative z-10">
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-micro text-zinc-400 mb-3">PROJECT NUMBER</label>
+                    <label className="block text-micro text-zinc-500 mb-3">PROJECT NUMBER</label>
                     <input 
                       type="text" 
-                      className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-body text-white focus:border-blue-500 focus:bg-black/40 focus:ring-1 focus:ring-blue-500 transition-all outline-none" 
+                      className="w-full bg-black/20 border border-black/10 rounded-xl px-5 py-4 text-body text-zinc-900 focus:border-blue-500 focus:bg-black/5 focus:ring-1 focus:ring-blue-500 transition-all outline-none" 
                       value={newProjectNumber} 
                       onChange={e => setNewProjectNumber(e.target.value)} 
                       required 
                     />
                   </div>
                   <div>
-                    <label className="block text-micro text-zinc-400 mb-3">PART NAME</label>
+                    <label className="block text-micro text-zinc-500 mb-3">PART NAME</label>
                     <input 
                       type="text" 
-                      className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-body text-white focus:border-blue-500 focus:bg-black/40 focus:ring-1 focus:ring-blue-500 transition-all outline-none" 
+                      className="w-full bg-black/20 border border-black/10 rounded-xl px-5 py-4 text-body text-zinc-900 focus:border-blue-500 focus:bg-black/5 focus:ring-1 focus:ring-blue-500 transition-all outline-none" 
                       value={newPartName} 
                       onChange={e => setNewPartName(e.target.value)} 
                       required 
@@ -245,28 +245,28 @@ export default function ProjectsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-micro text-zinc-400 mb-3">CUSTOMER</label>
+                    <label className="block text-micro text-zinc-500 mb-3">CUSTOMER</label>
                     <select 
-                      className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-body text-white focus:border-blue-500 focus:bg-black/40 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none" 
+                      className="w-full bg-black/20 border border-black/10 rounded-xl px-5 py-4 text-body text-zinc-900 focus:border-blue-500 focus:bg-black/5 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none" 
                       value={selectedCustomerId}
                       onChange={e => setSelectedCustomerId(e.target.value)}
                       required
                     >
                       {customers?.map((cust: any) => (
-                        <option key={cust.id} value={cust.id} className="bg-[#0B1018] text-white">
+                        <option key={cust.id} value={cust.id} className="bg-[#F4F4F6] text-zinc-900">
                           {cust.companyName}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
-                <div className="flex justify-end pt-8 gap-4 border-t border-white/10">
+                <div className="flex justify-end pt-8 gap-4 border-t border-black/10">
                   <motion.button 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="button" 
                     onClick={() => setShowNewProjectModal(false)} 
-                    className="glass-button px-6 py-3 text-white font-medium"
+                    className="glass-button px-6 py-3 text-zinc-900 font-medium"
                   >
                     Cancel
                   </motion.button>
@@ -274,7 +274,7 @@ export default function ProjectsPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit" 
-                    className="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-colors"
+                    className="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-elevation transition-colors"
                   >
                     Launch Project
                   </motion.button>

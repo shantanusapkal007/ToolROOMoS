@@ -48,7 +48,7 @@ export function AmbientCursor() {
 
   return (
     <motion.div
-      className="fixed top-0 left-0 w-4 h-4 rounded-full pointer-events-none z-[9999] border-2 border-white mix-blend-difference"
+      className="fixed top-0 left-0 w-4 h-4 rounded-full pointer-events-none z-[9999] border-2 border-black/10 mix-blend-difference"
       style={{
         x: mouseX,
         y: mouseY,

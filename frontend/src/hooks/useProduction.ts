@@ -18,10 +18,10 @@ export function useJobCards(projectId: string) {
   });
 }
 
-export function useMSDRs(projectId: string) {
+export function useMSDRs(projectId: string, section?: string) {
   return useQuery({
-    queryKey: productionKeys.msdrs(projectId),
-    queryFn: () => ProductionService.getMSDRs(projectId),
+    queryKey: [...productionKeys.msdrs(projectId), section],
+    queryFn: () => ProductionService.getMSDRs(projectId, section),
     enabled: !!projectId,
   });
 }

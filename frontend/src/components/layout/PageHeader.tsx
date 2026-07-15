@@ -29,11 +29,11 @@ export function PageHeader({ title, description, breadcrumbs, icon, colorHint = 
               <React.Fragment key={idx}>
                 {idx > 0 && <ChevronRight className="w-3 h-3 mx-1.5 text-slate-600 shrink-0" />}
                 {crumb.href ? (
-                  <Link href={crumb.href} className="hover:text-white transition-colors">
+                  <Link href={crumb.href} className="hover:text-zinc-900 transition-colors">
                     {crumb.label}
                   </Link>
                 ) : (
-                  <span className="text-slate-300">{crumb.label}</span>
+                  <span className="text-zinc-600">{crumb.label}</span>
                 )}
               </React.Fragment>
             ))}
@@ -43,16 +43,16 @@ export function PageHeader({ title, description, breadcrumbs, icon, colorHint = 
         {/* Title Area */}
         <div className="flex items-center gap-3">
           {icon && (
-            <div className={`w-10 h-10 rounded-xl bg-white/5 text-${colorHint} border border-white/10 flex items-center justify-center shadow-inner`}>
+            <div className={`w-10 h-10 rounded-xl bg-black/5 text-${colorHint} border border-black/10 flex items-center justify-center shadow-inner`}>
               {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'w-5 h-5' })}
             </div>
           )}
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">
+            <h1 className="text-3xl font-black tracking-tighter text-zinc-900">
               {title}
             </h1>
             {description && (
-              <h2 className="text-sm text-slate-400 font-medium tracking-wide mt-0.5">
+              <h2 className="text-sm text-zinc-500 font-medium tracking-wide mt-0.5">
                 {description}
               </h2>
             )}
@@ -61,17 +61,17 @@ export function PageHeader({ title, description, breadcrumbs, icon, colorHint = 
       </div>
 
       {/* Global Actions / Toolbar Area */}
-      <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-xl border border-white/10 backdrop-blur-md shadow-lg">
+      <div className="flex items-center gap-4 bg-black/5 p-1.5 rounded-xl border border-black/10 backdrop-blur-md shadow-lg">
         {actions}
         
         {/* Global Utilities (Search hint, Notifications) */}
-        <div className="flex items-center gap-2 pl-2 border-l border-white/10 ml-2">
-          <button className="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all" title="Search (Cmd+K)">
+        <div className="flex items-center gap-2 pl-2 border-l border-black/10 ml-2">
+          <button className="w-8 h-8 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/10 flex items-center justify-center transition-all" title="Search (Cmd+K)">
             <Search className="w-4 h-4" />
           </button>
-          <button className="relative w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all">
+          <button className="relative w-8 h-8 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/10 flex items-center justify-center transition-all">
             <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-2 w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+            <span className="absolute top-1.5 right-2 w-1.5 h-1.5 bg-red-500 rounded-full shadow-elevation" />
           </button>
         </div>
       </div>

@@ -170,7 +170,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const handleSaveConvertedBom = async (rows: any[]) => {
+    const handleSaveConvertedBom = async (rows: any[]) => {
     try {
       // Map ParsedBOMRow to CreateBomItemDto format
       const newItems = rows
@@ -182,7 +182,23 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
           estimatedCost: Number(r.basicCost),
           rawSize: r.rawMaterialSize,
           catalogSize: r.catalogSize,
-          stockSize: r.stockSize
+          stockSize: r.stockSize,
+          dimensions: r.rawMaterialSize,
+          hsnCode: r.hsnCode,
+          customFields: {
+            srNo: r.srNo,
+            partName: r.partName,
+            length: r.length,
+            width: r.width,
+            height: r.height,
+            finishSize: r.finishSize,
+            finishL: r.finishL,
+            finishW: r.finishW,
+            finishH: r.finishH,
+            apWeight: r.apWeight,
+            gstPercent: r.gstPercent,
+            rate: r.rate
+          }
         }));
       
       if (newItems.length === 0) {
@@ -200,7 +216,8 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
         catalogSize: i.catalogSize,
         stockSize: i.stockSize,
         dimensions: i.dimensions,
-        hsnCode: i.hsnCode
+        hsnCode: i.hsnCode,
+        customFields: i.customFields
       })) || [];
 
       const combinedItems = [...existingItems, ...newItems];
@@ -211,6 +228,74 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
       refetchBOM();
     } catch (err: any) {
       error("BOM Import Failed", err.message);
+    }
+  };
+
+  const handleProceedToPO = async (rows: any[]) => {
+    try {
+      const newItems = rows
+        .filter(r => r.matchedMaterialId)
+        .map(r => ({
+          materialId: r.matchedMaterialId,
+          requiredQty: Number(r.quantity),
+          calculatedWeight: Number(r.totalWeight),
+          estimatedCost: Number(r.basicCost),
+          rawSize: r.rawMaterialSize,
+          catalogSize: r.catalogSize,
+          stockSize: r.stockSize,
+          dimensions: r.rawMaterialSize,
+          hsnCode: r.hsnCode,
+          customFields: {
+            srNo: r.srNo,
+            partName: r.partName,
+            length: r.length,
+            width: r.width,
+            height: r.height,
+            finishSize: r.finishSize,
+            finishL: r.finishL,
+            finishW: r.finishW,
+            finishH: r.finishH,
+            apWeight: r.apWeight,
+            gstPercent: r.gstPercent,
+            rate: r.rate
+          }
+        }));
+      
+      if (newItems.length === 0) {
+        warning("No Valid Items", "No matched materials found to save.");
+        return;
+      }
+
+      const existingItems = activeBom?.items?.map((i: any) => ({
+        materialId: i.materialId,
+        requiredQty: i.requiredQty,
+        calculatedWeight: i.calculatedWeight,
+        estimatedCost: i.estimatedCost,
+        rawSize: i.rawSize,
+        catalogSize: i.catalogSize,
+        stockSize: i.stockSize,
+        dimensions: i.dimensions,
+        hsnCode: i.hsnCode,
+        customFields: i.customFields
+      })) || [];
+
+      const combinedItems = [...existingItems, ...newItems];
+
+      // Save BOM
+      const savedBom = await updateBOMMutation.mutateAsync({ items: combinedItems });
+      const bomId = savedBom?.id || activeBom?.id;
+      
+      if (bomId) {
+        // Approve BOM immediately to trigger auto PO generation
+        await approveBOMMutation.mutateAsync(bomId);
+        success("PO Generated", "BOM was saved and PO was successfully auto-generated.");
+        setActiveTab('sequence');
+        refetchBOM();
+      } else {
+        error("Proceed Failed", "Could not find a valid BOM to approve.");
+      }
+    } catch (err: any) {
+      error("Proceed to PO Failed", err.message);
     }
   };
 
@@ -238,14 +323,14 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
     <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col h-full min-h-0">
       
       {/* Dense Toolbar Header */}
-      <div className="flex justify-between items-center shrink-0 mb-4 bg-white/[0.01] border border-white/5 rounded-xl p-3">
+      <div className="flex justify-between items-center shrink-0 mb-4 bg-white/[0.01] border border-black/5 rounded-xl p-3">
         <div className="flex items-center">
           <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 mr-3 text-blue-400">
             <Settings className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">Manufacturing Planning Engine</h2>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Immutable Manufacturing Plan & Baseline</p>
+            <h2 className="text-lg font-bold text-zinc-900 tracking-tight">Manufacturing Planning Engine</h2>
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">Immutable Manufacturing Plan & Baseline</p>
           </div>
         </div>
         
@@ -257,23 +342,23 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Sub-navigation Tabs */}
-      <div className="flex space-x-2 mb-4 border-b border-white/5 pb-2 shrink-0">
+      <div className="flex space-x-2 mb-4 border-b border-zinc-200 pb-2 shrink-0">
         <button 
           onClick={() => setActiveTab('sequence')} 
-          className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
+          className={`px-4 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
             activeTab === 'sequence' 
-              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
-              : 'text-slate-400 hover:text-slate-200 border border-transparent hover:bg-white/[0.02]'
+              ? 'bg-white text-blue-700 border border-blue-200 shadow-sm' 
+              : 'text-zinc-500 hover:text-zinc-900 border border-transparent hover:bg-zinc-100'
           }`}
         >
           Planning Sequence
         </button>
         <button 
           onClick={() => setActiveTab('converter')} 
-          className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
+          className={`px-4 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
             activeTab === 'converter' 
-              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
-              : 'text-slate-400 hover:text-slate-200 border border-transparent hover:bg-white/[0.02]'
+              ? 'bg-white text-blue-700 border border-blue-200 shadow-sm' 
+              : 'text-zinc-500 hover:text-zinc-900 border border-transparent hover:bg-zinc-100'
           }`}
         >
           BOM Converter
@@ -283,23 +368,23 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
       {activeTab === 'sequence' ? (
         <div className="max-w-2xl">
           {/* Step 1: BOM */}
-          <div className={`p-4 rounded-xl border ${isBomComplete ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-blue-500/30 bg-blue-950/10'} relative flex flex-col justify-between`}>
-            <h3 className="text-xs font-bold text-white mb-2 flex items-center tracking-widest uppercase">
-              <span className="w-5 h-5 rounded bg-black/40 flex items-center justify-center text-[10px] mr-2 text-slate-300">1</span>
+          <div className={`p-4 rounded-xl border ${isBomComplete ? 'border-emerald-200 bg-emerald-50' : 'border-blue-200 bg-blue-50'} relative flex flex-col justify-between shadow-sm`}>
+            <h3 className={`text-xs font-black mb-2 flex items-center tracking-widest uppercase ${isBomComplete ? 'text-emerald-900' : 'text-blue-900'}`}>
+              <span className={`w-5 h-5 rounded flex items-center justify-center text-[10px] mr-2 font-bold ${isBomComplete ? 'bg-emerald-200/50 text-emerald-700' : 'bg-blue-200/50 text-blue-700'}`}>1</span>
               Material Plan
             </h3>
             {isBomComplete && (
-              <div className="text-[11px] font-bold text-emerald-400 flex items-center mt-2">
+              <div className="text-[11px] font-black text-emerald-700 flex items-center mt-2 uppercase tracking-wider">
                 <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
                 BOM Approved
               </div>
             )}
             <div className="mt-2 space-y-2">
-              <button onClick={() => setShowBomModal(true)} className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold transition-all">
+              <button onClick={() => setShowBomModal(true)} className="w-full py-1.5 bg-black/5 hover:bg-black/10 text-zinc-900 border border-black/10 rounded-lg text-xs font-bold transition-all">
                 {activeBom ? 'Edit BOM' : 'Create BOM'}
               </button>
               {activeBom && !isBomComplete && (
-                <button onClick={handleApproveBom} className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-[0_0_10px_rgba(5,150,105,0.3)]">Approve BOM</button>
+                <button onClick={handleApproveBom} className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-elevation">Approve BOM</button>
               )}
             </div>
           </div>
@@ -310,6 +395,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
           project={project} 
           materials={materials || []} 
           onSaveBOM={handleSaveConvertedBom}
+          onProceedToPO={handleProceedToPO}
         />
       )}
 
@@ -322,10 +408,10 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
         subtitle="Define required materials for this project"
         width="full"
       >
-        <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col p-6 bg-[#030712] print:bg-white text-white print:text-black">
+        <form onSubmit={handleSubmitBom} className="flex-1 min-h-0 flex flex-col p-6 bg-white/40 backdrop-blur-3xl print:bg-white text-zinc-900 print:text-black">
           
           {/* Header Information (Document Style) */}
-          <div className="grid grid-cols-4 gap-6 mb-6 pb-6 border-b border-white/10 print:border-black/20">
+          <div className="grid grid-cols-4 gap-6 mb-6 pb-6 border-b border-black/10 print:border-black/20">
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Customer</p>
               <p className="text-sm font-semibold">{project?.customer?.companyName || 'N/A'}</p>
@@ -346,7 +432,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
 
           <div className="flex-1 overflow-y-auto space-y-2 max-h-[50vh] pr-2 custom-scrollbar print:max-h-none print:overflow-visible">
             {/* Table Headers */}
-            <div className="grid grid-cols-[3rem_1.5fr_0.5fr_1fr_1fr_1.5fr_1.5fr] gap-3 px-4 py-2 bg-[#0B1018] rounded-xl border border-white/5 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 print:bg-slate-100 print:text-black print:border-black/20">
+            <div className="grid grid-cols-[3rem_1.5fr_0.5fr_1fr_1fr_1.5fr_1.5fr] gap-3 px-4 py-2 bg-white/80 rounded-xl border border-black/5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider shadow-sm sticky top-0 z-10 print:bg-slate-100 print:text-black print:border-black/20">
               <div className="text-center">No.</div>
               <div>Part Name</div>
               <div className="text-center">Qty</div>
@@ -357,65 +443,65 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
             </div>
 
             {bomItems.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-[3rem_1.5fr_0.5fr_1fr_1fr_1.5fr_1.5fr] gap-3 items-center bg-white/[0.02] px-4 py-2 rounded-xl border border-white/[0.05] hover:bg-white/[0.04] transition-colors shadow-[0_4px_10px_rgba(0,0,0,0.2)] print:bg-white print:border-black/20 print:shadow-none">
+              <div key={idx} className="grid grid-cols-[3rem_1.5fr_0.5fr_1fr_1fr_1.5fr_1.5fr] gap-3 items-center bg-white px-4 py-2 rounded-xl border border-black/5 hover:bg-zinc-50 transition-colors shadow-sm hover:shadow-elevation print:bg-white print:border-black/20 print:shadow-none">
                 
                 {/* No. */}
                 <div className="text-center font-mono text-slate-500 text-xs font-bold">{idx + 1}</div>
                 
                 {/* Part Name */}
-                <input type="text" className="w-full bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="Part Name" value={item.partName} onChange={(e) => { const a = [...bomItems]; a[idx].partName = e.target.value; setBomItems(a); }} />
+                <input type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-2 text-zinc-900 text-xs focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all shadow-inner print:bg-transparent print:text-black print:border-none print:p-0" placeholder="Part Name" value={item.partName} onChange={(e) => { const a = [...bomItems]; a[idx].partName = e.target.value; setBomItems(a); }} />
                 
                 {/* Qty */}
-                <input type="number" className="w-full bg-black/40 border border-white/[0.05] rounded-lg p-2 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" required min="1" placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
+                <input type="number" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-2 text-center text-zinc-900 text-xs font-mono focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all shadow-inner print:bg-transparent print:text-black print:border-none print:p-0" required min="1" placeholder="Qty" value={item.requiredQty} onChange={(e) => { const a = [...bomItems]; a[idx].requiredQty = Number(e.target.value); setBomItems(a); }} />
                 
                 {/* Finish Size */}
-                <div className="flex items-center space-x-1.5 bg-black/20 border border-white/[0.05] rounded-lg p-1">
-                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="L" value={item.finishL} onChange={(e) => { const a = [...bomItems]; a[idx].finishL = e.target.value; setBomItems(a); }} />
-                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="W" value={item.finishW} onChange={(e) => { const a = [...bomItems]; a[idx].finishW = e.target.value; setBomItems(a); }} />
-                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="H" value={item.finishH} onChange={(e) => { const a = [...bomItems]; a[idx].finishH = e.target.value; setBomItems(a); }} />
+                <div className="flex items-center space-x-1.5 bg-zinc-100 border border-zinc-200 rounded-lg p-1 shadow-inner">
+                  <input type="text" className="w-full min-w-[2rem] bg-white rounded px-1 py-1 text-center text-zinc-900 text-xs font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all shadow-sm print:bg-transparent print:text-black print:border-none print:p-0" placeholder="L" value={item.finishL} onChange={(e) => { const a = [...bomItems]; a[idx].finishL = e.target.value; setBomItems(a); }} />
+                  <input type="text" className="w-full min-w-[2rem] bg-white rounded px-1 py-1 text-center text-zinc-900 text-xs font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all shadow-sm print:bg-transparent print:text-black print:border-none print:p-0" placeholder="W" value={item.finishW} onChange={(e) => { const a = [...bomItems]; a[idx].finishW = e.target.value; setBomItems(a); }} />
+                  <input type="text" className="w-full min-w-[2rem] bg-white rounded px-1 py-1 text-center text-zinc-900 text-xs font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all shadow-sm print:bg-transparent print:text-black print:border-none print:p-0" placeholder="H" value={item.finishH} onChange={(e) => { const a = [...bomItems]; a[idx].finishH = e.target.value; setBomItems(a); }} />
                 </div>
                 
                 {/* RM Size */}
-                <div className="flex items-center space-x-1.5 bg-black/20 border border-white/[0.05] rounded-lg p-1">
-                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="L" value={item.rmL} onChange={(e) => { const a = [...bomItems]; a[idx].rmL = e.target.value; setBomItems(a); }} />
-                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="W" value={item.rmW} onChange={(e) => { const a = [...bomItems]; a[idx].rmW = e.target.value; setBomItems(a); }} />
-                  <input type="text" className="w-full min-w-[2rem] bg-black/60 rounded px-1 py-1 text-center text-white text-xs font-mono focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="H" value={item.rmH} onChange={(e) => { const a = [...bomItems]; a[idx].rmH = e.target.value; setBomItems(a); }} />
+                <div className="flex items-center space-x-1.5 bg-zinc-100 border border-zinc-200 rounded-lg p-1 shadow-inner">
+                  <input type="text" className="w-full min-w-[2rem] bg-white rounded px-1 py-1 text-center text-zinc-900 text-xs font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all shadow-sm print:bg-transparent print:text-black print:border-none print:p-0" placeholder="L" value={item.rmL} onChange={(e) => { const a = [...bomItems]; a[idx].rmL = e.target.value; setBomItems(a); }} />
+                  <input type="text" className="w-full min-w-[2rem] bg-white rounded px-1 py-1 text-center text-zinc-900 text-xs font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all shadow-sm print:bg-transparent print:text-black print:border-none print:p-0" placeholder="W" value={item.rmW} onChange={(e) => { const a = [...bomItems]; a[idx].rmW = e.target.value; setBomItems(a); }} />
+                  <input type="text" className="w-full min-w-[2rem] bg-white rounded px-1 py-1 text-center text-zinc-900 text-xs font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all shadow-sm print:bg-transparent print:text-black print:border-none print:p-0" placeholder="H" value={item.rmH} onChange={(e) => { const a = [...bomItems]; a[idx].rmH = e.target.value; setBomItems(a); }} />
                 </div>
                 
                 {/* Material */}
-                <select className="w-full bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all appearance-none [color-scheme:dark] print:bg-transparent print:text-black print:border-none print:p-0 print:appearance-none" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
-                  <option value="" className="bg-[#050A14] text-slate-500">Select Material...</option>
-                  {materials?.map((m: any) => <option key={m.id} value={m.id} className="bg-[#050A14]">{m.materialCode} - {m.materialGrade}</option>)}
+                <select className="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-2 text-zinc-900 text-xs focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all shadow-inner appearance-none print:bg-transparent print:text-black print:border-none print:p-0 print:appearance-none" required value={item.materialId} onChange={(e) => { const a = [...bomItems]; a[idx].materialId = e.target.value; setBomItems(a); }}>
+                  <option value="" className="bg-white text-slate-500">Select Material...</option>
+                  {materials?.map((m: any) => <option key={m.id} value={m.id} className="bg-white">{m.materialCode} - {m.materialGrade}</option>)}
                 </select>
-
+                
                 {/* Description */}
-                <input type="text" className="w-full bg-black/40 border border-white/[0.05] rounded-lg p-2 text-white text-xs focus:border-indigo-500/50 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:p-0" placeholder="Remarks/Desc" value={item.description} onChange={(e) => { const a = [...bomItems]; a[idx].description = e.target.value; setBomItems(a); }} />
+                <input type="text" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-2 text-zinc-900 text-xs focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all shadow-inner print:bg-transparent print:text-black print:border-none print:p-0" placeholder="Remarks/Desc" value={item.description} onChange={(e) => { const a = [...bomItems]; a[idx].description = e.target.value; setBomItems(a); }} />
               </div>
             ))}
             
-            <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, finishL: "", finishW: "", finishH: "", rmL: "", rmW: "", rmH: "", hsnCode: "", partName: "", description: "" }])} className="w-full py-3 mt-4 border border-white/10 border-dashed bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 text-indigo-400 hover:text-indigo-300 font-bold rounded-xl transition-all hide-on-print">+ Add Material Row</button>
+            <button type="button" onClick={() => setBomItems([...bomItems, { materialId: "", requiredQty: 1, finishL: "", finishW: "", finishH: "", rmL: "", rmW: "", rmH: "", hsnCode: "", partName: "", description: "" }])} className="w-full py-3 mt-4 border border-blue-200 border-dashed bg-blue-50/50 hover:bg-blue-50 text-blue-600 font-bold rounded-xl transition-all shadow-sm hide-on-print">+ Add Material Row</button>
           </div>
 
           {/* Footer Information */}
-          <div className="grid grid-cols-3 gap-6 pt-6 mt-6 border-t border-white/10 print:border-black/20">
+          <div className="grid grid-cols-3 gap-6 pt-6 mt-6 border-t border-black/10 print:border-black/20">
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Designer By</p>
-              <input type="text" className="w-full bg-black/40 border border-white/[0.05] border-b-white/20 rounded-t-lg p-2 text-white text-sm focus:border-b-indigo-500 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1" placeholder="Designer Signature" value={bomHeader.designerBy} onChange={(e) => setBomHeader({...bomHeader, designerBy: e.target.value})} />
+              <input type="text" className="w-full bg-zinc-50 border border-zinc-200 border-b-2 rounded-t-lg p-2 text-zinc-900 text-sm focus:border-b-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1" placeholder="Designer Signature" value={bomHeader.designerBy} onChange={(e) => setBomHeader({...bomHeader, designerBy: e.target.value})} />
             </div>
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Approved By</p>
-              <input type="text" className="w-full bg-black/40 border border-white/[0.05] border-b-white/20 rounded-t-lg p-2 text-white text-sm focus:border-b-indigo-500 focus:bg-white/[0.05] focus:outline-none transition-all print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1" placeholder="Approver Signature" value={bomHeader.approvedBy} onChange={(e) => setBomHeader({...bomHeader, approvedBy: e.target.value})} />
+              <input type="text" className="w-full bg-zinc-50 border border-zinc-200 border-b-2 rounded-t-lg p-2 text-zinc-900 text-sm focus:border-b-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1" placeholder="Approver Signature" value={bomHeader.approvedBy} onChange={(e) => setBomHeader({...bomHeader, approvedBy: e.target.value})} />
             </div>
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Release Date</p>
-              <input type="date" className="w-full bg-black/40 border border-white/[0.05] border-b-white/20 rounded-t-lg p-2 text-white text-sm focus:border-b-indigo-500 focus:bg-white/[0.05] focus:outline-none transition-all [color-scheme:dark] print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1 print:appearance-none" value={bomHeader.releaseDate} onChange={(e) => setBomHeader({...bomHeader, releaseDate: e.target.value})} />
+              <input type="date" className="w-full bg-zinc-50 border border-zinc-200 border-b-2 rounded-t-lg p-2 text-zinc-900 text-sm focus:border-b-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner appearance-none print:bg-transparent print:text-black print:border-none print:border-b print:border-b-black print:rounded-none print:p-0 print:pb-1 print:appearance-none" value={bomHeader.releaseDate} onChange={(e) => setBomHeader({...bomHeader, releaseDate: e.target.value})} />
             </div>
           </div>
 
-          <div className="flex space-x-3 pt-6 mt-8 border-t border-white/5 shrink-0 hide-on-print">
-            <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-3 bg-white/[0.05] hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl text-white font-bold text-sm transition-all">Cancel</button>
-            <button type="button" onClick={handleExportBOM} className="px-6 py-3 bg-white/[0.05] hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl text-white font-bold text-sm transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">Export Form (Excel)</button>
-            <button type="submit" className="flex-1 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 hover:border-indigo-500/50 shadow-[0_0_20px_rgba(79,70,229,0.2),_inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-xl text-indigo-300 hover:text-white font-bold text-sm transition-all">Save Material Plan</button>
+          <div className="flex space-x-3 pt-6 mt-8 border-t border-black/5 shrink-0 hide-on-print">
+            <button type="button" onClick={() => setShowBomModal(false)} className="flex-1 py-3 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-900 font-bold text-sm transition-all shadow-sm">Cancel</button>
+            <button type="button" onClick={handleExportBOM} className="px-6 py-3 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-900 font-bold text-sm transition-all shadow-sm">Export Form (Excel)</button>
+            <button type="submit" className="flex-1 py-3 bg-black hover:bg-zinc-800 rounded-xl text-white font-bold text-sm transition-all shadow-elevation">Save Material Plan</button>
           </div>
         </form>
       </PremiumDrawer>

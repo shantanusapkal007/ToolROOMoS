@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   ParseUUIDPipe,
+  Query
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -86,11 +87,14 @@ export class ProductionController {
   }
 
   @Get('machine-shop-reports')
-  async getMachineShopReports(@Param('projectId', ParseUUIDPipe) projectId: string) {
-    const data = await this.msdrService.getMachineShopReports(projectId);
+  async getMachineShopReports(
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Query('section') section?: string
+  ) {
+    const data = await this.msdrService.getMachineShopReports(projectId, section);
     return {
       status: 'success',
-      message: 'Machine shop daily reports retrieved.',
+      message: 'Production reports retrieved.',
       data,
     };
   }

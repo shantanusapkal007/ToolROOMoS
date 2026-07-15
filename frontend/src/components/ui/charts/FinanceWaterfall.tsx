@@ -26,13 +26,13 @@ const data: FinanceData[] = [
 
 const tooltipStyles = {
   ...defaultStyles,
-  backgroundColor: 'rgba(5, 10, 20, 0.85)',
-  color: 'white',
+  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  color: '#0A0A0C',
   padding: '12px',
   borderRadius: '12px',
-  border: '1px solid rgba(255,255,255,0.1)',
+  border: '1px solid rgba(15,15,20,0.1)',
   backdropFilter: 'blur(12px)',
-  boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
+  boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
 };
 
 interface Props {
@@ -121,10 +121,10 @@ export function FinanceWaterfall({ width, height }: Props) {
           <AxisBottom
             top={innerHeight}
             scale={xScale}
-            stroke="rgba(255,255,255,0.1)"
-            tickStroke="rgba(255,255,255,0.1)"
+            stroke="rgba(15,15,20,0.1)"
+            tickStroke="rgba(15,15,20,0.1)"
             tickLabelProps={() => ({
-              fill: 'rgba(255,255,255,0.4)',
+              fill: 'rgba(15,15,20,0.5)',
               fontSize: 11,
               textAnchor: 'middle',
               fontWeight: 600,
@@ -137,7 +137,7 @@ export function FinanceWaterfall({ width, height }: Props) {
       {tooltipOpen && tooltipData && (
         <TooltipInPortal top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{tooltipData.category}</span>
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{tooltipData.category}</span>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${tooltipData.type === 'revenue' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
               <span className="text-xl font-black">${tooltipData.value.toLocaleString()}</span>

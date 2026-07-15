@@ -29,17 +29,17 @@ export default function SchedulingDashboard() {
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
             <CalendarDays className="w-8 h-8 text-cyan-400" />
             Production Schedule
           </h1>
-          <p className="text-slate-400 mt-2 font-mono text-sm">Machine Capacity and Job Card Assignments</p>
+          <p className="text-zinc-500 mt-2 font-mono text-sm">Machine Capacity and Job Card Assignments</p>
         </div>
       </div>
 
-      <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden">
-        <div className="p-6 border-b border-white/10 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+      <div className="bg-black/5 backdrop-blur-xl border border-black/10 rounded-2xl overflow-hidden">
+        <div className="p-6 border-b border-black/10 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
             <Factory className="w-5 h-5 text-cyan-400" />
             Scheduled Jobs
           </h2>
@@ -50,26 +50,26 @@ export default function SchedulingDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-white/5 bg-white/5">
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Project / Part</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Operation</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Assigned Machine</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Start Time</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Est. Completion</th>
+              <tr className="border-b border-black/5 bg-black/5">
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Project / Part</th>
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Operation</th>
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Assigned Machine</th>
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Start Time</th>
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Est. Completion</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {schedules.map((row: any) => (
-                <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                <tr key={row.id} className="hover:bg-black/5 transition-colors">
                   <td className="p-4">
-                    <div className="font-bold text-white">{row.project?.projectNumber}</div>
-                    <div className="text-slate-400 text-xs truncate max-w-[200px]">{row.project?.partName}</div>
+                    <div className="font-bold text-zinc-900">{row.project?.projectNumber}</div>
+                    <div className="text-zinc-500 text-xs truncate max-w-[200px]">{row.project?.partName}</div>
                   </td>
                   <td className="p-4">
-                    <div className="font-bold text-slate-200">
+                    <div className="font-bold text-zinc-700">
                       {row.jobCard?.routingOperation?.operation?.operationName || 'Unknown Op'}
                     </div>
-                    <div className="text-slate-400 text-xs flex items-center gap-1 mt-1">
+                    <div className="text-zinc-500 text-xs flex items-center gap-1 mt-1">
                       <Clock className="w-3 h-3" /> {Number(row.estimatedHours).toFixed(1)} hrs
                     </div>
                   </td>
@@ -81,7 +81,7 @@ export default function SchedulingDashboard() {
                       </span>
                     </div>
                   </td>
-                  <td className="p-4 text-white font-mono text-sm">
+                  <td className="p-4 text-zinc-900 font-mono text-sm">
                     {formatDate(row.scheduledStartTime)}
                   </td>
                   <td className="p-4 text-emerald-400 font-mono text-sm">

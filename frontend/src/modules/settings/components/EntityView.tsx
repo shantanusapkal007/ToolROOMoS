@@ -124,18 +124,18 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
   return (
     <div className="h-full flex flex-col">
       {/* Dense Entity Toolbar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b border-white/5 shrink-0 bg-white/[0.01] backdrop-blur-2xl gap-4 relative overflow-hidden">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b border-black/5 shrink-0 bg-white/[0.01] backdrop-blur-2xl gap-4 relative overflow-hidden">
         {/* Subtle background glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/50 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
         
         <div className="relative z-10 flex items-center">
-          <span className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mr-3 border border-emerald-500/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.2)]">
+          <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mr-3 border border-emerald-200 shadow-sm">
             <Database className="w-4 h-4" />
           </span>
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight leading-tight">{registry.pluralName}</h2>
-            <div className="flex items-center space-x-2 text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">
+            <h2 className="text-lg font-bold text-zinc-900 tracking-tight leading-tight">{registry.pluralName}</h2>
+            <div className="flex items-center space-x-2 text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">
               <span>{data.length} Records</span>
             </div>
           </div>
@@ -143,7 +143,7 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
 
         <div className="flex items-center space-x-2 w-full md:w-auto relative z-10">
           <div className="w-full md:w-56 relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg blur opacity-0 group-focus-within:opacity-20 transition duration-500"></div>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg blur opacity-0 group-focus-within:opacity-10 transition duration-500"></div>
             <div className="relative">
               <Input 
                 placeholder={`Search...`} 
@@ -154,18 +154,18 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
               />
             </div>
           </div>
-          <button onClick={fetchData} title="Refresh" className="p-1.5 text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 transition-colors">
+          <button onClick={fetchData} title="Refresh" className="p-1.5 text-zinc-500 hover:text-emerald-600 bg-black/5 hover:bg-black/10 rounded-lg border border-black/5 transition-colors">
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => exportToCsv(registry.id, data, registry.columns)} title="Export CSV" className="p-1.5 text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 transition-colors">
+          <button onClick={() => exportToCsv(registry.id, data, registry.columns)} title="Export CSV" className="p-1.5 text-zinc-500 hover:text-emerald-600 bg-black/5 hover:bg-black/10 rounded-lg border border-black/5 transition-colors">
             <Download className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => setIsImportOpen(true)} title="Import CSV" className="p-1.5 text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 transition-colors">
+          <button onClick={() => setIsImportOpen(true)} title="Import CSV" className="p-1.5 text-zinc-500 hover:text-emerald-600 bg-black/5 hover:bg-black/10 rounded-lg border border-black/5 transition-colors">
             <Upload className="h-3.5 w-3.5" />
           </button>
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
-            <button onClick={handleCreateNew} className="relative bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all">
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+            <button onClick={handleCreateNew} className="relative bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center shadow-sm transition-all">
               <Plus className="h-3.5 w-3.5 mr-1" /> New
             </button>
           </div>
@@ -211,27 +211,27 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
       >
         {viewingRecord && (
           <div className="space-y-4 max-h-[70vh] overflow-y-auto hide-scrollbar pr-2">
-            <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3">
-              <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-2 border-b border-white/10 pb-1.5">Primary Details</h4>
+            <div className="bg-black/5 p-4 rounded-xl border border-black/5 space-y-3">
+              <h4 className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 border-b border-black/10 pb-1.5">Primary Details</h4>
               {registry.columns.map(col => (
-                <div key={col.key} className="grid grid-cols-3 gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0 hover:bg-white/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
+                <div key={col.key} className="grid grid-cols-3 gap-3 border-b border-black/5 pb-2 last:border-0 last:pb-0 hover:bg-black/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center">{col.label}</div>
-                  <div className="col-span-2 text-xs text-white font-medium">
+                  <div className="col-span-2 text-xs text-zinc-900 font-medium">
                     {col.render ? col.render(viewingRecord[col.key], viewingRecord) : viewingRecord[col.key] || '-'}
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3">
-              <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-2 border-b border-white/10 pb-1.5">All Data Fields</h4>
+            <div className="bg-black/5 p-4 rounded-xl border border-black/5 space-y-3">
+              <h4 className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 border-b border-black/10 pb-1.5">All Data Fields</h4>
               {registry.fields.map(field => (
-                <div key={field.name} className="grid grid-cols-3 gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0 hover:bg-white/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
+                <div key={field.name} className="grid grid-cols-3 gap-3 border-b border-black/5 pb-2 last:border-0 last:pb-0 hover:bg-black/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center">{field.label}</div>
-                  <div className="col-span-2 text-xs text-white font-medium">
+                  <div className="col-span-2 text-xs text-zinc-900 font-medium">
                     {viewingRecord[field.name] !== undefined && viewingRecord[field.name] !== null && viewingRecord[field.name] !== '' 
                       ? (typeof viewingRecord[field.name] === 'boolean' 
-                          ? (viewingRecord[field.name] ? <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">Yes</span> : <span className="text-slate-500 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">No</span>) 
+                          ? (viewingRecord[field.name] ? <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">Yes</span> : <span className="text-slate-500 bg-black/5 border border-black/10 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">No</span>) 
                           : viewingRecord[field.name])
                       : '-'}
                   </div>
@@ -239,8 +239,8 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
               ))}
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-white/10">
-              <button onClick={() => setIsViewOpen(false)} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold text-white transition-colors">Close</button>
+            <div className="flex justify-end pt-2 border-t border-black/10">
+              <button onClick={() => setIsViewOpen(false)} className="px-4 py-2 bg-black/5 hover:bg-black/10 rounded-lg text-xs font-bold text-zinc-900 transition-colors">Close</button>
             </div>
           </div>
         )}

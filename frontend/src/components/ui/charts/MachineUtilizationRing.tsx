@@ -14,10 +14,10 @@ interface MachineData {
 }
 
 const data: MachineData[] = [
-  { status: 'Running', count: 12, color: 'text-emerald-400', glowHex: '#34d399' },
-  { status: 'Idle', count: 4, color: 'text-zinc-400', glowHex: '#a1a1aa' },
-  { status: 'Maintenance', count: 2, color: 'text-amber-400', glowHex: '#fbbf24' },
-  { status: 'Breakdown', count: 1, color: 'text-red-400', glowHex: '#f87171' },
+  { status: 'Running', count: 12, color: 'text-emerald-600', glowHex: '#059669' },
+  { status: 'Idle', count: 4, color: 'text-zinc-600', glowHex: '#52525b' },
+  { status: 'Maintenance', count: 2, color: 'text-amber-600', glowHex: '#d97706' },
+  { status: 'Breakdown', count: 1, color: 'text-red-600', glowHex: '#dc2626' },
 ];
 
 const total = data.reduce((acc, curr) => acc + curr.count, 0);
@@ -98,7 +98,7 @@ export function MachineUtilizationRing({ width, height }: Props) {
                       d={arcPath}
                       fill={colorScale(status)}
                       fillOpacity={isHovered ? 1 : 0.8}
-                      stroke="rgba(0,0,0,0.5)"
+                      stroke="#FBFBFC"
                       strokeWidth={2}
                       filter={isHovered ? `url(#${filterId})` : undefined}
                       className="transition-all duration-300"
@@ -113,7 +113,7 @@ export function MachineUtilizationRing({ width, height }: Props) {
 
       {/* Center KPI Display */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
-        <span className="text-4xl font-bold tracking-tight text-white drop-shadow-md">
+        <span className="text-4xl font-black tracking-tighter text-zinc-900">
           {activeSegment ? data.find(d => d.status === activeSegment)?.count : total}
         </span>
         <span className={`text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${activeSegment ? data.find(d => d.status === activeSegment)?.color : 'text-zinc-500'}`}>

@@ -12,7 +12,8 @@ import {
   Eye,
   Sliders,
   X,
-  Maximize
+  Maximize,
+  ShoppingCart
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 
@@ -21,6 +22,7 @@ interface BomConverterProps {
   project: any;
   materials: any[];
   onSaveBOM?: (rows: any[]) => void;
+  onProceedToPO?: (rows: any[]) => void;
 }
 
 export interface ParsedBOMRow {
@@ -52,7 +54,7 @@ export interface ParsedBOMRow {
   validationError: string | null;
 }
 
-export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, materials = [], onSaveBOM }) => {
+export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, materials = [], onSaveBOM, onProceedToPO }) => {
   const { success, error, warning } = useToast();
 
   const [file, setFile] = useState<File | null>(null);
@@ -733,8 +735,8 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
           <div 
             className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all ${
               dragActive 
-                ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.2)]' 
-                : 'border-white/10 bg-white/[0.01] hover:border-white/20 hover:bg-white/[0.02]'
+                ? 'border-blue-500 bg-blue-50/50 shadow-elevation' 
+                : 'border-zinc-200 bg-white hover:border-blue-300 hover:bg-blue-50/20 shadow-sm'
             }`}
             onDragEnter={handleDrag}
             onDragOver={handleDrag}
@@ -742,8 +744,8 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             onDrop={handleDrop}
           >
             <Upload className="w-10 h-10 text-blue-400 mb-3 animate-pulse" />
-            <h3 className="text-sm font-bold text-white mb-1">Drag & Drop Engineering BOM Excel</h3>
-            <p className="text-[11px] text-slate-400 mb-4">Compatible with standard structured .xlsx and .xls formats</p>
+            <h3 className="text-sm font-bold text-zinc-900 mb-1">Drag & Drop Engineering BOM Excel</h3>
+            <p className="text-[11px] text-zinc-500 mb-4">Compatible with standard structured .xlsx and .xls formats</p>
             
             <input 
               id="bom-excel-upload"
@@ -764,22 +766,22 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         {/* Right Status Panel */}
         <div className="glass-panel p-6 flex flex-col justify-between">
           <div>
-            <h3 className="text-xs font-bold text-white mb-4 tracking-widest uppercase flex items-center">
+            <h3 className="text-xs font-bold text-zinc-900 mb-4 tracking-widest uppercase flex items-center">
               <Sliders className="w-4 h-4 mr-2 text-blue-400" />
               Converter Registry
             </h3>
             
             {file ? (
               <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-white/[0.02] border border-white/5 rounded-xl">
+                <div className="flex items-center space-x-3 p-3 bg-white border border-zinc-200 rounded-xl shadow-sm">
                   <FileSpreadsheet className="w-8 h-8 text-emerald-400 shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white truncate">{file.name}</p>
-                    <p className="text-[10px] text-slate-400">Size: {(file.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-xs font-bold text-zinc-900 truncate">{file.name}</p>
+                    <p className="text-[10px] text-zinc-500">Size: {(file.size / 1024).toFixed(1)} KB</p>
                   </div>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-slate-300">
+                <div className="space-y-1.5 text-xs text-zinc-600">
                   <div className="flex justify-between">
                     <span>Parsed Project (Tool No):</span>
                     <span className={`font-semibold font-mono ${parsedMetadata?.projectNumber ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -807,7 +809,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             <div className="flex space-x-3 mt-4 shrink-0">
               <button 
                 onClick={handleValidate} 
-                className="flex-1 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold transition-all"
+                className="flex-1 py-2 rounded-xl bg-black/5 hover:bg-black/10 text-zinc-900 border border-black/10 text-xs font-bold transition-all"
               >
                 Validate Data
               </button>
@@ -828,15 +830,15 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
           <div className="glass-panel p-4 flex items-center justify-between border-l-4 border-blue-500">
             <div>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Total Processed Rows</p>
-              <p className="text-xl font-bold text-white font-mono mt-1">{totalItemsCount}</p>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Total Processed Rows</p>
+              <p className="text-xl font-bold text-zinc-900 font-mono mt-1">{totalItemsCount}</p>
             </div>
             <FileSpreadsheet className="w-8 h-8 text-blue-500 opacity-40" />
           </div>
 
           <div className={`glass-panel p-4 flex items-center justify-between border-l-4 ${invalidRowsCount > 0 ? 'border-red-500' : 'border-emerald-500'}`}>
             <div>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Validation Status</p>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Validation Status</p>
               <p className={`text-xl font-bold font-mono mt-1 ${invalidRowsCount > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                 {invalidRowsCount > 0 ? `${invalidRowsCount} Errors` : '✓ All Clean'}
               </p>
@@ -855,45 +857,45 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         (() => {
           const content = (
             <div className={isFullscreen 
-              ? "fixed inset-0 z-[99999] bg-[#05070A]/95 backdrop-blur-2xl p-4 md:p-8 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" 
+              ? "fixed inset-0 z-[99999] bg-white/95 backdrop-blur-3xl p-4 md:p-8 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" 
               : "glass-panel p-6 flex-1 min-h-0 flex flex-col relative overflow-hidden transition-all duration-300"
             }>
               
               {/* Section Toolbar */}
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 mb-4 gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center tracking-widest uppercase">
+                  <h3 className="text-sm font-bold text-zinc-900 flex items-center tracking-widest uppercase">
                     <Eye className="w-4 h-4 mr-2 text-indigo-400" />
                     BOM mapping preview
               </h3>
-              <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">Configure, resolve errors, and double-check before generation</p>
+              <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider">Configure, resolve errors, and double-check before generation</p>
             </div>
 
                 {/* Filter buttons */}
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => setIsFullscreen(!isFullscreen)}
-                    className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-lg shadow-slate-900/20 transition-all"
+                    className="flex items-center space-x-1.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-900 font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all"
                   >
                     {isFullscreen ? <X className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
                     <span>{isFullscreen ? 'Exit Details' : 'View Details'}</span>
                   </button>
-                  <div className="flex border border-white/10 rounded-lg p-0.5 bg-black/40">
+                  <div className="flex border border-black/10 rounded-lg p-0.5 bg-black/5">
                 <button 
                   onClick={() => setActivePreviewTab('all')} 
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activePreviewTab === 'all' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activePreviewTab === 'all' ? 'bg-black/10 text-zinc-900' : 'text-zinc-500 hover:text-zinc-900'}`}
                 >
                   All ({totalItemsCount})
                 </button>
                 <button 
                   onClick={() => setActivePreviewTab('errors')} 
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activePreviewTab === 'errors' ? 'bg-red-500/20 text-red-400' : 'text-slate-400 hover:text-red-400'}`}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activePreviewTab === 'errors' ? 'bg-red-500/20 text-red-400' : 'text-zinc-500 hover:text-red-400'}`}
                 >
                   Errors ({invalidRowsCount})
                 </button>
                 <button 
                   onClick={() => setActivePreviewTab('valid')} 
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activePreviewTab === 'valid' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-emerald-400'}`}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activePreviewTab === 'valid' ? 'bg-emerald-500/20 text-emerald-400' : 'text-zinc-500 hover:text-emerald-400'}`}
                 >
                   Valid ({validRowsCount})
                 </button>
@@ -917,15 +919,24 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Save to Database</span>
                       </button>
+                      <button 
+                        onClick={() => {
+                          if (onProceedToPO) onProceedToPO(rows);
+                        }} 
+                        className="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-indigo-500/20 transition-all"
+                      >
+                        <ShoppingCart className="w-3.5 h-3.5" />
+                        <span>Proceed to PO</span>
+                      </button>
                     </>
                   )}
                 </div>
               </div>
 
           {/* Core Table Grid */}
-          <div className="flex-1 overflow-x-auto overflow-y-auto pr-2 min-h-0 border border-white/5 rounded-xl bg-black/30">
+          <div className="flex-1 overflow-x-auto overflow-y-auto pr-2 min-h-0 border border-zinc-200 rounded-xl bg-white shadow-sm">
             <table className="w-full text-left text-xs whitespace-nowrap min-w-[1200px]">
-              <thead className="bg-[#0B1018] text-slate-400 font-bold uppercase tracking-wider sticky top-0 z-20 border-b border-white/10">
+              <thead className="bg-[#F4F4F6] text-zinc-500 font-bold uppercase tracking-wider sticky top-0 z-20 border-b border-black/10">
                 <tr>
                   <th className="px-4 py-3 text-center w-12">SR.NO</th>
                   <th className="px-4 py-3">TOOL NO</th>
@@ -950,21 +961,21 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                     className={`transition-colors ${
                       row.validationError 
                         ? 'bg-red-500/5 hover:bg-red-500/10' 
-                        : 'hover:bg-white/[0.02]'
+                        : 'hover:bg-black/[0.02]'
                     }`}
                   >
                     {/* SR.NO */}
-                    <td className="px-4 py-2.5 text-center font-mono font-bold text-slate-400">
+                    <td className="px-4 py-2.5 text-center font-mono font-bold text-zinc-500">
                       {idx + 1}
                     </td>
 
                     {/* TOOL NO */}
-                    <td className="px-4 py-2.5 font-mono text-slate-300">
+                    <td className="px-4 py-2.5 font-mono text-zinc-600">
                       <input 
                         type="text" 
                         value={row.toolNo || ''} 
                         onChange={(e) => handleCellEdit(row.id, 'toolNo', e.target.value)}
-                        className="w-24 bg-transparent border-none text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                        className="w-24 bg-transparent border-none text-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
                       />
                     </td>
 
@@ -974,7 +985,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         type="text" 
                         value={row.srNo} 
                         onChange={(e) => handleCellEdit(row.id, 'srNo', e.target.value)}
-                        className="w-16 bg-black/60 border border-white/10 rounded px-2 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                        className="w-16 bg-zinc-50 border border-zinc-200 rounded px-2 py-1 text-center font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                       />
                     </td>
 
@@ -986,21 +997,21 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           placeholder="L"
                           value={row.finishL || ''} 
                           onChange={(e) => handleCellEdit(row.id, 'finishL', e.target.value)}
-                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-12 bg-zinc-50 border border-zinc-200 rounded px-1.5 py-1 text-center font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                         />
                         <input 
                           type="text" 
                           placeholder="W"
                           value={row.finishW || ''} 
                           onChange={(e) => handleCellEdit(row.id, 'finishW', e.target.value)}
-                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-12 bg-zinc-50 border border-zinc-200 rounded px-1.5 py-1 text-center font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                         />
                         <input 
                           type="text" 
                           placeholder="H"
                           value={row.finishH || ''} 
                           onChange={(e) => handleCellEdit(row.id, 'finishH', e.target.value)}
-                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-12 bg-zinc-50 border border-zinc-200 rounded px-1.5 py-1 text-center font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                         />
                       </div>
                     </td>
@@ -1013,21 +1024,21 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           placeholder="L"
                           value={row.length || ''} 
                           onChange={(e) => handleCellEdit(row.id, 'length', e.target.value)}
-                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-12 bg-zinc-50 border border-zinc-200 rounded px-1.5 py-1 text-center font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                         />
                         <input 
                           type="number" 
                           placeholder="W"
                           value={row.width || ''} 
                           onChange={(e) => handleCellEdit(row.id, 'width', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-12 bg-zinc-50 border border-zinc-200 rounded px-1.5 py-1 text-center font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                         />
                         <input 
                           type="number" 
                           placeholder="H"
                           value={row.height || ''} 
                           onChange={(e) => handleCellEdit(row.id, 'height', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          className="w-12 bg-black/60 border border-white/10 rounded px-1.5 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-12 bg-zinc-50 border border-zinc-200 rounded px-1.5 py-1 text-center font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                         />
                       </div>
                     </td>
@@ -1039,7 +1050,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         value={row.materialInput} 
                         onChange={(e) => handleCellEdit(row.id, 'materialInput', e.target.value)}
                         placeholder="Material details..."
-                        className="w-full bg-black/60 border border-white/10 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500/50"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded px-2 py-1 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                       />
                     </td>
 
@@ -1049,7 +1060,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         type="number" 
                         value={Number.isNaN(row.quantity) ? '' : row.quantity} 
                         onChange={(e) => handleCellEdit(row.id, 'quantity', e.target.value === '' ? '' : parseInt(e.target.value))}
-                        className="w-16 bg-black/60 border border-white/10 rounded px-2 py-1 text-center font-mono text-white text-xs focus:outline-none focus:border-blue-500/50"
+                        className="w-16 bg-zinc-50 border border-zinc-200 rounded px-2 py-1 text-center font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                         min="1"
                       />
                     </td>
@@ -1060,7 +1071,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         type="number" 
                         value={Number.isNaN(row.apWeight) ? '' : (row.apWeight || '')} 
                         onChange={(e) => handleCellEdit(row.id, 'apWeight', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        className="w-16 bg-black/60 border border-white/10 rounded px-2 py-1 text-right font-mono text-emerald-400 text-xs focus:outline-none focus:border-emerald-500/50"
+                        className="w-16 bg-zinc-50 border border-zinc-200 rounded px-2 py-1 text-right font-mono text-emerald-600 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-inner"
                         step="0.01"
                       />
                     </td>
@@ -1076,7 +1087,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         type="number" 
                         value={Number.isNaN(row.rate) ? '' : (row.rate || '')} 
                         onChange={(e) => handleCellEdit(row.id, 'rate', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        className="w-16 bg-black/60 border border-white/10 rounded px-2 py-1 text-right font-mono text-slate-300 text-xs focus:outline-none focus:border-blue-500/50"
+                        className="w-16 bg-zinc-50 border border-zinc-200 rounded px-2 py-1 text-right font-mono text-zinc-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                         step="0.01"
                       />
                     </td>
@@ -1093,7 +1104,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           type="number" 
                           value={Number.isNaN(row.gstPercent) ? '' : (row.gstPercent || '')} 
                           onChange={(e) => handleCellEdit(row.id, 'gstPercent', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          className="w-14 bg-black/60 border border-white/10 rounded px-2 py-1 text-right font-mono text-slate-500 text-xs focus:outline-none focus:border-blue-500/50"
+                          className="w-14 bg-zinc-50 border border-zinc-200 rounded px-2 py-1 text-right font-mono text-zinc-500 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-inner"
                           step="0.1"
                         />
                         <span className="text-slate-500 text-[10px]">%</span>
@@ -1101,7 +1112,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                     </td>
 
                     {/* TOTAL */}
-                    <td className="px-4 py-2.5 text-right font-mono text-white font-bold">
+                    <td className="px-4 py-2.5 text-right font-mono text-zinc-900 font-bold">
                       {row.basicCost ? (row.basicCost * 1.18).toFixed(2) : '-'}
                     </td>
 
@@ -1109,7 +1120,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                     <td className="px-4 py-2.5 text-center">
                       <button 
                         onClick={() => handleDeleteRow(row.id)}
-                        className="p-1 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded transition-colors"
+                        className="p-1 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded transition-colors"
                         title="Delete Item"
                       >
                         <Trash2 className="w-4 h-4" />

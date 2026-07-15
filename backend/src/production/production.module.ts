@@ -10,6 +10,8 @@ import { WipService } from './wip.service';
 import { WipController } from './wip.controller';
 import { SchedulingService } from './scheduling.service';
 import { SchedulingController } from './scheduling.controller';
+import { AssemblyController } from './assembly.controller';
+import { AssemblyService } from './assembly.service';
 
 @Module({
   imports: [PrismaModule],
@@ -17,7 +19,8 @@ import { SchedulingController } from './scheduling.controller';
     ProductionController, 
     JobCardsController, 
     WipController, 
-    SchedulingController
+    SchedulingController,
+    AssemblyController
   ],
   providers: [
     MaterialIssuesService,
@@ -25,7 +28,8 @@ import { SchedulingController } from './scheduling.controller';
     ProductionOperationsService,
     JobCardsService,
     WipService,
-    SchedulingService
+    SchedulingService,
+    AssemblyService
   ],
   exports: [
     MaterialIssuesService,
@@ -33,7 +37,8 @@ import { SchedulingController } from './scheduling.controller';
     ProductionOperationsService,
     JobCardsService,
     WipService,
-    SchedulingService
+    SchedulingService,
+    AssemblyService
   ],
 })
 export class ProductionModule {}

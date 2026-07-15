@@ -57,7 +57,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
           type="button"
           disabled={disabled}
           className={cn(
-            "flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white shadow-sm hover:bg-black/60 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed",
+            "flex w-full items-center justify-between rounded-lg border border-black/10 bg-black/5 px-3 py-2.5 text-sm text-zinc-900 shadow-sm hover:bg-black/5 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed",
             className
           )}
         >
@@ -71,20 +71,20 @@ export const Combobox: React.FC<ComboboxProps> = ({
         <Popover.Content
           align="start"
           sideOffset={4}
-          className="z-[100] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95"
+          className="z-[100] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-lg border border-black/10 bg-zinc-50 shadow-xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95"
         >
-          <div className="flex items-center border-b border-white/10 px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-white" />
+          <div className="flex items-center border-b border-black/10 px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-zinc-900" />
             <input
               ref={inputRef}
-              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-500"
               placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             {search && (
               <button onClick={() => setSearch('')} className="ml-2">
-                <X className="h-4 w-4 opacity-50 hover:opacity-100 text-white" />
+                <X className="h-4 w-4 opacity-50 hover:opacity-100 text-zinc-900" />
               </button>
             )}
           </div>
@@ -101,7 +101,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
                   }}
                   className={cn(
                     "relative flex w-full cursor-pointer select-none items-center rounded-sm py-2 pl-3 pr-9 text-sm text-white outline-none hover:bg-blue-600 hover:text-white transition-colors",
-                    value === option.value ? "bg-white/10" : ""
+                    value === option.value ? "bg-black/10" : ""
                   )}
                 >
                   <span className="truncate">{option.label}</span>

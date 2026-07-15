@@ -99,10 +99,10 @@ export default function ResourceRatesPage() {
 
   return (
     <div className="h-full flex flex-col relative">
-      <div className="p-6 border-b border-white/5 bg-black/20 flex justify-between items-center">
+      <div className="p-6 border-b border-black/5 bg-black/20 flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold text-white">Resource Rates</h2>
-          <p className="text-sm text-slate-400">Consolidated financial view of hourly cost rates for employees and machines.</p>
+          <h2 className="text-xl font-bold text-zinc-900">Resource Rates</h2>
+          <p className="text-sm text-zinc-500">Consolidated financial view of hourly cost rates for employees and machines.</p>
         </div>
         <div className="relative w-64">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -111,21 +111,21 @@ export default function ResourceRatesPage() {
             placeholder="Search resources..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-black/5 border border-black/10 rounded-xl pl-9 pr-4 py-2 text-sm text-zinc-900 focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        <div className="bg-black/40 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl">
+        <div className="bg-black/5 border border-black/10 rounded-2xl overflow-hidden backdrop-blur-xl">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-white/[0.02] border-b border-white/10">
-                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Resource</th>
-                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
-                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Category</th>
-                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Current Rate (₹)</th>
-                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-center">Actions</th>
+              <tr className="bg-black/[0.02] border-b border-black/10">
+                <th className="p-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Resource</th>
+                <th className="p-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Type</th>
+                <th className="p-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Category</th>
+                <th className="p-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-right">Current Rate (₹)</th>
+                <th className="p-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -135,9 +135,9 @@ export default function ResourceRatesPage() {
                 <tr><td colSpan={5} className="p-8 text-center text-slate-500">No resources found.</td></tr>
               ) : (
                 filteredData.map(item => (
-                  <tr key={`${item.type}-${item.id}`} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                  <tr key={`${item.type}-${item.id}`} className="border-b border-black/5 hover:bg-black/[0.02] transition-colors group">
                     <td className="p-4">
-                      <div className="font-bold text-white flex items-center">
+                      <div className="font-bold text-zinc-900 flex items-center">
                         {item.type === 'EMPLOYEE' ? <UserCog className="w-4 h-4 mr-2 text-blue-400" /> : <Factory className="w-4 h-4 mr-2 text-purple-400" />}
                         {item.name}
                       </div>
@@ -148,7 +148,7 @@ export default function ResourceRatesPage() {
                         {item.type}
                       </span>
                     </td>
-                    <td className="p-4 text-sm text-slate-300">{item.category}</td>
+                    <td className="p-4 text-sm text-zinc-600">{item.category}</td>
                     <td className="p-4 text-right font-mono font-bold text-emerald-400">
                       ₹{Number(item.rate).toFixed(2)}
                       <span className="text-xs text-slate-500 font-sans font-normal ml-1">/hr</span>
@@ -157,7 +157,7 @@ export default function ResourceRatesPage() {
                       <div className="flex items-center justify-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => setSelectedEntity(item)}
-                          className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-semibold text-slate-300 transition-colors flex items-center"
+                          className="px-3 py-1.5 bg-black/5 hover:bg-black/10 rounded-lg text-xs font-semibold text-zinc-600 transition-colors flex items-center"
                         >
                           <History className="w-3 h-3 mr-1.5" /> History
                         </button>
@@ -182,41 +182,41 @@ export default function ResourceRatesPage() {
         {editEntity && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-sm"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-[#0B1120] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+              className="bg-[#0B1120] border border-black/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
             >
-              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
-                <h3 className="font-bold text-white">Update Hourly Rate</h3>
-                <button onClick={() => setEditEntity(null)} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+              <div className="px-6 py-4 border-b border-black/10 flex justify-between items-center bg-black/[0.02]">
+                <h3 className="font-bold text-zinc-900">Update Hourly Rate</h3>
+                <button onClick={() => setEditEntity(null)} className="text-zinc-500 hover:text-zinc-900"><X className="w-5 h-5" /></button>
               </div>
               <form onSubmit={handleUpdate} className="p-6 space-y-4">
                 <div>
-                  <div className="text-sm text-slate-400 mb-1">Resource</div>
-                  <div className="font-bold text-white">{editEntity.name} ({editEntity.code})</div>
+                  <div className="text-sm text-zinc-500 mb-1">Resource</div>
+                  <div className="font-bold text-zinc-900">{editEntity.name} ({editEntity.code})</div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">New Rate (₹/hr)</label>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">New Rate (₹/hr)</label>
                   <input 
                     type="number" step="0.01" required
                     value={newRate} onChange={e => setNewRate(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-blue-500 outline-none"
+                    className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2 text-zinc-900 focus:border-blue-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Reason for Update</label>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Reason for Update</label>
                   <input 
                     type="text" required placeholder="e.g. Annual Increment, Inflation"
                     value={reason} onChange={e => setReason(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-blue-500 outline-none"
+                    className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2 text-zinc-900 focus:border-blue-500 outline-none"
                   />
                 </div>
                 <div className="pt-4 flex justify-end">
                   <button 
                     type="button" onClick={() => setEditEntity(null)}
-                    className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white mr-2"
+                    className="px-4 py-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900 mr-2"
                   >
                     Cancel
                   </button>
@@ -239,14 +239,14 @@ export default function ResourceRatesPage() {
         {selectedEntity && (
           <motion.div 
             initial={{ x: 400, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 400, opacity: 0 }}
-            className="absolute top-0 right-0 bottom-0 w-96 bg-[#0B1120]/95 backdrop-blur-2xl border-l border-white/10 shadow-2xl flex flex-col z-40"
+            className="absolute top-0 right-0 bottom-0 w-96 bg-[#0B1120]/95 backdrop-blur-2xl border-l border-black/10 shadow-2xl flex flex-col z-40"
           >
-            <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+            <div className="px-6 py-5 border-b border-black/10 flex justify-between items-center bg-black/[0.02]">
               <div>
-                <h3 className="font-bold text-white">Rate History</h3>
-                <p className="text-xs text-slate-400">{selectedEntity.name}</p>
+                <h3 className="font-bold text-zinc-900">Rate History</h3>
+                <p className="text-xs text-zinc-500">{selectedEntity.name}</p>
               </div>
-              <button onClick={() => setSelectedEntity(null)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400"><X className="w-5 h-5" /></button>
+              <button onClick={() => setSelectedEntity(null)} className="p-2 hover:bg-black/10 rounded-lg text-zinc-500"><X className="w-5 h-5" /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {loadingHistory ? (
@@ -255,25 +255,25 @@ export default function ResourceRatesPage() {
                 <div className="text-center text-slate-500">No rate changes recorded yet.</div>
               ) : (
                 <div className="relative">
-                  <div className="absolute top-0 bottom-0 left-[15px] w-px bg-white/10" />
+                  <div className="absolute top-0 bottom-0 left-[15px] w-px bg-black/10" />
                   {history.map((record: any, idx: number) => (
                     <div key={record.id} className="relative flex items-start mb-6">
-                      <div className="w-8 h-8 rounded-full bg-black border border-white/20 flex items-center justify-center shrink-0 z-10">
+                      <div className="w-8 h-8 rounded-full bg-black border border-black/20 flex items-center justify-center shrink-0 z-10">
                         <div className="w-2 h-2 rounded-full bg-blue-400" />
                       </div>
                       <div className="ml-4 flex-1">
-                        <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                        <div className="bg-black/5 border border-black/5 rounded-xl p-3">
                           <div className="flex justify-between items-start mb-2">
-                            <div className="text-xs text-slate-400">{new Date(record.effectiveFrom).toLocaleDateString()}</div>
+                            <div className="text-xs text-zinc-500">{new Date(record.effectiveFrom).toLocaleDateString()}</div>
                             <div className="text-[10px] font-mono text-slate-500">{record.recordedBy}</div>
                           </div>
                           <div className="flex items-center text-sm font-bold font-mono">
-                            <span className="text-slate-400 line-through mr-2">₹{Number(record.oldRate).toFixed(2)}</span>
+                            <span className="text-zinc-500 line-through mr-2">₹{Number(record.oldRate).toFixed(2)}</span>
                             <ArrowRight className="w-3 h-3 text-slate-500 mr-2" />
                             <span className="text-emerald-400">₹{Number(record.newRate).toFixed(2)}</span>
                           </div>
                           {record.reason && (
-                            <div className="mt-2 text-xs text-slate-300 bg-black/40 p-2 rounded-lg italic">
+                            <div className="mt-2 text-xs text-zinc-600 bg-black/5 p-2 rounded-lg italic">
                               "{record.reason}"
                             </div>
                           )}

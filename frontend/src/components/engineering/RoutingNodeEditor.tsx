@@ -26,26 +26,26 @@ import { api } from '../../lib/api';
 const StartNode = ({ isConnectable }: any) => (
   <motion.div 
     initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-    className="relative flex items-center justify-center w-16 h-16 rounded-full bg-black/40 border border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.3)] backdrop-blur-xl group"
+    className="relative flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 shadow-md group"
   >
-    <div className="absolute inset-0 rounded-full border-2 border-emerald-400/30 animate-[spin_4s_linear_infinite]" />
-    <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md group-hover:bg-emerald-500/40 transition-colors" />
-    <Play className="w-6 h-6 text-emerald-400 ml-1 relative z-10" />
-    <Handle type="source" position={Position.Right} isConnectable={isConnectable} className="w-3 h-3 bg-emerald-400 border-2 border-black !right-[-6px]" />
-    <div className="absolute -bottom-8 whitespace-nowrap text-xs font-bold text-emerald-400 tracking-widest uppercase">Start Routing</div>
+    <div className="absolute inset-0 rounded-full border-2 border-emerald-200 animate-[spin_4s_linear_infinite]" />
+    <div className="absolute inset-0 bg-emerald-100 rounded-full group-hover:bg-emerald-200 transition-colors" />
+    <Play className="w-6 h-6 text-emerald-700 ml-1 relative z-10" />
+    <Handle type="source" position={Position.Right} isConnectable={isConnectable} className="w-3 h-3 bg-emerald-500 border-2 border-white !right-[-6px]" />
+    <div className="absolute -bottom-8 whitespace-nowrap text-xs font-bold text-emerald-700 tracking-widest uppercase">Start Routing</div>
   </motion.div>
 );
 
 const EndNode = ({ isConnectable }: any) => (
   <motion.div 
     initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-    className="relative flex items-center justify-center w-16 h-16 rounded-full bg-black/40 border border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.3)] backdrop-blur-xl group"
+    className="relative flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 border border-blue-200 shadow-md group"
   >
-    <div className="absolute inset-0 rounded-full border-2 border-blue-400/30 animate-[spin_4s_linear_infinite_reverse]" />
-    <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-md group-hover:bg-blue-500/40 transition-colors" />
-    <CheckCircle className="w-6 h-6 text-blue-400 relative z-10" />
-    <Handle type="target" position={Position.Left} isConnectable={isConnectable} className="w-3 h-3 bg-blue-400 border-2 border-black !left-[-6px]" />
-    <div className="absolute -bottom-8 whitespace-nowrap text-xs font-bold text-blue-400 tracking-widest uppercase">Quality Release</div>
+    <div className="absolute inset-0 rounded-full border-2 border-blue-200 animate-[spin_4s_linear_infinite_reverse]" />
+    <div className="absolute inset-0 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors" />
+    <CheckCircle className="w-6 h-6 text-blue-700 relative z-10" />
+    <Handle type="target" position={Position.Left} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500 border-2 border-white !left-[-6px]" />
+    <div className="absolute -bottom-8 whitespace-nowrap text-xs font-bold text-blue-700 tracking-widest uppercase">Quality Release</div>
   </motion.div>
 );
 
@@ -59,28 +59,28 @@ const OperationNode = ({ data, isConnectable, selected }: any) => {
       whileHover={{ y: -4, scale: 1.02 }}
       className={`relative group rounded-2xl w-80 transition-all duration-500 ${
         selected 
-          ? `bg-white/[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.5),_0_0_20px_rgba(${isMachining ? '59,130,246' : '168,85,247'},0.3)] border-${accentColor}-500/50` 
-          : 'bg-black/60 backdrop-blur-3xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] border-white/10 hover:border-white/20'
+          ? `bg-${accentColor}-50 shadow-lg border-${accentColor}-300 scale-[1.02]` 
+          : 'bg-white shadow-md border-zinc-200 hover:border-zinc-300'
       } border overflow-visible`}
     >
-      <div className="absolute inset-0 rounded-2xl border border-white/[0.05] pointer-events-none" />
+      <div className="absolute inset-0 rounded-2xl border border-black/10/[0.05] pointer-events-none" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-      <div className={`absolute -top-12 -right-12 w-32 h-32 bg-${accentColor}-500/20 blur-[50px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-700`} />
+      <div className={`absolute -top-12 -right-12 w-32 h-32 bg-${accentColor}-100 blur-[20px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-700`} />
 
       <Handle 
         type="target" 
         position={Position.Left} 
         isConnectable={isConnectable} 
-        className={`w-4 h-4 rounded-full bg-black border-2 ${selected ? `border-${accentColor}-400 shadow-[0_0_10px_rgba(${isMachining ? '59,130,246' : '168,85,247'},0.8)]` : 'border-white/30'} !left-[-8px] transition-colors`} 
+        className={`w-4 h-4 rounded-full bg-black border-2 ${selected ? `border-${accentColor}-500` : `border-zinc-300`} !left-[-8px] transition-colors`} 
       />
       
       <div className="p-5 relative z-10">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center space-x-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-inner ${
-              isMachining ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-purple-500/10 border-purple-500/20 text-purple-400'
+              isMachining ? 'bg-blue-500/10 border-blue-500/20 text-blue-700' : 'bg-purple-500/10 border-purple-500/20 text-purple-700'
             }`}>
-              <AccentIcon className="w-5 h-5 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
+              <AccentIcon className="w-5 h-5 drop-shadow-sm" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -95,7 +95,7 @@ const OperationNode = ({ data, isConnectable, selected }: any) => {
                   </span>
                 )}
               </div>
-              <div className="text-base font-bold text-white tracking-tight mt-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-400 transition-all">
+              <div className="text-base font-bold text-zinc-900 tracking-tight mt-1  transition-all">
                 {data.label}
               </div>
             </div>
@@ -103,13 +103,13 @@ const OperationNode = ({ data, isConnectable, selected }: any) => {
         </div>
         
         {data.machine && (
-          <div className="mb-3 px-3 py-1.5 bg-black/40 border border-white/5 rounded-lg flex justify-between items-center text-xs text-slate-300">
+          <div className="mb-3 px-3 py-1.5 bg-black/5 border border-black/5 rounded-lg flex justify-between items-center text-xs text-zinc-600">
             <div className="flex items-center">
                 <Cpu className="w-3.5 h-3.5 mr-2 text-slate-500" />
-                <span className="font-medium text-white">{data.machineName || data.machine}</span>
+                <span className="font-medium text-zinc-900">{data.machineName || data.machine}</span>
             </div>
             {data.estimatedCost > 0 && (
-                <div className="text-emerald-400 font-mono font-bold flex items-center">
+                <div className="text-emerald-700 font-mono font-bold flex items-center">
                     <IndianRupee className="w-3 h-3 mr-0.5" />
                     {data.estimatedCost.toFixed(2)}
                 </div>
@@ -119,17 +119,17 @@ const OperationNode = ({ data, isConnectable, selected }: any) => {
 
         {/* Metrics Bar */}
         <div className="grid grid-cols-2 gap-2 mt-2">
-          <div className="bg-white/5 rounded-lg p-2 border border-white/5 flex flex-col items-center justify-center group-hover:bg-white/[0.07] transition-colors">
-            <div className="flex items-center text-[10px] text-slate-400 uppercase tracking-widest mb-1">
+          <div className="bg-black/5 rounded-lg p-2 border border-black/5 flex flex-col items-center justify-center group-hover:bg-white/[0.07] transition-colors">
+            <div className="flex items-center text-[10px] text-zinc-500 uppercase tracking-widest mb-1">
               <Settings className="w-3 h-3 mr-1" /> Setup
             </div>
-            <div className="text-sm font-bold text-white">{data.setupTime} <span className="text-[10px] text-slate-500 font-normal">hrs</span></div>
+            <div className="text-sm font-bold text-zinc-900">{data.setupTime} <span className="text-[10px] text-slate-500 font-normal">hrs</span></div>
           </div>
-          <div className="bg-white/5 rounded-lg p-2 border border-white/5 flex flex-col items-center justify-center group-hover:bg-white/[0.07] transition-colors">
-            <div className="flex items-center text-[10px] text-slate-400 uppercase tracking-widest mb-1">
+          <div className="bg-black/5 rounded-lg p-2 border border-black/5 flex flex-col items-center justify-center group-hover:bg-white/[0.07] transition-colors">
+            <div className="flex items-center text-[10px] text-zinc-500 uppercase tracking-widest mb-1">
               <Clock className="w-3 h-3 mr-1" /> Runtime
             </div>
-            <div className="text-sm font-bold text-white">{data.runTime} <span className="text-[10px] text-slate-500 font-normal">hrs</span></div>
+            <div className="text-sm font-bold text-zinc-900">{data.runTime} <span className="text-[10px] text-slate-500 font-normal">hrs</span></div>
           </div>
         </div>
       </div>
@@ -138,7 +138,7 @@ const OperationNode = ({ data, isConnectable, selected }: any) => {
         type="source" 
         position={Position.Right} 
         isConnectable={isConnectable} 
-        className={`w-4 h-4 rounded-full bg-black border-2 ${selected ? `border-${accentColor}-400 shadow-[0_0_10px_rgba(${isMachining ? '59,130,246' : '168,85,247'},0.8)]` : 'border-white/30'} !right-[-8px] transition-colors`} 
+        className={`w-4 h-4 rounded-full bg-black border-2 ${selected ? `border-${accentColor}-500` : `border-zinc-300`} !right-[-8px] transition-colors`} 
       />
     </motion.div>
   );
@@ -175,16 +175,16 @@ const CustomControls = () => {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   
   return (
-    <div className="absolute bottom-6 left-6 z-50 flex items-center p-1.5 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
-      <motion.button whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }} whileTap={{ scale: 0.9 }} onClick={() => zoomIn()} className="p-2.5 rounded-xl text-white transition-colors" title="Zoom In">
+    <div className="absolute bottom-6 left-6 z-50 flex items-center p-1.5 bg-black/10 backdrop-blur-2xl border border-black/10 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+      <motion.button whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }} whileTap={{ scale: 0.9 }} onClick={() => zoomIn()} className="p-2.5 rounded-xl text-zinc-900 transition-colors" title="Zoom In">
         <ZoomIn className="w-5 h-5" />
       </motion.button>
-      <div className="w-px h-6 bg-white/10 mx-1" />
-      <motion.button whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }} whileTap={{ scale: 0.9 }} onClick={() => zoomOut()} className="p-2.5 rounded-xl text-white transition-colors" title="Zoom Out">
+      <div className="w-px h-6 bg-black/10 mx-1" />
+      <motion.button whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }} whileTap={{ scale: 0.9 }} onClick={() => zoomOut()} className="p-2.5 rounded-xl text-zinc-900 transition-colors" title="Zoom Out">
         <ZoomOut className="w-5 h-5" />
       </motion.button>
-      <div className="w-px h-6 bg-white/10 mx-1" />
-      <motion.button whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }} whileTap={{ scale: 0.9 }} onClick={() => fitView({ duration: 800 })} className="p-2.5 rounded-xl text-white transition-colors" title="Fit View">
+      <div className="w-px h-6 bg-black/10 mx-1" />
+      <motion.button whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }} whileTap={{ scale: 0.9 }} onClick={() => fitView({ duration: 800 })} className="p-2.5 rounded-xl text-zinc-900 transition-colors" title="Fit View">
         <Maximize className="w-5 h-5" />
       </motion.button>
     </div>
@@ -305,27 +305,27 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-2xl"
+        className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/5 backdrop-blur-2xl"
       >
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="relative w-full h-full max-w-[95vw] max-h-[95vh] flex flex-col rounded-[2rem] overflow-hidden bg-[#050914]/80 shadow-[0_0_100px_rgba(0,0,0,1)] border border-white/[0.08]"
+          className="relative w-full h-full max-w-[95vw] max-h-[95vh] flex flex-col rounded-[2rem] overflow-hidden bg-[#FBFBFC] shadow-2xl border border-black/10"
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-50" />
+          <div className="absolute inset-0  pointer-events-none" />
+          <div className="absolute inset-x-0 top-0 h-px " />
           
           {/* Header */}
-          <div className="relative z-20 px-8 py-5 flex justify-between items-center bg-black/40 backdrop-blur-xl border-b border-white/5">
+          <div className="relative z-20 px-8 py-5 flex justify-between items-center bg-black/5 backdrop-blur-xl border-b border-black/5">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shadow-inner">
-                <Zap className="w-6 h-6 text-blue-400" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-black/10 flex items-center justify-center shadow-inner">
+                <Zap className="w-6 h-6 text-blue-700" />
               </div>
               <div>
-                <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 tracking-tight">Visual Routing Editor</h2>
-                <p className="text-sm text-slate-400 font-medium tracking-wide">Design spatial manufacturing workflows with magnetic connections.</p>
+                <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Visual Routing Editor</h2>
+                <p className="text-sm text-zinc-500 font-medium tracking-wide">Design spatial manufacturing workflows with magnetic connections.</p>
               </div>
             </div>
             
@@ -333,7 +333,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
               <motion.button 
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={handleAddNode} 
-                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold tracking-wider uppercase rounded-xl flex items-center shadow-inner transition-colors"
+                className="px-5 py-2.5 bg-black/5 hover:bg-black/10 border border-black/10 text-zinc-900 text-sm font-bold tracking-wider uppercase rounded-xl flex items-center shadow-inner transition-colors"
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Operation
               </motion.button>
@@ -341,15 +341,15 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                 whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(59,130,246,0.5)" }} 
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onSave(nodes, edges)}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold tracking-wider uppercase rounded-xl flex items-center shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all"
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold tracking-wider uppercase rounded-xl flex items-center shadow-elevation transition-all"
               >
                 <Save className="w-4 h-4 mr-2" /> Deploy Routing
               </motion.button>
-              <div className="w-px h-8 bg-white/10 mx-2" />
+              <div className="w-px h-8 bg-black/10 mx-2" />
               <motion.button 
                 whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }}
                 onClick={onClose} 
-                className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white shadow-inner transition-colors"
+                className="p-2.5 rounded-full bg-black/5 hover:bg-black/10 border border-black/10 text-zinc-500 hover:text-zinc-900 shadow-inner transition-colors"
               >
                 <X className="w-5 h-5" />
               </motion.button>
@@ -358,7 +358,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
 
           <div className="flex-1 flex overflow-hidden relative">
             {/* Canvas Area */}
-            <div className="flex-1 w-full h-full relative bg-[#02040A]">
+            <div className="flex-1 w-full h-full relative bg-[#F4F4F6]">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(59,130,246,0.05)_0%,_transparent_60%)] pointer-events-none" />
               
               <ReactFlowProvider>
@@ -379,7 +379,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                 >
                   <CustomControls />
                   <MiniMap 
-                    className="!bg-[#050914]/90 !backdrop-blur-xl !border-white/10 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8)] !bottom-6 !right-6" 
+                    className="!bg-[#FBFBFC]/90 !backdrop-blur-xl !border-black/10 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8)] !bottom-6 !right-6" 
                     nodeColor={(node) => {
                       if (node.type === 'startNode') return '#10b981';
                       if (node.type === 'endNode') return '#3b82f6';
@@ -400,19 +400,19 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 400, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 400, damping: 40 }}
-                  className="w-96 bg-[#0B1120]/95 backdrop-blur-2xl border-l border-white/10 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] z-20"
+                  className="w-96 bg-white border-l border-black/10 flex flex-col shadow-2xl z-20"
                 >
-                  <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                  <div className="px-6 py-5 border-b border-black/5 flex justify-between items-center bg-black/5">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-700">
                         <Target className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-white tracking-tight">Operation Analysis</h3>
-                        <p className="text-xs text-slate-400 font-medium">Configure machine \u0026 parameters</p>
+                        <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Operation Analysis</h3>
+                        <p className="text-xs text-zinc-500 font-medium">Configure machine \u0026 parameters</p>
                       </div>
                     </div>
-                    <button onClick={() => setSelectedNodeId(null)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors">
+                    <button onClick={() => setSelectedNodeId(null)} className="p-2 hover:bg-black/10 rounded-lg text-zinc-500 hover:text-zinc-900 transition-colors">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
@@ -420,20 +420,20 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                   <div className="p-6 overflow-y-auto space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Op Code</label>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Op Code</label>
                         <input 
                           type="text" 
                           value={selectedNode.data.opCode}
                           onChange={(e) => updateSelectedNodeData('opCode', e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                          className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-zinc-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Op Type</label>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Op Type</label>
                         <select 
                           value={selectedNode.data.type}
                           onChange={(e) => updateSelectedNodeData('type', e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none [color-scheme:dark]"
+                          className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-zinc-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none "
                         >
                           <option value="machining">Machining</option>
                           <option value="external">External</option>
@@ -443,7 +443,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Operation Name</label>
+                      <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Operation Name</label>
                       <select 
                         value={selectedNode.data.operationId || ''}
                         onChange={(e) => {
@@ -453,7 +453,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                             setTimeout(() => updateSelectedNodeData('label', op.operationName), 0);
                           }
                         }}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none [color-scheme:dark]"
+                        className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-zinc-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none "
                       >
                         <option value="">-- Select Operation --</option>
                         {operations.map((op: any) => (
@@ -462,16 +462,16 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                       </select>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-4">
-                      <div className="flex items-center text-sm font-bold text-slate-200 mb-2">
-                        <Cpu className="w-4 h-4 mr-2 text-blue-400" /> System Analysis & Machine
+                    <div className="p-4 rounded-xl bg-black/5 border border-black/5 space-y-4">
+                      <div className="flex items-center text-sm font-bold text-zinc-700 mb-2">
+                        <Cpu className="w-4 h-4 mr-2 text-blue-700" /> System Analysis & Machine
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Work Center / Machine</label>
+                        <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Work Center / Machine</label>
                         <select 
                           value={selectedNode.data.machine}
                           onChange={(e) => updateSelectedNodeData('machine', e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none [color-scheme:dark]"
+                          className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-zinc-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none "
                         >
                           <option value="">-- Select Machine --</option>
                           {machines.map((m: any) => (
@@ -484,28 +484,28 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Setup Time (hrs)</label>
+                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Setup Time (hrs)</label>
                           <input 
                             type="number" step="0.1"
                             value={selectedNode.data.setupTime}
                             onChange={(e) => updateSelectedNodeData('setupTime', e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 transition-all outline-none"
+                            className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-zinc-900 text-sm focus:border-blue-500 transition-all outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Run Time (hrs)</label>
+                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Run Time (hrs)</label>
                           <input 
                             type="number" step="0.1"
                             value={selectedNode.data.runTime}
                             onChange={(e) => updateSelectedNodeData('runTime', e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 transition-all outline-none"
+                            className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-zinc-900 text-sm focus:border-blue-500 transition-all outline-none"
                           />
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <label className="flex items-center space-x-3 cursor-pointer p-4 rounded-xl bg-black/40 border border-white/5 hover:border-white/10 transition-colors">
+                      <label className="flex items-center space-x-3 cursor-pointer p-4 rounded-xl bg-black/5 border border-black/5 hover:border-black/10 transition-colors">
                         <div className="relative">
                           <input 
                             type="checkbox" 
@@ -517,21 +517,21 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
                           <div className={`absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform ${selectedNode.data.inspectionRequired ? 'translate-x-5' : ''}`}></div>
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-white">Quality Inspection Required</div>
+                          <div className="text-sm font-bold text-zinc-900">Quality Inspection Required</div>
                           <div className="text-xs text-slate-500">Flag for mandatory QC check after operation.</div>
                         </div>
                       </label>
                     </div>
 
                     <div>
-                      <label className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                      <label className="flex items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
                         <FileText className="w-3 h-3 mr-1" /> Tooling & Notes
                       </label>
                       <textarea 
                         value={selectedNode.data.notes}
                         onChange={(e) => updateSelectedNodeData('notes', e.target.value)}
                         rows={4}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none resize-none"
+                        className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-3 text-zinc-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none resize-none"
                         placeholder="Add special instructions, required tools, etc..."
                       />
                     </div>

@@ -32,13 +32,13 @@ const bisectDate = bisector<VelocityData, Date>(d => d.date).left;
 
 const tooltipStyles = {
   ...defaultStyles,
-  backgroundColor: 'rgba(5, 10, 20, 0.85)',
-  color: 'white',
+  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  color: '#0A0A0C',
   padding: '12px',
   borderRadius: '12px',
-  border: '1px solid rgba(255,255,255,0.1)',
+  border: '1px solid rgba(15,15,20,0.1)',
   backdropFilter: 'blur(12px)',
-  boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
+  boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
 };
 
 interface Props {
@@ -90,7 +90,7 @@ export function ProductionVelocityChart({ width, height }: Props) {
   return (
     <div className="relative">
       <svg ref={containerRef} width={width} height={height} className="overflow-visible">
-        <LinearGradient id="area-gradient" from="#8b5cf6" to="#8b5cf6" fromOpacity={0.4} toOpacity={0} />
+        <LinearGradient id="area-gradient" from="#7C3AED" to="#7C3AED" fromOpacity={0.4} toOpacity={0} />
         
         <Group top={margin.top} left={margin.left}>
           {/* Animated Area */}
@@ -113,21 +113,21 @@ export function ProductionVelocityChart({ width, height }: Props) {
               data={data}
               x={d => xScale(getDate(d)) ?? 0}
               y={d => yScale(getCompleted(d)) ?? 0}
-              stroke="#a78bfa"
+              stroke="#7C3AED"
               strokeWidth={3}
-              style={{ filter: 'drop-shadow(0px 10px 10px rgba(139, 92, 246, 0.4))' }}
+              style={{ filter: 'drop-shadow(0px 10px 10px rgba(124, 58, 237, 0.2))' }}
             />
           </motion.g>
 
           <AxisBottom
             top={innerHeight}
             scale={xScale}
-            stroke="rgba(255,255,255,0.1)"
-            tickStroke="rgba(255,255,255,0.1)"
+            stroke="rgba(15,15,20,0.1)"
+            tickStroke="rgba(15,15,20,0.1)"
             numTicks={5}
             tickFormat={(v) => new Date(v as Date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             tickLabelProps={() => ({
-              fill: 'rgba(255,255,255,0.4)',
+              fill: 'rgba(15,15,20,0.5)',
               fontSize: 11,
               textAnchor: 'middle',
               fontWeight: 600,
@@ -155,7 +155,7 @@ export function ProductionVelocityChart({ width, height }: Props) {
                 y1={0}
                 x2={tooltipLeft}
                 y2={innerHeight}
-                stroke="rgba(255,255,255,0.2)"
+                stroke="rgba(15,15,20,0.2)"
                 strokeWidth={1}
                 strokeDasharray="4 4"
               />
@@ -163,8 +163,8 @@ export function ProductionVelocityChart({ width, height }: Props) {
                 cx={tooltipLeft}
                 cy={tooltipTop}
                 r={6}
-                fill="#a78bfa"
-                stroke="white"
+                fill="#7C3AED"
+                stroke="#FBFBFC"
                 strokeWidth={2}
                 pointerEvents="none"
               />
@@ -176,12 +176,12 @@ export function ProductionVelocityChart({ width, height }: Props) {
       {tooltipOpen && tooltipData && (
         <TooltipInPortal top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
               {new Date(tooltipData.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-black text-purple-400">{tooltipData.completed}</span>
-              <span className="text-sm font-semibold text-zinc-300">Operations</span>
+              <span className="text-xl font-black text-purple-600">{tooltipData.completed}</span>
+              <span className="text-sm font-semibold text-zinc-600">Operations</span>
             </div>
           </div>
         </TooltipInPortal>

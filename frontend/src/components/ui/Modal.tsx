@@ -66,7 +66,7 @@ export const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             transition={{ duration: 0.3 }}
-            className="absolute inset-0 bg-black/40" 
+            className="absolute inset-0 bg-black/5" 
             onClick={onClose} 
           />
           
@@ -80,16 +80,16 @@ export const Modal: React.FC<ModalProps> = ({
             {/* Environmental Glow */}
             <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/10 blur-[100px] pointer-events-none rounded-full" />
             
-            <div className="flex justify-between items-start p-6 border-b border-white/5 shrink-0 relative z-10">
+            <div className="flex justify-between items-start p-6 border-b border-black/5 shrink-0 relative z-10">
               <div>
-                <h2 className="text-heading font-bold text-white tracking-tight">{title}</h2>
-                {subtitle && <p className="text-body text-zinc-400 mt-1">{subtitle}</p>}
+                <h2 className="text-heading font-bold text-zinc-900 tracking-tight">{title}</h2>
+                {subtitle && <p className="text-body text-zinc-500 mt-1">{subtitle}</p>}
               </div>
               <motion.button 
                 whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onClose}
-                className="text-zinc-400 p-2 rounded-full transition-colors focus:outline-none"
+                className="text-zinc-500 p-2 rounded-full transition-colors focus:outline-none"
               >
                 <X className="h-5 w-5" />
               </motion.button>
@@ -100,7 +100,7 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
             
             {footer && (
-              <div className="p-6 border-t border-white/5 shrink-0 relative z-10 flex items-center justify-end gap-3 bg-black/20">
+              <div className="p-6 border-t border-black/5 shrink-0 relative z-10 flex items-center justify-end gap-3 bg-black/20">
                 {footer}
               </div>
             )}
