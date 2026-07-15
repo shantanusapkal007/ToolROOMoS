@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { api } from '../../lib/api';
 import { Input } from '../../components/ui/Input';
-import { Lock, Mail, AlertCircle, ArrowRight, Fingerprint } from 'lucide-react';
+import { Lock, Mail, AlertCircle, ArrowRight, Shield } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -41,7 +41,7 @@ export default function LoginPage() {
         
         <div className="text-center mb-10">
           <div className="mx-auto w-16 h-16 rounded-[1.25rem] bg-white border border-black/5 shadow-[0_8px_16px_rgba(15,15,20,0.04)] flex items-center justify-center mb-6">
-            <Fingerprint className="w-8 h-8 text-zinc-900" strokeWidth={1.5} />
+            <Shield className="w-8 h-8 text-zinc-900" strokeWidth={1.5} />
           </div>
           <h1 className="text-2xl font-bold text-zinc-900 mb-2 tracking-tight">ToolRoomOS</h1>
           <p className="text-zinc-600 font-medium text-sm">Sign in to Mission Control</p>
@@ -98,3 +98,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

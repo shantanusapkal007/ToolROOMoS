@@ -459,12 +459,16 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
   return (
     <div className="flex-1 h-full flex flex-col animate-fade-in min-h-0 max-w-7xl mx-auto w-full px-2">
       
-      <div className="flex justify-between items-center shrink-0 mb-6 bg-white border border-black/5 rounded-xl p-3">
-        <div className="flex items-center">
-          <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 mr-3 text-amber-700 shadow-sm">
-            <ShoppingCart className="w-4 h-4" />
-          </div>
-          <h2 className="text-lg font-bold text-zinc-900 tracking-tight">Procurement & Sourcing</h2>
+      {/* Premium Typographic Header */}
+      <div className="flex justify-between items-end mb-8 px-2 relative z-10">
+        <div>
+          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-zinc-900 to-zinc-600 tracking-tight flex items-center drop-shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 mr-4">
+              <ShoppingCart className="w-5 h-5 text-white" />
+            </div>
+            Procurement & Sourcing
+          </h2>
+          <p className="text-zinc-500 mt-2 font-medium">Manage purchase orders and inbound logistics</p>
         </div>
         <button 
           onClick={() => {
@@ -474,9 +478,10 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
             setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
             setShowPoModal(true);
           }} 
-          className="group relative px-4 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-all duration-300 shadow-elevation hover:shadow-elevation"
+          className="group relative px-6 py-3 bg-gradient-to-b from-zinc-900 to-zinc-800 hover:from-zinc-800 hover:to-zinc-700 rounded-xl transition-all duration-300 shadow-xl shadow-black/10 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5 border border-black/10 overflow-hidden"
         >
-          <span className="relative z-10 flex items-center text-amber-700 font-black tracking-widest text-sm">
+          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <span className="relative z-10 flex items-center text-white font-bold tracking-wide text-sm">
             <Plus className="w-4 h-4 mr-2" />
             Generate Vendor PO
           </span>
@@ -492,9 +497,9 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 key={po.id} 
-                className="group relative rounded-2xl bg-white border border-zinc-200 p-4 flex flex-col overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-0.5"
+                className="group relative rounded-[2rem] glass-panel p-5 flex flex-col overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-1 border border-white/40"
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full blur-[20px] -mr-10 -mt-10 pointer-events-none group-hover:bg-amber-500/20 transition-all duration-500" />
+                <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 rounded-full blur-[30px] -mr-16 -mt-16 pointer-events-none group-hover:bg-amber-500/15 transition-all duration-700" />
                 
                 <div className="flex justify-between items-start mb-4 relative z-10">
                   <div>
@@ -518,21 +523,21 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   </div>
                 </div>
 
-                <div className="flex-1 bg-zinc-50 rounded-xl p-3 border border-zinc-200 mb-4 relative z-10">
+                <div className="flex-1 bg-black/[0.02] rounded-2xl p-4 border border-white/50 mb-4 relative z-10 shadow-inner">
                   <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center">
                     <FileText className="w-3 h-3 mr-1.5" />
                     Order Items
                   </h4>
                   <div className="space-y-2">
                     {po.items?.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center group/item bg-white p-2 rounded-lg border border-zinc-100 shadow-sm">
+                      <div key={item.id} className="flex justify-between items-center group/item bg-white/60 backdrop-blur-md p-3 rounded-xl border border-white shadow-sm hover:shadow-md transition-all">
                         <div className="flex flex-col">
-                          <span className="text-xs font-medium text-zinc-700">{item.material?.materialName}</span>
-                          <span className="text-[10px] text-slate-500 mt-0.5 font-bold">{Number(item.orderedQty).toLocaleString(undefined, {maximumFractionDigits:2})} {Number(item.orderedQty) === 1 ? "unit" : "units"} ordered</span>
+                          <span className="text-xs font-bold text-zinc-800">{item.material?.materialName}</span>
+                          <span className="text-[10px] text-zinc-500 mt-0.5 font-medium">{Number(item.orderedQty).toLocaleString(undefined, {maximumFractionDigits:2})} {Number(item.orderedQty) === 1 ? "unit" : "units"} ordered</span>
                         </div>
                         <div className="text-right flex flex-col">
-                          <span className="text-xs text-zinc-600 font-mono font-bold">&#8377;{Number(item.lineTotal || (item.orderedQty * item.agreedRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                          <span className="text-[10px] text-slate-500 mt-0.5 font-mono">@ &#8377;{Number(item.agreedRate).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                          <span className="text-xs text-zinc-800 font-mono font-black">&#8377;{Number(item.lineTotal || (item.orderedQty * item.agreedRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                          <span className="text-[10px] text-zinc-400 mt-0.5 font-mono font-medium">@ &#8377;{Number(item.agreedRate).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                       </div>
                     ))}
@@ -542,14 +547,14 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                 <div className="mt-auto pt-4 border-t border-black/5 relative z-10 flex gap-2">
                   <button
                     onClick={() => setViewingPoDetails(po)}
-                    className={`font-bold text-xs py-2.5 rounded-xl transition-all duration-300 bg-white border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 text-zinc-900 shadow-sm flex-1`}
+                    className="font-bold text-xs py-3 rounded-xl transition-all duration-300 bg-white border border-zinc-200 hover:border-black/20 hover:bg-zinc-50 text-zinc-900 shadow-sm flex-1 hover:shadow-md"
                   >
                     View Details
                   </button>
                   {po.status === 'DRAFT' && (
                     <button
                       onClick={() => handleIssuePO(po.id)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-md border border-transparent font-bold text-xs flex items-center justify-center space-x-1"
+                      className="flex-1 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md border border-transparent font-bold text-xs flex items-center justify-center space-x-1 rounded-xl transition-all hover:shadow-lg"
                     >
                       <span>Issue PO</span>
                     </button>
@@ -557,7 +562,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   {(po.status === 'ISSUED' || po.status === 'PARTIAL') && (
                     <button
                       onClick={() => openGrnModal(po)}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md border border-transparent font-bold text-xs flex items-center justify-center space-x-1"
+                      className="flex-1 bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md border border-transparent font-bold text-xs flex items-center justify-center space-x-1 rounded-xl transition-all hover:shadow-lg"
                     >
                       <span>Process GRN</span>
                     </button>
@@ -565,7 +570,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
                     <button
                       onClick={() => openEditPoModal(po)}
-                      className="px-3 bg-blue-600 hover:bg-blue-700 text-white shadow-md border border-transparent flex items-center justify-center"
+                      className="px-4 bg-gradient-to-b from-zinc-800 to-zinc-900 hover:from-zinc-900 hover:to-black text-white shadow-md border border-transparent flex items-center justify-center rounded-xl transition-all hover:shadow-lg"
                       title="Edit Purchase Order"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -574,7 +579,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
                   {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
                     <button
                       onClick={() => handleDeletePO(po.id)}
-                      className="px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 shadow-sm flex items-center justify-center"
+                      className="px-4 bg-gradient-to-b from-rose-50 to-rose-100 text-rose-700 border border-rose-200 shadow-sm flex items-center justify-center rounded-xl transition-all hover:shadow-md hover:bg-rose-100"
                       title="Delete Purchase Order"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -986,53 +991,55 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Vendor Card */}
-                <div className="p-4 rounded-xl bg-white border border-black/5">
-                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center">
-                    <Package className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+                <div className="p-6 rounded-2xl bg-white/60 backdrop-blur-md border border-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[20px] -mr-10 -mt-10 pointer-events-none" />
+                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4 flex items-center relative z-10">
+                    <Package className="w-4 h-4 mr-2 text-amber-500" />
                     Supplier Information
                   </h4>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">Vendor Name:</span>
-                      <span className="text-zinc-900 font-bold">{viewingPoDetails.customFields?.vendorName || viewingPoDetails.vendor?.vendorName || 'Unknown'}</span>
+                  <div className="space-y-3 text-sm relative z-10">
+                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
+                      <span className="text-zinc-500 font-medium">Vendor Name:</span>
+                      <span className="text-zinc-900 font-black">{viewingPoDetails.customFields?.vendorName || viewingPoDetails.vendor?.vendorName || 'Unknown'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">Vendor Address:</span>
-                      <span className="text-zinc-600">{viewingPoDetails.customFields?.vendorAddress || 'N/A'}</span>
+                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
+                      <span className="text-zinc-500 font-medium">Vendor Address:</span>
+                      <span className="text-zinc-700 text-right max-w-[200px] truncate" title={viewingPoDetails.customFields?.vendorAddress || 'N/A'}>{viewingPoDetails.customFields?.vendorAddress || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">Customer Name:</span>
-                      <span className="text-zinc-600">{viewingPoDetails.customFields?.customerName || 'N/A'}</span>
+                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
+                      <span className="text-zinc-500 font-medium">Customer Name:</span>
+                      <span className="text-zinc-700">{viewingPoDetails.customFields?.customerName || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">Customer Location:</span>
-                      <span className="text-zinc-600">{viewingPoDetails.customFields?.customerLocation || 'N/A'}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-500 font-medium">Customer Location:</span>
+                      <span className="text-zinc-700">{viewingPoDetails.customFields?.customerLocation || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* PO Stats Card */}
-                <div className="p-4 rounded-xl bg-white border border-black/5">
-                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center">
-                    <Activity className="w-3.5 h-3.5 mr-1.5 text-blue-500" />
+                <div className="p-6 rounded-2xl bg-white/60 backdrop-blur-md border border-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-[20px] -mr-10 -mt-10 pointer-events-none" />
+                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4 flex items-center relative z-10">
+                    <Activity className="w-4 h-4 mr-2 text-blue-500" />
                     RM Slip Details
                   </h4>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-zinc-500">Status:</span>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-wider ${
-                        viewingPoDetails.status === 'CLOSED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
+                  <div className="space-y-3 text-sm relative z-10">
+                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
+                      <span className="text-zinc-500 font-medium">Status:</span>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black border uppercase tracking-wider shadow-sm ${
+                        viewingPoDetails.status === 'CLOSED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                       }`}>
                         {viewingPoDetails.status}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">RM Slip No:</span>
-                      <span className="text-amber-700 font-black tracking-widest font-mono">{viewingPoDetails.customFields?.rmSlipNo || viewingPoDetails.poNumber}</span>
+                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
+                      <span className="text-zinc-500 font-medium">RM Slip No:</span>
+                      <span className="text-amber-700 font-black tracking-widest font-mono text-base">{viewingPoDetails.customFields?.rmSlipNo || viewingPoDetails.poNumber}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">Date:</span>
-                      <span className="text-zinc-600 font-medium">
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-500 font-medium">Date:</span>
+                      <span className="text-zinc-900 font-bold">
                         {viewingPoDetails.customFields?.date ? new Date(viewingPoDetails.customFields.date).toLocaleDateString() : new Date(viewingPoDetails.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -1042,109 +1049,121 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
               </div>
 
               {/* Items Table (RM Slip Format) */}
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center">
-                  <Info className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center">
+                  <Info className="w-4 h-4 mr-2 text-amber-500" />
                   Line Items
                 </h4>
                 
-                <div className="bg-white border border-black/5 rounded-xl overflow-x-auto hide-scrollbar">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="text-[9px] font-black text-slate-500 uppercase tracking-wider bg-black/5 border-b border-black/5 whitespace-nowrap">
-                        <th className="px-4 py-3">Sr. No</th>
-                        <th className="px-4 py-3">Tool No</th>
-                        <th className="px-4 py-3">Det No</th>
-                        <th className="px-4 py-3">L</th>
-                        <th className="px-4 py-3">W</th>
-                        <th className="px-4 py-3">H</th>
-                        <th className="px-4 py-3">Material</th>
-                        <th className="px-4 py-3 text-right">Qty</th>
-                        <th className="px-4 py-3 text-right">AP WT.</th>
-                        <th className="px-4 py-3 text-right">Total WT</th>
-                        <th className="px-4 py-3 text-right">Rate</th>
-                        <th className="px-4 py-3 text-right">Basic Cost</th>
-                        <th className="px-4 py-3 text-right">GST</th>
-                        <th className="px-4 py-3 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {viewingPoDetails.items?.map((item: any, i: number) => {
-                        const cf = item.customFields || {};
-                        return (
-                          <tr key={item.id} className="text-xs text-zinc-600 hover:bg-white transition-colors">
-                            <td className="px-4 py-3">{cf.srNo || (i + 1)}</td>
-                            <td className="px-4 py-3 font-semibold text-zinc-900 whitespace-nowrap">{cf.toolNo || '-'}</td>
-                            <td className="px-4 py-3">{cf.detNo || (i + 1)}</td>
-                            <td className="px-4 py-3">{cf.L || '-'}</td>
-                            <td className="px-4 py-3">{cf.W || '-'}</td>
-                            <td className="px-4 py-3">{cf.H || '-'}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">{cf.material || item.material?.materialGrade || item.material?.materialName || '-'}</td>
-                            <td className="px-4 py-3 text-right">{cf.qty || Number(item.orderedQty)}</td>
-                            <td className="px-4 py-3 text-right font-mono">{cf.apWt ? Number(cf.apWt).toFixed(2) : '-'}</td>
-                            <td className="px-4 py-3 text-right font-mono">{cf.totalWt ? Number(cf.totalWt).toFixed(2) : '-'}</td>
-                            <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.rate || item.agreedRate).toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.basicCost || item.lineTotal).toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right font-mono">&#8377;{Number(cf.gst || 0).toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right font-mono font-bold text-zinc-900">&#8377;{Number(cf.total || item.lineTotal).toLocaleString()}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    
-                    {/* Per Tool Summary Footer */}
-                    <tfoot className="bg-amber-500/5 border-t-2 border-amber-500/20">
-                      <tr className="text-xs font-bold text-amber-400">
-                        <td colSpan={7} className="px-4 py-3 text-right uppercase tracking-wider text-[10px]">Per Tool Summary</td>
-                        <td className="px-4 py-3 text-right">{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.qty) || it.orderedQty || 0), 0)}</td>
-                        <td className="px-4 py-3"></td>
-                        <td className="px-4 py-3 text-right font-mono">{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.totalWt) || 0), 0).toFixed(2)}</td>
-                        <td className="px-4 py-3"></td>
-                        <td className="px-4 py-3 text-right font-mono">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.basicCost) || it.lineTotal || 0), 0).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right font-mono">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.gst) || 0), 0).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right font-mono font-black text-amber-500">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.total) || it.lineTotal || 0), 0).toLocaleString()}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                <div className="bg-white/40 backdrop-blur-xl border border-white shadow-lg rounded-2xl overflow-hidden">
+                  <div className="overflow-x-auto hide-scrollbar">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="text-[10px] font-black text-zinc-500 uppercase tracking-widest bg-zinc-100/50 backdrop-blur-sm border-b border-black/5 whitespace-nowrap">
+                          <th className="px-5 py-4">Sr. No</th>
+                          <th className="px-5 py-4">Tool No</th>
+                          <th className="px-5 py-4">Det No</th>
+                          <th className="px-5 py-4">L</th>
+                          <th className="px-5 py-4">W</th>
+                          <th className="px-5 py-4">H</th>
+                          <th className="px-5 py-4">Material</th>
+                          <th className="px-5 py-4 text-right">Qty</th>
+                          <th className="px-5 py-4 text-right">AP WT.</th>
+                          <th className="px-5 py-4 text-right">Total WT</th>
+                          <th className="px-5 py-4 text-right">Rate</th>
+                          <th className="px-5 py-4 text-right">Basic Cost</th>
+                          <th className="px-5 py-4 text-right">GST</th>
+                          <th className="px-5 py-4 text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black/5">
+                        {viewingPoDetails.items?.map((item: any, i: number) => {
+                          const cf = item.customFields || {};
+                          return (
+                            <tr key={item.id} className="text-xs text-zinc-600 hover:bg-white/60 transition-colors group">
+                              <td className="px-5 py-3.5 font-medium">{cf.srNo || (i + 1)}</td>
+                              <td className="px-5 py-3.5 font-bold text-zinc-900 whitespace-nowrap">{cf.toolNo || '-'}</td>
+                              <td className="px-5 py-3.5 font-medium">{cf.detNo || (i + 1)}</td>
+                              <td className="px-5 py-3.5 text-zinc-500">{cf.L || '-'}</td>
+                              <td className="px-5 py-3.5 text-zinc-500">{cf.W || '-'}</td>
+                              <td className="px-5 py-3.5 text-zinc-500">{cf.H || '-'}</td>
+                              <td className="px-5 py-3.5 whitespace-nowrap font-medium text-zinc-800">{cf.material || item.material?.materialGrade || item.material?.materialName || '-'}</td>
+                              <td className="px-5 py-3.5 text-right font-bold text-zinc-900">{cf.qty || Number(item.orderedQty)}</td>
+                              <td className="px-5 py-3.5 text-right font-mono text-zinc-500">{cf.apWt ? Number(cf.apWt).toFixed(2) : '-'}</td>
+                              <td className="px-5 py-3.5 text-right font-mono text-zinc-800 font-bold">{cf.totalWt ? Number(cf.totalWt).toFixed(2) : '-'}</td>
+                              <td className="px-5 py-3.5 text-right font-mono">&#8377;{Number(cf.rate || item.agreedRate).toLocaleString()}</td>
+                              <td className="px-5 py-3.5 text-right font-mono">&#8377;{Number(cf.basicCost || item.lineTotal).toLocaleString()}</td>
+                              <td className="px-5 py-3.5 text-right font-mono text-zinc-400">&#8377;{Number(cf.gst || 0).toLocaleString()}</td>
+                              <td className="px-5 py-3.5 text-right font-mono font-black text-amber-700">&#8377;{Number(cf.total || item.lineTotal).toLocaleString()}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      
+                      {/* Per Tool Summary Footer */}
+                      <tfoot className="bg-amber-50/50 backdrop-blur-md border-t-2 border-amber-500/20">
+                        <tr className="text-xs font-bold text-amber-700">
+                          <td colSpan={7} className="px-5 py-4 text-right uppercase tracking-widest text-[10px]">Per Tool Summary</td>
+                          <td className="px-5 py-4 text-right text-sm">{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.qty) || it.orderedQty || 0), 0)}</td>
+                          <td className="px-5 py-4"></td>
+                          <td className="px-5 py-4 text-right font-mono text-sm">{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.totalWt) || 0), 0).toFixed(2)}</td>
+                          <td className="px-5 py-4"></td>
+                          <td className="px-5 py-4 text-right font-mono text-sm">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.basicCost) || it.lineTotal || 0), 0).toLocaleString()}</td>
+                          <td className="px-5 py-4 text-right font-mono text-sm">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.gst) || 0), 0).toLocaleString()}</td>
+                          <td className="px-5 py-4 text-right font-mono font-black text-base">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.total) || it.lineTotal || 0), 0).toLocaleString()}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
                 </div>
               </div>
 
               {/* Goods Receipts Audit Timeline */}
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center">
-                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-emerald-500" />
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center">
+                  <Calendar className="w-4 h-4 mr-2 text-emerald-500" />
                   Goods Receipt Notes (GRN) History
                 </h4>
 
                 {viewingPoDetails.goodsReceiptHeaders && viewingPoDetails.goodsReceiptHeaders.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {viewingPoDetails.goodsReceiptHeaders.map((grn: any) => (
-                      <div key={grn.id} className="p-4 rounded-xl bg-black/30 border border-black/5 space-y-3 relative overflow-hidden group/grn">
-                        <div className="flex justify-between items-start">
+                      <div key={grn.id} className="p-5 rounded-2xl bg-white/60 backdrop-blur-md border border-white shadow-sm hover:shadow-md transition-all duration-300 space-y-4 relative overflow-hidden group/grn">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[20px] -mr-10 -mt-10 pointer-events-none group-hover/grn:bg-emerald-500/10 transition-all duration-500" />
+                        
+                        <div className="flex justify-between items-start relative z-10">
                           <div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs font-bold text-emerald-400 font-mono">{grn.grnNumber}</span>
-                              <span className="text-[9px] font-bold bg-black/5 border border-black/10 px-2 py-0.5 rounded text-zinc-500 uppercase">Received</span>
+                            <div className="flex items-center space-x-3 mb-1.5">
+                              <span className="text-sm font-bold text-emerald-600 font-mono tracking-tight">{grn.grnNumber}</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider shadow-sm">
+                                Received
+                              </span>
                             </div>
-                            <p className="text-[10px] text-slate-500 mt-1">Processed: {new Date(grn.receiptDate).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-zinc-500 font-medium flex items-center">
+                              <Calendar className="w-3 h-3 mr-1 opacity-50" />
+                              Processed on <strong className="text-zinc-700 ml-1">{new Date(grn.receiptDate).toLocaleDateString()}</strong>
+                            </p>
                           </div>
                           {grn.remarks && (
-                            <div className="text-[10px] bg-black/5 text-zinc-500 px-2 py-1 rounded max-w-xs truncate border border-black/5">
+                            <div className="text-[10px] bg-white/80 text-zinc-600 px-3 py-1.5 rounded-lg max-w-xs truncate border border-black/5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] font-medium">
                               {grn.remarks}
                             </div>
                           )}
                         </div>
 
                         {/* Received items checklist */}
-                        <div className="space-y-1.5 pt-2 border-t border-black/10/[0.03]">
+                        <div className="space-y-2 pt-4 border-t border-black/5 relative z-10">
                           {grn.items?.map((gItem: any) => (
-                            <div key={gItem.id} className="flex justify-between text-xs py-1 px-2 bg-white rounded">
-                              <span className="text-zinc-500">{gItem.poItem?.material?.materialName}</span>
-                              <div className="space-x-3 font-semibold text-zinc-600">
-                                <span>Rcvd: <span className="font-mono text-zinc-900">{Number(gItem.receivedQty)}</span></span>
-                                <span className="text-emerald-500">Accpt: <span className="font-mono text-emerald-400">{Number(gItem.acceptedQty)}</span></span>
+                            <div key={gItem.id} className="flex justify-between items-center text-xs p-3 bg-white/80 backdrop-blur-sm border border-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                                <span className="font-bold text-zinc-800">{gItem.poItem?.material?.materialName}</span>
+                              </div>
+                              <div className="flex items-center space-x-4 font-medium text-zinc-500">
+                                <span className="bg-zinc-100/50 px-2 py-1 rounded-md">Rcvd: <strong className="font-mono text-zinc-900 ml-1">{Number(gItem.receivedQty)}</strong></span>
+                                <span className="bg-emerald-50/50 px-2 py-1 rounded-md text-emerald-600">Accpt: <strong className="font-mono text-emerald-700 ml-1">{Number(gItem.acceptedQty)}</strong></span>
                                 {Number(gItem.rejectedQty) > 0 && (
-                                  <span className="text-red-500">Rej: <span className="font-mono text-red-400">{Number(gItem.rejectedQty)}</span></span>
+                                  <span className="bg-red-50/50 px-2 py-1 rounded-md text-red-600">Rej: <strong className="font-mono text-red-700 ml-1">{Number(gItem.rejectedQty)}</strong></span>
                                 )}
                               </div>
                             </div>

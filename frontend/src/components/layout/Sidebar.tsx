@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Package, Wrench } from "lucide-react";
+import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Package, Wrench, FileText } from "lucide-react";
 import { useAuth } from '../auth/AuthProvider';
 
 export function Sidebar() {
@@ -101,6 +101,13 @@ export function Sidebar() {
           />
           
           <div className="mt-auto mb-2 pt-6 border-t border-black/5">
+            <NavItem 
+              href="/activity-log"
+              icon={<FileText className="h-5 w-5" />} 
+              label="Activity Log" 
+              active={pathname.startsWith("/activity-log")} 
+              isExpanded={isHovered}
+            />
             <NavItem 
               href="/settings"
               icon={<Settings className="h-5 w-5" />} 

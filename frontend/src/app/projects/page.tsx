@@ -77,9 +77,23 @@ export default function ProjectsPage() {
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="flex justify-between items-end mb-16 relative z-10"
           >
-            <div>
-              <h1 className="text-display font-bold tracking-tight mb-2 bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">Active Projects</h1>
-              <p className="text-body-large text-zinc-500">All manufacturing missions currently in progress.</p>
+            <div className="relative group cursor-default">
+              <div className="absolute -inset-x-6 -inset-y-4 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-transparent blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 rounded-full" />
+              
+              <h1 
+                className="relative text-[3.5rem] leading-none font-black tracking-tighter mb-3 bg-gradient-to-b from-zinc-700 via-zinc-900 to-black bg-clip-text text-transparent"
+                style={{ textShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+              >
+                Active Projects
+              </h1>
+              
+              <p className="relative text-lg font-medium text-zinc-500/80 flex items-center gap-3">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                </span>
+                All manufacturing missions currently in progress.
+              </p>
             </div>
             <div className="flex items-center space-x-4">
               <motion.button 

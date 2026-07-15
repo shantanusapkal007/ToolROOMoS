@@ -1,6 +1,7 @@
 import React from 'react';
 import { PackageOpen } from 'lucide-react';
 import { Button } from './Button';
+import { motion } from 'framer-motion';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -11,28 +12,80 @@ interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ 
-  icon = <PackageOpen className="h-12 w-12 text-slate-500" />, 
+  icon = <PackageOpen className="h-10 w-10 text-blue-500" />, 
   title, 
   description, 
   actionLabel, 
   onAction 
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center w-full max-w-2xl mx-auto">
-      <div className="relative mb-6">
-        <div className="absolute inset-0 bg-indigo-500/10 blur-[60px] rounded-full"></div>
-        <div className="relative bg-white p-6 rounded-[2rem] border border-black/5 shadow-elevation">
-          {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'h-16 w-16 text-indigo-600 opacity-80' })}
-        </div>
-      </div>
-      <h3 className="text-2xl font-bold text-zinc-900 mb-3 tracking-tight">{title}</h3>
-      <p className="text-body text-zinc-500 max-w-md mx-auto mb-8 leading-relaxed">
-        {description}
-      </p>
+    <div className="flex flex-col items-center justify-center py-32 px-6 text-center w-full max-w-2xl mx-auto relative">
+      
+      {/* Background Ambient Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-gradient-to-tr from-blue-500/5 via-indigo-500/5 to-purple-500/5 rounded-full blur-[80px] pointer-events-none z-0" />
+
+      {/* Floating Icon Container */}
+      <motion.div 
+        initial={{ scale: 0.8, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        className="relative mb-10 z-10"
+      >
+        <motion.div 
+          animate={{ y: [-5, 5, -5] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="relative"
+        >
+          {/* Outer Ring Glow */}
+          <div className="absolute -inset-6 bg-gradient-to-b from-blue-400/20 to-transparent blur-xl rounded-full opacity-60" />
+          
+          {/* Glass Orb */}
+          <div className="relative h-28 w-28 rounded-[2rem] bg-gradient-to-br from-white/80 to-white/30 border border-white/60 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.08),inset_0_2px_4px_rgba(255,255,255,0.8)] backdrop-blur-xl flex items-center justify-center overflow-hidden">
+            {/* Internal Highlight */}
+            <div className="absolute -top-4 -left-4 w-16 h-16 bg-white/60 rounded-full blur-xl opacity-50" />
+            
+            {/* The Icon */}
+            {React.cloneElement(icon as React.ReactElement<{className?: string}>, { 
+              className: 'h-12 w-12 text-blue-600 drop-shadow-sm z-10' 
+            })}
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Typography Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="z-10"
+      >
+        <h3 className="text-[2.25rem] font-bold text-transparent bg-clip-text bg-gradient-to-br from-zinc-900 to-zinc-600 mb-4 tracking-tight drop-shadow-sm leading-tight">
+          {title}
+        </h3>
+        <p className="text-lg text-zinc-500/90 max-w-md mx-auto mb-10 leading-relaxed font-medium">
+          {description}
+        </p>
+      </motion.div>
+
+      {/* Action Button */}
       {actionLabel && onAction && (
-        <Button variant="primary" size="lg" onClick={onAction}>
-          {actionLabel}
-        </Button>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="z-10"
+        >
+          <motion.button 
+            whileHover={{ scale: 1.03, boxShadow: '0 20px 40px -10px rgba(59,130,246,0.3)' }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onAction}
+            className="group relative px-8 py-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-2xl text-white font-semibold text-lg overflow-hidden shadow-elevation border border-blue-400/50"
+          >
+            {/* Button Inner Glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out" />
+            <span className="relative z-10">{actionLabel}</span>
+          </motion.button>
+        </motion.div>
       )}
     </div>
   );

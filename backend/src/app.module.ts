@@ -35,6 +35,7 @@ import { UsersModule } from './users/users.module';
 import { InspectionStandardsModule } from './master-data/inspection-standards/inspection-standards.module';
 import { LookupsModule } from './master-data/lookups/lookups.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { ClsModule } from 'nestjs-cls';
 
 /**
  * AppModule
@@ -53,6 +54,12 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
 
     // Scheduling
     ScheduleModule.forRoot(),
+
+    // Async Local Storage / Request Context
+    ClsModule.forRoot({
+      global: true,
+      middleware: { mount: true },
+    }),
 
     // Layer 5 — Persistence (Global)
     PrismaModule,

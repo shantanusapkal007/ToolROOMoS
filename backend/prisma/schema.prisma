@@ -2103,3 +2103,20 @@ model MaintenanceSparePart {
   @@map("maintenance_spare_parts")
 }
 
+model AuditLog {
+  id          String   @id @default(uuid())
+  entityId    String
+  entityType  String
+  action      String
+  performedBy String
+  snapshot    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([entityId])
+  @@index([entityType])
+  @@index([performedBy])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

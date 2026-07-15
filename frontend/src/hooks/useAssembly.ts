@@ -6,7 +6,7 @@ export const useAssemblyOrders = (projectId: string) => {
     queryKey: ['assemblyOrders', projectId],
     queryFn: async () => {
       const data = await api.get(`/projects/${projectId}/assembly/orders`);
-      return data;
+      return data as any;
     },
     enabled: !!projectId
   });
@@ -43,7 +43,7 @@ export const useProjectTrials = (projectId: string) => {
     queryKey: ['projectTrials', projectId],
     queryFn: async () => {
       const data = await api.get(`/projects/${projectId}/assembly/trials`);
-      return data;
+      return data as any;
     },
     enabled: !!projectId
   });
