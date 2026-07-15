@@ -5,6 +5,7 @@ import { Sidebar } from "../../components/layout/Sidebar";
 import { Plus, ArrowRight, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as XLSX from 'xlsx';
+import { exportPremiumProjects } from "../../utils/exportPremiumProjects";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useToast } from "../../components/ui/Toast";
 import { LoadingState } from "../../components/ui/LoadingState";
@@ -58,23 +59,7 @@ export default function ProjectsPage() {
   };
 
   const handleExportProjects = () => {
-    if (!projects || projects.length === 0) return;
-    
-    const exportData = projects.map((p: any) => ({
-      "Project Number": p.projectNumber,
-      "Part Name": p.partName,
-      "Customer": p.customer?.companyName || '-',
-      "Status": p.status,
-      "Current Stage": p.currentStage,
-      "Priority": p.priority,
-      "Target Delivery": p.targetDeliveryDate ? formatDate(p.targetDeliveryDate) : '-',
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Projects");
-    
-    XLSX.writeFile(wb, `Projects_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+    exportPremiumProjects(projects || []);
   };
 
   // Apple Spring Configuration

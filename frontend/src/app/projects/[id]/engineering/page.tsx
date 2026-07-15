@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+import { exportPremiumBOM } from '../../../../utils/exportPremiumBOM';
 import { api } from "../../../../lib/api";
 import { FileText, Layers, GitMerge, CheckCircle, Lock, Cpu, Settings } from "lucide-react";
 import { Input } from "../../../../components/ui/Input";
@@ -88,55 +89,7 @@ export default function EngineeringTab({ params }: { params: Promise<{ id: strin
 
 
   const handleExportBOM = () => {
-    const documentData: any[][] = [];
-
-    documentData.push(["                            KRUPA TOOLS & STAMPING LTD\r\n                            B O M Table"]);
-    documentData.push(["CUSTOMER", null, project?.customer?.companyName || "", null, "PROJECT NUMBER", project?.projectNumber || "", "VERSION"]);
-    
-    const headers = ["NO.", "PART NAME", "QTY", "CATALOG/SIZE", "FINISH SIZES", "STOCK SIZES", "MATERIAL"];
-    documentData.push(headers);
-
-    bomItems.forEach((item, idx) => {
-      const mat = materials?.find((m: any) => m.id === item.materialId);
-      const matName = mat ? `${mat.materialCode}` : "";
-      
-      const finishSizes = item.finishL && item.finishW && item.finishH ? `${item.finishL}X${item.finishW}X${item.finishH}` : (item.finishL || "");
-      const stockSizes = item.rmL && item.rmW && item.rmH ? `${item.rmL}X${item.rmW}X${item.rmH}` : (item.rmL || "");
-
-      documentData.push([
-        idx + 1,
-        item.partName,
-        item.requiredQty,
-        item.description, // using description as catalog/size 
-        finishSizes,
-        stockSizes,
-        matName
-      ]);
-    });
-
-    documentData.push(["RELEASE DATE", null, `DATE :-${bomHeader.releaseDate || new Date().toLocaleDateString()}`, null, "DESIGNER BY", bomHeader.designerBy || "", "APPROVED BY", bomHeader.approvedBy || ""]);
-
-    const worksheet = XLSX.utils.aoa_to_sheet(documentData);
-
-    // Apply exact template merges
-    worksheet['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Header Title
-      
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }, // CUSTOMER label
-      { s: { r: 1, c: 2 }, e: { r: 1, c: 3 } }, // Customer Name value
-      
-      { s: { r: documentData.length - 1, c: 0 }, e: { r: documentData.length - 1, c: 1 } }, // RELEASE DATE label
-      { s: { r: documentData.length - 1, c: 2 }, e: { r: documentData.length - 1, c: 3 } }, // DATE value
-    ];
-
-    const wscols = [
-      { wch: 5 },  { wch: 30 }, { wch: 6 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }
-    ];
-    worksheet['!cols'] = wscols;
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "PDW_BOM_TEMPLATE");
-    XLSX.writeFile(workbook, `BOM_${project?.projectNumber || 'Form'}.xlsx`);
+    exportPremiumBOM(project, bomItems || [], materials || [], bomHeader || {});
   };
 
   const handleSubmitBom = async (e: React.FormEvent) => {

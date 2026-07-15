@@ -5,6 +5,7 @@ import { api } from "../../../../lib/api";
 import { ShoppingCart, Plus, FileText, Package, ArrowRight, ChevronRight, CheckCircle2, Clock, X, Calendar, Activity, Info, Download, Trash2, Upload } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { exportPremiumPO } from '../../../../utils/exportPremiumPO';
+import { exportPremiumRMSlip } from '../../../../utils/exportPremiumRMSlip';
 import { Input } from "../../../../components/ui/Input";
 import { Select } from "../../../../components/ui/Select";
 import { useToast } from "../../../../components/ui/Toast";
@@ -404,100 +405,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
 
   const handleExportGRN = (po: any) => {
     if (!po) return;
-    
-    const documentData: any[][] = [];
-
-    documentData.push(["KRUPA TOOLS & STAMPINGS LTD."]);
-    documentData.push(["GUT NO.23 PLOT NO.45 KAMLAPUR MIDC, WALUJ AURANAGABAD."]);
-    documentData.push([]);
-    documentData.push(["VENDOR NAME & ADDRESS", po.vendor?.companyName || po.vendor?.vendorName || "STEEL HUB", null, null, null, null, null, null, null, "RM SLIP NO", po.customFields?.rmSlipNo || "PUR/26-27/0035"]);
-    documentData.push([null, po.vendor?.address || "WALUJ", null, null, null, null, null, null, null, "DATE", po.createdAt ? new Date(po.createdAt).toLocaleDateString() : new Date().toLocaleDateString()]);
-    documentData.push([]);
-    documentData.push(["KINDLY SUPPLY THE FOLLOWING ITEMS AS PER TERMS & CONDITIONS MENTIONED BELOW."]);
-    
-    const headers = ["SR.NO","TOOL NO","DET NO","L","W","H","MATERIAL","QTY","AP WT.","TOTAL WT","RATE","BASIC COST","GST ","TOTAL"];
-    documentData.push(headers);
-
-    let grandQty = 0;
-    let grandTotalWt = 0;
-    let grandBasicCost = 0;
-    let grandGst = 0;
-    let grandTotal = 0;
-
-    po.items?.forEach((item: any, idx: number) => {
-      // Find the corresponding GRN item either from the direct relation or from the included headers
-      const grnItem = item.goodsReceiptItems?.[0] || 
-                      po.goodsReceiptHeaders?.[0]?.items?.find((i: any) => i.poItemId === item.id);
-      
-      const qty = grnItem ? Number(grnItem.acceptedQty) : Number(item.orderedQty);
-      const rate = Number(item.agreedRate || 0);
-      
-      const apWt = Number(grnItem?.apWeight || 0);
-      const totalWt = Number(grnItem?.totalWeight || (apWt * qty) || 0);
-      
-      const basicCost = Number(grnItem?.basicCost || (totalWt * rate) || 0);
-      const gstPercent = Number(item.gstPercent || 18);
-      const gst = Number(grnItem?.gst || (basicCost * (gstPercent / 100)) || 0);
-      const total = Number(grnItem?.total || (basicCost + gst) || 0);
-
-      grandQty += qty;
-      grandTotalWt += totalWt;
-      grandBasicCost += basicCost;
-      grandGst += gst;
-      grandTotal += total;
-
-      documentData.push([
-        idx + 1,
-        grnItem?.toolNo || po.customFields?.toolNo || "-",
-        grnItem?.detNo || "-",
-        grnItem?.length || "-",
-        grnItem?.width || "-",
-        grnItem?.height || "-",
-        item.material?.materialCode || "",
-        qty,
-        apWt > 0 ? apWt : "",
-        totalWt > 0 ? totalWt : "",
-        rate,
-        basicCost,
-        gst,
-        total
-      ]);
-    });
-
-    documentData.push([
-      null, null, null, null, null, null, null, 
-      grandQty, 
-      null, 
-      grandTotalWt, 
-      null, 
-      grandBasicCost, 
-      grandGst, 
-      grandTotal
-    ]);
-
-    const ws = XLSX.utils.aoa_to_sheet(documentData);
-    
-    // Apply exact template merges for RM Slip
-    ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } }, // KRUPA TOOLS
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } }, // Address
-      
-      { s: { r: 3, c: 1 }, e: { r: 3, c: 8 } }, // Vendor Name value
-      { s: { r: 4, c: 1 }, e: { r: 4, c: 8 } }, // Address value
-      
-      { s: { r: 6, c: 0 }, e: { r: 6, c: 13 } }, // KINDLY SUPPLY...
-    ];
-
-    const wscols = [
-      { wch: 6 },  { wch: 15 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, 
-      { wch: 15 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 8 }, { wch: 15 }, { wch: 12 }, { wch: 15 }
-    ];
-    ws['!cols'] = wscols;
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "MS");
-    
-    XLSX.writeFile(wb, `RMSlip_${po.poNumber}.xlsx`);
+    exportPremiumRMSlip(po);
   };
 
   const handleIssuePO = async (poId: string) => {
