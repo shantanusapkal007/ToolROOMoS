@@ -34,6 +34,7 @@ import { ReportsModule } from './reports/reports.module';
 import { UsersModule } from './users/users.module';
 import { InspectionStandardsModule } from './master-data/inspection-standards/inspection-standards.module';
 import { LookupsModule } from './master-data/lookups/lookups.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
 
 /**
  * AppModule
@@ -89,6 +90,7 @@ import { LookupsModule } from './master-data/lookups/lookups.module';
     FormsModule,
     ReportsModule,
     InspectionStandardsModule,
+    MaintenanceModule,
   ],
   controllers: [AppController],
   providers: [

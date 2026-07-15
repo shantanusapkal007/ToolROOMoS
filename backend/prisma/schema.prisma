@@ -25,6 +25,9 @@ model User {
   plants         Plant?        @relation("UserPlants", fields: [plantId], references: [id])
   primaryPlant   Plant?        @relation("UserPrimaryPlant", fields: [primaryPlantId], references: [id])
   projectTeams   ProjectTeam[]
+  reportedTickets  MaintenanceTicket[] @relation("ReportedTickets")
+  assignedTickets  MaintenanceTicket[] @relation("AssignedTickets")
+  maintenanceLogs  MaintenanceLog[]
 
   @@map("users")
 }
@@ -72,6 +75,7 @@ model Plant {
   users        User[]       @relation("UserPlants")
   primaryUsers User[]       @relation("UserPrimaryPlant")
   warehouses   Warehouse[]
+  maintenanceTickets MaintenanceTicket[]
 
   @@map("plants")
 }
@@ -174,6 +178,7 @@ model Material {
   purchaseRequestItems PurchaseRequestItem[]
   vendorBillItems      VendorBillItem[]
   assemblyComponents   AssemblyComponent[]
+  maintenanceSpareParts MaintenanceSparePart[]
 
   @@map("materials")
 }
@@ -221,6 +226,7 @@ model Machine {
 
   isActive    Boolean      @default(true)
   msdrHeaders MsdrHeader[]
+  maintenanceTickets MaintenanceTicket[]
 
   @@map("machines")
 }
@@ -455,6 +461,7 @@ model Project {
   projectTeams           ProjectTeam[]
   accountEntries         AccountEntry[]
   assemblyHeaders        AssemblyHeader[]
+  maintenanceTickets     MaintenanceTicket[]
 
   @@map("projects")
 }
@@ -1810,13 +1817,13 @@ model ProjectTeam {
 
 model AccountEntry {
   id          String   @id @default(uuid())
-  projectId   String
+  projectId   String?
   type        String
   amount      Decimal
   referenceId String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  project     Project  @relation(fields: [projectId], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id])
 
   entryDate DateTime?
 
@@ -2004,5 +2011,65 @@ model WorkflowStepInstance {
   startedAt    DateTime?
 
   @@map("workflow_step_instances")
+}
+
+model MaintenanceTicket {
+  id               String   @id @default(uuid())
+  ticketNumber     String   @unique
+  machineId        String
+  issueDescription String
+  priority         String   @default("NORMAL") // LOW, NORMAL, HIGH, CRITICAL
+  status           String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  lotoApplied      Boolean  @default(false)
+  
+  reportedById     String
+  assignedToId     String?
+  projectId        String?
+  plantId          String
+  totalCost        Decimal  @default(0)
+  category         String?  // MECHANICAL, ELECTRICAL, HYDRAULIC, PNEUMATIC, SOFTWARE
+  downtimeStartedAt DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  resolvedAt       DateTime?
+
+  machine          Machine  @relation(fields: [machineId], references: [id])
+  project          Project? @relation(fields: [projectId], references: [id])
+  plant            Plant    @relation(fields: [plantId], references: [id])
+  reportedBy       User     @relation("ReportedTickets", fields: [reportedById], references: [id])
+  assignedTo       User?    @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  logs             MaintenanceLog[]
+  spareParts       MaintenanceSparePart[]
+
+  @@map("maintenance_tickets")
+}
+
+model MaintenanceLog {
+  id             String   @id @default(uuid())
+  ticketId       String
+  actionTaken    String
+  timeSpentHours Decimal  @default(0)
+  loggedById     String
+  createdAt      DateTime @default(now())
+
+  ticket         MaintenanceTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  loggedBy       User              @relation(fields: [loggedById], references: [id])
+
+  @@map("maintenance_logs")
+}
+
+model MaintenanceSparePart {
+  id               String   @id @default(uuid())
+  ticketId         String
+  materialId       String
+  quantityConsumed Decimal
+  costAtTime       Decimal  @default(0)
+  createdAt        DateTime @default(now())
+
+  ticket           MaintenanceTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  material         Material          @relation(fields: [materialId], references: [id])
+
+  @@map("maintenance_spare_parts")
 }
 

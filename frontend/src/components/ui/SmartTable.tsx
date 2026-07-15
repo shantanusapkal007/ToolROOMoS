@@ -6,6 +6,8 @@ import * as XLSX from 'xlsx';
 import { EmptyState } from './EmptyState';
 import { LoadingState } from './LoadingState';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo, useRef } from 'react';
+import { Search } from 'lucide-react';
 
 interface SmartTableProps {
   columns: EntityColumn[];
@@ -57,10 +59,53 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
     );
   }
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!tableRef.current) return;
+    const rect = tableRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    tableRef.current.style.setProperty('--mouse-x', `${x}px`);
+    tableRef.current.style.setProperty('--mouse-y', `${y}px`);
+  };
+
+  const filteredData = useMemo(() => {
+    if (!searchQuery) return data;
+    const lowerQuery = searchQuery.toLowerCase();
+    return data.filter(row => {
+      return columns.some(col => {
+        const val = row[col.key];
+        if (val == null) return false;
+        if (typeof val === 'object') {
+          return JSON.stringify(val).toLowerCase().includes(lowerQuery);
+        }
+        return String(val).toLowerCase().includes(lowerQuery);
+      });
+    });
+  }, [data, searchQuery, columns]);
+
   return (
-    <div className="glass-panel w-full flex flex-col spotlight-card">
-      {exportable && data && data.length > 0 && (
-        <div className="flex justify-end items-center px-4 py-3 border-b border-white/5 bg-white/[0.01]">
+    <div 
+      ref={tableRef}
+      onMouseMove={handleMouseMove}
+      className="glass-panel w-full flex flex-col spotlight-card relative z-10"
+    >
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 py-4 border-b border-white/5 bg-white/[0.01] gap-4 relative z-20">
+        <div className="relative w-full sm:w-72 group">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+            <Search className="h-4 w-4" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search all columns..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:bg-black/60 shadow-inner transition-all"
+          />
+        </div>
+        {exportable && data && data.length > 0 && (
           <button 
             onClick={handleExport}
             className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-white/10 transition-colors"
@@ -68,12 +113,12 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
             <Download className="w-3.5 h-3.5" />
             <span>Export to Excel</span>
           </button>
-        </div>
-      )}
-      <div className="w-full overflow-x-auto overflow-y-hidden pb-4 hide-scrollbar">
+        )}
+      </div>
+      <div className="w-full overflow-auto max-h-[600px] pb-4 custom-scrollbar">
         <table className="w-full text-left border-collapse min-w-max">
-        <thead>
-          <tr className="border-b border-white/10 relative bg-white/[0.02]">
+        <thead className="sticky top-0 z-30">
+          <tr className="border-b border-white/10 bg-[#0a0a0c]/90 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             {columns.map((col) => (
               <th key={col.key} className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap relative z-10">
                 {col.label}
@@ -88,7 +133,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({ columns, data, isLoading
         </thead>
         <tbody className="divide-y divide-white/5 relative z-10">
           <AnimatePresence>
-            {data.map((row, idx) => (
+            {filteredData.map((row, idx) => (
               <motion.tr 
                 key={row.id || idx} 
                 initial={{ opacity: 0, y: 10 }}

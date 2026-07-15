@@ -30,7 +30,7 @@ export const SettingsModule: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 h-full flex flex-col relative z-0 pl-32 pr-12 animate-fade-in py-12">
+    <div className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] pr-8 animate-fade-in py-8">
       <PageHeader 
         title="System Settings" 
         subtitle="Manage company profile, users, forms, and preferences."

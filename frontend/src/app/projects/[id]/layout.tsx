@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from "../../../lib/api";
 import { Sidebar } from "../../../components/layout/Sidebar";
+import { PageHeader } from "../../../components/layout/PageHeader";
 import { WorkflowTimeline } from "../../../components/workspace/WorkflowTimeline";
-import { Clock, Calendar as CalendarIcon, Edit2 } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Edit2, Briefcase } from "lucide-react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LoadingState } from "../../../components/ui/LoadingState";
@@ -137,26 +138,14 @@ export default function ProjectLayout({
         <div className="flex-1 h-full flex flex-col animate-slide-up min-h-0 overflow-hidden">
             
           {/* Premium Ultra-Dense Context Header */}
-          <header className="relative flex items-center justify-between shrink-0 px-6 py-3 bg-white/[0.02] backdrop-blur-2xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] z-20 hide-on-print">
-            {/* Ambient Top Glow */}
-            <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent blur-[1px]" />
-            
-            <div className="flex items-center space-x-4 relative z-10">
-              <div className="flex items-center text-xs font-bold text-slate-400 uppercase tracking-widest bg-black/40 shadow-inner px-3 py-1.5 rounded-lg border border-white/5">
-                <Link href="/projects" className="hover:text-white transition-colors">Projects</Link>
-                <span className="mx-2 opacity-40">/</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">{project.projectNumber}</span>
-              </div>
-              
-              <h1 className="text-xl font-bold text-white tracking-tight truncate max-w-sm flex items-center">
-                {project.partName}
-              </h1>
-              
-              <div className="flex items-center space-x-2">
-                <span className="flex items-center text-xs text-slate-300 font-mono bg-white/[0.03] border border-white/10 px-2.5 py-1 rounded-md shadow-sm">
-                  <span className="text-slate-500 mr-1.5">PO:</span> {project.customerPoNumber}
-                </span>
-                
+          <PageHeader 
+            title={project.partName || 'Unknown Project'} 
+            description={`PO: ${project.customerPoNumber || 'N/A'}`}
+            icon={<Briefcase />}
+            colorHint="blue-500"
+            breadcrumbs={[{ label: 'Projects', href: '/projects' }, { label: project.projectNumber }]}
+            actions={
+              <div className="flex items-center space-x-3 z-10">
                 <span className={`flex items-center text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border shadow-[0_0_10px_rgba(0,0,0,0.2)] ${
                   project.currentStage === 'INVOICED' 
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
@@ -165,32 +154,31 @@ export default function ProjectLayout({
                   <div className={`w-1.5 h-1.5 rounded-full mr-2 ${project.currentStage === 'INVOICED' ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]' : 'bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.8)]'}`} />
                   {project.currentStage}
                 </span>
-              </div>
-            </div>
 
-            <div className="flex items-center space-x-3 z-10">
-              <button 
-                onClick={() => setShowDeliveryModal(true)}
-                className="group relative flex items-center bg-black/40 hover:bg-black/60 border border-white/10 hover:border-blue-500/50 shadow-inner rounded-xl px-4 py-2 transition-all duration-300"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-                <Clock className="h-4 w-4 mr-2.5 text-blue-500 group-hover:text-blue-400 relative z-10" />
-                <span className={`relative z-10 text-xs font-bold ${project.targetDeliveryDate ? 'text-slate-200' : 'text-slate-500 italic'}`}>
-                  {project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Delivery: Not Set'}
-                </span>
-                <Edit2 className="h-3.5 w-3.5 ml-3 text-slate-500 group-hover:text-blue-400 transition-colors relative z-10" />
-              </button>
-              
-              {/* Delete Button */}
-              <button
-                onClick={() => setShowDeleteStep1(true)}
-                className="p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 transition-all shadow-inner"
-                title="Delete Project"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              </button>
-            </div>
-          </header>
+                <button 
+                  onClick={() => setShowDeliveryModal(true)}
+                  className="group relative flex items-center bg-black/40 hover:bg-black/60 border border-white/10 hover:border-blue-500/50 shadow-inner rounded-xl px-4 py-2 transition-all duration-300"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                  <Clock className="h-4 w-4 mr-2.5 text-blue-500 group-hover:text-blue-400 relative z-10" />
+                  <span className={`relative z-10 text-xs font-bold ${project.targetDeliveryDate ? 'text-slate-200' : 'text-slate-500 italic'}`}>
+                    {project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Delivery: Not Set'}
+                  </span>
+                  <Edit2 className="h-3.5 w-3.5 ml-3 text-slate-500 group-hover:text-blue-400 transition-colors relative z-10" />
+                </button>
+                
+                {/* Delete Button */}
+                <button
+                  onClick={() => setShowDeleteStep1(true)}
+                  className="p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 transition-all shadow-inner"
+                  title="Delete Project"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
+            }
+          />
+
 
           {/* Project Navigation Tabs */}
           <div className="flex space-x-6 border-b border-white/5 px-6 pt-2 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar hide-on-print">

@@ -21,7 +21,7 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
   const delayedProjects = activeProjects.filter(p => p.targetDeliveryDate && new Date(p.targetDeliveryDate) < new Date());
   
   return (
-    <div className="flex-1 h-full overflow-y-auto pl-32 pr-12 py-12 pb-32 animate-fade-in hide-scrollbar">
+    <div className="flex-1 h-full overflow-y-auto px-8 py-8 pb-32 animate-fade-in hide-scrollbar">
       
       {/* Massive Typographical Header */}
       <div className="mb-14 flex items-end justify-between">

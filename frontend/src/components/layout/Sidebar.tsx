@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Package } from "lucide-react";
+import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Package, Wrench } from "lucide-react";
 import { useAuth } from '../auth/AuthProvider';
 
 export function Sidebar() {
@@ -21,7 +21,7 @@ export function Sidebar() {
       onMouseLeave={() => setIsHovered(false)}
       animate={{ width: isHovered ? "17rem" : "4.5rem" }}
       transition={springConfig}
-      className="fixed left-3 top-3 bottom-3 z-50 rounded-3xl border border-white/[0.08] shadow-[10px_0_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] bg-[#08080C] overflow-hidden flex flex-col group/sidebar transition-colors hover:border-white/15 hide-on-print"
+      className="fixed left-3 top-3 bottom-3 z-50 glass-sidebar flex flex-col group/sidebar transition-colors hover:border-white/20 hide-on-print"
     >
       {/* Ambient Inner Glow */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-purple-500/5 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-screen" />
@@ -90,6 +90,13 @@ export function Sidebar() {
             icon={<Package className="h-5 w-5" />} 
             label="Inventory Ledger" 
             active={pathname.startsWith("/inventory")} 
+            isExpanded={isHovered}
+          />
+          <NavItem 
+            href="/maintenance"
+            icon={<Wrench className="h-5 w-5" />} 
+            label="Maintenance" 
+            active={pathname.startsWith("/maintenance")} 
             isExpanded={isHovered}
           />
           
@@ -162,7 +169,7 @@ function NavItem({
       {active && (
         <motion.div 
           layoutId="activeNav"
-          className="absolute inset-0 bg-white/[0.03] border border-white/[0.05] rounded-xl pointer-events-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),_0_0_15px_rgba(255,255,255,0.05)]"
+          className="absolute inset-0 bg-white/[0.04] border border-white/[0.1] rounded-xl pointer-events-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_20px_rgba(255,255,255,0.05)]"
           initial={false}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >

@@ -1,11 +1,12 @@
 "use client";
 
 import React from 'react';
-import { Layers, GitMerge, FileText, Settings, Cpu } from 'lucide-react';
+import { Layers, GitMerge, FileText, Cpu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sidebar } from "@/components/layout/Sidebar";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const navigation = [
   { id: 'bom', label: 'Bill of Materials', desc: 'Material requirements', icon: <Layers /> },
@@ -20,18 +21,13 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
       <div className="flex-1 h-full flex flex-col relative z-0 pl-24 pr-6 animate-fade-in py-6 max-h-screen">
-        <div className="mb-4 flex items-end justify-between shrink-0">
-          <div>
-            <div className="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-full mb-2">
-              <Cpu className="w-3 h-3 text-amber-400" />
-              <span className="text-amber-400 text-[10px] font-bold tracking-widest uppercase">Engineering Hub</span>
-            </div>
-            <h1 className="text-3xl font-bold mb-1 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-500 drop-shadow-lg">
-              Engineering
-            </h1>
-            <h2 className="text-sm text-slate-400 font-medium tracking-wide">Manage BOMs, Routings, and Technical Data.</h2>
-          </div>
-        </div>
+        <PageHeader 
+          title="Engineering" 
+          description="Manage BOMs, Routings, and Technical Data."
+          icon={<Cpu />}
+          colorHint="amber-500"
+          breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Engineering' }]}
+        />
 
         <div className="flex flex-1 min-h-0 overflow-hidden mt-2 gap-6">
           {/* Sub Navigation Sidebar */}

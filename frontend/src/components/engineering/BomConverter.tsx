@@ -1,5 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import * as XLSX from 'xlsx';
+"use client";
+import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import * as XLSX from 'xlsx-js-style';
 import { 
   Upload, 
   FileSpreadsheet, 
@@ -8,7 +10,9 @@ import {
   Download, 
   Trash2, 
   Eye,
-  Sliders
+  Sliders,
+  X,
+  Maximize
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 
@@ -19,9 +23,10 @@ interface BomConverterProps {
   onSaveBOM?: (rows: any[]) => void;
 }
 
-interface ParsedBOMRow {
+export interface ParsedBOMRow {
   id: string;
-  srNo: string;
+  toolNo?: string;
+  srNo: string | number;
   partName: string;
   quantity: number;
   finishSize: string;
@@ -61,52 +66,52 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
   const [isConverted, setIsConverted] = useState<boolean>(false);
   const [validationRun, setValidationRun] = useState<boolean>(false);
   const [activePreviewTab, setActivePreviewTab] = useState<'all' | 'errors' | 'valid'>('all');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // --- Size Parser ---
   const parseDimensions = (sizeStr: string) => {
-    if (!sizeStr) return { length: '', width: '', height: '', isValid: false };
-    const cleaned = sizeStr.toString().trim();
+    if (!sizeStr) return { length: '-', width: '-', height: '-', isValid: true };
+    let cleaned = sizeStr.toString().trim();
     
-    // Check for round bar (e.g. Ø20x110 or Dia20x110)
+    // Check for round bar
     const isRound = /^[Ø0O\s]*dia/i.test(cleaned) || /^Ø/i.test(cleaned);
     
-    // Match numbers split by x, X, ×, *
-    const parts = cleaned.split(/[\s]*[xX×\*][\s]*/);
-    
-    if (isRound && parts.length >= 2) {
-      let dStr = parts[0];
-      let lStr = parts[1];
-      if (parts[0] === 'Ø' || parts[0].toLowerCase() === 'dia' || parts[0].toLowerCase() === '0') {
-         dStr = parts[1];
-         lStr = parts[2] || '';
-      }
-      
-      const dMatch = dStr?.match(/([\d\.]+)/);
-      const lMatch = lStr?.match(/([\d\.]+)/);
-      
-      const d = dMatch ? parseFloat(dMatch[1]) : NaN;
-      const l = lMatch ? parseFloat(lMatch[1]) : NaN;
-      
-      const isValid = !isNaN(d) && !isNaN(l) && d > 0 && l > 0;
-      // Format: L=Ø, W=Dia, H=Length
-      return { length: 'Ø', width: d, height: l, isValid };
+    if (isRound) {
+       cleaned = cleaned.replace(/^[Ø0O\s]*dia/i, '').replace(/^Ø/i, '').trim();
+       const parts = cleaned.split(/[\s]*[xX×\*][\s]*/);
+       const dMatch = parts[0]?.match(/([\d\.]+)/);
+       const lMatch = parts[1]?.match(/([\d\.]+)/);
+       
+       const d = dMatch ? parseFloat(dMatch[1]) : NaN;
+       const l = lMatch ? parseFloat(lMatch[1]) : NaN;
+       const isValid = !isNaN(d) && !isNaN(l) && d > 0 && l > 0;
+       
+       if (!isValid) return { length: '-', width: '-', height: '-', isValid: true };
+       return { length: 'Ø', width: d, height: l, isValid: true };
     }
 
+    const parts = cleaned.split(/[\s]*[xX×\*][\s]*/);
     if (parts.length < 3) {
-      return { length: '', width: '', height: '', isValid: false };
+      return { length: '-', width: '-', height: '-', isValid: true };
     }
     
-    // Pull numbers (including float decimals) from each part
-    const lMatch = parts[0].match(/([\d\.]+)/);
-    const wMatch = parts[1].match(/([\d\.]+)/);
-    const hMatch = parts[2].match(/([\d\.]+)/);
+    const lMatch = parts[0]?.match(/([\d\.]+)/);
+    const wMatch = parts[1]?.match(/([\d\.]+)/);
+    const hMatch = parts[2]?.match(/([\d\.]+)/);
 
     const l = lMatch ? parseFloat(lMatch[1]) : NaN;
     const w = wMatch ? parseFloat(wMatch[1]) : NaN;
     const h = hMatch ? parseFloat(hMatch[1]) : NaN;
 
     const isValid = !isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0;
-    return { length: l, width: w, height: h, isValid };
+    if (!isValid) return { length: '-', width: '-', height: '-', isValid: true };
+    
+    return { length: l, width: w, height: h, isValid: true };
   };
 
   // --- Calculations ---
@@ -133,12 +138,14 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
            const l = Number(item.height);
            const vol = Math.PI * Math.pow(d / 2, 2) * l;
            item.apWeight = (vol * item.density) / 1000000;
-        } else {
+        } else if (item.length !== '-' && item.width !== '-' && item.height !== '-') {
            const l = Number(item.length);
            const w = Number(item.width);
            const h = Number(item.height);
            const vol = l * w * h;
            item.apWeight = (vol * item.density) / 1000000;
+        } else {
+           item.apWeight = 0;
         }
     } else {
         item.apWeight = 0;
@@ -156,13 +163,6 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     }
     if (!row.quantity || isNaN(row.quantity) || row.quantity <= 0) {
       return `Row ${index + 1}: Quantity must be greater than 0.`;
-    }
-    if (!row.rawMaterialSize || !row.rawMaterialSize.toString().trim()) {
-      return `Row ${index + 1}: Raw Material Size is missing.`;
-    }
-    const size = parseDimensions(row.rawMaterialSize);
-    if (!size.isValid) {
-      return `Row ${index + 1}: Raw Material Size is invalid. Expected format like 280x235x50.`;
     }
     if (!row.materialInput || !row.materialInput.toString().trim()) {
       return `Row ${index + 1}: Material description is empty.`;
@@ -290,6 +290,10 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             } else if (clean.includes("material") || clean.includes("grade") || clean.includes("matl") || clean.includes("mat") || clean.includes("spec")) {
               tempMapping["material"] = c;
               matches++;
+            } else if (clean.includes("supplier") || clean.includes("vendor") || clean.includes("make") || clean.includes("brand")) {
+              tempMapping["supplier"] = c;
+            } else if (clean.includes("toolno") || clean.includes("projectno")) {
+              tempMapping["toolNo"] = c;
             } else if (clean.includes("catalogsize") || clean.includes("catsize") || clean.includes("standard")) {
               tempMapping["catalogSize"] = c;
             } else if (clean.includes("stocksize") || clean.includes("stock")) {
@@ -319,6 +323,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
         // 3. Map Data Rows
         const parsedItems: ParsedBOMRow[] = [];
+        let lastToolNo = "";
         
         for (let r = headerRowIndex + 1; r < allRows.length; r++) {
           const row = allRows[r];
@@ -327,30 +332,47 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
           // Skip footer summaries
           const firstCellStr = row[colMapping["srNo"]]?.toString().toLowerCase() || "";
-          if (firstCellStr.includes("prepared") || firstCellStr.includes("approved") || firstCellStr.includes("total")) {
+          if (firstCellStr.includes("prepared") || firstCellStr.includes("approved") || firstCellStr.includes("total") || firstCellStr.includes("release") || firstCellStr.includes("checked")) {
             continue;
           }
 
-          const srVal = colMapping["srNo"] !== -1 ? row[colMapping["srNo"]]?.toString().trim() || "" : "";
+          let srVal = colMapping["srNo"] !== -1 ? row[colMapping["srNo"]]?.toString().trim() || "" : "";
           const nameVal = colMapping["partName"] !== undefined ? row[colMapping["partName"]]?.toString().trim() || "" : "";
           const qtyVal = colMapping["quantity"] !== -1 ? (parseInt(row[colMapping["quantity"]]?.toString().trim() || "0", 10) || 0) : 0;
           const finishVal = colMapping["finishSize"] !== undefined ? row[colMapping["finishSize"]]?.toString().trim() || "" : "";
-          const rmVal = colMapping["rawMaterialSize"] !== -1 ? row[colMapping["rawMaterialSize"]]?.toString().trim() || "" : "";
-          const matVal = colMapping["material"] !== -1 ? row[colMapping["material"]]?.toString().trim() || "" : "";
+          let rmVal = colMapping["rawMaterialSize"] !== -1 ? row[colMapping["rawMaterialSize"]]?.toString().trim() || "" : "";
+          let matVal = colMapping["material"] !== -1 ? row[colMapping["material"]]?.toString().trim() || "" : "";
+          const supVal = colMapping["supplier"] !== undefined ? row[colMapping["supplier"]]?.toString().trim() || "" : "";
           const catVal = colMapping["catalogSize"] !== undefined ? row[colMapping["catalogSize"]]?.toString().trim() || "" : "";
           const stockVal = colMapping["stockSize"] !== undefined ? row[colMapping["stockSize"]]?.toString().trim() || "" : "";
+
+          // Check for Tool No column (Fill down if exists, else global tool no)
+          if (colMapping["toolNo"] !== undefined) {
+             const t = row[colMapping["toolNo"]]?.toString().trim();
+             if (t) lastToolNo = t;
+          }
+
+          if (!matVal && supVal) matVal = supVal;
+          if (!matVal && nameVal && !rmVal) matVal = nameVal;
+          
+          if (!rmVal && finishVal) rmVal = finishVal;
 
           if (!srVal && !nameVal && !rmVal && !catVal) continue; // Skip padding blank rows
 
           // Resolve dimensions
           const dimensions = parseDimensions(rmVal);
+          const fDimensions = parseDimensions(finishVal);
 
           const item: ParsedBOMRow = {
             id: `row-${r}-${Date.now()}`,
+            toolNo: lastToolNo || docProjectNum || project.projectNumber,
             srNo: srVal || (parsedItems.length + 1).toString(),
             partName: nameVal,
             quantity: qtyVal,
             finishSize: finishVal,
+            finishL: fDimensions.length as any,
+            finishW: fDimensions.width as any,
+            finishH: fDimensions.height as any,
             rawMaterialSize: rmVal,
             materialInput: matVal,
             catalogSize: catVal,
@@ -508,38 +530,98 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     ];
     documentData.push(headers);
 
-    // Populate Rows
+    // Group Rows by Tool No
+    const groupedRows: { [key: string]: typeof rows } = {};
+    rows.forEach(r => {
+      const t = r.toolNo || parsedMetadata?.projectNumber || project.projectNumber || 'UNKNOWN';
+      if (!groupedRows[t]) groupedRows[t] = [];
+      groupedRows[t].push(r);
+    });
+
     let grandQty = 0;
     let grandTotalWt = 0;
     let grandTotalCost = 0;
 
-    rows.forEach((row, idx) => {
-      grandQty += row.quantity;
-      grandTotalWt += row.totalWeight || 0;
-      
-      const rate = row.rate || 0;
-      const gst = row.gstPercent || 18;
-      grandTotalCost += (row.basicCost || 0) * (1 + (gst / 100)); // Includes GST
+    let currentRowIndex = 7; // Headers are at index 6
+    let groupIndex = 1;
+    const dynamicMerges: any[] = [];
 
+    Object.entries(groupedRows).forEach(([toolNo, items]) => {
+      let groupQty = 0;
+      let groupApWt = 0;
+      let groupTotalWt = 0;
+      let groupBasicCost = 0;
+      let groupGst = 0;
+      let groupTotalCost = 0;
+
+      const startRowForGroup = currentRowIndex;
+
+      items.forEach((row, idx) => {
+        const qty = row.quantity || 0;
+        const apWt = row.apWeight || 0;
+        const tw = row.totalWeight || 0;
+        const rate = row.rate || 0;
+        const basic = row.basicCost || 0;
+        const gstPct = row.gstPercent || 18;
+        const gstAmt = basic * (gstPct / 100);
+        const total = basic + gstAmt;
+
+        groupQty += qty;
+        groupApWt += apWt;
+        groupTotalWt += tw;
+        groupBasicCost += basic;
+        groupGst += gstAmt;
+        groupTotalCost += total;
+
+        documentData.push([
+          idx === 0 ? groupIndex : "", // SR.NO
+          idx === 0 ? toolNo : "",     // TOOL NO
+          row.srNo,                    // DET NO
+          row.length,                  // L
+          row.width,                   // W
+          row.height,                  // H
+          row.materialInput,           // MATERIAL
+          qty,                         // QTY
+          apWt > 0 ? apWt.toFixed(2) : "", // AP WT.
+          tw > 0 ? tw.toFixed(2) : "",     // TOTAL WT.
+          rate > 0 ? rate.toFixed(2) : "", // RATE
+          basic > 0 ? basic.toFixed(2) : "", // BASIC COST
+          gstAmt > 0 ? gstAmt.toFixed(2) : "", // GST
+          total > 0 ? total.toFixed(2) : ""  // TOTAL
+        ]);
+        currentRowIndex++;
+      });
+
+      // Merge SR.NO and TOOL NO for the group if multiple items
+      if (items.length > 1) {
+        dynamicMerges.push({ s: { r: startRowForGroup, c: 0 }, e: { r: startRowForGroup + items.length - 1, c: 0 } });
+        dynamicMerges.push({ s: { r: startRowForGroup, c: 1 }, e: { r: startRowForGroup + items.length - 1, c: 1 } });
+      }
+
+      // Group Subtotal Row
       documentData.push([
-        idx + 1, // SR.NO
-        parsedMetadata?.projectNumber || project.projectNumber, // TOOL NO
-        row.srNo, // DET NO
-        row.length, // L
-        row.width, // W
-        row.height, // H
-        row.materialInput, // MATERIAL
-        row.quantity, // QTY
-        row.apWeight ? row.apWeight.toFixed(2) : "", // AP WT.
-        row.totalWeight ? row.totalWeight.toFixed(2) : "", // TOTAL WT.
-        row.rate ? row.rate.toFixed(2) : "", // RATE
-        row.basicCost ? row.basicCost.toFixed(2) : "", // BASIC COST
-        row.basicCost ? (row.basicCost * ((row.gstPercent || 18) / 100)).toFixed(2) : "", // GST
-        row.basicCost ? (row.basicCost * (1 + ((row.gstPercent || 18) / 100))).toFixed(2) : ""  // TOTAL
+        "", "", "", "", "", "", "", // Skip to QTY
+        groupQty,
+        groupApWt > 0 ? groupApWt.toFixed(2) : "",
+        groupTotalWt > 0 ? groupTotalWt.toFixed(2) : "",
+        "", // RATE is blank for subtotal
+        groupBasicCost > 0 ? groupBasicCost.toFixed(2) : "",
+        groupGst > 0 ? groupGst.toFixed(2) : "",
+        groupTotalCost > 0 ? groupTotalCost.toFixed(2) : ""
       ]);
+      
+      // We can also merge the blank cells of the subtotal row to make it cleaner
+      dynamicMerges.push({ s: { r: currentRowIndex, c: 0 }, e: { r: currentRowIndex, c: 6 } });
+      currentRowIndex++;
+
+      grandQty += groupQty;
+      grandTotalWt += groupTotalWt;
+      grandTotalCost += groupTotalCost;
+      groupIndex++;
     });
 
     // Grand Totals Row
+    const grandTotalRowIndex = currentRowIndex;
     documentData.push([
       "GRAND TOTAL", "", "", "", "", "", "",
       grandQty, 
@@ -569,12 +651,13 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     // Margins & Page setup
     ws['!pageSetup'] = { orientation: 'landscape', paperSize: 9 }; // Landscape, A4 Ready
     
-    // Merge cell ranges (A1-N1 for Company Header, A2-N2 for Title, A{total}-G{total} for GRAND TOTAL)
+    // Merge cell ranges
     ws['!merges'] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } }, // Company Header
       { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } }, // Title
       // Merges for GRAND TOTAL cell label
-      { s: { r: 6 + rows.length + 1, c: 0 }, e: { r: 6 + rows.length + 1, c: 6 } }
+      { s: { r: grandTotalRowIndex, c: 0 }, e: { r: grandTotalRowIndex, c: 6 } },
+      ...dynamicMerges
     ];
 
     // Calculate Column Widths dynamically (Auto column widths)
@@ -592,6 +675,28 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
       });
     });
     ws['!cols'] = colWidths.map(w => ({ wch: w }));
+
+    // Apply styling to all cells (Borders, Alignment, Font for Headers)
+    Object.keys(ws).forEach(key => {
+      if (key.startsWith('!')) return;
+      
+      const cell = ws[key];
+      if (!cell.s) cell.s = {};
+      
+      // Default borders
+      cell.s.border = {
+        top: { style: "thin", color: { auto: 1 } },
+        bottom: { style: "thin", color: { auto: 1 } },
+        left: { style: "thin", color: { auto: 1 } },
+        right: { style: "thin", color: { auto: 1 } }
+      };
+      
+      // Default center alignment
+      cell.s.alignment = { vertical: "center", horizontal: "center", wrapText: true };
+
+      // Optional: If you want to make the headers bold, we can check if it's row 6 (which is index 7)
+      // but applying it universally first solves the layout problem!
+    });
 
     // Create Workbook
     const wb = XLSX.utils.book_new();
@@ -747,21 +852,33 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
       {/* Preview & Correction Workspace */}
       {rows.length > 0 && (
-        <div className="glass-panel p-6 flex-1 min-h-0 flex flex-col relative overflow-hidden">
-          
-          {/* Section Toolbar */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 mb-4 gap-3">
-            <div>
-              <h3 className="text-sm font-bold text-white flex items-center tracking-widest uppercase">
-                <Eye className="w-4 h-4 mr-2 text-indigo-400" />
-                Purchase order mapping preview
+        (() => {
+          const content = (
+            <div className={isFullscreen 
+              ? "fixed inset-0 z-[99999] bg-[#05070A]/95 backdrop-blur-2xl p-4 md:p-8 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" 
+              : "glass-panel p-6 flex-1 min-h-0 flex flex-col relative overflow-hidden transition-all duration-300"
+            }>
+              
+              {/* Section Toolbar */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 mb-4 gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center tracking-widest uppercase">
+                    <Eye className="w-4 h-4 mr-2 text-indigo-400" />
+                    BOM mapping preview
               </h3>
               <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">Configure, resolve errors, and double-check before generation</p>
             </div>
 
-            {/* Filter buttons */}
-            <div className="flex items-center space-x-2">
-              <div className="flex border border-white/10 rounded-lg p-0.5 bg-black/40">
+                {/* Filter buttons */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setIsFullscreen(!isFullscreen)}
+                    className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-lg shadow-slate-900/20 transition-all"
+                  >
+                    {isFullscreen ? <X className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
+                    <span>{isFullscreen ? 'Exit Details' : 'View Details'}</span>
+                  </button>
+                  <div className="flex border border-white/10 rounded-lg p-0.5 bg-black/40">
                 <button 
                   onClick={() => setActivePreviewTab('all')} 
                   className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${activePreviewTab === 'all' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
@@ -782,28 +899,28 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                 </button>
               </div>
 
-              {validationRun && invalidRowsCount === 0 && (
-                <>
-                  <button 
-                    onClick={handleExportExcel} 
-                    className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-500/20 transition-all ml-4"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download Excel</span>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      if (onSaveBOM) onSaveBOM(rows);
-                    }} 
-                    className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-blue-500/20 transition-all ml-2"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Save to Database</span>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+                  {validationRun && invalidRowsCount === 0 && (
+                    <>
+                      <button 
+                        onClick={handleExportExcel} 
+                        className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-500/20 transition-all"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download Excel</span>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (onSaveBOM) onSaveBOM(rows);
+                        }} 
+                        className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-blue-500/20 transition-all"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Save to Database</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
 
           {/* Core Table Grid */}
           <div className="flex-1 overflow-x-auto overflow-y-auto pr-2 min-h-0 border border-white/5 rounded-xl bg-black/30">
@@ -843,7 +960,12 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
                     {/* TOOL NO */}
                     <td className="px-4 py-2.5 font-mono text-slate-300">
-                      {parsedMetadata?.projectNumber || project.projectNumber}
+                      <input 
+                        type="text" 
+                        value={row.toolNo || ''} 
+                        onChange={(e) => handleCellEdit(row.id, 'toolNo', e.target.value)}
+                        className="w-24 bg-transparent border-none text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                      />
                     </td>
 
                     {/* DET NO */}
@@ -1023,7 +1145,14 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             </div>
           )}
 
-        </div>
+            </div>
+          );
+
+          if (isFullscreen && mounted) {
+            return createPortal(content, document.body);
+          }
+          return content;
+        })()
       )}
 
     </div>

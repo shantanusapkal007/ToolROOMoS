@@ -25,7 +25,7 @@ export default function InventoryPage() {
   return (
     <div className="flex h-screen bg-transparent relative w-full overflow-hidden">
       <Sidebar />
-      <div className="flex-1 h-full flex flex-col relative z-0 pl-32 pr-12 animate-fade-in py-12 overflow-y-auto hide-scrollbar">
+      <div className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] pr-8 animate-fade-in py-8 overflow-y-auto hide-scrollbar">
         <PageHeader 
           title="Inventory Ledger" 
           subtitle="Real-time stock balances across all warehouses."

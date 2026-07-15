@@ -74,7 +74,7 @@ export const PremiumDrawer: React.FC<PremiumDrawerProps> = ({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
             transition={spring}
-            className={`relative w-full ${widthClasses[width]} max-h-[90vh] bg-[#0f1117] border border-white/10 rounded-2xl flex flex-col shadow-2xl overflow-hidden shadow-[0_0_50px_rgba(79,70,229,0.1)] z-10 print:static print:max-h-none print:h-auto print:w-full print:max-w-none print:shadow-none print:border-none print:bg-white print:text-black print:overflow-visible print:rounded-none`}
+            className={`relative w-full ${widthClasses[width]} max-h-[90vh] glass-modal flex flex-col overflow-hidden z-10 print:static print:max-h-none print:h-auto print:w-full print:max-w-none print:shadow-none print:border-none print:bg-white print:text-black print:overflow-visible print:rounded-none`}
           >
             {/* Top Header matching MSDR */}
             <div className="flex-shrink-0 p-6 border-b border-white/5 bg-white/[0.01] flex justify-between items-center relative overflow-hidden hide-on-print print:hidden">

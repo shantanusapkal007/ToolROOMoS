@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { CheckSquare, AlertTriangle, FileText, ClipboardList, Plus, PlayCircle } from "lucide-react";
 import { SmartTable } from "@/components/ui/SmartTable";
 import { PremiumDrawer } from "@/components/ui/PremiumDrawer";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
@@ -92,12 +93,12 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
           <p className="text-slate-400 text-sm mt-1">Manage inspections, NCRs, and quality metrics</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <Button 
+            variant="primary" 
             onClick={() => setDrawerMode('INSPECT')} 
-            className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] text-sm font-medium"
           >
             <Plus className="w-4 h-4 mr-2" /> Log Inspection
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -194,9 +195,9 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
           <Input label="Remarks" value={remarks} onChange={e => setRemarks(e.target.value)} />
           
           <div className="pt-6">
-            <button onClick={handleLogInspection} className="w-full py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2),_inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-xl text-emerald-300 hover:text-white font-bold text-sm transition-all">
+            <Button variant="primary" onClick={handleLogInspection} className="w-full">
               Submit Report
-            </button>
+            </Button>
           </div>
         </div>
       </PremiumDrawer>
@@ -218,9 +219,9 @@ export default function QualityTab({ params }: { params: Promise<{ id: string }>
           <Input label="Root Cause Analysis" value={ncrRootCause} onChange={e => setNcrRootCause(e.target.value)} />
           
           <div className="pt-6">
-            <button onClick={handleCloseNcr} className="w-full py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2),_inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-xl text-emerald-300 hover:text-white font-bold text-sm transition-all">
+            <Button variant="primary" onClick={handleCloseNcr} className="w-full">
               Close NCR
-            </button>
+            </Button>
           </div>
         </div>
       </PremiumDrawer>

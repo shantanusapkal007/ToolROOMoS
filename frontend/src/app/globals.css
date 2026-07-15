@@ -51,12 +51,31 @@ html {
   --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.1);
 
   /* Radius System */
+  --radius-xs: 0.25rem;    /* 4px */
   --radius-sm: 0.375rem;   /* 6px */
   --radius-md: 0.5rem;     /* 8px */
   --radius-lg: 0.75rem;    /* 12px */
   --radius-xl: 1rem;       /* 16px */
   --radius-2xl: 1.5rem;    /* 24px */
   --radius-pill: 9999px;
+
+  /* Spacing System (Enterprise Density) */
+  --spacing-1: 0.25rem;    /* 4px */
+  --spacing-2: 0.5rem;     /* 8px */
+  --spacing-3: 0.75rem;    /* 12px */
+  --spacing-4: 1rem;       /* 16px */
+  --spacing-5: 1.25rem;    /* 20px */
+  --spacing-6: 1.5rem;     /* 24px */
+  --spacing-8: 2rem;       /* 32px */
+  --spacing-10: 2.5rem;    /* 40px */
+  --spacing-12: 3rem;      /* 48px */
+  --spacing-16: 4rem;      /* 64px */
+
+  /* Accessibility Tokens */
+  --focus-ring-color: rgba(59, 130, 246, 0.8);
+  --focus-ring-offset: 2px;
+  --focus-ring-width: 2px;
+  --min-touch-target: 44px;
 
   /* Motion Tokens (Timing) */
   --motion-hover: 120ms;
@@ -88,6 +107,19 @@ html {
 
   --font-sans: var(--font-outfit), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-space), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Expose Radius & Shadows */
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  
+  --shadow-glass: var(--shadow-glass);
+  --shadow-floating: var(--shadow-floating);
+  --shadow-elevation: var(--shadow-elevation);
+  --shadow-focus: var(--shadow-focus);
 }
 
 body {

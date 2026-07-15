@@ -102,7 +102,7 @@ export default function HrDashboard() {
   return (
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans bg-[#05070A]">
       <Sidebar />
-      <div className="flex-1 overflow-y-auto p-8 pl-32 pb-32 relative z-0 animate-fade-in">
+      <div className="flex-1 overflow-y-auto px-8 py-8 pl-[5.5rem] pb-32 relative z-0 animate-fade-in">
         <PageHeader
           title="HR & Resource Management"
           subtitle="Manage internal staff, outside contractors, and dynamic base hourly charges."

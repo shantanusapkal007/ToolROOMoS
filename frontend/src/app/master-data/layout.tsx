@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sidebar } from "@/components/layout/Sidebar";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const navigation = [
   { id: 'customers', label: 'Customers', desc: 'Client profiles & CRM', icon: <Users /> },
@@ -25,19 +26,14 @@ export default function MasterDataLayout({ children }: { children: React.ReactNo
   return (
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
-      <div className="flex-1 h-full flex flex-col relative z-0 pl-24 pr-6 animate-fade-in py-6 max-h-screen">
-        <div className="mb-4 flex items-end justify-between shrink-0">
-          <div>
-            <div className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full mb-2">
-              <Database className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Factory Knowledge Base</span>
-            </div>
-            <h1 className="text-3xl font-bold mb-1 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-500 drop-shadow-lg">
-              Master Data
-            </h1>
-            <h2 className="text-sm text-slate-400 font-medium tracking-wide">Manage foundational entities and resources.</h2>
-          </div>
-        </div>
+      <div className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] px-8 animate-fade-in py-6 max-h-screen">
+        <PageHeader 
+          title="Master Data" 
+          description="Manage foundational entities and resources."
+          icon={<Database />}
+          colorHint="emerald-500"
+          breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Master Data' }]}
+        />
 
         <div className="flex flex-1 min-h-0 overflow-hidden mt-2 gap-6">
           {/* Sub Navigation Sidebar */}

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { X, Plus, Save, Trash2, Calendar, User, Factory, Clock } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import Papa from 'papaparse';
+import { X, Plus, Save, Trash2, Calendar, User, Factory, Clock, Download, Upload } from 'lucide-react';
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useMasterData } from "@/hooks/useMasterData";
@@ -28,6 +29,70 @@ export function MsdrTableForm({ projectId, onClose, onSuccess }: MsdrTableFormPr
     employeeId: '',
     reportDate: new Date().toISOString().split('T')[0]
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDownloadTemplate = () => {
+    const headers = ['Tool No', 'Det No (Job Card ID)', 'Description', 'Raw Matl Size', 'Material Code', 'Finish Matl Size', 'Qty', 'Start Time', 'End Time'];
+    const csvContent = headers.join(',') + '\n' + 'T-100,,Milling operation,10x10,MAT-1,9x9,1,09:00,10:30';
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `MSDR_Template.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        try {
+          const newItems = results.data.map((row: any, i: number) => {
+            const materialCode = row['Material Code'] || '';
+            const matchedMaterial = materials?.find((m: any) => m.materialCode === materialCode || m.materialName === materialCode);
+            
+            const detNoStr = row['Det No (Job Card ID)'] || '';
+            const matchedJobCard = jobCards?.find((jc: any) => jc.id === detNoStr || jc.id.endsWith(detNoStr.toLowerCase()));
+
+            return {
+              id: Date.now() + i,
+              toolNo: row['Tool No'] || project?.projectNumber || '',
+              detNo: matchedJobCard ? matchedJobCard.id : detNoStr,
+              description: row['Description'] || matchedJobCard?.routingOperation?.operation?.operationName || '',
+              rawMatlSize: row['Raw Matl Size'] || '',
+              materialId: matchedMaterial ? matchedMaterial.id : '',
+              finishMatlSize: row['Finish Matl Size'] || '',
+              qty: Number(row['Qty']) || 1,
+              startTime: row['Start Time'] || '',
+              endTime: row['End Time'] || ''
+            };
+          });
+          
+          if (newItems.length > 0) {
+            setItems(newItems);
+            success("Import Successful", `Imported ${newItems.length} rows.`);
+          } else {
+            error("Import Failed", "No valid data found in CSV.");
+          }
+        } catch (err: any) {
+          error("Import Failed", "Could not parse CSV format correctly.");
+        }
+        
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      },
+      error: (err: any) => {
+        error("Import Failed", `CSV Parsing error: ${err.message}`);
+      }
+    });
+  };
 
   const [items, setItems] = useState(
     Array(5).fill(null).map((_, i) => ({
@@ -233,9 +298,22 @@ export function MsdrTableForm({ projectId, onClose, onSuccess }: MsdrTableFormPr
             </tbody>
           </table>
           
-          <div className="mt-4">
+          <div className="mt-4 flex gap-3">
             <button onClick={addRow} className="flex items-center text-sm text-indigo-400 hover:text-indigo-300 font-medium bg-indigo-500/10 hover:bg-indigo-500/20 px-4 py-2 rounded-lg transition-colors border border-indigo-500/20">
               <Plus className="w-4 h-4 mr-2" /> Add Row
+            </button>
+            <button onClick={handleDownloadTemplate} className="flex items-center text-sm text-emerald-400 hover:text-emerald-300 font-medium bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2 rounded-lg transition-colors border border-emerald-500/20">
+              <Download className="w-4 h-4 mr-2" /> Download Template
+            </button>
+            <input 
+              type="file" 
+              accept=".csv"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button onClick={() => fileInputRef.current?.click()} className="flex items-center text-sm text-blue-400 hover:text-blue-300 font-medium bg-blue-500/10 hover:bg-blue-500/20 px-4 py-2 rounded-lg transition-colors border border-blue-500/20">
+              <Upload className="w-4 h-4 mr-2" /> Import CSV
             </button>
           </div>
         </div>

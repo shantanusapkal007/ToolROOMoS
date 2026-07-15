@@ -5,6 +5,7 @@ import { Input } from './Input';
 import { Select } from './Select';
 import { Button } from './Button';
 import { Modal } from './Modal';
+import { SectionCard } from './SectionCard';
 import { useToast } from './Toast';
 
 interface SmartFormProps {
@@ -245,19 +246,16 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
   }, {} as Record<string, EntityField[]>);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl mx-auto">
       {Object.entries(sections).map(([sectionName, sectionFields]) => (
-        <div key={sectionName} className="space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/10 pb-2 mb-4">
-            {sectionName}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#0B1018]/30 p-5 rounded-xl border border-white/5">
+        <SectionCard key={sectionName} title={sectionName} className="!p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
             {sectionFields.map(renderField)}
           </div>
-        </div>
+        </SectionCard>
       ))}
 
-      <div className="flex justify-end space-x-3 pt-6 border-t border-white/10 mt-6">
+      <div className="sticky bottom-4 z-50 flex justify-end space-x-3 p-4 bg-[#0a0a0c]/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel

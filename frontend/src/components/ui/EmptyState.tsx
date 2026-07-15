@@ -18,16 +18,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onAction 
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="bg-white/5 p-4 rounded-full border border-white/10 mb-4 shadow-[0_0_20px_rgba(255,255,255,0.02)]">
-        {icon}
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center w-full max-w-2xl mx-auto">
+      <div className="relative mb-6">
+        <div className="absolute inset-0 bg-indigo-500/20 blur-[50px] rounded-full"></div>
+        <div className="relative bg-white/[0.03] p-6 rounded-[2rem] border border-white/[0.05] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),_0_10px_40px_rgba(0,0,0,0.5)]">
+          {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'h-16 w-16 text-indigo-400 opacity-80' })}
+        </div>
       </div>
-      <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-      <p className="text-sm text-slate-400 max-w-sm mb-6 leading-relaxed">
+      <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">{title}</h3>
+      <p className="text-body text-slate-400 max-w-md mx-auto mb-8 leading-relaxed">
         {description}
       </p>
       {actionLabel && onAction && (
-        <Button variant="primary" onClick={onAction}>
+        <Button variant="primary" size="lg" onClick={onAction}>
           {actionLabel}
         </Button>
       )}

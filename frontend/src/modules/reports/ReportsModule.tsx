@@ -45,7 +45,7 @@ export const ReportsModule = () => {
     : 100; // Default to 100 to avoid division by zero
     
   return (
-    <div className="flex-1 h-full flex flex-col relative z-0 pl-32 pr-12 animate-fade-in py-12 overflow-y-auto hide-scrollbar">
+    <div className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] pr-8 animate-fade-in py-8 overflow-y-auto hide-scrollbar">
       <PageHeader 
         title="Analytics & Reports" 
         subtitle="Real-time insights across production, procurement, and inventory."

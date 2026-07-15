@@ -83,8 +83,8 @@ export default function ProjectsPage() {
   return (
     <div className="flex h-screen w-screen overflow-hidden text-white font-sans mission-control-bg">
       <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative z-0 pl-24 pt-4 pr-4 pb-4">
-        <div className="flex-1 p-12 overflow-y-auto hide-scrollbar relative">
+      <main className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] pt-4 pr-4 pb-4">
+        <div className="flex-1 px-8 py-8 overflow-y-auto hide-scrollbar relative">
           
           <motion.div 
             initial={{ opacity: 0, y: -20 }}

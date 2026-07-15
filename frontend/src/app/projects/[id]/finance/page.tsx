@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { DollarSign, Plus, CheckSquare } from "lucide-react";
 import { SmartTable } from "@/components/ui/SmartTable";
 import { PremiumDrawer } from "@/components/ui/PremiumDrawer";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
@@ -70,12 +71,19 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
           <p className="text-slate-400 text-sm mt-1">Manage billing, invoices, and payments</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => { setInvoiceForm({ dispatchNoteId: "", invoiceNumber: `INV-${Date.now().toString().slice(-4)}`, amount: "" }); setDrawerMode('INVOICE'); }} className="flex items-center px-4 py-2 bg-rose-600 text-white rounded-xl hover:bg-rose-500 transition-all shadow-[0_0_20px_rgba(244,63,94,0.3)] text-sm font-medium">
+          <Button 
+            variant="primary" 
+            onClick={() => { setInvoiceForm({ dispatchNoteId: "", invoiceNumber: `INV-${Date.now().toString().slice(-4)}`, amount: "" }); setDrawerMode('INVOICE'); }} 
+            className="!bg-rose-600 hover:!bg-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.3)]"
+          >
             <Plus className="w-4 h-4 mr-2" /> Generate Invoice
-          </button>
-          <button onClick={() => { setPaymentForm({ invoiceId: "", amount: "", reference: "", remarks: "" }); setDrawerMode('PAYMENT'); }} className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] text-sm font-medium">
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={() => { setPaymentForm({ invoiceId: "", amount: "", reference: "", remarks: "" }); setDrawerMode('PAYMENT'); }}
+          >
             <DollarSign className="w-4 h-4 mr-2" /> Record Payment
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -98,7 +106,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
               { key: 'invoiceNumber', label: 'Invoice No' },
               { key: 'status', label: 'Status' },
               { key: 'createdAt', label: 'Date', render: (v) => formatDate(v) },
-              { key: 'totalAmount', label: 'Total Amount', render: (v) => `₹${v.toFixed(2)}` },
+              { key: 'totalAmount', label: 'Total Amount', render: (v) => `₹${(Number(v) || 0).toFixed(2)}` },
               { key: 'paymentStatus', label: 'Payment' }
             ]}
           />
@@ -117,7 +125,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
           <Input label="Invoice Number" value={invoiceForm.invoiceNumber} onChange={e => setInvoiceForm({...invoiceForm, invoiceNumber: e.target.value})} />
           <Input label="Subtotal Amount" type="number" value={invoiceForm.amount} onChange={e => setInvoiceForm({...invoiceForm, amount: e.target.value})} />
           <div className="pt-6">
-            <button onClick={handleCreateInvoice} className="w-full py-3 bg-rose-600 text-white rounded-xl font-medium shadow-lg shadow-rose-500/20 hover:bg-rose-500 transition-colors">Generate Invoice</button>
+            <Button variant="primary" onClick={handleCreateInvoice} className="w-full !bg-rose-600 hover:!bg-rose-500 shadow-lg shadow-rose-500/20">Generate Invoice</Button>
           </div>
         </div>
       </PremiumDrawer>
@@ -134,7 +142,7 @@ export default function FinanceTab({ params }: { params: Promise<{ id: string }>
           <Input label="Reference (Cheque/UTR)" value={paymentForm.reference} onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} />
           <Input label="Remarks" value={paymentForm.remarks} onChange={e => setPaymentForm({...paymentForm, remarks: e.target.value})} />
           <div className="pt-6">
-            <button onClick={handleRecordPayment} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-medium shadow-lg shadow-emerald-500/20 hover:bg-emerald-500 transition-colors">Record Payment</button>
+            <Button variant="primary" onClick={handleRecordPayment} className="w-full">Record Payment</Button>
           </div>
         </div>
       </PremiumDrawer>
