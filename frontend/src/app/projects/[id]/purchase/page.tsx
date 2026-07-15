@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { api } from "../../../../lib/api";
 import { ShoppingCart, Plus, FileText, Package, ArrowRight, ChevronRight, CheckCircle2, Clock, X, Calendar, Activity, Info, Download, Trash2, Upload } from "lucide-react";
 import * as XLSX from 'xlsx';
+import { exportPremiumPO } from '../../../../utils/exportPremiumPO';
 import { Input } from "../../../../components/ui/Input";
 import { Select } from "../../../../components/ui/Select";
 import { useToast } from "../../../../components/ui/Toast";
@@ -398,124 +399,7 @@ export default function PurchaseTab({ params }: { params: Promise<{ id: string }
 
   const handleExportPO = (po: any) => {
     if (!po) return;
-    
-    const documentData: any[][] = [];
-
-    documentData.push(["KRUPA TOOLS & STAMPING LTD."]);
-    documentData.push(["                                             GUT NO.23,PLOT NO.45 MIDC WALUJ, AURANGABAD-431136                                                                                                                                                                    "]);
-    documentData.push(["GST NO :  27AAKCK1751B1ZS"]);
-    documentData.push(["Manufacturers of Press Tools,Jig Fixtures,Die sets, Gauge,All Types of Engineering Works"]);
-    documentData.push(["PURCHASE ORDER"]);
-    documentData.push([]);
-    documentData.push([null, "Vendour Name ", po.vendor?.companyName || po.vendor?.vendorName || "NEW ERA METALS", null, null, null, null, null, null, null, "P.O.NO", po.poNumber]);
-    documentData.push([null, " Address", "45B SHREE JI ARCADE, TATA ROAD NO2,MUMBAI", null, null, null, null, null, null, null, "DATE", po.createdAt ? new Date(po.createdAt).toLocaleDateString() : new Date().toLocaleDateString()]);
-    documentData.push([null, "GST NO", po.vendor?.taxId || "27ATGPJ6102R1ZB", null, null, null, null, null, null, null, "REF.", "BY EMAIL"]);
-    documentData.push([null, "Contact Details", po.vendor?.contactEmail || po.vendor?.contactPhone || ""]);
-    documentData.push(["Dear Sir,"]);
-    documentData.push(["Kindly supply the following material / services in accordance with the terms and conditions mentioned below."]);
-    
-    documentData.push(["SR NO","Material Description","HSN","QTY","UOM","Rate / Unit   (INR)","DISC.","Basic Value (INR)","CGST     ",null,"SGST",null,"TOTAL VALUE"]);
-    documentData.push([null,null,null,null,null,null,null,null,"% ","Value (INR)","% ","Value(INR)"]);
-
-    let grandQty = 0;
-    let grandBasic = 0;
-    let grandTotal = 0;
-
-    po.items?.forEach((item: any, idx: number) => {
-      const qty = Number(item.orderedQty || 0);
-      const rate = Number(item.agreedRate || 0);
-      const disc = Number(item.discount || 0);
-      grandQty += qty;
-      
-      const basicVal = (qty * rate) - disc;
-      const gstPercent = Number(item.gstPercent || 18);
-      const cgstVal = basicVal * ((gstPercent/2) / 100);
-      const sgstVal = basicVal * ((gstPercent/2) / 100);
-      const totalVal = basicVal + cgstVal + sgstVal;
-
-      grandBasic += basicVal;
-      grandTotal += totalVal;
-
-      documentData.push([
-        idx + 1,
-        `${item.material?.materialCode || ''} ${item.dimensions ? item.dimensions : ''}`,
-        item.hsnCode || "",
-        qty,
-        item.uom || "NOS",
-        rate,
-        disc,
-        basicVal,
-        (gstPercent/2) / 100, // 0.09
-        cgstVal,
-        (gstPercent/2) / 100, // 0.09
-        sgstVal,
-        totalVal
-      ]);
-    });
-
-    documentData.push([]);
-    documentData.push([]);
-    documentData.push([]);
-    documentData.push([null,null,null,null,null,null,null,null,null,null,null,null, grandTotal]);
-    documentData.push([null,null,`Rs. ${grandTotal} /-`]);
-    documentData.push(["Purchase Order value (INR)", null, "TOTAL IN WORDS CALCULATED HERE"]);
-    documentData.push([]);
-    documentData.push([null, "*TERMS & CONDITIONS ", null, null, null, null, null, null, "*COMMERCIAL INFORMATION :"]);
-    documentData.push([null, "*Delivery schedule :-  2-3 DAY"]);
-
-    const ws = XLSX.utils.aoa_to_sheet(documentData);
-    
-    // Add structural cell merges for visual replication of the PO Template
-    ws['!merges'] = [
-      // Top Headers (Rows 0-4)
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } }, // KRUPA TOOLS
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } }, // Address
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 12 } }, // GST NO
-      { s: { r: 3, c: 0 }, e: { r: 3, c: 12 } }, // Manufacturers of...
-      { s: { r: 4, c: 0 }, e: { r: 4, c: 12 } }, // PURCHASE ORDER
-      
-      // Vendor Details Block (Rows 6-9)
-      { s: { r: 6, c: 2 }, e: { r: 6, c: 8 } }, // Vendor Name value
-      { s: { r: 6, c: 11 }, e: { r: 6, c: 12 } }, // P.O.NO value
-      
-      { s: { r: 7, c: 2 }, e: { r: 7, c: 8 } }, // Address value
-      { s: { r: 7, c: 11 }, e: { r: 7, c: 12 } }, // Date value
-      
-      { s: { r: 8, c: 2 }, e: { r: 8, c: 8 } }, // GST value
-      { s: { r: 8, c: 11 }, e: { r: 8, c: 12 } }, // REF value
-      
-      { s: { r: 9, c: 2 }, e: { r: 9, c: 8 } }, // Contact Details value
-
-      // Salutations (Rows 10-11)
-      { s: { r: 10, c: 0 }, e: { r: 10, c: 12 } }, // Dear Sir
-      { s: { r: 11, c: 0 }, e: { r: 11, c: 12 } }, // Kindly supply...
-
-      // Table Headers (Row 12 - 13)
-      { s: { r: 12, c: 0 }, e: { r: 13, c: 0 } }, // SR NO (vertical merge)
-      { s: { r: 12, c: 1 }, e: { r: 13, c: 1 } }, // Material Description (vertical merge)
-      { s: { r: 12, c: 2 }, e: { r: 13, c: 2 } }, // HSN (vertical merge)
-      { s: { r: 12, c: 3 }, e: { r: 13, c: 3 } }, // QTY (vertical merge)
-      { s: { r: 12, c: 4 }, e: { r: 13, c: 4 } }, // UOM (vertical merge)
-      { s: { r: 12, c: 5 }, e: { r: 13, c: 5 } }, // Rate (vertical merge)
-      { s: { r: 12, c: 6 }, e: { r: 13, c: 6 } }, // DISC (vertical merge)
-      { s: { r: 12, c: 7 }, e: { r: 13, c: 7 } }, // Basic Value (vertical merge)
-      
-      { s: { r: 12, c: 8 }, e: { r: 12, c: 9 } }, // CGST (horizontal merge)
-      { s: { r: 12, c: 10 }, e: { r: 12, c: 11 } }, // SGST (horizontal merge)
-      
-      { s: { r: 12, c: 12 }, e: { r: 13, c: 12 } }, // TOTAL VALUE (vertical merge)
-    ];
-
-    const wscols = [
-      { wch: 8 },  { wch: 35 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, 
-      { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 8 }, { wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 15 }
-    ];
-    ws['!cols'] = wscols;
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "PO NO-34");
-    
-    XLSX.writeFile(wb, `PO_${po.poNumber}.xlsx`);
+    exportPremiumPO(po);
   };
 
   const handleExportGRN = (po: any) => {

@@ -11,6 +11,11 @@ async function bootstrap() {
   console.log("Starting backend... Please wait.");
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   
+  // Increase payload limits for large BOM files
+  const express = require('express');
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
   app.useLogger(app.get(Logger));
 
   // Security headers
