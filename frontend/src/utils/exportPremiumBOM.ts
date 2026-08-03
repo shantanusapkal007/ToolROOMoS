@@ -251,6 +251,46 @@ export async function exportPremiumBOM(project: any, bomItems: any[], materials:
   fill(totalCostCell, C.grandTotalBg);
   totalCostCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
+  // ── Signature / Approval Block ──────────────────────────────────────────────
+  row += 3;
+
+  // Signature space row
+  sheet.getRow(row).height = 42;
+
+  const signBoxes = [
+    { startCol: 'B', endCol: 'C', label: 'VERIFIED BY DESIGNER', defaultVal: bomHeader?.verifiedByDesigner || project?.verifiedByDesigner || '' },
+    { startCol: 'D', endCol: 'E', label: 'PREPARED BY', defaultVal: bomHeader?.preparedBy || project?.preparedBy || 'DESIGN TEAM' },
+    { startCol: 'F', endCol: 'G', label: 'CHECKED BY', defaultVal: bomHeader?.checkedBy || project?.checkedBy || '' },
+    { startCol: 'H', endCol: 'I', label: 'AUTHORISED SIGNATORY', defaultVal: bomHeader?.authorisedSignatory || project?.authorisedSignatory || '' },
+  ];
+
+  signBoxes.forEach(box => {
+    sheet.mergeCells(`${box.startCol}${row}:${box.endCol}${row}`);
+    const cell = sheet.getCell(`${box.startCol}${row}`);
+    cell.value = box.defaultVal;
+    font(cell, 10, true, C.darkText);
+    cell.alignment = { vertical: 'bottom', horizontal: 'center' };
+    
+    thinBorder(sheet.getCell(`${box.startCol}${row}`), ['top', 'left', 'bottom'], C.border);
+    thinBorder(sheet.getCell(`${box.endCol}${row}`), ['top', 'right', 'bottom'], C.border);
+  });
+
+  // Label row
+  row++;
+  sheet.getRow(row).height = 22;
+
+  signBoxes.forEach(box => {
+    sheet.mergeCells(`${box.startCol}${row}:${box.endCol}${row}`);
+    const cell = sheet.getCell(`${box.startCol}${row}`);
+    cell.value = box.label;
+    font(cell, 9, true, C.darkText);
+    fill(cell, 'FFF1F5F9');
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    thinBorder(sheet.getCell(`${box.startCol}${row}`), ['top', 'left', 'bottom'], C.border);
+    thinBorder(sheet.getCell(`${box.endCol}${row}`), ['top', 'right', 'bottom'], C.border);
+  });
+
   // Write and Save
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

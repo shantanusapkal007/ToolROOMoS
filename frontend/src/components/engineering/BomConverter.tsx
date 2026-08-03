@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx-js-style';
 import ExcelJS from 'exceljs';
 import { applyKrupaHeader } from '@/utils/excelHeaderTemplate';
+import { exportPremiumBOM } from '@/utils/exportPremiumBOM';
 import { 
   Upload, 
   FileSpreadsheet, 
@@ -84,6 +85,12 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
   const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'tree'>('tree');
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+
+  // Sign-off / Approval fields
+  const [verifiedByDesigner, setVerifiedByDesigner] = useState<string>('');
+  const [preparedBy, setPreparedBy] = useState<string>('DESIGN TEAM');
+  const [checkedBy, setCheckedBy] = useState<string>('');
+  const [authorisedSignatory, setAuthorisedSignatory] = useState<string>('');
 
   const { data: existingBom } = useProjectBOM(projectId);
   const { data: masterMaterialsRes = [] } = useMasterData('materials');
@@ -867,22 +874,41 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
     r += 3;
 
-    // Signatures
-    sheet.getRow(r).height = 24;
-    sheet.mergeCells(`A${r}:C${r}`);
-    sheet.getCell(`A${r}`).value = 'PREPARED BY (ENGINEERING)';
-    sheet.getCell(`A${r}`).font = { bold: true, size: 9 };
-    sheet.getCell(`A${r}`).alignment = { horizontal: 'center' };
+    // 4-Column Signature Block (VERIFIED BY DESIGNER | PREPARED BY | CHECKED BY | AUTHORISED SIGNATORY)
+    // Row 1: Signature / Name Space (Height 40)
+    sheet.getRow(r).height = 40;
+    const signBoxes = [
+      { startCol: 1, endCol: 3, label: 'VERIFIED BY DESIGNER', val: verifiedByDesigner || '' },
+      { startCol: 4, endCol: 6, label: 'PREPARED BY', val: preparedBy || 'DESIGN TEAM' },
+      { startCol: 7, endCol: 9, label: 'CHECKED BY', val: checkedBy || '' },
+      { startCol: 10, endCol: 14, label: 'AUTHORISED SIGNATORY', val: authorisedSignatory || '' },
+    ];
 
-    sheet.mergeCells(`E${r}:G${r}`);
-    sheet.getCell(`E${r}`).value = 'APPROVED BY (HOD)';
-    sheet.getCell(`E${r}`).font = { bold: true, size: 9 };
-    sheet.getCell(`E${r}`).alignment = { horizontal: 'center' };
+    signBoxes.forEach(box => {
+      sheet.mergeCells(r, box.startCol, r, box.endCol);
+      const cell = sheet.getRow(r).getCell(box.startCol);
+      cell.value = box.val;
+      cell.font = { bold: true, size: 10, color: { argb: 'FF1E293B' } };
+      cell.alignment = { vertical: 'bottom', horizontal: 'center' };
+      for (let c = box.startCol; c <= box.endCol; c++) {
+        sheet.getRow(r).getCell(c).border = { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle };
+      }
+    });
 
-    sheet.mergeCells(`I${r}:K${r}`);
-    sheet.getCell(`I${r}`).value = 'PURCHASE AUTHORITY';
-    sheet.getCell(`I${r}`).font = { bold: true, size: 9 };
-    sheet.getCell(`I${r}`).alignment = { horizontal: 'center' };
+    // Row 2: Label Row (Height 22)
+    r++;
+    sheet.getRow(r).height = 22;
+    signBoxes.forEach(box => {
+      sheet.mergeCells(r, box.startCol, r, box.endCol);
+      const cell = sheet.getRow(r).getCell(box.startCol);
+      cell.value = box.label;
+      cell.font = { bold: true, size: 9, color: { argb: 'FF1E293B' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      for (let c = box.startCol; c <= box.endCol; c++) {
+        sheet.getRow(r).getCell(c).border = { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle };
+      }
+    });
 
     // Set Column Widths
     sheet.columns = [
@@ -1043,27 +1069,98 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
       {/* Rows & Validation Stats Panel */}
       {rows.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
-          <div className="glass-panel p-4 flex items-center justify-between border-l-4 border-zinc-900">
-            <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Total Processed Rows</p>
-              <p className="text-xl font-bold text-zinc-900 font-mono mt-1">{totalItemsCount}</p>
+        <div className="space-y-4 shrink-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="glass-panel p-4 flex items-center justify-between border-l-4 border-zinc-900">
+              <div>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Total Processed Rows</p>
+                <p className="text-xl font-bold text-zinc-900 font-mono mt-1">{totalItemsCount}</p>
+              </div>
+              <FileSpreadsheet className="w-8 h-8 text-zinc-400 opacity-40" />
             </div>
-            <FileSpreadsheet className="w-8 h-8 text-zinc-400 opacity-40" />
+
+            <div className={`glass-panel p-4 flex items-center justify-between border-l-4 ${invalidRowsCount > 0 ? 'border-red-500' : 'border-emerald-600'}`}>
+              <div>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Validation Status</p>
+                <p className={`text-xl font-bold font-mono mt-1 ${invalidRowsCount > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                  {invalidRowsCount > 0 ? `${invalidRowsCount} Errors` : '✓ All Clean'}
+                </p>
+              </div>
+              {invalidRowsCount > 0 ? (
+                <AlertCircle className="w-8 h-8 text-red-500 opacity-40" />
+              ) : (
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 opacity-40" />
+              )}
+            </div>
           </div>
 
-          <div className={`glass-panel p-4 flex items-center justify-between border-l-4 ${invalidRowsCount > 0 ? 'border-red-500' : 'border-emerald-600'}`}>
-            <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Validation Status</p>
-              <p className={`text-xl font-bold font-mono mt-1 ${invalidRowsCount > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
-                {invalidRowsCount > 0 ? `${invalidRowsCount} Errors` : '✓ All Clean'}
-              </p>
+          {/* BOM Sign-off & Authorization Signatories Bar */}
+          <div className="bg-white border border-zinc-200/90 rounded-2xl p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[11px] font-bold text-zinc-800 tracking-wider uppercase flex items-center">
+                <CheckCircle2 className="w-4 h-4 mr-2 text-blue-600" />
+                BOM Approval Sign-off Signatories
+              </h4>
+              <span className="text-[10px] font-semibold text-zinc-400">Included on Excel Export & Documentation</span>
             </div>
-            {invalidRowsCount > 0 ? (
-              <AlertCircle className="w-8 h-8 text-red-500 opacity-40" />
-            ) : (
-              <CheckCircle2 className="w-8 h-8 text-emerald-600 opacity-40" />
-            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* VERIFIED BY DESIGNER */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-[10px] font-extrabold text-zinc-700 tracking-wider uppercase">
+                  Verified By Designer
+                </label>
+                <input 
+                  type="text"
+                  value={verifiedByDesigner}
+                  onChange={(e) => setVerifiedByDesigner(e.target.value)}
+                  placeholder="Designer / Engineer Name"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 text-xs text-zinc-900 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                />
+              </div>
+
+              {/* PREPARED BY */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-[10px] font-extrabold text-zinc-700 tracking-wider uppercase">
+                  Prepared By
+                </label>
+                <input 
+                  type="text"
+                  value={preparedBy}
+                  onChange={(e) => setPreparedBy(e.target.value)}
+                  placeholder="Design / Engineering Team"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 text-xs text-zinc-900 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                />
+              </div>
+
+              {/* CHECKED BY */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-[10px] font-extrabold text-zinc-700 tracking-wider uppercase">
+                  Checked By
+                </label>
+                <input 
+                  type="text"
+                  value={checkedBy}
+                  onChange={(e) => setCheckedBy(e.target.value)}
+                  placeholder="Checker / Lead Name"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 text-xs text-zinc-900 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                />
+              </div>
+
+              {/* AUTHORISED SIGNATORY */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-[10px] font-extrabold text-zinc-700 tracking-wider uppercase">
+                  Authorised Signatory
+                </label>
+                <input 
+                  type="text"
+                  value={authorisedSignatory}
+                  onChange={(e) => setAuthorisedSignatory(e.target.value)}
+                  placeholder="Manager / Authority Name"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 text-xs text-zinc-900 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1146,19 +1243,11 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                   {rows.length > 0 && (
                     <div className="flex items-center gap-2 ml-1">
                       <button 
-                        onClick={handleExportExcel} 
-                        className="flex items-center space-x-1.5 bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-300 font-semibold text-xs px-3.5 py-1.5 rounded-xl shadow-2xs transition-all cursor-pointer"
+                        onClick={() => exportPremiumBOM(project, rows, allMaterials, { verifiedByDesigner, preparedBy, checkedBy, authorisedSignatory })} 
+                        className="flex items-center space-x-1.5 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-2xs transition-all cursor-pointer"
                       >
-                        <Download className="w-3.5 h-3.5 text-zinc-600" />
-                        <span>Download Excel</span>
-                      </button>
-
-                      <button 
-                        onClick={handleExportExcel} 
-                        className="flex items-center space-x-1.5 bg-white hover:bg-zinc-50 text-emerald-700 border border-emerald-200 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-2xs transition-all cursor-pointer"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>Download Excel</span>
+                        <Download className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Export Premium BOM</span>
                       </button>
 
                       <button 
