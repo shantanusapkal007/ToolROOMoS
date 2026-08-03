@@ -152,6 +152,41 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     }
   }, [existingBom, project]);
 
+  const handleCreateNewManualBOM = () => {
+    const defaultPartName = project?.partName || project?.name || '';
+    const initialRows: ParsedBOMRow[] = Array.from({ length: 3 }).map((_, idx) => ({
+      id: `manual_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 4)}`,
+      srNo: idx + 1,
+      toolNo: project?.projectNumber || '',
+      partName: defaultPartName,
+      description: '',
+      quantity: '' as any,
+      finishSize: '',
+      rawMaterialSize: '',
+      materialInput: '',
+      catalogSize: '',
+      stockSize: '',
+      length: '' as any,
+      width: '' as any,
+      height: '' as any,
+      finishL: '',
+      finishW: '',
+      finishH: '',
+      unitCost: '' as any,
+      apWeight: '' as any,
+      rate: '' as any,
+      gstPercent: '' as any,
+      remarks: '',
+    }));
+    setRows(initialRows);
+    setFile(null);
+    setParsedMetadata(null);
+    setIsConverted(true);
+    setValidationRun(false);
+    setActivePreviewTab('all');
+    success("New BOM Sheet Initialized", "Started a fresh blank Bill of Materials sheet.");
+  };
+
   const handleAddManualRow = () => {
     const defaultPartName = project?.partName || project?.name || '';
     const newRow: ParsedBOMRow = {
@@ -995,7 +1030,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
               <button
                 type="button"
-                onClick={handleAddManualRow}
+                onClick={handleCreateNewManualBOM}
                 className="bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] px-4.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
