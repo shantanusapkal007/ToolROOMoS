@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { PackageCheck, Plus, Trash2, LayoutGrid, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { useMasterData } from "@/hooks/useMasterData";
 import { api } from "@/lib/api";
 
 interface MaterialIssueFormProps {
@@ -13,6 +14,7 @@ interface MaterialIssueFormProps {
 
 export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIssueFormProps) {
   const { success, error } = useToast();
+  const { data: employees = [] } = useMasterData('employees');
   
   const [issueNumber, setIssueNumber] = useState(`ISSUE-${Date.now().toString().slice(-6)}`);
   const [productionSection, setProductionSection] = useState("MACHINE_SHOP");
@@ -187,13 +189,23 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
 
               <div>
                 <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Assigned / Issued To</label>
-                <input
-                  type="text"
+                <select
                   value={issuedTo}
                   onChange={e => setIssuedTo(e.target.value)}
-                  placeholder="Operator / Fitter name"
-                  className="w-full bg-white border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                />
+                  className="w-full bg-white border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium"
+                >
+                  <option value="">Select Operator / Fitter from Master Data...</option>
+                  {employees?.map((emp: any) => {
+                    const displayName = emp.name || emp.employeeName || emp.code;
+                    const deptStr = typeof emp.department === 'object' ? emp.department?.departmentName || '' : (emp.department || '');
+                    const subtitle = emp.designation || deptStr;
+                    return (
+                      <option key={emp.id} value={displayName}>
+                        {displayName} {subtitle ? `(${subtitle})` : ''}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
 
               <div>
