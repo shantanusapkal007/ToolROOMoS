@@ -83,7 +83,7 @@ const CAD_TOOLS = [
 ];
 
 const PRODUCTION_SECTIONS = [
-  { id: 'MACHINE_SHOP', label: 'Machine Shop (CNC/VMC/EDM)' },
+  { id: 'MACHINE_SHOP', label: 'Machine Shop' },
   { id: 'PRESS_SHOP', label: 'Press Shop & Tryout' },
   { id: 'TOOL_ROOM_FITTING', label: 'Tool Room Fitting & Assembly' },
   { id: 'FABRICATION_INDIAN', label: 'Fabrication (Domestic)' },

@@ -15,7 +15,7 @@ interface MoveToNextSectionModalProps {
 
 const SECTION_FLOW: Record<string, { label: string; color: string; next: string[] }> = {
   MACHINE_SHOP: {
-    label: "Machine Shop (CNC/VMC/EDM)",
+    label: "Machine Shop",
     color: "bg-purple-50 text-purple-700 border-purple-200",
     next: ["TOOL_ROOM_FITTING", "PRESS_SHOP", "FABRICATION_INDIAN", "FABRICATION_EXPORT"],
   },
@@ -42,7 +42,7 @@ const SECTION_FLOW: Record<string, { label: string; color: string; next: string[
 };
 
 const ALL_SECTIONS: Record<string, string> = {
-  MACHINE_SHOP: "Machine Shop (CNC/VMC/EDM)",
+  MACHINE_SHOP: "Machine Shop",
   TOOL_ROOM_FITTING: "Toolroom Fitting & Assembly",
   PRESS_SHOP: "Press Shop & Tryout",
   FABRICATION_INDIAN: "Fabrication (Domestic)",

@@ -36,7 +36,7 @@ interface InterSectionTransferModalProps {
 
 const SECTIONS = [
   { id: 'TOOL_ROOM_FITTING', label: 'Toolroom Production (Fitting/Assembly)' },
-  { id: 'MACHINE_SHOP', label: 'Toolroom Machine Shop (VMC/CNC/EDM)' },
+  { id: 'MACHINE_SHOP', label: 'Toolroom Machine Shop' },
   { id: 'PRESS_SHOP', label: 'Press Shop & Stamping Tryout' },
   { id: 'FABRICATION_INDIAN', label: 'Fabrication (Domestic / Sheet Metal)' },
   { id: 'FABRICATION_EXPORT', label: 'Fabrication Export (Sea-Worthy)' },

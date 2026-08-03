@@ -179,7 +179,7 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                   onChange={e => setProductionSection(e.target.value)}
                   className="w-full bg-white border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium"
                 >
-                  <option value="MACHINE_SHOP">Machine Shop (CNC / VMC / EDM)</option>
+                  <option value="MACHINE_SHOP">Machine Shop</option>
                   <option value="TOOL_ROOM_FITTING">Toolroom Fitting & Assembly</option>
                   <option value="PRESS_SHOP">Press Shop & Tryout</option>
                   <option value="FABRICATION_INDIAN">Fabrication (Domestic)</option>

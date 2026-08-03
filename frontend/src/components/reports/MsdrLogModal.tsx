@@ -160,7 +160,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   onChange={(e) => setFormData({ ...formData, productionSection: e.target.value })}
                   className="w-full h-10 px-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
                 >
-                  <option value="MACHINE_SHOP">Machine Shop (CNC / VMC / EDM / Grinding)</option>
+                  <option value="MACHINE_SHOP">Machine Shop</option>
                   <option value="PRESS_SHOP">Press Shop & Tryout</option>
                   <option value="TOOL_ROOM_FITTING">Tool Room Fitting & Assembly</option>
                   <option value="FABRICATION_INDIAN">Fabrication (Domestic)</option>

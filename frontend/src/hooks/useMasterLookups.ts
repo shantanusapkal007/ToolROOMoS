@@ -13,7 +13,7 @@ export interface CategoryOption {
 
 const DEFAULT_FALLBACKS: Record<string, CategoryOption[]> = {
   PRODUCTION_SECTION: [
-    { id: 'ps-1', category: 'PRODUCTION_SECTION', code: 'MACHINE_SHOP', label: 'Machine Shop (CNC/VMC/EDM)', isSystem: true },
+    { id: 'ps-1', category: 'PRODUCTION_SECTION', code: 'MACHINE_SHOP', label: 'Machine Shop', isSystem: true },
     { id: 'ps-2', category: 'PRODUCTION_SECTION', code: 'PRESS_SHOP', label: 'Press Shop & Tryout', isSystem: true },
     { id: 'ps-3', category: 'PRODUCTION_SECTION', code: 'TOOL_ROOM_FITTING', label: 'Tool Room Fitting & Assembly', isSystem: true },
     { id: 'ps-4', category: 'PRODUCTION_SECTION', code: 'FABRICATION_INDIAN', label: 'Fabrication (Domestic)', isSystem: true },
