@@ -73,8 +73,8 @@ describe('PurchaseOrdersService', () => {
         items: [
           {
             materialId: 'mat-1',
-            qty: 10,
-            unitRate: 50,
+            orderedQty: 10,
+            agreedRate: 50,
             dimensions: '10x10',
             hsnCode: '1234',
             gstPercent: 18,

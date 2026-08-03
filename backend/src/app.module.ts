@@ -32,9 +32,12 @@ import { SearchModule } from './search/search.module';
 import { FormsModule } from './forms/forms.module';
 import { ReportsModule } from './reports/reports.module';
 import { UsersModule } from './users/users.module';
+import { RbacModule } from './rbac/rbac.module';
 import { InspectionStandardsModule } from './master-data/inspection-standards/inspection-standards.module';
 import { LookupsModule } from './master-data/lookups/lookups.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { AssetsModule } from './assets/assets.module';
+import { SettingsModule } from './settings/settings.module';
 import { ClsModule } from 'nestjs-cls';
 
 /**
@@ -68,6 +71,7 @@ import { ClsModule } from 'nestjs-cls';
     CommonModule,
     AuthModule,
     UsersModule,
+    RbacModule,
 
     // Layer 1 — Master Data
     CustomersModule,
@@ -98,6 +102,8 @@ import { ClsModule } from 'nestjs-cls';
     ReportsModule,
     InspectionStandardsModule,
     MaintenanceModule,
+    AssetsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [

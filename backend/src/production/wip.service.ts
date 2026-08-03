@@ -38,33 +38,44 @@ export class WipService {
    */
   async updateWipProgress(data: {
     projectId: string;
-    routingOperationId: string;
+    routingOperationId?: string;
     machineId: string;
     batchId?: string;
+    materialId?: string;
     accruedMachineCost: number;
     accruedLabourCost: number;
   }, txClient?: any) {
     const tx = txClient || this.prisma;
 
-    // Find active WIP entry for this project/batch
+    const whereClause: any = {
+      projectId: data.projectId,
+      status: 'IN_PROCESS',
+    };
+
+    if (data.batchId) {
+      whereClause.batchId = data.batchId;
+    } else if (data.materialId) {
+      whereClause.materialId = data.materialId;
+    } else {
+      this.logger.warn(`Cannot update WIP: Neither batchId nor materialId was provided.`);
+      return null;
+    }
+
+    // Find active WIP entry for this project
     const activeWip = await tx.wipLedger.findFirst({
-      where: {
-        projectId: data.projectId,
-        batchId: data.batchId, // if tracked by batch
-        status: 'IN_PROCESS'
-      },
+      where: whereClause,
       orderBy: { updatedAt: 'desc' }
     });
 
     if (!activeWip) {
-      this.logger.warn(`No active WIP entry found for Project ${data.projectId} / Batch ${data.batchId}`);
+      this.logger.warn(`No active WIP entry found for Project ${data.projectId} / Batch ${data.batchId} / Material ${data.materialId}`);
       return null;
     }
 
     return await tx.wipLedger.update({
       where: { id: activeWip.id },
       data: {
-        routingOperationId: data.routingOperationId,
+        routingOperationId: data.routingOperationId || undefined,
         machineId: data.machineId,
         accruedMachineCost: { increment: data.accruedMachineCost },
         accruedLabourCost: { increment: data.accruedLabourCost }

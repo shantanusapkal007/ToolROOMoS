@@ -11,20 +11,13 @@ import { localPoint } from '@visx/event';
 import { bisector } from 'd3-array';
 import { motion } from 'framer-motion';
 
+import { useGlobalDailyReports } from '../../../hooks/useDailyReports';
+
+
 export interface VelocityData {
   date: Date;
   completed: number;
 }
-
-const data: VelocityData[] = [
-  { date: new Date('2026-07-01'), completed: 12 },
-  { date: new Date('2026-07-02'), completed: 15 },
-  { date: new Date('2026-07-03'), completed: 14 },
-  { date: new Date('2026-07-04'), completed: 22 },
-  { date: new Date('2026-07-05'), completed: 18 },
-  { date: new Date('2026-07-06'), completed: 25 },
-  { date: new Date('2026-07-07'), completed: 30 },
-];
 
 const getDate = (d: VelocityData) => d.date;
 const getCompleted = (d: VelocityData) => d.completed;
@@ -42,11 +35,35 @@ const tooltipStyles = {
 };
 
 interface Props {
+  data?: VelocityData[];
   width: number;
   height: number;
 }
 
-export function ProductionVelocityChart({ width, height }: Props) {
+export function ProductionVelocityChart({ data: passedData, width, height }: Props) {
+  const { data: globalReportsRes = [] } = useGlobalDailyReports({});
+  
+  const computedData: VelocityData[] = useMemo(() => {
+    if (passedData && passedData.length > 0) return passedData;
+    
+    const reports = Array.isArray(globalReportsRes) ? globalReportsRes : (globalReportsRes as any)?.data || [];
+    if (reports.length === 0) return [];
+
+    const dateMap = new Map<string, number>();
+    reports.forEach((r: any) => {
+      const dateStr = r.reportDate || r.workDate || r.createdAt;
+      if (!dateStr) return;
+      const key = new Date(dateStr).toISOString().split('T')[0];
+      const count = Number(r.producedQty || 1);
+      dateMap.set(key, (dateMap.get(key) || 0) + count);
+    });
+
+    const sortedKeys = Array.from(dateMap.keys()).sort();
+    return sortedKeys.map(k => ({ date: new Date(k), completed: dateMap.get(k)! }));
+  }, [passedData, globalReportsRes]);
+
+  const data = computedData;
+
   const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<VelocityData>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     detectBounds: true,
@@ -57,16 +74,20 @@ export function ProductionVelocityChart({ width, height }: Props) {
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
+  const minTime = data.length > 0 ? Math.min(...data.map(d => d.date.getTime())) : new Date().getTime() - 7*86400000;
+  const maxTime = data.length > 0 ? Math.max(...data.map(d => d.date.getTime())) : new Date().getTime();
+
   const xScale = useMemo(() => scaleTime<number>({
     range: [0, innerWidth],
-    domain: [Math.min(...data.map(d => d.date.getTime())), Math.max(...data.map(d => d.date.getTime()))],
-  }), [innerWidth]);
+    domain: [minTime, maxTime],
+  }), [innerWidth, minTime, maxTime]);
 
   const yScale = useMemo(() => scaleLinear<number>({
     range: [innerHeight, 0],
-    domain: [0, Math.max(...data.map(getCompleted)) * 1.2],
+    domain: [0, data.length > 0 ? Math.max(...data.map(getCompleted)) * 1.2 : 10],
     nice: true,
-  }), [innerHeight]);
+  }), [innerHeight, data]);
+
 
   const handleTooltip = (event: React.MouseEvent<SVGRectElement> | React.TouchEvent<SVGRectElement>) => {
     const { x } = localPoint(event) || { x: 0 };

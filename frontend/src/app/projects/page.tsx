@@ -2,28 +2,24 @@
 
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "../../components/layout/Sidebar";
-import { Plus, ArrowRight, Download } from "lucide-react";
+import { PageHeader } from "../../components/layout/PageHeader";
+import { Plus, Download, Briefcase, Clock, AlertTriangle, CheckCircle2, FileSpreadsheet } from "lucide-react";
 import { useRouter } from "next/navigation";
-import * as XLSX from 'xlsx';
 import { exportPremiumProjects } from "../../utils/exportPremiumProjects";
-import { EmptyState } from "../../components/ui/EmptyState";
 import { useToast } from "../../components/ui/Toast";
-import { LoadingState } from "../../components/ui/LoadingState";
-import { formatDate } from "../../lib/formatters";
 import { useProjects, useCreateProject } from "../../hooks/useProjects";
 import { useMasterData } from "../../hooks/useMasterData";
-import { useUsers } from "../../hooks/useUsers";
-import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "../../components/ui/Button";
+import { Modal } from "../../components/ui/Modal";
+import { SmartTable } from "../../components/ui/SmartTable";
+import { formatDate } from "../../lib/formatters";
 
 export default function ProjectsPage() {
-  const { success, error } = useToast();
-  const { data: projects, isLoading: projectsLoading } = useProjects();
+  const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const { data: customers } = useMasterData('customers');
+  const { data: plants } = useMasterData('plants');
   const createProjectMutation = useCreateProject();
   const router = useRouter();
-
-  const { data: usersResult } = useUsers();
-  const users = usersResult?.data || [];
 
   // New Project Form State
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
@@ -32,13 +28,9 @@ export default function ProjectsPage() {
   const [newCustomerPo, setNewCustomerPo] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
-  if (customers && customers.length > 0 && !selectedCustomerId) {
-    setSelectedCustomerId(customers[0].id);
-  }
-
   useEffect(() => {
-    if (showNewProjectModal) {
-      if (customers && customers.length > 0) setSelectedCustomerId(customers[0].id);
+    if (showNewProjectModal && customers && customers.length > 0) {
+      setSelectedCustomerId(customers[0].id);
     }
   }, [showNewProjectModal, customers]);
 
@@ -50,239 +42,238 @@ export default function ProjectsPage() {
         partName: newPartName, 
         customerPoNumber: newCustomerPo,
         customerId: selectedCustomerId,
-        plantId: "PL-01",
+        plantId: plants?.[0]?.id || "PL-01",
       } as any);
       setShowNewProjectModal(false);
-    } catch (err: any) { 
-      // Error handled by mutation hook
+      setNewProjectNumber("");
+      setNewPartName("");
+      setNewCustomerPo("");
+    } catch (err: any) {}
+  };
+
+  const activeProjects = projects.filter(p => p.currentStage !== "CLOSED" && p.currentStage !== "CANCELLED");
+  const delayedProjects = activeProjects.filter(p => p.targetDeliveryDate && new Date(p.targetDeliveryDate).getTime() < new Date().getTime());
+  const onTrackCount = activeProjects.length - delayedProjects.length;
+
+  const columns = [
+    {
+      key: 'projectNumber',
+      label: 'Project #',
+      render: (val: string, row: any) => (
+        <button 
+          onClick={() => router.push(`/projects/${row.id}/overview`)} 
+          className="font-bold text-zinc-900 font-mono hover:text-blue-600 cursor-pointer"
+        >
+          {val}
+        </button>
+      )
+    },
+    {
+      key: 'partName',
+      label: 'Part / Component Name',
+      render: (val: string) => <span className="font-semibold text-zinc-800">{val || 'N/A'}</span>
+    },
+    {
+      key: 'customer',
+      label: 'Customer',
+      render: (val: any) => <span>{val?.companyName || 'Pending'}</span>
+    },
+    {
+      key: 'customerPoNumber',
+      label: 'Customer PO',
+      render: (val: string) => <span className="font-mono text-zinc-600">{val || 'N/A'}</span>
+    },
+    {
+      key: 'currentStage',
+      label: 'Stage',
+      render: (val: string) => (
+        <span className="text-micro font-bold px-2 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-zinc-700">
+          {val?.replace('_', ' ')}
+        </span>
+      )
+    },
+    {
+      key: 'targetDeliveryDate',
+      label: 'Target Delivery',
+      render: (val: string) => (
+        <span className="font-mono text-zinc-500">
+          {val ? formatDate(val) : <span className="text-zinc-300">Not Set</span>}
+        </span>
+      )
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (_: any, row: any) => {
+        const hasDate = !!row.targetDeliveryDate;
+        const isDelayed = hasDate && new Date(row.targetDeliveryDate).getTime() < new Date().getTime();
+        return isDelayed ? (
+          <span className="text-micro font-bold px-2 py-0.5 rounded border text-red-700 bg-red-50 border-red-200">
+            OVERDUE
+          </span>
+        ) : (
+          <span className="text-micro font-bold px-2 py-0.5 rounded border text-emerald-700 bg-emerald-50 border-emerald-200">
+            ON TRACK
+          </span>
+        );
+      }
     }
-  };
-
-  const handleExportProjects = () => {
-    exportPremiumProjects(projects || []);
-  };
-
-  // Apple Spring Configuration
-  const spring = { type: "spring" as const, stiffness: 400, damping: 30 };
+  ];
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans mission-control-bg">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#F8F9FA]">
       <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] pt-4 pr-4 pb-4">
-        <div className="flex-1 px-8 py-8 overflow-y-auto hide-scrollbar relative">
+      <main className="flex-1 h-full flex flex-col relative pl-16">
+        <div className="w-full max-w-[1440px] mx-auto h-full flex flex-col px-6 py-6 min-h-0 overflow-y-auto space-y-6">
           
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="flex justify-between items-end mb-16 relative z-10"
-          >
-            <div className="relative group cursor-default">
-              <div className="absolute -inset-x-6 -inset-y-4 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-transparent blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 rounded-full" />
-              
-              <h1 
-                className="relative text-[3.5rem] leading-none font-black tracking-tighter mb-3 bg-gradient-to-b from-zinc-700 via-zinc-900 to-black bg-clip-text text-transparent"
-                style={{ textShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-              >
-                Active Projects
-              </h1>
-              
-              <p className="relative text-lg font-medium text-zinc-500/80 flex items-center gap-3">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                </span>
-                All manufacturing missions currently in progress.
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleExportProjects}
-                className="glass-button px-6 py-4 font-semibold flex items-center shadow-elevation"
-              >
-                <Download className="h-5 w-5 mr-3 text-emerald-400" />
-                Export to Excel
-              </motion.button>
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowNewProjectModal(true)}
-                className="glass-button px-6 py-4 font-semibold flex items-center shadow-elevation"
-              >
-                <Plus className="h-5 w-5 mr-3 text-blue-400" />
-                Initialize Project
-              </motion.button>
-            </div>
-          </motion.div>
+          {/* Header */}
+          <PageHeader 
+            title="Active Projects Pipeline"
+            description="All manufacturing missions currently in progress across shopfloor stages."
+            icon={<Briefcase />}
+            breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Projects' }]}
+            actions={
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="secondary" 
+                  size="md"
+                  onClick={() => exportPremiumProjects(projects)}
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span>Export Excel</span>
+                </Button>
+                <Button 
+                  variant="primary" 
+                  size="md"
+                  onClick={() => setShowNewProjectModal(true)}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Initialize Project</span>
+                </Button>
+              </div>
+            }
+          />
 
-          <AnimatePresence mode="wait">
-            {projectsLoading ? (
-              <motion.div 
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <LoadingState message="Scanning Project Database..." />
-              </motion.div>
-            ) : !projects || projects.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-              >
-                <EmptyState 
-                  title="No Active Projects" 
-                  description="Initialize a new project to start tracking production, cost, and logistics." 
-                  actionLabel="Initialize Project"
-                  onAction={() => setShowNewProjectModal(true)}
-                />
-              </motion.div>
-            ) : (
-              <motion.div 
-                key="grid"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8 pb-12"
-              >
-                {projects.filter(p => p.currentStage !== "CLOSED" && p.currentStage !== "CANCELLED").map((proj, idx) => (
-                  <motion.div 
-                    key={proj.id}
-                    initial={{ opacity: 0, y: 20, filter: "blur(8px)", rotateX: 0, rotateY: 0 }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ delay: idx * 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                    whileHover={{ 
-                      y: -8, 
-                      scale: 1.02, 
-                      boxShadow: "0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 20px rgba(59, 130, 246, 0.15)",
-                      rotateX: 2,
-                      rotateY: -2
-                    }}
-                    whileTap={{ scale: 0.98, rotateX: 0, rotateY: 0 }}
-                    onClick={() => router.push(`/projects/${proj.id}/overview`)}
-                    className="spotlight-card p-8 cursor-pointer group flex flex-col h-[280px] relative overflow-hidden"
-                  >
-                    {/* Inner Glass Highlights */}
-                    <div className="absolute inset-0 border border-black/5 rounded-xl pointer-events-none z-20 group-hover:border-black/10 transition-colors" />
-                    
-                    {/* Hover Glow Light */}
-                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/20 blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-full z-0" />
-                    
-                    <div className="flex-1 z-10 flex flex-col">
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="px-3 py-1 rounded-full bg-black/5 border border-black/10 text-micro text-zinc-600">
-                          {proj.projectNumber}
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-zinc-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all duration-300" />
-                      </div>
-                      <h3 className="text-heading font-bold text-zinc-900 mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-blue-200 transition-all">
-                        {proj.partName}
-                      </h3>
-                      <p className="text-body text-zinc-500">{proj.customer?.companyName || "Customer Pending"}</p>
-                    </div>
+          {/* Analytical KPI Summary Strips */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="enterprise-card p-4 flex items-center justify-between">
+              <div>
+                <span className="text-micro font-semibold uppercase text-zinc-500">Active Missions</span>
+                <div className="text-2xl font-bold font-mono text-zinc-900 mt-1">{activeProjects.length}</div>
+              </div>
+              <div className="w-8 h-8 rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                <Briefcase className="w-4 h-4" />
+              </div>
+            </div>
 
-                    <div className="mt-auto pt-6 border-t border-black/10 z-10 flex justify-between items-center">
-                      <div className="flex items-center text-caption text-zinc-600">
-                        <div className="h-2 w-2 rounded-full bg-emerald-400 mr-3 shadow-elevation animate-pulse"></div>
-                        {proj.currentStage}
-                      </div>
-                      <span className="text-micro text-zinc-500">{formatDate(proj.targetDeliveryDate)}</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <div className="enterprise-card p-4 flex items-center justify-between">
+              <div>
+                <span className="text-micro font-semibold uppercase text-zinc-500">On Track</span>
+                <div className="text-2xl font-bold font-mono text-emerald-600 mt-1">{onTrackCount}</div>
+              </div>
+              <div className="w-8 h-8 rounded bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="enterprise-card p-4 flex items-center justify-between">
+              <div>
+                <span className="text-micro font-semibold uppercase text-zinc-500">Overdue Alerts</span>
+                <div className="text-2xl font-bold font-mono text-red-600 mt-1">{delayedProjects.length}</div>
+              </div>
+              <div className="w-8 h-8 rounded bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="enterprise-card p-4 flex items-center justify-between">
+              <div>
+                <span className="text-micro font-semibold uppercase text-zinc-500">Total Records</span>
+                <div className="text-2xl font-bold font-mono text-zinc-900 mt-1">{projects.length}</div>
+              </div>
+              <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-600">
+                <Clock className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Hero Projects Table */}
+          <SmartTable 
+            title="Projects Execution Register"
+            columns={columns}
+            data={projects}
+            isLoading={projectsLoading}
+            onView={(row) => router.push(`/projects/${row.id}/overview`)}
+            exportFilename="Projects_Register"
+          />
+
         </div>
       </main>
 
-      {/* New Project Modal (Using Glass Modal) */}
-      <AnimatePresence>
-        {showNewProjectModal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-xl"
-          >
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={spring}
-              className="glass-modal w-full max-w-2xl p-10 relative !overflow-visible"
-            >
-              <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/20 blur-[100px] pointer-events-none rounded-full" />
-              
-              <h2 className="text-heading-xl font-bold mb-8 text-zinc-900 tracking-tight relative z-10">Initialize Mission</h2>
-              
-              <form onSubmit={handleCreateProject} className="space-y-6 relative z-10">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-micro text-zinc-500 mb-3">PROJECT NUMBER</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-black/20 border border-black/10 rounded-xl px-5 py-4 text-body text-zinc-900 focus:border-blue-500 focus:bg-black/5 focus:ring-1 focus:ring-blue-500 transition-all outline-none" 
-                      value={newProjectNumber} 
-                      onChange={e => setNewProjectNumber(e.target.value)} 
-                      required 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-micro text-zinc-500 mb-3">PART NAME</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-black/20 border border-black/10 rounded-xl px-5 py-4 text-body text-zinc-900 focus:border-blue-500 focus:bg-black/5 focus:ring-1 focus:ring-blue-500 transition-all outline-none" 
-                      value={newPartName} 
-                      onChange={e => setNewPartName(e.target.value)} 
-                      required 
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-micro text-zinc-500 mb-3">CUSTOMER</label>
-                    <select 
-                      className="w-full bg-black/20 border border-black/10 rounded-xl px-5 py-4 text-body text-zinc-900 focus:border-blue-500 focus:bg-black/5 focus:ring-1 focus:ring-blue-500 transition-all outline-none appearance-none" 
-                      value={selectedCustomerId}
-                      onChange={e => setSelectedCustomerId(e.target.value)}
-                      required
-                    >
-                      {customers?.map((cust: any) => (
-                        <option key={cust.id} value={cust.id} className="bg-[#F4F4F6] text-zinc-900">
-                          {cust.companyName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="flex justify-end pt-8 gap-4 border-t border-black/10">
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button" 
-                    onClick={() => setShowNewProjectModal(false)} 
-                    className="glass-button px-6 py-3 text-zinc-900 font-medium"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit" 
-                    className="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-elevation transition-colors"
-                  >
-                    Launch Project
-                  </motion.button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Initialize Project Modal */}
+      <Modal
+        isOpen={showNewProjectModal}
+        onClose={() => setShowNewProjectModal(false)}
+        title="Initialize New Project Mission"
+        subtitle="Set up project number, part name, and customer PO assignment."
+      >
+        <form onSubmit={handleCreateProject} className="space-y-4">
+          <div>
+            <label className="block text-caption font-semibold text-zinc-700 mb-1">Project Number / Code *</label>
+            <input 
+              type="text"
+              required
+              placeholder="e.g. PRJ-2026-009"
+              value={newProjectNumber}
+              onChange={(e) => setNewProjectNumber(e.target.value)}
+              className="w-full px-3 py-2 border border-zinc-200 rounded-md font-mono text-caption text-zinc-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-caption font-semibold text-zinc-700 mb-1">Part / Tooling Component Name *</label>
+            <input 
+              type="text"
+              required
+              placeholder="e.g. Fender Panel Draw Die"
+              value={newPartName}
+              onChange={(e) => setNewPartName(e.target.value)}
+              className="w-full px-3 py-2 border border-zinc-200 rounded-md text-caption text-zinc-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-caption font-semibold text-zinc-700 mb-1">Customer PO Number</label>
+            <input 
+              type="text"
+              placeholder="e.g. PO-88992"
+              value={newCustomerPo}
+              onChange={(e) => setNewCustomerPo(e.target.value)}
+              className="w-full px-3 py-2 border border-zinc-200 rounded-md font-mono text-caption text-zinc-900"
+            />
+          </div>
+
+          {customers && customers.length > 0 && (
+            <div>
+              <label className="block text-caption font-semibold text-zinc-700 mb-1">Customer / Client</label>
+              <select
+                value={selectedCustomerId}
+                onChange={(e) => setSelectedCustomerId(e.target.value)}
+                className="w-full px-3 py-2 border border-zinc-200 rounded-md text-caption text-zinc-900 bg-white"
+              >
+                {customers.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.companyName}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <Button variant="secondary" onClick={() => setShowNewProjectModal(false)}>Cancel</Button>
+            <Button type="submit">Create Project Mission</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -13,13 +13,15 @@ export default function Home() {
   const router = useRouter();
 
   return (
-    <div className="flex h-screen w-full overflow-hidden text-zinc-900 font-sans mission-control-bg">
+    <div className="flex h-screen w-full overflow-hidden text-zinc-900 font-sans bg-[#F8F9FA]">
       <Sidebar />
-      <main className="flex-1 h-screen overflow-hidden flex flex-col relative z-0 pl-[5.5rem]">
-        <MissionControl 
-          projects={projects} 
-          onSelectProject={(proj) => router.push(`/projects/${proj.id}/overview`)} 
-        />
+      <main className="flex-1 h-screen overflow-y-auto flex flex-col relative pl-16">
+        <div className="w-full max-w-[1440px] mx-auto h-full flex flex-col">
+          <MissionControl 
+            projects={projects} 
+            onSelectProject={(proj) => router.push(`/projects/${proj.id}/overview`)} 
+          />
+        </div>
       </main>
     </div>
   );

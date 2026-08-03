@@ -110,7 +110,8 @@ export function useIssueMaterial(projectId: string) {
     onSuccess: (res, variables) => {
       queryClient.invalidateQueries({ queryKey: productionKeys.issues(projectId) });
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
-      success('Material Issued', `Issue slip generated.`);
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      success('Material Issued', `Issue slip generated successfully.`);
     },
     onError: (err: any) => {
       error('Failed', err.message || 'An error occurred');

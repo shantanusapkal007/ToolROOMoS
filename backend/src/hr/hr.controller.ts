@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Query, ParseUUIDPipe } from '@nestjs/common';
 import { HrService } from './hr.service';
 import { CreateEmployeeDto } from '../master-data/employees/dto/create-employee.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -36,5 +36,24 @@ export class HrController {
   async getRateHistory(@Param('entityType') entityType: string, @Param('entityId') entityId: string) {
     return this.hrService.getRateHistory(entityType, entityId);
   }
+
+  @Get('monthly-payroll')
+  async getMonthlyPayrollAndWork(
+    @Query('monthYear') monthYear?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string
+  ) {
+    return this.hrService.getMonthlyPayrollAndWork({ monthYear, startDate, endDate });
+  }
+
+  @Post('monthly-salary')
+  @Roles('ADMIN')
+  async upsertMonthlySalary(
+    @Body() body: { employeeId: string; monthYear: string; actualSalary: number; remarks?: string },
+    @CurrentUser() user: any
+  ) {
+    return this.hrService.upsertMonthlySalary(body, user?.userId || 'SYSTEM');
+  }
 }
+
 

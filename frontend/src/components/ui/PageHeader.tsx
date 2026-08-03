@@ -44,9 +44,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         {/* Status Indicator */}
         <div className="mt-3 flex-shrink-0">
           <div className="relative flex h-3 w-3">
-            {status !== 'neutral' && (
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${statusColors[status].split(' ')[0]}`}></span>
-            )}
             <span className={`relative inline-flex rounded-full h-3 w-3 ${statusColors[status]}`}></span>
           </div>
         </div>

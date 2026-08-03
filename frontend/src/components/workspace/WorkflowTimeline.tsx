@@ -66,7 +66,6 @@ export function WorkflowTimeline({ currentStage }: WorkflowTimelineProps) {
                       transition={springConfig}
                     >
                       <ArrowRight className="h-5 w-5" />
-                      <div className={`absolute inset-0 bg-[${stage.hex}] opacity-20 animate-ping rounded-full`} />
                     </motion.div>
                   )}
                   {isFuture && <Circle className="h-3 w-3 opacity-50" />}

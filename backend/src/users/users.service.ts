@@ -58,6 +58,7 @@ export class UsersService {
           status: true,
           hourlyRate: true,
           createdAt: true,
+          lastLoginAt: true,
         },
         orderBy: { createdAt: 'desc' },
       }),

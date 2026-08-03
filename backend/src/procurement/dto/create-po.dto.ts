@@ -4,8 +4,8 @@ import { CreatePoItemDto } from './create-po-item.dto';
 
 export class CreatePoDto {
   @IsString()
-  @IsNotEmpty()
-  vendorId: string;
+  @IsOptional()
+  vendorId?: string;
 
   @IsString()
   @IsNotEmpty()

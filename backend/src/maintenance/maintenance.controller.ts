@@ -47,4 +47,9 @@ export class MaintenanceController {
   ) {
     return this.maintenanceService.addSparePart(id, sparePartDto);
   }
+
+  @Get('machines/:machineId/metrics')
+  async getMachineMetrics(@Param('machineId') machineId: string) {
+    return this.maintenanceService.getMachineMetrics(machineId);
+  }
 }

@@ -9,6 +9,7 @@ declare module 'lucide-react' {
   export const AlertTriangle: LucideIcon;
   export const Archive: LucideIcon;
   export const ArrowDown: LucideIcon;
+  export const ArrowDownLeft: LucideIcon;
   export const ArrowDownRight: LucideIcon;
   export const ArrowLeft: LucideIcon;
   export const ArrowRight: LucideIcon;
@@ -116,6 +117,7 @@ declare module 'lucide-react' {
   export const PlusCircle: LucideIcon;
   export const Power: LucideIcon;
   export const Printer: LucideIcon;
+  export const QrCode: LucideIcon;
   export const RefreshCcw: LucideIcon;
   export const RefreshCw: LucideIcon;
   export const Repeat: LucideIcon;

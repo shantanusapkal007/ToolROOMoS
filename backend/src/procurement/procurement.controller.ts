@@ -26,7 +26,6 @@ export class ProcurementController {
 
   // Purchase Order routes
   @Post('purchase-orders')
-  @Roles('ADMIN', 'PURCHASE')
   async createPo(
     @Param('projectId') projectId: string,
     @Body() dto: CreatePoDto,
@@ -41,8 +40,9 @@ export class ProcurementController {
   }
 
   @Post('purchase-orders/:poId')
-  @Roles('ADMIN', 'PURCHASE')
   async updatePo(
+
+
     @Param('projectId') projectId: string,
     @Param('poId') poId: string,
     @Body() dto: CreatePoDto,

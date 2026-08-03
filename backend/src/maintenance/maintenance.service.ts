@@ -223,4 +223,48 @@ export class MaintenanceService {
       return sparePart;
     });
   }
+
+  async getMachineMetrics(machineId: string) {
+    const resolvedTickets = await this.prisma.maintenanceTicket.findMany({
+      where: {
+        machineId,
+        status: { in: ['RESOLVED', 'CLOSED'] },
+        downtimeStartedAt: { not: null },
+        resolvedAt: { not: null },
+      },
+    });
+
+    let totalDowntimeHours = 0;
+    resolvedTickets.forEach((ticket) => {
+      const diffMs = ticket.resolvedAt!.getTime() - ticket.downtimeStartedAt!.getTime();
+      totalDowntimeHours += diffMs / (1000 * 60 * 60);
+    });
+
+    const breakdownCount = resolvedTickets.length;
+    const mttr = breakdownCount > 0 ? totalDowntimeHours / breakdownCount : 0;
+
+    // Get actual operating running hours from MSDR
+    const msdrOperations = await this.prisma.msdrOperation.findMany({
+      where: {
+        msdrHeader: {
+          machineId,
+        },
+      },
+      select: {
+        runningHours: true,
+      },
+    });
+
+    const totalOperatingHours = msdrOperations.reduce((sum, op) => sum + Number(op.runningHours || 0), 0);
+    const mtbf = breakdownCount > 0 ? totalOperatingHours / breakdownCount : totalOperatingHours;
+
+    return {
+      machineId,
+      mttrHours: Number(mttr.toFixed(2)),
+      mtbfHours: Number(mtbf.toFixed(2)),
+      totalDowntimeHours: Number(totalDowntimeHours.toFixed(2)),
+      totalOperatingHours: Number(totalOperatingHours.toFixed(2)),
+      breakdownCount,
+    };
+  }
 }

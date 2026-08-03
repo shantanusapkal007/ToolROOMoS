@@ -146,26 +146,48 @@ axiosInstance.interceptors.response.use(
 
     // Wrap in Business Error to prevent raw Axios errors from leaking to UI
     const responseData = error.response.data as any;
-    const message = responseData?.message || error.message || 'An unexpected error occurred.';
+    let message = 'An unexpected error occurred.';
+    if (responseData?.message) {
+      message = Array.isArray(responseData.message)
+        ? responseData.message.join(', ')
+        : String(responseData.message);
+    } else if (error.message) {
+      message = error.message;
+    }
     
     throw new ApiBusinessError(message, status, responseData);
   }
 );
 
+const cleanPath = (path: string): string => {
+  if (!path) return '';
+  let cleaned = path;
+  if (cleaned.startsWith('/')) {
+    cleaned = cleaned.slice(1);
+  }
+  if (cleaned.startsWith('api/v1/')) {
+    cleaned = cleaned.slice(7);
+  }
+  return cleaned;
+};
+
 // Wrapper to retain the original interface
 export const api = {
   get: <T = any>(path: string, config?: any): Promise<ApiResponse<T>> => 
-    axiosInstance.get(path, config),
+    axiosInstance.get(cleanPath(path), config),
     
   post: <T = any>(path: string, body?: any, config?: any): Promise<ApiResponse<T>> => 
-    axiosInstance.post(path, body, config),
+    axiosInstance.post(cleanPath(path), body, config),
     
   put: <T = any>(path: string, body?: any, config?: any): Promise<ApiResponse<T>> => 
-    axiosInstance.put(path, body, config),
+    axiosInstance.put(cleanPath(path), body, config),
     
   patch: <T = any>(path: string, body?: any, config?: any): Promise<ApiResponse<T>> => 
-    axiosInstance.patch(path, body, config),
+    axiosInstance.patch(cleanPath(path), body, config),
     
   delete: <T = any>(path: string, config?: any): Promise<ApiResponse<T>> => 
-    axiosInstance.delete(path, config),
+    axiosInstance.delete(cleanPath(path), config),
 };
+
+export default api;
+

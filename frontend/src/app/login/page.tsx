@@ -44,7 +44,7 @@ export default function LoginPage() {
             <Shield className="w-8 h-8 text-zinc-900" strokeWidth={1.5} />
           </div>
           <h1 className="text-2xl font-bold text-zinc-900 mb-2 tracking-tight">ToolRoomOS</h1>
-          <p className="text-zinc-600 font-medium text-sm">Sign in to Mission Control</p>
+          <p className="text-zinc-600 font-medium text-sm">Sign in to your account</p>
         </div>
 
         {error && (

@@ -6,6 +6,9 @@ import { Group } from '@visx/group';
 import { scaleOrdinal } from '@visx/scale';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { useMasterData } from '../../../hooks/useMasterData';
+
+
 interface MachineData {
   status: string;
   count: number;
@@ -13,23 +16,29 @@ interface MachineData {
   glowHex: string;
 }
 
-const data: MachineData[] = [
-  { status: 'Running', count: 12, color: 'text-emerald-600', glowHex: '#059669' },
-  { status: 'Idle', count: 4, color: 'text-zinc-600', glowHex: '#52525b' },
-  { status: 'Maintenance', count: 2, color: 'text-amber-600', glowHex: '#d97706' },
-  { status: 'Breakdown', count: 1, color: 'text-red-600', glowHex: '#dc2626' },
-];
-
-const total = data.reduce((acc, curr) => acc + curr.count, 0);
-
 interface Props {
   width: number;
   height: number;
 }
 
 export function MachineUtilizationRing({ width, height }: Props) {
+  const { data: machines = [] } = useMasterData('machines');
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
-  
+
+  const runningCount = machines.filter((m: any) => m.status === 'RUNNING' || m.status === 'ACTIVE' || !m.status).length;
+  const idleCount = machines.filter((m: any) => m.status === 'IDLE').length;
+  const maintCount = machines.filter((m: any) => m.status === 'MAINTENANCE' || m.status === 'PM').length;
+  const breakdownCount = machines.filter((m: any) => m.status === 'BREAKDOWN' || m.status === 'DOWN').length;
+
+  const data: MachineData[] = [
+    { status: 'Running', count: Math.max(runningCount, machines.length > 0 ? runningCount : 0), color: 'text-emerald-600', glowHex: '#059669' },
+    { status: 'Idle', count: idleCount, color: 'text-zinc-600', glowHex: '#52525b' },
+    { status: 'Maintenance', count: maintCount, color: 'text-amber-600', glowHex: '#d97706' },
+    { status: 'Breakdown', count: breakdownCount, color: 'text-red-600', glowHex: '#dc2626' },
+  ];
+
+  const total = machines.length || data.reduce((acc, curr) => acc + curr.count, 0);
+
   const margin = { top: 20, right: 20, bottom: 20, left: 20 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
@@ -41,6 +50,7 @@ export function MachineUtilizationRing({ width, height }: Props) {
     domain: data.map(d => d.status),
     range: data.map(d => d.glowHex),
   });
+
 
   return (
     <div className="relative flex items-center justify-center">

@@ -1,7 +1,11 @@
 import { Controller, Get, Post, Put, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { AssemblyService } from './assembly.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
-@Controller('projects/:projectId/assembly')
+@Controller('api/v1/projects/:projectId/assembly')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AssemblyController {
   constructor(private readonly assemblyService: AssemblyService) {}
 
@@ -11,21 +15,25 @@ export class AssemblyController {
   }
 
   @Post('orders')
+  @Roles('ADMIN', 'PRODUCTION')
   async createOrder(@Param('projectId') projectId: string, @Body() data: any) {
     return this.assemblyService.createAssemblyHeader(projectId, data);
   }
 
   @Put('orders/:id/status')
+  @Roles('ADMIN', 'PRODUCTION', 'QUALITY')
   async updateOrderStatus(@Param('id') id: string, @Body('status') status: string) {
     return this.assemblyService.updateAssemblyStatus(id, status);
   }
 
   @Post('orders/:id/components')
+  @Roles('ADMIN', 'PRODUCTION')
   async addComponent(@Param('id') id: string, @Body() data: any) {
     return this.assemblyService.addAssemblyComponent(id, data);
   }
 
   @Post('orders/:id/link-subassembly')
+  @Roles('ADMIN', 'PRODUCTION')
   async linkSubAssembly(@Param('id') id: string, @Body('childId') childId: string) {
     return this.assemblyService.linkSubAssembly(id, childId);
   }
@@ -36,11 +44,13 @@ export class AssemblyController {
   }
 
   @Post('trials')
+  @Roles('ADMIN', 'PRODUCTION', 'QUALITY')
   async createTrial(@Param('projectId') projectId: string, @Body() data: any) {
     return this.assemblyService.createProjectTrial(projectId, data);
   }
 
   @Put('trials/:id/status')
+  @Roles('ADMIN', 'PRODUCTION', 'QUALITY')
   async updateTrialStatus(
     @Param('id') id: string, 
     @Body('status') status: string,
@@ -50,6 +60,7 @@ export class AssemblyController {
   }
 
   @Put('trials/:id/signoff')
+  @Roles('ADMIN', 'QUALITY')
   async signOffTrial(@Param('id') id: string, @Req() req: any) {
     // Assuming req.user is populated by AuthGuard. If not, fallback to 'SYSTEM'
     const user = req.user?.name || 'Authorized Signatory';

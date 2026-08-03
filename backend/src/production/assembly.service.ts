@@ -23,8 +23,9 @@ export class AssemblyService {
   }
 
   async createAssemblyHeader(projectId: string, data: any) {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const assemblyNumber = `ASM-${projectId.substring(0, 4).toUpperCase()}-${randomNum}`;
+    const count = await this.prisma.assemblyHeader.count({ where: { projectId } });
+    const seqStr = (count + 1).toString().padStart(3, '0');
+    const assemblyNumber = `ASM-${projectId.substring(0, 4).toUpperCase()}-${seqStr}`;
     
     return this.prisma.assemblyHeader.create({
       data: {

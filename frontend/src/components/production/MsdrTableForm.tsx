@@ -10,8 +10,8 @@ import { useToast } from "@/components/ui/Toast";
 
 interface MsdrTableFormProps {
   projectId: string;
-  onClose: () => void;
-  onSuccess: () => void;
+  onClose?: () => void;
+  onSuccess?: () => void;
   productionSection?: string;
 }
 
@@ -22,7 +22,7 @@ const SECTION_LABELS: Record<string, string> = {
   FABRICATION_EXPORT: 'Fabrication (Export)',
 };
 
-export function MsdrTableForm({ projectId, onClose, onSuccess, productionSection = 'MACHINE_SHOP' }: MsdrTableFormProps) {
+export function MsdrTableForm({ projectId, onClose = () => {}, onSuccess = () => {}, productionSection = 'MACHINE_SHOP' }: MsdrTableFormProps) {
   const { data: project } = useProject(projectId);
   const { data: machines } = useMasterData('machines');
   const { data: employees } = useMasterData('employees');
@@ -188,7 +188,7 @@ export function MsdrTableForm({ projectId, onClose, onSuccess, productionSection
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/5 backdrop-blur-sm p-4 sm:p-8 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-300">
       <div className="bg-[#FBFBFC] border border-black/10 w-full max-w-[1400px] max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
         
         {/* Top Header */}

@@ -1,39 +1,91 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { InventoryMovementType } from '@prisma/client';
 
 @Injectable()
 export class InventoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getInventoryLedger() {
-    const batches = await this.prisma.inventoryBatch.findMany({
-      where: {
-        status: { in: ['AVAILABLE', 'RESERVED'] }, // Ignore depleted or quarantined for main ledger, or maybe show all? Let's show all for a full ledger but ordered.
-      },
+  async getLedger() {
+    return this.prisma.inventoryBatch.findMany({
       include: {
         material: true,
         location: {
           include: {
             warehouse: true,
-          },
-        },
-        grnItem: {
-          include: {
-            grnHeader: {
-              include: {
-                poHeader: {
-                  include: {
-                    vendor: true
-                  }
-                }
-              }
-            }
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: {
+        createdAt: 'desc',
+      }
     });
-    
-    return batches;
+  }
+
+  async getInventoryLedger() {
+    return this.getLedger();
+  }
+
+  async getStockByMaterial(materialId: string) {
+    return this.prisma.inventoryStock.findMany({
+      where: { materialId },
+      include: {
+        warehouse: true,
+      }
+    });
+  }
+
+  async getBatchesByMaterial(materialId: string) {
+    return this.prisma.inventoryBatch.findMany({
+      where: { materialId, currentQty: { gt: 0 } },
+      include: {
+        location: {
+          include: {
+            warehouse: true,
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'asc', // FIFO default
+      }
+    });
+  }
+
+  async createManualBatch(data: {
+    materialId: string;
+    batchNumber?: string;
+    heatNumber?: string;
+    currentQty: number;
+    unitCost?: number;
+    locationId?: string;
+  }) {
+    const batchNumber = data.batchNumber || `BAT-MAN-${Date.now()}`;
+    const newBatch = await this.prisma.inventoryBatch.create({
+      data: {
+        materialId: data.materialId,
+        batchNumber,
+        heatNumber: data.heatNumber || 'N/A',
+        currentQty: data.currentQty,
+        availableQty: data.currentQty,
+        unitCost: data.unitCost || 0,
+        locationId: data.locationId || null,
+        status: 'AVAILABLE',
+      },
+      include: {
+        material: true,
+        location: true,
+      }
+    });
+
+    await this.prisma.inventoryTransaction.create({
+      data: {
+        inventoryBatchId: newBatch.id,
+        movementType: InventoryMovementType.GRN_RECEIPT,
+        quantity: data.currentQty,
+        remarks: 'Manual Stock Intake',
+      }
+    });
+
+    return newBatch;
   }
 }

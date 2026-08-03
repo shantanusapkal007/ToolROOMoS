@@ -6,14 +6,14 @@ import { saveAs } from 'file-saver';
 // ─────────────────────────────────────────────────────────────────────────────
 const C = {
   black: 'FF000000',
-  darkText: 'FF1D1D1F',
-  mediumText: 'FF424245',
-  lightText: 'FF86868B',
-  headerBg: 'FFF5F5F7',
-  border: 'FFD2D2D7',
-  lightBorder: 'FFE8E8ED',
+  darkText: 'FF2C2E88',
+  mediumText: 'FF4A4C9D',
+  lightText: 'FF8688C4',
+  headerBg: 'FFF0F1F8',
+  border: 'FFD2D4E5',
+  lightBorder: 'FFE8E9F2',
   white: 'FFFFFFFF',
-  totalBg: 'FFF9FAFB',
+  totalBg: 'FFF9FAFD',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

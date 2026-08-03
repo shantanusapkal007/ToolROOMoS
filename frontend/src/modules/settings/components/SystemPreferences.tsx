@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Save } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
+import { api } from '../../../lib/api';
 
 export const SystemPreferences = () => {
-  const { success } = useToast();
+  const { success, error } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Mock state for toggles
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
     slackIntegration: false,
@@ -15,17 +16,61 @@ export const SystemPreferences = () => {
     maintenanceMode: false,
   });
 
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPrefs() {
+      try {
+        setIsLoading(true);
+        const res: any = await api.get('settings/preferences');
+        const data = res.data || res;
+        if (isMounted && data && typeof data === 'object') {
+          setPreferences(prev => ({
+            ...prev,
+            ...(data.emailNotifications !== undefined && { emailNotifications: Boolean(data.emailNotifications) }),
+            ...(data.slackIntegration !== undefined && { slackIntegration: Boolean(data.slackIntegration) }),
+            ...(data.autoBackup !== undefined && { autoBackup: Boolean(data.autoBackup) }),
+            ...(data.maintenanceMode !== undefined && { maintenanceMode: Boolean(data.maintenanceMode) }),
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to load system preferences from backend', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+    loadPrefs();
+    return () => { isMounted = false; };
+  }, []);
+
   const togglePref = (key: keyof typeof preferences) => {
     setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await api.post('settings/preferences', { preferences });
       success('Preferences Updated', 'System preferences saved successfully!');
-    }, 1000);
+    } catch (err: any) {
+      console.error('Failed to save preferences', err);
+      if (err?.status === 403 || err?.response?.status === 403) {
+        error('Access Denied', 'Admin privileges are required to modify system settings.');
+      } else {
+        error('Update Failed', 'Failed to save system preferences to backend.');
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black/10"></div>
+        <span className="ml-3 text-sm text-zinc-500 font-bold uppercase tracking-widest">Loading Preferences...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">

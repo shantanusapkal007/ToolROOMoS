@@ -25,17 +25,19 @@ export interface Project {
 
 export const ProjectsService = {
   getAllProjects: async (): Promise<Project[]> => {
-    // Axios response.data is already returned via interceptor, but our interceptor returns `response.data`
-    // which has `{ status, data: Project[] }`. Let's handle the extraction.
-    const res = await api.get<Project[]>('projects');
-    // If the backend returns { data: [...] } we return res.data.
-    // Given the ApiResponse interface, res.data contains the payload.
-    return res.data as unknown as Project[]; 
+    const res = await api.get<any>('projects');
+    const body = res?.data;
+    if (Array.isArray(body)) return body;
+    if (body && Array.isArray(body.data)) return body.data;
+    if (body && body.data && Array.isArray(body.data.data)) return body.data.data;
+    return [];
   },
 
   getProjectById: async (id: string): Promise<Project> => {
-    const res = await api.get<Project>(`projects/${id}`);
-    return res.data as unknown as Project;
+    const res = await api.get<any>(`projects/${id}`);
+    const body = res?.data;
+    if (body && body.data) return body.data;
+    return body as Project;
   },
 
   createProject: async (data: Partial<Project>): Promise<Project> => {

@@ -1,719 +1,362 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { api } from "../../../../lib/api";
-import { FileText, DollarSign, Activity, TrendingUp, Clock, Target, CalendarDays, CheckCircle2, ChevronRight, BarChart2, X, AlertTriangle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { useToast } from "../../../../components/ui/Toast";
-import { formatCurrency, formatDate } from "../../../../lib/formatters";
-import { useProject, useAdvanceProjectStage, useReopenImpact, useReopenEngineering, useCloseProject } from "../../../../hooks/useProjects";
+import React from "react";
+import { useParams } from "next/navigation";
+import { useProject, useAdvanceProjectStage } from "@/hooks/useProjects";
+import { 
+  Briefcase, 
+  Clock, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Layers, 
+  Calendar, 
+  Building2, 
+  User, 
+  ArrowRight,
+  TrendingUp,
+  ShieldCheck,
+  Wrench,
+  FileText,
+  PackageCheck,
+  ShoppingCart,
+  ChevronRight,
+  CheckSquare,
+  Sparkles,
+  Factory
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { formatDate, formatCurrency } from "@/lib/formatters";
+import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 
-export default function OverviewTab({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = React.use(params);
-  const { data: project, isLoading } = useProject(resolvedParams.id);
-  const advanceStageMutation = useAdvanceProjectStage(resolvedParams.id);
-  const reopenEngineeringMutation = useReopenEngineering(resolvedParams.id);
-  const { data: reopenImpact, refetch: refetchImpact } = useReopenImpact(resolvedParams.id);
-  const closeProjectMutation = useCloseProject(resolvedParams.id);
-  const [mounted, setMounted] = useState(false);
-  const router = useRouter();
-  const { success, error } = useToast();
+import { useGlobalDailyReports } from "@/hooks/useDailyReports";
 
-  const [showStatusModal, setShowStatusModal] = useState(false);
-  const [showReopenModal, setShowReopenModal] = useState(false);
-  const [showCloseModal, setShowCloseModal] = useState(false);
-  const [newStatus, setNewStatus] = useState("");
-  const [statusRemarks, setStatusRemarks] = useState("");
+export default function ProjectOverviewPage() {
+  const params = useParams();
+  const id = params?.id as string;
+  const { data: project, isLoading, error } = useProject(id);
+  const { data: globalReportsRes = [] } = useGlobalDailyReports({ projectId: id });
+  const advanceStageMutation = useAdvanceProjectStage(id);
 
-  const PROJECT_STAGES = [
-    "CREATED", "ENGINEERING", "PROCUREMENT", "MATERIAL_AVAILABLE", 
-    "PRODUCTION", "INSPECTION", "DISPATCH_READY", "DISPATCHED", 
-    "INVOICED", "PAYMENT_PENDING", "CLOSED", "CANCELLED"
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <SkeletonBox className="h-32 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <SkeletonBox className="h-28" />
+          <SkeletonBox className="h-28" />
+          <SkeletonBox className="h-28" />
+          <SkeletonBox className="h-28" />
+        </div>
+        <SkeletonBox className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <div className="bg-white rounded-2xl border border-zinc-200 p-8 text-center space-y-3">
+        <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
+        <h3 className="text-lg font-bold text-zinc-900">Project Not Found</h3>
+        <p className="text-xs text-zinc-500">Could not retrieve details for project ID: {id}</p>
+      </div>
+    );
+  }
+
+  const STAGES = [
+    'CREATED',
+    'ENQUIRY',
+    'QUOTATION',
+    'ORDER_CONFIRMED',
+    'DESIGN_CAD',
+    'CAM_PROGRAMMING',
+    'MACHINING',
+    'BENCH_ASSEMBLY',
+    'TRYOUT',
+    'QUALITY_INSPECTION',
+    'DISPATCH',
+    'CLOSED'
   ];
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const currentStageIdx = Math.max(0, STAGES.indexOf(project.currentStage || 'CREATED'));
+  const progressPercent = Math.round(((currentStageIdx + 1) / STAGES.length) * 100);
 
-  if (isLoading || !mounted) return null;
-  if (!project) return null;
-
-  const handleAdvanceStage = async () => {
-    try {
-      await advanceStageMutation.mutateAsync();
-      setShowStatusModal(false);
-    } catch (err: any) {
-      // Handled by hook
-    }
-  };
-
-  const totalCost = Number(project.projectCostSummary?.totalCost || 0);
-  const revenue = Number(project.projectCostSummary?.revenue || 0);
-  const profit = revenue - totalCost;
-  const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
-
-  const pendingApprovals = [];
-  if (project.billOfMaterialHeaders?.some((b: any) => b.approvalStatus === 'PENDING')) {
-    pendingApprovals.push({ title: 'Bill of Materials', desc: 'Awaiting engineering approval', type: 'BOM' });
+  // Calculate target delivery countdown
+  let daysRemaining = null;
+  if (project.targetDeliveryDate) {
+    const target = new Date(project.targetDeliveryDate);
+    const now = new Date();
+    const diffTime = target.getTime() - now.getTime();
+    daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
-  if (project.routingHeaders?.some((r: any) => r.approvalStatus === 'PENDING')) {
-    pendingApprovals.push({ title: 'Routing & Operations', desc: 'Awaiting production planning approval', type: 'ROUTING' });
-  }
-  if (project.purchaseOrderHeaders?.some((p: any) => p.approvalStatus === 'PENDING')) {
-    pendingApprovals.push({ title: 'Purchase Orders', desc: 'Awaiting procurement approval', type: 'PO' });
-  }
+
+  // Real BOM & Procurement metrics
+  const bomHeaders = project.billOfMaterialHeaders || [];
+  let totalBomItemsCount = 0;
+  bomHeaders.forEach((b: any) => {
+    totalBomItemsCount += (b.items || []).length;
+  });
+
+  const grnReceivedCount = (project.goodsReceiptHeaders || []).length;
+  const poHeaders = project.purchaseOrderHeaders || [];
+  const poInProgressCount = poHeaders.filter((po: any) => po.status !== 'CLOSED' && po.status !== 'CANCELLED').length;
+
+  // Real Machining & Floor Logs metrics
+  const reports = Array.isArray(globalReportsRes) ? globalReportsRes : (globalReportsRes as any)?.data || [];
+  const totalMachineHours = reports.reduce((sum: number, r: any) => {
+    const setup = Number(r.setupTime || 0);
+    const cutting = Number(r.cuttingTime || (r.type === 'MSDR' ? Number(r.hoursSpent || 0) : 0));
+    return sum + setup + cutting;
+  }, 0);
+
+  // Format plant name clean
+  const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/i.test(str);
+  const formattedPlant = !project.plantId || isUuid(project.plantId) 
+    ? "Toolroom Main Facility" 
+    : project.plantId;
 
   return (
-    <div className="flex-1 overflow-y-auto pb-12 animate-fade-in flex flex-col min-h-0">
+    <div className="space-y-5 text-zinc-900 font-sans pb-12">
       
-      {/* Project Workflow Controller */}
-      <div className="glass-panel spotlight-card mb-4 relative overflow-hidden group shrink-0" style={{ padding: '0' }}>
-        
-        {/* Header bar */}
-        <div className="flex items-center justify-between px-5 pt-3 pb-3 border-b border-black/5 relative z-10 bg-white/50 backdrop-blur-md">
+      {/* Sleek Enterprise Page Header */}
+      <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          {/* Breadcrumbs */}
+          <nav className="flex items-center text-xs font-semibold text-zinc-400 mb-1">
+            <span>Projects</span>
+            <ChevronRight className="w-3.5 h-3.5 mx-1.5 text-zinc-300" />
+            <span className="font-mono font-bold text-zinc-800">{project.projectNumber}</span>
+            <ChevronRight className="w-3.5 h-3.5 mx-1.5 text-zinc-300" />
+            <span className="text-zinc-950 font-bold">Overview & KPIs</span>
+          </nav>
+
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500/30 to-blue-500/20 border border-purple-500/40 flex items-center justify-center shadow-elevation">
-              <Target className="w-3 h-3 text-purple-400" />
+            <div className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold shadow-xs">
+              <Briefcase className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-black text-zinc-900 tracking-widest uppercase">Project Workflow Controller</h3>
-              <p className="text-[10px] text-slate-500 font-medium mt-0.5">Stage Gate Progression</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 relative z-10">
-            {['PROCUREMENT', 'MATERIAL_AVAILABLE'].includes(project.currentStage) && (
-              <button 
-                onClick={async () => {
-                  await refetchImpact();
-                  setShowReopenModal(true);
-                }}
-                className="group/btn relative inline-flex items-center gap-1.5 font-bold text-xs transition-all outline-none px-3.5 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-400/40"
-              >
-                Reopen Engineering
-              </button>
-            )}
-            {project.currentStage !== 'CLOSED' && project.currentStage !== 'CANCELLED' && (
-              <button 
-                onClick={() => setShowCloseModal(true)}
-                className="group/btn relative inline-flex items-center gap-1.5 font-bold text-xs transition-all outline-none px-3.5 py-2 rounded-lg bg-slate-500/10 text-zinc-600 border border-slate-500/20 hover:bg-slate-500/20 hover:border-slate-400/40 hover:text-white"
-              >
-                Close Project
-              </button>
-            )}
-            <button 
-              onClick={handleAdvanceStage}
-              disabled={project.currentStage === 'CLOSED' || project.currentStage === 'CANCELLED'}
-              className="group/btn relative inline-flex items-center gap-1.5 font-bold text-xs transition-all outline-none disabled:opacity-40 disabled:pointer-events-none px-3.5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 text-white border border-purple-400/40 hover:border-purple-300/60 overflow-hidden"
-              style={{ boxShadow: '0 0 14px rgba(168,85,247,0.3)' }}
-            >
-              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-150 pointer-events-none" />
-              <span className="relative z-10 tracking-wide">Advance Stage</span>
-              <ChevronRight className="w-3.5 h-3.5 relative z-10 group-hover/btn:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-        </div>
-
-        {/* Stage Rail */}
-        <div className="relative px-5 pt-3 pb-4 overflow-x-auto hide-scrollbar">
-          {/* Background track */}
-          <div className="absolute left-5 right-5 top-[calc(0.75rem+10px)] h-0.5 bg-black/5 rounded-full" />
-          
-          <div className="relative flex items-start justify-between min-w-[800px]">
-            {PROJECT_STAGES.map((stage, idx) => {
-               const currentIdx = PROJECT_STAGES.indexOf(project.currentStage);
-               const isPast = idx < currentIdx;
-               const isCurrent = idx === currentIdx;
-               
-               const stageColors: Record<string, { border: string; glow: string; text: string; bg: string; lineFrom: string; lineTo: string }> = {
-                 'CREATED':          { border: '#6366f1', glow: 'rgba(99,102,241,0.2)',  text: '#4f46e5', bg: 'rgba(99,102,241,0.1)',  lineFrom: '#c7d2fe', lineTo: '#818cf8' },
-                 'ENGINEERING':      { border: '#3b82f6', glow: 'rgba(59,130,246,0.2)',  text: '#2563eb', bg: 'rgba(59,130,246,0.1)',  lineFrom: '#bfdbfe', lineTo: '#60a5fa' },
-                 'PROCUREMENT':      { border: '#f59e0b', glow: 'rgba(245,158,11,0.2)',  text: '#d97706', bg: 'rgba(245,158,11,0.1)',  lineFrom: '#fde68a', lineTo: '#fbbf24' },
-                 'MATERIAL_AVAILABLE':{ border: '#10b981', glow: 'rgba(16,185,129,0.2)', text: '#059669', bg: 'rgba(16,185,129,0.1)', lineFrom: '#a7f3d0', lineTo: '#34d399' },
-                 'PRODUCTION':       { border: '#8b5cf6', glow: 'rgba(139,92,246,0.2)',  text: '#7c3aed', bg: 'rgba(139,92,246,0.1)',  lineFrom: '#ddd6fe', lineTo: '#a78bfa' },
-                 'INSPECTION':       { border: '#06b6d4', glow: 'rgba(6,182,212,0.2)',   text: '#0891b2', bg: 'rgba(6,182,212,0.1)',   lineFrom: '#a5f3fc', lineTo: '#22d3ee' },
-                 'DISPATCH_READY':   { border: '#f97316', glow: 'rgba(249,115,22,0.2)',  text: '#ea580c', bg: 'rgba(249,115,22,0.1)',  lineFrom: '#fed7aa', lineTo: '#fb923c' },
-                 'DISPATCHED':       { border: '#ec4899', glow: 'rgba(236,72,153,0.2)',  text: '#db2777', bg: 'rgba(236,72,153,0.1)',  lineFrom: '#fbcfe8', lineTo: '#f472b6' },
-                 'INVOICED':         { border: '#22c55e', glow: 'rgba(34,197,94,0.2)',   text: '#16a34a', bg: 'rgba(34,197,94,0.1)',   lineFrom: '#bbf7d0', lineTo: '#4ade80' },
-                 'PAYMENT_PENDING':  { border: '#eab308', glow: 'rgba(234,179,8,0.2)',   text: '#ca8a04', bg: 'rgba(234,179,8,0.1)',   lineFrom: '#fef08a', lineTo: '#facc15' },
-                 'CLOSED':           { border: '#64748b', glow: 'rgba(100,116,139,0.1)', text: '#475569', bg: 'rgba(100,116,139,0.05)',lineFrom: '#e2e8f0', lineTo: '#cbd5e1' },
-                 'CANCELLED':        { border: '#ef4444', glow: 'rgba(239,68,68,0.2)',   text: '#dc2626', bg: 'rgba(239,68,68,0.1)',    lineFrom: '#fecaca', lineTo: '#f87171' },
-               };
-               const color = isCurrent || isPast ? stageColors[stage] || stageColors['CLOSED'] : null;
-               const label = stage.replace(/_/g, '\n');
-               
-               return (
-                 <div key={stage} className="flex flex-col items-center flex-1 relative" style={{ minWidth: 0 }}>
-                   {/* Connector line to next stage */}
-                   {idx < PROJECT_STAGES.length - 1 && (
-                     <div 
-                       className="absolute top-[13px] rounded-full overflow-hidden"
-                       style={{
-                         left: 'calc(50% + 13px)',
-                         right: 'calc(-50% + 13px)',
-                         height: '2px',
-                         background: 'rgba(15,15,20,0.06)',
-                         zIndex: 0
-                       }}
-                     >
-                       <motion.div
-                         initial={{ scaleX: 0, transformOrigin: 'left' }}
-                         animate={{ scaleX: isPast ? 1 : 0 }}
-                         transition={{ duration: 0.5, ease: 'easeOut', delay: idx * 0.04 }}
-                         className="absolute inset-0 h-full"
-                         style={{
-                           background: color ? `linear-gradient(90deg, ${color.lineFrom}, ${color.lineTo})` : 'transparent',
-                           boxShadow: color ? `0 0 6px ${color.glow}` : 'none'
-                         }}
-                       />
-                       {isCurrent && (
-                         <motion.div
-                           initial={{ x: '-100%' }}
-                           animate={{ x: '200%' }}
-                           transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-                           className="absolute inset-0 w-1/3"
-                           style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)' }}
-                         />
-                       )}
-                     </div>
-                   )}
-                   
-                   {/* Node circle */}
-                   <motion.div
-                     whileHover={{ scale: 1.1 }}
-                     transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                     className="relative z-10 flex items-center justify-center mb-2 cursor-default"
-                     style={{
-                       width: 20,
-                       height: 20,
-                       borderRadius: '50%',
-                       border: `2px solid ${isCurrent || isPast ? color?.border : 'rgba(15,15,20,0.1)'}`,
-                       background: isCurrent || isPast ? color?.bg : 'rgba(15,15,20,0.02)',
-                       color: isCurrent || isPast ? color?.text : 'rgba(100,116,139,1)',
-                       boxShadow: isCurrent ? `0 0 14px ${color?.glow}, inset 0 0 6px rgba(255,255,255,0.05)` : 'none',
-                       transform: isCurrent ? 'scale(1.2)' : 'scale(1)',
-                     }}
-                   >
-                     {isCurrent && (
-                       <div
-                         className="absolute inset-0 rounded-full animate-ping"
-                         style={{ background: color?.border, opacity: 0.25 }}
-                       />
-                     )}
-                     {isPast 
-                       ? <CheckCircle2 className="w-3 h-3" />
-                       : <span style={{ fontSize: '9px', fontWeight: 900, lineHeight: 1 }}>{idx + 1}</span>
-                     }
-                   </motion.div>
-                   
-                   {/* Stage label */}
-                   <div
-                     className="text-center leading-tight px-0.5"
-                     style={{
-                       fontSize: '8px',
-                       fontWeight: isCurrent ? 800 : 600,
-                       letterSpacing: '0.04em',
-                       color: isCurrent ? color?.text : isPast ? 'rgba(148,163,184,0.8)' : 'rgba(71,85,105,1)',
-                       textTransform: 'uppercase',
-                       textShadow: isCurrent ? `0 0 10px ${color?.glow}` : 'none',
-                       whiteSpace: 'pre-line',
-                     }}
-                   >
-                     {label}
-                   </div>
-                 </div>
-               );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Top KPI Row */}
-      <div className="grid grid-cols-3 gap-4 mb-4 shrink-0">
-        
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 shadow-elevation hover:shadow-elevation">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:bg-emerald-500/20 transition-all duration-500"></div>
-          <div className="flex justify-between items-start relative z-10 mb-2">
-            <div>
-              <p className="text-[10px] font-bold text-emerald-500 tracking-wider uppercase mb-0.5">Net Profit</p>
-              <h3 className="text-xl font-bold text-emerald-400 tracking-tight font-mono">{formatCurrency(profit)}</h3>
-            </div>
-            <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-emerald-400">
-              <TrendingUp className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="relative z-10">
-            <span className={`text-xs font-bold ${profitMargin >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {profitMargin.toFixed(1)}% Margin
-            </span>
-          </div>
-        </div>
-
-        <div className="glass-panel spotlight-card p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-xl -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="flex justify-between items-start relative z-10 mb-2">
-            <div>
-              <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-0.5">Total Cost</p>
-              <h3 className="text-xl font-bold text-zinc-900 tracking-tight font-mono">{formatCurrency(totalCost)}</h3>
-            </div>
-            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400">
-              <DollarSign className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="relative z-10">
-             <span className="text-xs text-zinc-500 font-medium">Accumulated Expenses</span>
-          </div>
-        </div>
-
-        <div className="glass-panel spotlight-card p-4 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-orange-500/10 rounded-full blur-xl -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="flex justify-between items-start relative z-10 mb-2">
-            <div>
-              <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-0.5">Delivery Date</p>
-              <h3 className="text-lg font-bold text-zinc-900 tracking-tight mt-0.5">
-                {formatDate(project.deliveryDate)}
-              </h3>
-            </div>
-            <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20 text-orange-400">
-              <CalendarDays className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="relative z-10">
-             <span className="text-xs text-zinc-500 font-medium">Target Deadline</span>
-          </div>
-        </div>
-
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        
-        {/* Main Left Area */}
-        <div className="col-span-2 space-y-4">
-          
-          {/* Engineering & Documents */}
-          <div className="glass-panel spotlight-card p-5 relative overflow-hidden">
-             
-             <div className="flex justify-between items-end mb-4 relative z-10">
-               <div>
-                  <h3 className="text-base font-bold text-zinc-900 flex items-center">
-                    <FileText className="w-4 h-4 mr-2 text-blue-400" />
-                    Engineering Documents
-                  </h3>
-               </div>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-              {project.billOfMaterialHeaders && project.billOfMaterialHeaders.length > 0 && (
-                <div 
-                  onClick={() => router.push(`/projects/${project.id}/engineering`)}
-                  className="p-4 rounded-xl bg-[#F4F4F6]/60 border border-black/10 hover:border-blue-500/40 hover:bg-black/5 transition-all cursor-pointer group flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="bg-blue-500/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <FileText className="h-5 w-5 text-blue-400" />
-                    </div>
-                    <p className="font-semibold text-zinc-900 text-xs tracking-wide mb-2">{project.billOfMaterialHeaders[0].documentNumber || 'Bill of Materials'}</p>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center mt-2 text-[10px]">
-                      <span className="font-bold text-slate-500 uppercase">Rev {project.billOfMaterialHeaders[0].revision}</span>
-                      <span className="text-blue-400 font-bold uppercase">{project.billOfMaterialHeaders[0].status}</span>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-black/5 flex items-center justify-between text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[10px] font-bold uppercase">View Details</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {project.routingHeaders && project.routingHeaders.length > 0 && (
-                <div 
-                  onClick={() => router.push(`/projects/${project.id}/engineering`)}
-                  className="p-4 rounded-xl bg-[#F4F4F6]/60 border border-black/10 hover:border-blue-500/40 hover:bg-black/5 transition-all cursor-pointer group flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="bg-blue-500/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <FileText className="h-5 w-5 text-blue-400" />
-                    </div>
-                    <p className="font-semibold text-zinc-900 text-xs tracking-wide mb-2">{project.routingHeaders[0].documentNumber || 'Routing Operations'}</p>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center mt-2 text-[10px]">
-                      <span className="font-bold text-slate-500 uppercase">Rev {project.routingHeaders[0].revision}</span>
-                      <span className="text-blue-400 font-bold uppercase">{project.routingHeaders[0].status}</span>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-black/5 flex items-center justify-between text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[10px] font-bold uppercase">View Details</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {(!project.billOfMaterialHeaders?.length && !project.routingHeaders?.length) && (
-                <div className="col-span-2 text-center py-6 bg-black/5 rounded-xl border border-black/5 border-dashed">
-                  <FileText className="h-7 w-7 text-slate-600 mx-auto mb-2" />
-                  <p className="text-zinc-500 text-xs">No planning documents initialized yet.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Pending Approvals & Action Items */}
-          <div className="glass-panel spotlight-card p-5 relative overflow-hidden">
-            
-            <div className="flex justify-between items-end mb-4 relative z-10">
-              <div>
-                 <h3 className="text-base font-bold text-zinc-900 flex items-center">
-                   <Target className="w-4 h-4 mr-2 text-amber-400" />
-                   Pending Approvals
-                 </h3>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 relative z-10">
-              {pendingApprovals.length > 0 ? pendingApprovals.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors group cursor-default shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center border border-amber-200 group-hover:scale-110 transition-transform shadow-elevation">
-                      <CheckCircle2 className="w-5 h-5 text-amber-600 animate-pulse" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-amber-900 text-sm">{item.title}</h4>
-                      <p className="text-xs text-amber-700 font-medium tracking-wide mt-0.5">{item.desc}</p>
-                    </div>
-                  </div>
-                  <button className="px-4 py-2 bg-amber-200 hover:bg-amber-300 border border-amber-300 rounded-lg text-xs font-bold text-amber-800 uppercase tracking-widest transition-colors opacity-0 group-hover:opacity-100 shadow-elevation">
-                    Review
-                  </button>
-                </div>
-              )) : (
-                <div className="flex items-center justify-center p-6 bg-black/[0.02] border border-black/5 rounded-xl border-dashed">
-                  <div className="text-center">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-500/50 mx-auto mb-2" />
-                    <p className="text-zinc-500 text-xs font-medium">All approvals are up to date.</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Premium Activity Feed */}
-          <div className="glass-panel spotlight-card p-4 relative overflow-hidden group/feed transition-all duration-500">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-[50px] -mr-24 -mt-24 pointer-events-none opacity-50 group-hover/feed:opacity-100 group-hover/feed:bg-emerald-500/10 transition-all duration-700" />
-            
-            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center mb-5 relative z-10">
-              <Activity className="w-3.5 h-3.5 mr-2 text-emerald-400 animate-pulse" />
-              Live Activity Feed
-            </h3>
-            
-            <div className="space-y-4 max-h-[300px] overflow-y-auto hide-scrollbar pl-2 pr-2 relative z-10">
-              {(project.projectActivities && project.projectActivities.length > 0) ? project.projectActivities.map((act: any, idx: number) => (
-                <div key={act.id} className="relative group cursor-default" style={{ animation: `slideUp 0.3s ease-out ${idx * 0.05}s forwards`, opacity: mounted ? 1 : 0 }}>
-                  {/* Glassmorphic Activity Card */}
-                  <div className="bg-white/40 backdrop-blur-md border border-black/5 p-3.5 rounded-xl group-hover:bg-white/60 group-hover:border-emerald-500/20 transition-all duration-300 shadow-sm group-hover:shadow-floating group-hover:-translate-y-0.5 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-transparent group-hover:via-emerald-500/5 transition-all duration-500 translate-x-[-100%] group-hover:translate-x-[100%]"></div>
-                    
-                    <div className="flex justify-between items-start mb-1.5 relative z-10">
-                      <span className="font-bold text-zinc-900 text-xs tracking-wide">{act.action}</span>
-                      <span className="text-[9px] font-bold text-slate-500 font-mono uppercase tracking-widest bg-black/5 px-2 py-0.5 rounded shadow-inner border border-black/5 group-hover:text-emerald-400/80 transition-colors">
-                        {new Date(act.performedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-zinc-500 leading-relaxed font-medium relative z-10 group-hover:text-zinc-600 transition-colors">{act.description}</p>
-                  </div>
-                </div>
-              )) : (
-                <div className="pl-8 py-4 flex items-center space-x-3 text-slate-500">
-                  <div className="w-2 h-2 rounded-full bg-black/10 animate-pulse"></div>
-                  <p className="text-xs italic tracking-wide">Awaiting project activity...</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
-
-        {/* Right Sidebar - Cost Ledger Pipeline */}
-        <div className="col-span-1">
-          <div className="glass-panel spotlight-card p-5 sticky top-4">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-base font-bold text-zinc-900 flex items-center">
-                <BarChart2 className="w-4 h-4 mr-2 text-purple-400" />
-                Cost Ledger
-              </h3>
-              <button 
-                onClick={() => router.push(`/projects/${project.id}/finance`)}
-                className="text-[10px] font-bold text-purple-400 hover:text-purple-300 uppercase tracking-widest flex items-center transition-colors bg-purple-500/10 px-2 py-1 rounded"
-              >
-                Full Ledger <ChevronRight className="w-3 h-3 ml-1" />
-              </button>
-            </div>
-            
-            <div className="relative space-y-5 before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
-              
-              {/* Pipeline Nodes */}
-              {[
-                { label: 'Estimated Material', value: project.projectCostSummary?.estimatedMaterialCost, color: 'bg-slate-500', shadow: '' },
-                { label: 'Sourced Cost', value: project.projectCostSummary?.actualMaterialCost, color: 'bg-blue-500', shadow: 'shadow-elevation' },
-                { label: 'Machine Prod.', value: project.projectCostSummary?.machineCost, color: 'bg-purple-500', shadow: 'shadow-elevation' },
-                { label: 'Outside Process', value: project.projectCostSummary?.subcontractCost, color: 'bg-orange-500', shadow: 'shadow-elevation' },
-                { label: 'Logistics', value: project.projectCostSummary?.logisticsCost, color: 'bg-pink-500', shadow: 'shadow-elevation' }
-              ].map((node, i) => (
-                <div key={i} className="relative flex items-center justify-between group">
-                  <div className="flex items-center">
-                    <div className={`h-6 w-6 rounded-full border-4 border-[#0B1018] ${node.color} ${node.shadow} mr-4 relative z-10 group-hover:scale-125 transition-transform`}></div>
-                    <span className="text-sm font-semibold text-zinc-600 group-hover:text-zinc-900 transition-colors">{node.label}</span>
-                  </div>
-                  <span className="font-mono text-sm text-zinc-500">{formatCurrency(Number(node.value || 0))}</span>
-                </div>
-              ))}
-              
-            </div>
-
-            <div className="mt-6 pt-5 border-t border-black/5">
-               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl relative overflow-hidden shadow-inner">
-                 <div className="absolute -right-4 -top-4 w-16 h-16 bg-emerald-100 rounded-full blur-xl pointer-events-none"></div>
-                 <p className="text-[10px] font-bold text-emerald-600 tracking-widest uppercase mb-0.5">Total Actual Cost</p>
-                 <p className="text-2xl font-bold text-emerald-600 tracking-tight font-mono">
-                   {formatCurrency(totalCost)}
-                 </p>
-               </div>
-            </div>
-            
-          </div>
-        </div>
-
-      </div>
-
-      {/* Update Status Modal */}
-      {showStatusModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white/95 backdrop-blur-3xl border border-black/5 rounded-2xl w-full max-w-md shadow-floating overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-black/5">
-              <h3 className="text-lg font-bold text-zinc-900 flex items-center">
-                <Activity className="w-5 h-5 mr-2 text-purple-400" />
-                Advance Project Stage
-              </h3>
-              <button onClick={() => setShowStatusModal(false)} className="text-zinc-500 hover:text-zinc-900 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <form action="/api/projects/advance-stage" method="POST" className="p-6 space-y-5">
-              <input type="hidden" name="projectId" value={project.id} />
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1">New Stage</label>
-                <select 
-                  name="stage"
-                  value={newStatus}
-                  onChange={e => setNewStatus(e.target.value)}
-                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2.5 text-zinc-900 text-sm focus:outline-none focus:border-purple-500 appearance-none"
-                  required
-                >
-                  {PROJECT_STAGES.map(stage => (
-                    <option key={stage} value={stage}>{stage.replace(/_/g, ' ')}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-slate-500 mt-2">
-                  Advancing the stage unlocks downstream workflows (e.g., Procurement, Production).
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1">Transition Remarks (Optional)</label>
-                <textarea 
-                  name="remarks"
-                  value={statusRemarks}
-                  onChange={e => setStatusRemarks(e.target.value)}
-                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-purple-500 min-h-[80px]"
-                  placeholder="e.g. BOM approved, ready for procurement"
-                />
-              </div>
-
-              <div className="pt-4 flex justify-end space-x-3">
-                <button 
-                  type="button"
-                  onClick={() => setShowStatusModal(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-black/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white transition-colors shadow-lg shadow-purple-500/20"
-                >
-                  Update Stage
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      {showReopenModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
-          <div className="bg-white/95 backdrop-blur-3xl border border-black/5 rounded-2xl p-6 w-full max-w-md shadow-floating relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/10 rounded-full blur-[40px] pointer-events-none" />
-            
-            <div className="flex items-center justify-between pb-4 border-b border-black/5 mb-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
-                <h3 className="text-sm font-black text-zinc-900 uppercase tracking-wider">Engineering Revision Rollback</h3>
+                <h1 className="text-xl font-extrabold text-zinc-950 tracking-tight">
+                  {project.partName || 'Tooling Project'}
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {project.status || 'ACTIVE'}
+                </span>
               </div>
-              <button 
-                onClick={() => setShowReopenModal(false)}
-                className="text-zinc-500 hover:text-zinc-900 p-1 rounded-lg hover:bg-black/5"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {reopenImpact?.data?.isBlocked ? (
-              <div className="space-y-4">
-                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-200 text-xs rounded-xl flex gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{reopenImpact.data.blockReason}</span>
-                </div>
-                <div className="pt-4 flex justify-end">
-                  <button 
-                    onClick={() => setShowReopenModal(false)}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold bg-black/5 border border-black/10 text-zinc-900 hover:bg-black/10"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4 text-xs text-zinc-600">
-                <p className="text-zinc-500">
-                  Reopening the engineering stage will revert the project to <strong className="text-zinc-900">ENGINEERING</strong> stage. Review the impact analysis below:
-                </p>
-
-                <div className="p-4 bg-black/5 border border-black/5 rounded-xl space-y-2 font-medium">
-                  <div className="flex justify-between">
-                    <span>Affected Purchase Orders:</span>
-                    <span className="text-red-400 font-bold">{reopenImpact?.data?.affectedPOs || 0} (Placed ON HOLD)</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Affected Routing Headers:</span>
-                    <span className="text-red-400 font-bold">{reopenImpact?.data?.affectedRouting || 0} (Marked OBSOLETE)</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Affected Materials:</span>
-                    <span className="text-red-400 font-bold">{reopenImpact?.data?.affectedMaterials || 0} (BOM Reset Required)</span>
-                  </div>
-                </div>
-
-                <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-200 rounded-xl flex gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>
-                    Warning: Downstream routing planning must be fully re-approved before procurement can be re-released.
-                  </span>
-                </div>
-
-                <div className="pt-4 flex justify-end space-x-3">
-                  <button 
-                    onClick={() => setShowReopenModal(false)}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 hover:text-zinc-900 hover:bg-black/5"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      try {
-                        await reopenEngineeringMutation.mutateAsync();
-                        setShowReopenModal(false);
-                      } catch (err) {}
-                    }}
-                    disabled={reopenEngineeringMutation.isPending}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-500/20 disabled:opacity-40"
-                  >
-                    {reopenEngineeringMutation.isPending ? 'Reopening...' : 'Confirm Reopen'}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {showCloseModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
-          <div className="bg-white/95 backdrop-blur-3xl border border-black/5 rounded-2xl p-6 w-full max-w-md shadow-floating relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />
-            
-            <div className="flex items-center justify-between pb-4 border-b border-black/5 mb-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-black text-zinc-900 uppercase tracking-wider">Close Project</h3>
-              </div>
-              <button 
-                onClick={() => setShowCloseModal(false)}
-                className="text-zinc-500 hover:text-zinc-900 p-1 rounded-lg hover:bg-black/5"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs text-zinc-600">
-              <p className="text-zinc-500">
-                You are about to officially close <strong className="text-zinc-900">{project.projectNumber}</strong>.
+              <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                {project.description || 'No description provided for this tooling mission.'}
               </p>
-
-              <div className="p-4 bg-black/5 border border-black/5 rounded-xl space-y-2 font-medium">
-                <div className="flex justify-between items-center">
-                  <span>Current Stage:</span>
-                  <span className="text-zinc-900 font-bold bg-black/10 px-2 py-0.5 rounded">{project.currentStage}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Project Progress:</span>
-                  <span className={`font-bold ${Number(project.progress) >= 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {Number(project.progress).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Net Profit:</span>
-                  <span className={`font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {formatCurrency(profit)}
-                  </span>
-                </div>
-              </div>
-
-              {Number(project.progress) < 100 && (
-                <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-200 rounded-xl flex gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>
-                    Warning: The project is not fully completed yet. Closing it now will lock all workflows and freeze cost accumulation.
-                  </span>
-                </div>
-              )}
-
-              <div className="pt-4 flex justify-end space-x-3">
-                <button 
-                  onClick={() => setShowCloseModal(false)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 hover:text-zinc-900 hover:bg-black/5"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={async () => {
-                    try {
-                      await closeProjectMutation.mutateAsync();
-                      setShowCloseModal(false);
-                    } catch (err) {}
-                  }}
-                  disabled={closeProjectMutation.isPending}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-40"
-                >
-                  {closeProjectMutation.isPending ? 'Closing...' : 'Confirm Closure'}
-                </button>
-              </div>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Stage Advancement Action */}
+        <div className="flex items-center gap-3 shrink-0">
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => advanceStageMutation.mutate()}
+            isLoading={advanceStageMutation.isPending}
+            className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+          >
+            <span>Evaluate & Advance Stage</span>
+            <ArrowRight className="w-4 h-4 ml-1.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* 4 HIGHLY RELEVANT TOOLROOM PROJECT KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* KPI 1: Schedule & Target Delivery */}
+        <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Schedule & Delivery</span>
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+              <Calendar className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="text-sm font-extrabold text-zinc-950 font-mono">
+              {project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Not Scheduled'}
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                daysRemaining !== null && daysRemaining < 0 
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : daysRemaining !== null
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-zinc-100 text-zinc-600 border-zinc-200"
+              }`}>
+                {daysRemaining !== null 
+                  ? (daysRemaining < 0 ? `${Math.abs(daysRemaining)} Days Overdue` : `${daysRemaining} Days Remaining`) 
+                  : 'Target Date Not Set'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 2: Workflow Stage & Progress */}
+        <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Workflow & Progress</span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+              <Layers className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold text-zinc-900">{project.currentStage?.replace(/_/g, ' ') || 'CREATED'}</span>
+              <span className="text-xs font-mono font-bold text-indigo-700">{progressPercent}%</span>
+            </div>
+            <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-indigo-600 rounded-full transition-all duration-500" 
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-zinc-400 font-mono mt-1 block">Stage {currentStageIdx + 1} of {STAGES.length}</span>
+          </div>
+        </div>
+
+        {/* KPI 3: BOM & Materials Requisitions */}
+        <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">BOM & Steel Stock</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <PackageCheck className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="text-sm font-extrabold text-zinc-950 font-mono">
+              {totalBomItemsCount} Material Requisitions
+            </div>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                {grnReceivedCount} GRN Received
+              </span>
+              <span className="text-[10px] font-bold text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
+                {poInProgressCount} In Progress
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 4: Machining & Shopfloor Capacity */}
+        <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Machining Capacity</span>
+            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+              <Wrench className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="text-sm font-extrabold text-zinc-950 font-mono">
+              {totalMachineHours > 0 ? `${totalMachineHours.toFixed(1)} Machine Hrs` : '0.0 Machine Hrs'}
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                {reports.length > 0 ? `${reports.length} Daily Log Shifts` : 'No shopfloor logs recorded'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Stage Progress Pipeline Stepper */}
+      <div className="bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-zinc-700" />
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-950">
+              Tooling Workflow Pipeline Stepper
+            </h3>
+          </div>
+          <span className="text-xs font-mono font-bold text-zinc-600">
+            Active: <strong className="text-zinc-950 font-black">{project.currentStage?.replace(/_/g, ' ') || 'CREATED'}</strong>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5">
+          {STAGES.map((stg, idx) => {
+            const isCompleted = idx < currentStageIdx;
+            const isCurrent = idx === currentStageIdx;
+
+            return (
+              <div 
+                key={stg} 
+                className={`p-3 rounded-xl border text-center transition-all ${
+                  isCurrent 
+                    ? "bg-zinc-900 border-zinc-900 text-white shadow-xs" 
+                    : isCompleted 
+                    ? "bg-emerald-50/70 border-emerald-200 text-emerald-900 font-semibold" 
+                    : "bg-zinc-50/80 border-zinc-200/80 text-zinc-400"
+                }`}
+              >
+                <div className="text-[10px] font-extrabold uppercase tracking-wider">
+                  {stg.replace(/_/g, ' ')}
+                </div>
+                <div className="text-[9px] mt-1 font-mono font-bold">
+                  {isCurrent ? "IN PROGRESS" : isCompleted ? "COMPLETED" : "PENDING"}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Mission Specifications Card */}
+      <div className="bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-3">
+          <FileText className="w-4 h-4 text-zinc-700" />
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-950">
+            Tooling Mission Specifications
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 text-xs">
+          <div>
+            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Customer / Client</span>
+            <div className="font-extrabold text-zinc-950 mt-1 flex items-center gap-2">
+              <Building2 className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{project.customer?.companyName || project.customerName || 'Unspecified Customer'}</span>
+            </div>
+          </div>
+
+          <div>
+            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Customer PO Number</span>
+            <div className="font-mono font-bold text-zinc-950 mt-1">
+              {project.customerPoNumber || 'No PO Assigned'}
+            </div>
+          </div>
+
+          <div>
+            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Target Delivery Date</span>
+            <div className="font-mono font-extrabold text-zinc-950 mt-1 flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Not Scheduled'}</span>
+            </div>
+          </div>
+
+          <div>
+            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Plant / Facility</span>
+            <div className="font-extrabold text-zinc-950 mt-1 flex items-center gap-2">
+              <Factory className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{formattedPlant}</span>
+            </div>
+          </div>
+
+          <div>
+            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Project Owner</span>
+            <div className="font-extrabold text-zinc-950 mt-1 flex items-center gap-2">
+              <User className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{project.projectOwner || project.manager || 'Unassigned'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   );
 }
+

@@ -31,7 +31,9 @@ export class AuthService {
       email: user.email, 
       role: user.role,
       name: user.name,
-      employeeId: user.employeeId 
+      employeeId: user.employeeId,
+      plantId: user.plantId,
+      primaryPlantId: user.primaryPlantId
     };
 
     return {
@@ -55,7 +57,9 @@ export class AuthService {
         email: user.email, 
         role: user.role,
         name: user.name,
-        employeeId: user.employeeId 
+        employeeId: user.employeeId,
+        plantId: user.plantId,
+        primaryPlantId: user.primaryPlantId
       };
 
       return {

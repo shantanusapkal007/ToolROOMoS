@@ -255,7 +255,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
         </SectionCard>
       ))}
 
-      <div className="sticky bottom-4 z-50 flex justify-end space-x-3 p-4 bg-white/80 backdrop-blur-xl border border-black/10 rounded-2xl shadow-[0_24px_48px_-12px_rgba(15,15,20,0.12)]">
+      <div className="sticky bottom-0 z-50 flex justify-end space-x-3 p-4 bg-white border border-black/10 rounded-2xl shadow-[0_24px_48px_-12px_rgba(15,15,20,0.12)]">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel

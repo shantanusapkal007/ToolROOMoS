@@ -192,12 +192,12 @@ const CustomControls = () => {
 };
 
 interface RoutingNodeEditorProps {
-  onClose: () => void;
-  onSave: (nodes: any, edges: any) => void;
+  onClose?: () => void;
+  onSave?: (nodes: any, edges: any) => void;
   initialRouting?: any;
 }
 
-export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNodeEditorProps) => {
+export const RoutingNodeEditor = ({ onClose = () => {}, onSave = () => {}, initialRouting }: RoutingNodeEditorProps) => {
   const initNodes = React.useMemo(() => {
     if (!initialRouting || !initialRouting.operations || initialRouting.operations.length === 0) return emptyNodes;
     
@@ -262,7 +262,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
     const newNode = {
       id: newNodeId,
       type: 'operationNode',
-      position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 100 },
+      position: { x: 200 + ((nodes.length % 5) * 120), y: 150 + (Math.floor(nodes.length / 5) * 100) },
       data: { opCode: `${(nodes.length - 1) * 10}`, label: 'New Operation', operationId: '', type: 'machining', setupTime: 1, runTime: 5, machine: '', machineName: '', inspectionRequired: false, notes: '', estimatedCost: 0 },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -305,7 +305,7 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/5 backdrop-blur-2xl"
+        className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-950/60 backdrop-blur-2xl"
       >
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -331,17 +331,18 @@ export const RoutingNodeEditor = ({ onClose, onSave, initialRouting }: RoutingNo
             
             <div className="flex items-center space-x-4">
               <motion.button 
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.01 }} 
+                whileTap={{ scale: 0.97 }}
                 onClick={handleAddNode} 
-                className="px-5 py-2.5 bg-black/5 hover:bg-black/10 border border-black/10 text-zinc-900 text-sm font-bold tracking-wider uppercase rounded-xl flex items-center shadow-inner transition-colors"
+                className="px-5 py-2.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-900 text-xs font-bold tracking-wider uppercase rounded-xl flex items-center shadow-sm active:scale-[0.98] transition-all cursor-pointer"
               >
-                <Plus className="w-4 h-4 mr-2" /> Add Operation
+                <Plus className="w-4 h-4 mr-2 text-zinc-700" /> Add Operation
               </motion.button>
               <motion.button 
-                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(59,130,246,0.5)" }} 
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.01 }} 
+                whileTap={{ scale: 0.97 }}
                 onClick={() => onSave(nodes, edges)}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold tracking-wider uppercase rounded-xl flex items-center shadow-elevation transition-all"
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold tracking-wider uppercase rounded-xl flex items-center shadow-[0_1px_3px_rgba(0,0,0,0.1),_inset_0_1px_0_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <Save className="w-4 h-4 mr-2" /> Deploy Routing
               </motion.button>

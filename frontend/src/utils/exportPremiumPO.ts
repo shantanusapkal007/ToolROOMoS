@@ -6,17 +6,17 @@ import { saveAs } from 'file-saver';
 // ─────────────────────────────────────────────────────────────────────────────
 const C = {
   black: 'FF000000',
-  darkText: 'FF1D1D1F',      // Apple SF text primary
-  mediumText: 'FF424245',     // Apple SF text secondary  
-  lightText: 'FF86868B',      // Apple SF text tertiary
-  mutedLabel: 'FFB0B0B5',    // Ultra-light label text
-  accent: 'FF0066CC',         // Apple link blue
-  headerBg: 'FFF5F5F7',       // Apple surface grey
-  border: 'FFD2D2D7',         // Apple separator
-  lightBorder: 'FFE8E8ED',    // Subtle separator
+  darkText: 'FF2C2E88',      // KRUPA Deep Blue
+  mediumText: 'FF4A4C9D',    // Lighter blue for secondary text
+  lightText: 'FF8688C4',     // Muted blue
+  mutedLabel: 'FFB6B8D6',    // Ultra-light label text
+  accent: 'FF861C16',        // KRUPA Dark Red / Maroon
+  headerBg: 'FFF0F1F8',      // Very light blue tint
+  border: 'FFD2D4E5',        // Light blue border
+  lightBorder: 'FFE8E9F2',   // Subtle separator
   white: 'FFFFFFFF',
-  totalBg: 'FFF9FAFB',        // Subtle highlight for total row
-  grandTotalBg: 'FF1D1D1F',   // Dark total bar (inverted)
+  totalBg: 'FFF9FAFD',       // Subtle highlight for total row
+  grandTotalBg: 'FF2C2E88',  // KRUPA Deep Blue
   grandTotalText: 'FFFFFFFF', // White text on dark bar
 };
 
@@ -106,6 +106,9 @@ function numberToWords(n: number): string {
 export async function exportPremiumPO(po: any) {
   if (!po) return;
 
+  const vendorGst = po.vendor?.taxId || po.vendor?.gstNumber || '';
+  const isIntrastate = !vendorGst || vendorGst.startsWith('27');
+
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'KRUPA TOOLS & STAMPING LTD.';
   workbook.created = new Date();
@@ -159,45 +162,45 @@ export async function exportPremiumPO(po: any) {
   //  HEADER SECTION
   // ═══════════════════════════════════════════════════════════════════════
 
-  // Row 2: Company name (right of logo space)
-  sheet.getRow(row).height = 36;
-  sheet.mergeCells(`D${row}:N${row}`);
-  const companyCell = sheet.getCell(`D${row}`);
+  // Row 1: Company name (RED, 20pt, Bold, Centered)
+  sheet.getRow(1).height = 36;
+  sheet.mergeCells(`D1:N1`);
+  const companyCell = sheet.getCell(`D1`);
   companyCell.value = 'KRUPA TOOLS & STAMPING LTD.';
-  font(companyCell, 22, true, C.darkText, 'Arial');
-  companyCell.alignment = { vertical: 'middle', horizontal: 'left' };
+  font(companyCell, 20, true, 'CC0000', 'Calibri');
+  companyCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-  // Row 3: Address
-  row = 3;
-  sheet.getRow(row).height = 18;
-  sheet.mergeCells(`D${row}:N${row}`);
-  const addrCell = sheet.getCell(`D${row}`);
-  addrCell.value = 'GUT NO.23, PLOT NO.45 MIDC WALUJ, AURANGABAD - 431136';
-  font(addrCell, 10, false, C.mediumText);
-  addrCell.alignment = { vertical: 'middle' };
+  // Row 2: Address
+  sheet.getRow(2).height = 20;
+  sheet.mergeCells(`D2:N2`);
+  const addrCell = sheet.getCell(`D2`);
+  addrCell.value = 'GUT NO.23,PLOT NO.45 MIDC WALUJ, AURANGABAD-431136';
+  font(addrCell, 10.5, true, '000000', 'Calibri');
+  addrCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-  // Row 4: GST & tagline
-  row = 4;
-  sheet.getRow(row).height = 16;
-  sheet.mergeCells(`D${row}:H${row}`);
-  const gstCell = sheet.getCell(`D${row}`);
-  gstCell.value = 'GSTIN: 27AAKCK1751B1ZS';
-  font(gstCell, 9, true, C.mediumText);
+  // Row 3: GST
+  sheet.getRow(3).height = 20;
+  sheet.mergeCells(`D3:N3`);
+  const gstCell = sheet.getCell(`D3`);
+  gstCell.value = 'GST NO : 27AAKCK1751B1ZS';
+  font(gstCell, 10.5, true, '000000', 'Calibri');
+  gstCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-  sheet.mergeCells(`I${row}:N${row}`);
-  const tagline = sheet.getCell(`I${row}`);
-  tagline.value = 'Manufacturers of Press Tools, Jig Fixtures, Die sets, Gauges';
-  font(tagline, 8, false, C.lightText);
-  tagline.alignment = { horizontal: 'right' };
+  // Row 4: Tagline
+  sheet.getRow(4).height = 22;
+  sheet.mergeCells(`A4:N4`);
+  const tagline = sheet.getCell(`A4`);
+  tagline.value = 'Manufacturers of Press Tools,Jig Fixtures,Die sets, Gauge,All Types of Engineering Works';
+  font(tagline, 10.5, true, '000000', 'Calibri');
+  tagline.alignment = { vertical: 'middle', horizontal: 'center' };
 
   // Row 5: "PURCHASE ORDER" banner
-  row = 6;
-  sheet.getRow(row).height = 32;
-  sheet.mergeCells(`B${row}:N${row}`);
-  const titleCell = sheet.getCell(`B${row}`);
+  sheet.getRow(5).height = 26;
+  sheet.mergeCells(`A5:N5`);
+  const titleCell = sheet.getCell(`A5`);
   titleCell.value = 'PURCHASE ORDER';
-  font(titleCell, 16, true, C.white, 'Arial');
-  fill(titleCell, C.darkText);
+  font(titleCell, 13, true, '000000', 'Calibri');
+  titleCell.font.underline = true;
   titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -315,52 +318,80 @@ export async function exportPremiumPO(po: any) {
     thinBorder(cell, ['top', 'bottom', 'left', 'right'], C.border);
   });
 
-  // CGST horizontal merge (J-K)
-  sheet.mergeCells(`J${tableHeaderRow1}:K${tableHeaderRow1}`);
-  const cgstHeader = sheet.getCell(`J${tableHeaderRow1}`);
-  cgstHeader.value = 'CGST';
-  font(cgstHeader, 9, true, C.darkText);
-  fill(cgstHeader, C.headerBg);
-  cgstHeader.alignment = { vertical: 'middle', horizontal: 'center' };
-  thinBorder(cgstHeader, ['top', 'left', 'right'], C.border);
+  if (isIntrastate) {
+    // CGST horizontal merge (J-K)
+    sheet.mergeCells(`J${tableHeaderRow1}:K${tableHeaderRow1}`);
+    const cgstHeader = sheet.getCell(`J${tableHeaderRow1}`);
+    cgstHeader.value = 'CGST';
+    font(cgstHeader, 9, true, C.darkText);
+    fill(cgstHeader, C.headerBg);
+    cgstHeader.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(cgstHeader, ['top', 'left', 'right'], C.border);
 
-  // CGST sub-headers
-  const cgstPct = sheet.getCell(`J${tableHeaderRow2}`);
-  cgstPct.value = '%';
-  font(cgstPct, 8, true, C.lightText);
-  fill(cgstPct, C.headerBg);
-  cgstPct.alignment = { vertical: 'middle', horizontal: 'center' };
-  thinBorder(cgstPct, ['bottom', 'left'], C.border);
+    // CGST sub-headers
+    const cgstPct = sheet.getCell(`J${tableHeaderRow2}`);
+    cgstPct.value = '%';
+    font(cgstPct, 8, true, C.lightText);
+    fill(cgstPct, C.headerBg);
+    cgstPct.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(cgstPct, ['bottom', 'left'], C.border);
 
-  const cgstVal = sheet.getCell(`K${tableHeaderRow2}`);
-  cgstVal.value = 'Value (INR)';
-  font(cgstVal, 8, true, C.lightText);
-  fill(cgstVal, C.headerBg);
-  cgstVal.alignment = { vertical: 'middle', horizontal: 'center' };
-  thinBorder(cgstVal, ['bottom', 'right'], C.border);
+    const cgstVal = sheet.getCell(`K${tableHeaderRow2}`);
+    cgstVal.value = 'Value (INR)';
+    font(cgstVal, 8, true, C.lightText);
+    fill(cgstVal, C.headerBg);
+    cgstVal.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(cgstVal, ['bottom', 'right'], C.border);
 
-  // SGST horizontal merge (L-M)
-  sheet.mergeCells(`L${tableHeaderRow1}:M${tableHeaderRow1}`);
-  const sgstHeader = sheet.getCell(`L${tableHeaderRow1}`);
-  sgstHeader.value = 'SGST';
-  font(sgstHeader, 9, true, C.darkText);
-  fill(sgstHeader, C.headerBg);
-  sgstHeader.alignment = { vertical: 'middle', horizontal: 'center' };
-  thinBorder(sgstHeader, ['top', 'left', 'right'], C.border);
+    // SGST horizontal merge (L-M)
+    sheet.mergeCells(`L${tableHeaderRow1}:M${tableHeaderRow1}`);
+    const sgstHeader = sheet.getCell(`L${tableHeaderRow1}`);
+    sgstHeader.value = 'SGST';
+    font(sgstHeader, 9, true, C.darkText);
+    fill(sgstHeader, C.headerBg);
+    sgstHeader.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(sgstHeader, ['top', 'left', 'right'], C.border);
 
-  const sgstPct = sheet.getCell(`L${tableHeaderRow2}`);
-  sgstPct.value = '%';
-  font(sgstPct, 8, true, C.lightText);
-  fill(sgstPct, C.headerBg);
-  sgstPct.alignment = { vertical: 'middle', horizontal: 'center' };
-  thinBorder(sgstPct, ['bottom', 'left'], C.border);
+    const sgstPct = sheet.getCell(`L${tableHeaderRow2}`);
+    sgstPct.value = '%';
+    font(sgstPct, 8, true, C.lightText);
+    fill(sgstPct, C.headerBg);
+    sgstPct.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(sgstPct, ['bottom', 'left'], C.border);
 
-  const sgstValH = sheet.getCell(`M${tableHeaderRow2}`);
-  sgstValH.value = 'Value (INR)';
-  font(sgstValH, 8, true, C.lightText);
-  fill(sgstValH, C.headerBg);
-  sgstValH.alignment = { vertical: 'middle', horizontal: 'center' };
-  thinBorder(sgstValH, ['bottom', 'right'], C.border);
+    const sgstValH = sheet.getCell(`M${tableHeaderRow2}`);
+    sgstValH.value = 'Value (INR)';
+    font(sgstValH, 8, true, C.lightText);
+    fill(sgstValH, C.headerBg);
+    sgstValH.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(sgstValH, ['bottom', 'right'], C.border);
+  } else {
+    // IGST horizontal merge (J-M)
+    sheet.mergeCells(`J${tableHeaderRow1}:M${tableHeaderRow1}`);
+    const igstHeader = sheet.getCell(`J${tableHeaderRow1}`);
+    igstHeader.value = 'IGST';
+    font(igstHeader, 9, true, C.darkText);
+    fill(igstHeader, C.headerBg);
+    igstHeader.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(igstHeader, ['top', 'left', 'right'], C.border);
+
+    // IGST sub-headers - J-K merged for %, L-M merged for Value
+    sheet.mergeCells(`J${tableHeaderRow2}:K${tableHeaderRow2}`);
+    const igstPct = sheet.getCell(`J${tableHeaderRow2}`);
+    igstPct.value = '%';
+    font(igstPct, 8, true, C.lightText);
+    fill(igstPct, C.headerBg);
+    igstPct.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(igstPct, ['bottom', 'left'], C.border);
+
+    sheet.mergeCells(`L${tableHeaderRow2}:M${tableHeaderRow2}`);
+    const igstValH = sheet.getCell(`L${tableHeaderRow2}`);
+    igstValH.value = 'Value (INR)';
+    font(igstValH, 8, true, C.lightText);
+    fill(igstValH, C.headerBg);
+    igstValH.alignment = { vertical: 'middle', horizontal: 'center' };
+    thinBorder(igstValH, ['bottom', 'right'], C.border);
+  }
 
   // ═══════════════════════════════════════════════════════════════════════
   //  TABLE ITEMS
@@ -370,6 +401,7 @@ export async function exportPremiumPO(po: any) {
   let grandBasic = 0;
   let grandCgst = 0;
   let grandSgst = 0;
+  let grandIgst = 0;
   let grandTotal = 0;
 
   const items = po.items || [];
@@ -379,22 +411,41 @@ export async function exportPremiumPO(po: any) {
     const disc = Number(item.discount || 0);
     const basicVal = (qty * rate) - disc;
     const gstPercent = Number(item.gstPercent || 18);
-    const cgstPercent = gstPercent / 2;
-    const sgstPercent = gstPercent / 2;
-    const cgstAmt = basicVal * (cgstPercent / 100);
-    const sgstAmt = basicVal * (sgstPercent / 100);
-    const totalVal = basicVal + cgstAmt + sgstAmt;
+    
+    let cgstPercent = 0;
+    let sgstPercent = 0;
+    let cgstAmt = 0;
+    let sgstAmt = 0;
+    let igstAmt = 0;
+    let totalVal = 0;
+
+    if (isIntrastate) {
+      cgstPercent = gstPercent / 2;
+      sgstPercent = gstPercent / 2;
+      cgstAmt = basicVal * (cgstPercent / 100);
+      sgstAmt = basicVal * (sgstPercent / 100);
+      totalVal = basicVal + cgstAmt + sgstAmt;
+      grandCgst += cgstAmt;
+      grandSgst += sgstAmt;
+    } else {
+      igstAmt = basicVal * (gstPercent / 100);
+      totalVal = basicVal + igstAmt;
+      grandIgst += igstAmt;
+    }
 
     grandBasic += basicVal;
-    grandCgst += cgstAmt;
-    grandSgst += sgstAmt;
     grandTotal += totalVal;
 
     sheet.getRow(row).height = 28;
 
     const materialDesc = `${item.material?.materialCode || ''} ${item.dimensions || ''}`.trim() || item.material?.materialName || '';
 
-    const cols = [
+    if (!isIntrastate) {
+      sheet.mergeCells(`J${row}:K${row}`);
+      sheet.mergeCells(`L${row}:M${row}`);
+    }
+
+    const cols = isIntrastate ? [
       { col: 'B', val: idx + 1, fmt: undefined, align: 'center' as const },
       { col: 'C', val: materialDesc, fmt: undefined, align: 'left' as const },
       { col: 'D', val: item.hsnCode || '', fmt: undefined, align: 'center' as const },
@@ -408,11 +459,25 @@ export async function exportPremiumPO(po: any) {
       { col: 'L', val: sgstPercent / 100, fmt: '0%', align: 'center' as const },
       { col: 'M', val: sgstAmt, fmt: '#,##0.00', align: 'right' as const },
       { col: 'N', val: totalVal, fmt: '#,##0.00', align: 'right' as const },
+    ] : [
+      { col: 'B', val: idx + 1, fmt: undefined, align: 'center' as const },
+      { col: 'C', val: materialDesc, fmt: undefined, align: 'left' as const },
+      { col: 'D', val: item.hsnCode || '', fmt: undefined, align: 'center' as const },
+      { col: 'E', val: qty, fmt: '#,##0.00', align: 'right' as const },
+      { col: 'F', val: item.uom || 'NOS', fmt: undefined, align: 'center' as const },
+      { col: 'G', val: rate, fmt: '#,##0.00', align: 'right' as const },
+      { col: 'H', val: disc, fmt: '#,##0.00', align: 'right' as const },
+      { col: 'I', val: basicVal, fmt: '#,##0.00', align: 'right' as const },
+      { col: 'J', val: gstPercent / 100, fmt: '0%', align: 'center' as const },
+      { col: 'K', val: '', fmt: undefined, align: 'center' as const },
+      { col: 'L', val: igstAmt, fmt: '#,##0.00', align: 'right' as const },
+      { col: 'M', val: '', fmt: undefined, align: 'center' as const },
+      { col: 'N', val: totalVal, fmt: '#,##0.00', align: 'right' as const },
     ];
 
     cols.forEach(c => {
       const cell = sheet.getCell(`${c.col}${row}`);
-      cell.value = c.val;
+      if (c.val !== '') cell.value = c.val;
       font(cell, 10, false, C.darkText);
       cell.alignment = { vertical: 'middle', horizontal: c.align };
       if (c.fmt) cell.numFmt = c.fmt;
@@ -431,6 +496,10 @@ export async function exportPremiumPO(po: any) {
   const minRows = Math.max(0, 3 - items.length);
   for (let i = 0; i < minRows; i++) {
     sheet.getRow(row).height = 28;
+    if (!isIntrastate) {
+      sheet.mergeCells(`J${row}:K${row}`);
+      sheet.mergeCells(`L${row}:M${row}`);
+    }
     ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'].forEach(col => {
       thinBorder(sheet.getCell(`${col}${row}`), ['left', 'right', 'bottom'], C.lightBorder);
     });
@@ -500,19 +569,15 @@ export async function exportPremiumPO(po: any) {
   font(commTitle, 10, true, C.darkText);
   commTitle.alignment = { horizontal: 'right' };
 
-  const terms = [
-    { left: '*Delivery schedule :- 2-3 DAYS', right: '' },
-    { left: '*Mode of Transport :- BY ROAD', right: 'COMMISIONERATE: A\'BAD.' },
-    { left: '*Payment Term:- 45 DAYS', right: '' },
-    { left: '*Header Text:- RAW MATERIAL', right: '' },
-    { left: '*All the legal concerns associated with Aurangabad jurisdiction board', right: '' },
-    { left: 'Please indicate our PO No., Material code & HSN Code on all your correspondence.', right: '' },
-    { left: 'The material is to be supplied as per drawing and parts inspection specification / supply specification as applicable.', right: '' },
-    { left: '"Any Product delivered under this Purchase order must meet all requirement of ROHS "Restriction of Hazardous Substances" and', right: '' },
-    { left: 'Packing material used for packing for such products, should be within legal norms set by Government from time to time.', right: '' },
-  ];
+  const rawTerms = po.customFields?.termsAndConditions || `*Delivery schedule :- 2-3 DAYS\n*Mode of Transport :- BY ROAD\n*Payment Term:- 45 DAYS\n*Header Text:- RAW MATERIAL\n*All the legal concerns associated with Aurangabad jurisdiction board\nPlease indicate our PO No., Material code & HSN Code on all your correspondence.\nThe material is to be supplied as per drawing and parts inspection specification / supply specification as applicable.\n"Any Product delivered under this Purchase order must meet all requirement of ROHS "Restriction of Hazardous Substances" and\nPacking material used for packing for such products, should be within legal norms set by Government from time to time.`;
 
-  terms.forEach(t => {
+  const termsList = rawTerms.split('\n');
+  const terms = termsList.map((t: string, idx: number) => ({
+    left: t,
+    right: idx === 1 ? "COMMISIONERATE: A'BAD." : ""
+  }));
+
+  terms.forEach((t: any) => {
     row++;
     sheet.getRow(row).height = 16;
     sheet.mergeCells(`B${row}:I${row}`);

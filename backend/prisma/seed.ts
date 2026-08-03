@@ -12,7 +12,7 @@ async function main() {
   console.log('🌱 Starting database seeding...');
 
   // 0. Seed Admin User
-  const passwordHash = await bcrypt.hash('password123', 10);
+  const passwordHash = await bcrypt.hash('admin123', 10);
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@toolroom.com' },
     update: { passwordHash },
@@ -1415,6 +1415,180 @@ async function main() {
     });
     console.log(`✅ Seeded Tasks for PRJ-2025-003`);
   }
+
+  // -------------------------------------------------------------
+  // SEED GLOBAL ASSETS & TOOL MANAGEMENT (STANDALONE MODULE)
+  // -------------------------------------------------------------
+  console.log('🌱 Seeding Global Asset Management...');
+
+  const catCutting = await prisma.globalAssetCategory.upsert({
+    where: { categoryCode: 'CAT-CUT' },
+    update: {},
+    create: { categoryCode: 'CAT-CUT', name: 'Cutting Tools', description: 'End mills, drills, inserts, taps, reamers' },
+  });
+
+  const catMeasuring = await prisma.globalAssetCategory.upsert({
+    where: { categoryCode: 'CAT-MEAS' },
+    update: {},
+    create: { categoryCode: 'CAT-MEAS', name: 'Measuring Instruments', description: 'Calipers, micrometers, bore gauges, height gauges' },
+  });
+
+  const catPower = await prisma.globalAssetCategory.upsert({
+    where: { categoryCode: 'CAT-PWR' },
+    update: {},
+    create: { categoryCode: 'CAT-PWR', name: 'Power Tools', description: 'Pneumatic wrenches, grinders, cordless drills' },
+  });
+
+  const catIT = await prisma.globalAssetCategory.upsert({
+    where: { categoryCode: 'CAT-IT' },
+    update: {},
+    create: { categoryCode: 'CAT-IT', name: 'Laptops & IT Hardware', description: 'Engineering laptops, workstations, monitors' },
+  });
+
+  const catFix = await prisma.globalAssetCategory.upsert({
+    where: { categoryCode: 'CAT-FIX' },
+    update: {},
+    create: { categoryCode: 'CAT-FIX', name: 'Fixtures & Jigs', description: 'Universal clamping fixtures, modular tooling plates' },
+  });
+
+  const locToolCrib = await prisma.globalAssetLocation.upsert({
+    where: { locationCode: 'LOC-TCA1' },
+    update: {},
+    create: { locationCode: 'LOC-TCA1', locationName: 'Tool Crib Alpha', building: 'Building 1', room: 'Room 102', rackBin: 'Rack A-1' },
+  });
+
+  const locQALab = await prisma.globalAssetLocation.upsert({
+    where: { locationCode: 'LOC-QALAB' },
+    update: {},
+    create: { locationCode: 'LOC-QALAB', locationName: 'QA Calibration Lab', building: 'Building 1', room: 'Room 201', rackBin: 'Cabinet B-3' },
+  });
+
+  const locITStore = await prisma.globalAssetLocation.upsert({
+    where: { locationCode: 'LOC-ITSTORE' },
+    update: {},
+    create: { locationCode: 'LOC-ITSTORE', locationName: 'IT Asset Locker', building: 'Main Office', room: 'Room 304', rackBin: 'Shelf C-1' },
+  });
+
+  // Seed Assets
+  const asset1 = await prisma.globalAsset.upsert({
+    where: { assetId: 'AST-10001' },
+    update: {},
+    create: {
+      assetId: 'AST-10001',
+      assetCode: 'VC-300-DIG',
+      name: 'Digital Vernier Caliper 300mm',
+      categoryId: catMeasuring.id,
+      locationId: locQALab.id,
+      brand: 'Mitutoyo',
+      model: '500-196-30',
+      serialNumber: 'MT-884920',
+      partNumber: 'MIT-500-196',
+      description: 'High precision IP67 waterproof digital caliper with SPC data output',
+      quantity: 10,
+      availableQty: 8,
+      issuedQty: 2,
+      unit: 'NOS',
+      purchaseDate: new Date('2025-01-15'),
+      purchaseCost: 280,
+      supplier: 'Mitutoyo India Pvt Ltd',
+      storageRack: 'Cabinet B-3 / Bin 12',
+      condition: 'EXCELLENT',
+      status: 'AVAILABLE',
+      qrCode: 'QR-AST-10001',
+      barcode: 'BC-VC-300-DIG',
+      createdBy: 'SEED',
+    }
+  });
+
+  const asset2 = await prisma.globalAsset.upsert({
+    where: { assetId: 'AST-10002' },
+    update: {},
+    create: {
+      assetId: 'AST-10002',
+      assetCode: 'PWR-TRQ-61',
+      name: 'Pneumatic Torque Wrench 50Nm',
+      categoryId: catPower.id,
+      locationId: locToolCrib.id,
+      brand: 'Atlas Copco',
+      model: 'ETP ST61-50',
+      serialNumber: 'AC-993812',
+      description: 'Precision electric nutrunner shutoff torque control',
+      quantity: 5,
+      availableQty: 4,
+      issuedQty: 1,
+      unit: 'NOS',
+      purchaseDate: new Date('2024-11-10'),
+      purchaseCost: 1450,
+      supplier: 'Atlas Copco India',
+      storageRack: 'Rack A-1 / Shelf 2',
+      condition: 'GOOD',
+      status: 'AVAILABLE',
+      qrCode: 'QR-AST-10002',
+      barcode: 'BC-PWR-TRQ-61',
+      createdBy: 'SEED',
+    }
+  });
+
+  const asset3 = await prisma.globalAsset.upsert({
+    where: { assetId: 'AST-10003' },
+    update: {},
+    create: {
+      assetId: 'AST-10003',
+      assetCode: 'IT-LAP-5570',
+      name: 'Dell Precision 5570 CAD Workstation',
+      categoryId: catIT.id,
+      locationId: locITStore.id,
+      brand: 'Dell',
+      model: 'Precision 5570',
+      serialNumber: 'DL-5570-9831',
+      description: 'Intel i9 32GB RAM RTX A2000 for Siemens NX CAD Modeling',
+      quantity: 4,
+      availableQty: 2,
+      issuedQty: 2,
+      unit: 'NOS',
+      purchaseDate: new Date('2025-02-01'),
+      purchaseCost: 2400,
+      supplier: 'Dell India',
+      storageRack: 'Shelf C-1 / Unit 4',
+      condition: 'NEW',
+      status: 'AVAILABLE',
+      qrCode: 'QR-AST-10003',
+      barcode: 'BC-IT-LAP-5570',
+      createdBy: 'SEED',
+    }
+  });
+
+  // Seed Issue Transaction if employee exists
+  const emp = await prisma.employee.findFirst();
+  if (emp) {
+    const issue1 = await prisma.globalAssetIssueTransaction.upsert({
+      where: { issueNumber: 'ISS-10001' },
+      update: {},
+      create: {
+        issueNumber: 'ISS-10001',
+        assetId: asset1.id,
+        employeeId: emp.id,
+        quantity: 2,
+        issueDate: new Date('2025-07-20'),
+        expectedReturnDate: new Date('2025-08-05'),
+        conditionBeforeIssue: 'EXCELLENT',
+        status: 'ISSUED',
+        remarks: 'Issued for CMM inspection run on PRJ-2025-001',
+        createdBy: 'SEED',
+      }
+    });
+
+    await prisma.globalAssetAuditLog.create({
+      data: {
+        assetId: asset1.id,
+        action: 'ISSUED',
+        performedBy: 'SEED',
+        newValues: { issueNumber: 'ISS-10001', employeeName: emp.name, quantity: 2 },
+      }
+    });
+  }
+
+  console.log('✅ Seeded Global Assets: Categories, Locations, Assets & Issues');
 
   console.log('🌱 Database seeding completed successfully.');
 }

@@ -54,7 +54,7 @@ export const ProjectGanttChart = () => {
     <div className="bg-[#F4F4F6]/50 backdrop-blur-xl border border-black/10 rounded-2xl overflow-hidden flex flex-col h-[400px]">
       <div className="p-4 border-b border-black/10 bg-black/5 flex justify-between items-center shrink-0">
         <h2 className="text-sm font-bold text-zinc-900 tracking-widest uppercase flex items-center">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-2"></span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
           Master Production Timeline
         </h2>
       </div>

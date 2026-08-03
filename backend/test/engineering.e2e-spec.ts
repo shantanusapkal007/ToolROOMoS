@@ -11,7 +11,7 @@ import { RolesGuard } from '../src/auth/guards/roles.guard';
 describe('EngineeringController (e2e)', () => {
   let app: INestApplication;
 
-  const mockPrismaService = {
+  const mockPrismaService: any = {
     project: {
       findUniqueOrThrow: jest.fn().mockResolvedValue({ id: 'proj-1', projectNumber: 'PROJ-123' }),
     },
@@ -29,19 +29,19 @@ describe('EngineeringController (e2e)', () => {
     projectActivity: {
       create: jest.fn().mockResolvedValue({ id: 'act-1' }),
     },
-    $transaction: jest.fn(async (cb) => {
+    $transaction: jest.fn(async (cb: (prisma: any) => Promise<any>) => {
       return cb(mockPrismaService);
     }),
   };
 
   beforeAll(async () => {
     // Mock the guards at prototype level since they are both globally and locally bound
-    jest.spyOn(JwtAuthGuard.prototype, 'canActivate').mockImplementation((context: any) => {
+    jest.spyOn(JwtAuthGuard.prototype, 'canActivate').mockImplementation(async (context: any) => {
       const req = context.switchToHttp().getRequest();
       req.user = { userId: 'user-1', roles: ['ADMIN', 'ENGINEERING'] };
       return true;
     });
-    jest.spyOn(RolesGuard.prototype, 'canActivate').mockImplementation(() => true);
+    jest.spyOn(RolesGuard.prototype, 'canActivate').mockImplementation(async () => true);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],

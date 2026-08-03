@@ -81,7 +81,7 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/5 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-zinc-950/60 backdrop-blur-md z-40"
             onClick={onClose}
           />
           <motion.div
@@ -250,7 +250,7 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
                       <input 
                         type="number" 
                         value={timeSpent}
-                        onChange={(e) => setTimeSpent(Number(e.target.value))}
+                        onChange={(e) => setTimeSpent((e.target.value === '' ? ('' as any) : Number(e.target.value)))}
                         placeholder="Hours"
                         className="w-24 bg-black/5 border border-black/10 rounded-lg p-2 text-sm text-zinc-900 outline-none focus:border-blue-500"
                         min="0"
@@ -303,7 +303,7 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
                     <input 
                       type="number" 
                       value={quantity}
-                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      onChange={(e) => setQuantity((e.target.value === '' ? ('' as any) : Number(e.target.value)))}
                       className="w-20 bg-black/5 border border-black/10 rounded-lg p-2 text-sm text-zinc-900 outline-none focus:border-blue-500"
                       min="1"
                       placeholder="Qty"

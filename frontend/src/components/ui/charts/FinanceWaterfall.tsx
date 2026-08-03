@@ -15,15 +15,6 @@ export interface FinanceData {
   type: 'revenue' | 'cost';
 }
 
-const data: FinanceData[] = [
-  { category: 'Jan', value: 45000, type: 'revenue' },
-  { category: 'Feb', value: 52000, type: 'revenue' },
-  { category: 'Mar', value: 48000, type: 'revenue' },
-  { category: 'Apr', value: 61000, type: 'revenue' },
-  { category: 'May', value: 59000, type: 'revenue' },
-  { category: 'Jun', value: 72000, type: 'revenue' },
-];
-
 const tooltipStyles = {
   ...defaultStyles,
   backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -36,11 +27,13 @@ const tooltipStyles = {
 };
 
 interface Props {
-  width: number;
-  height: number;
+  data?: FinanceData[];
+  width?: number;
+  height?: number;
 }
 
-export function FinanceWaterfall({ width, height }: Props) {
+
+export function FinanceWaterfall({ data = [], width = 600, height = 300 }: Props) {
   const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<FinanceData>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     detectBounds: true,
@@ -57,15 +50,24 @@ export function FinanceWaterfall({ width, height }: Props) {
     range: [0, innerWidth],
     domain: data.map(d => d.category),
     padding: 0.4,
-  }), [innerWidth]);
+  }), [innerWidth, data]);
 
   const yScale = useMemo(() => scaleLinear<number>({
     range: [innerHeight, 0],
-    domain: [0, Math.max(...data.map(d => d.value)) * 1.2],
+    domain: [0, data.length > 0 ? Math.max(...data.map(d => d.value)) * 1.2 : 100],
     nice: true,
-  }), [innerHeight]);
+  }), [innerHeight, data]);
 
   if (width < 10) return null;
+  if (!data || data.length === 0) {
+    return (
+      <div className="p-8 text-center bg-slate-50/50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+        <p className="text-xs font-semibold text-slate-500">No cost events recorded for this project yet.</p>
+        <p className="text-[11px] text-slate-400 mt-1">Financial variance will populate dynamically as daily report costs & invoices are logged.</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="relative">

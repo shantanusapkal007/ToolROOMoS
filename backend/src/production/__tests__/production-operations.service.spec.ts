@@ -15,6 +15,7 @@ const mockPrismaService = {
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    upsert: jest.fn().mockResolvedValue({ revenue: 1000, totalCost: 500 }),
   },
   msdrHeader: {
     create: jest.fn(),
@@ -30,6 +31,9 @@ const mockPrismaService = {
   },
   projectActivity: {
     create: jest.fn(),
+  },
+  jobCard: {
+    updateMany: jest.fn(),
   }
 };
 
@@ -101,10 +105,10 @@ describe('ProductionOperationsService', () => {
       
       // Cost should be 2 hours * (150 + 50) = 400 total. 
       // Labour: 100, Machine: 300
-      expect(mockPrismaService.projectCostSummary.update).toHaveBeenCalledWith(
+      expect(mockPrismaService.projectCostSummary.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { projectId: 'proj-1' },
-          data: expect.objectContaining({
+          update: expect.objectContaining({
             machineCost: { increment: 300 },
             labourCost: { increment: 100 },
             totalCost: { increment: 400 },

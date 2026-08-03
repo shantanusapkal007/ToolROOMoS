@@ -62,10 +62,10 @@ export class MaterialReturnsService {
         },
       });
 
-      // 4. Update Inventory Stock in Warehouse
-      const warehouse = await tx.warehouse.findFirst({
-        where: { warehouseCode: 'DEFAULT-WH' },
-      });
+      // 4. Update Inventory Stock in Warehouse (dynamically resolved)
+      const warehouse = (await tx.warehouse.findFirst({ where: { warehouseCode: 'DEFAULT-WH' } })) ||
+                        (await tx.warehouse.findFirst({ where: { status: 'ACTIVE' } })) ||
+                        (await tx.warehouse.findFirst());
       if (warehouse) {
         await tx.inventoryStock.upsert({
           where: {

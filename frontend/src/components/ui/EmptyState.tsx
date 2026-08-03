@@ -76,13 +76,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           className="z-10"
         >
           <motion.button 
-            whileHover={{ scale: 1.03, boxShadow: '0 20px 40px -10px rgba(59,130,246,0.3)' }}
+            whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.97 }}
             onClick={onAction}
-            className="group relative px-8 py-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-2xl text-white font-semibold text-lg overflow-hidden shadow-elevation border border-blue-400/50"
+            className="group relative px-7 py-3.5 bg-zinc-900 hover:bg-zinc-800 rounded-2xl text-white font-bold text-base border border-zinc-700/80 shadow-[0_1px_3px_rgba(0,0,0,0.12),_inset_0_1px_0_rgba(255,255,255,0.15)] active:scale-[0.98] transition-all duration-200 cursor-pointer"
           >
-            {/* Button Inner Glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out" />
             <span className="relative z-10">{actionLabel}</span>
           </motion.button>
         </motion.div>

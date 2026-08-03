@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
 
 export class CreateGrnItemDto {
   @IsString()
@@ -7,14 +7,17 @@ export class CreateGrnItemDto {
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   receivedQty: number;
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   acceptedQty: number;
 
   @IsNumber()
   @IsOptional()
+  @Min(0)
   rejectedQty?: number;
 
   @IsString()

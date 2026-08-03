@@ -6,6 +6,7 @@ import { Database, UserCog, Factory, History, Search, ArrowRight, Save, X } from
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from "../../../lib/api";
 import { useToast } from "../../../components/ui/Toast";
+import { Modal } from "../../../components/ui/Modal";
 
 // API Fetchers
 const fetchEmployees = async () => {
@@ -178,68 +179,59 @@ export default function ResourceRatesPage() {
       </div>
 
       {/* Edit Rate Modal */}
-      <AnimatePresence>
+      <Modal
+        isOpen={!!editEntity}
+        onClose={() => setEditEntity(null)}
+        title="Update Hourly Rate"
+        maxWidth="md"
+      >
         {editEntity && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-sm"
-          >
-            <motion.div 
-              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-[#0B1120] border border-black/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
-            >
-              <div className="px-6 py-4 border-b border-black/10 flex justify-between items-center bg-black/[0.02]">
-                <h3 className="font-bold text-zinc-900">Update Hourly Rate</h3>
-                <button onClick={() => setEditEntity(null)} className="text-zinc-500 hover:text-zinc-900"><X className="w-5 h-5" /></button>
-              </div>
-              <form onSubmit={handleUpdate} className="p-6 space-y-4">
-                <div>
-                  <div className="text-sm text-zinc-500 mb-1">Resource</div>
-                  <div className="font-bold text-zinc-900">{editEntity.name} ({editEntity.code})</div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">New Rate (₹/hr)</label>
-                  <input 
-                    type="number" step="0.01" required
-                    value={newRate} onChange={e => setNewRate(e.target.value)}
-                    className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2 text-zinc-900 focus:border-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Reason for Update</label>
-                  <input 
-                    type="text" required placeholder="e.g. Annual Increment, Inflation"
-                    value={reason} onChange={e => setReason(e.target.value)}
-                    className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2 text-zinc-900 focus:border-blue-500 outline-none"
-                  />
-                </div>
-                <div className="pt-4 flex justify-end">
-                  <button 
-                    type="button" onClick={() => setEditEntity(null)}
-                    className="px-4 py-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900 mr-2"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    disabled={updateRateMutation.isPending}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl flex items-center"
-                  >
-                    {updateRateMutation.isPending ? 'Updating...' : 'Save Rate'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
+          <form onSubmit={handleUpdate} className="space-y-4 text-zinc-900">
+            <div>
+              <div className="text-sm text-zinc-500 mb-1">Resource</div>
+              <div className="font-bold text-zinc-900">{editEntity.name} ({editEntity.code})</div>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">New Rate (₹/hr)</label>
+              <input 
+                type="number" step="0.01" required
+                value={newRate} onChange={e => setNewRate(e.target.value)}
+                className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2 text-zinc-900 focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Reason for Update</label>
+              <input 
+                type="text" required placeholder="e.g. Annual Increment, Inflation"
+                value={reason} onChange={e => setReason(e.target.value)}
+                className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2 text-zinc-900 focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div className="pt-4 flex justify-end">
+              <button 
+                type="button" onClick={() => setEditEntity(null)}
+                className="px-4 py-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900 mr-2"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                disabled={updateRateMutation.isPending}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl flex items-center"
+              >
+                {updateRateMutation.isPending ? 'Updating...' : 'Save Rate'}
+              </button>
+            </div>
+          </form>
         )}
-      </AnimatePresence>
+      </Modal>
 
       {/* History Side Panel */}
       <AnimatePresence>
         {selectedEntity && (
           <motion.div 
             initial={{ x: 400, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 400, opacity: 0 }}
-            className="absolute top-0 right-0 bottom-0 w-96 bg-[#0B1120]/95 backdrop-blur-2xl border-l border-black/10 shadow-2xl flex flex-col z-40"
+            className="absolute top-0 right-0 bottom-0 w-96 bg-white/95 backdrop-blur-2xl border-l border-black/10 shadow-2xl flex flex-col z-40"
           >
             <div className="px-6 py-5 border-b border-black/10 flex justify-between items-center bg-black/[0.02]">
               <div>
@@ -258,8 +250,8 @@ export default function ResourceRatesPage() {
                   <div className="absolute top-0 bottom-0 left-[15px] w-px bg-black/10" />
                   {history.map((record: any, idx: number) => (
                     <div key={record.id} className="relative flex items-start mb-6">
-                      <div className="w-8 h-8 rounded-full bg-black border border-black/20 flex items-center justify-center shrink-0 z-10">
-                        <div className="w-2 h-2 rounded-full bg-blue-400" />
+                      <div className="w-8 h-8 rounded-full bg-zinc-100 border border-zinc-300 flex items-center justify-center shrink-0 z-10">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
                       </div>
                       <div className="ml-4 flex-1">
                         <div className="bg-black/5 border border-black/5 rounded-xl p-3">
@@ -270,7 +262,7 @@ export default function ResourceRatesPage() {
                           <div className="flex items-center text-sm font-bold font-mono">
                             <span className="text-zinc-500 line-through mr-2">₹{Number(record.oldRate).toFixed(2)}</span>
                             <ArrowRight className="w-3 h-3 text-slate-500 mr-2" />
-                            <span className="text-emerald-400">₹{Number(record.newRate).toFixed(2)}</span>
+                            <span className="text-emerald-600">₹{Number(record.newRate).toFixed(2)}</span>
                           </div>
                           {record.reason && (
                             <div className="mt-2 text-xs text-zinc-600 bg-black/5 p-2 rounded-lg italic">

@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ChevronRight, Search, Bell } from 'lucide-react';
-import { UniversalToolbar } from './UniversalToolbar';
+import { useNotifications } from '../../context/NotificationContext';
 
 interface BreadcrumbItem {
   label: string;
@@ -17,61 +17,73 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
 }
 
-export function PageHeader({ title, description, breadcrumbs, icon, colorHint = 'indigo-500', actions }: PageHeaderProps) {
+export function PageHeader({ title, description, breadcrumbs, icon, actions }: PageHeaderProps) {
+  const { unreadCount, toggleCenter } = useNotifications();
+
   return (
-    <div className="relative z-20 flex flex-col sm:flex-row sm:items-end justify-between w-full mb-6 shrink-0 gap-4">
-      <div className="flex flex-col gap-2">
+    <div className="h-[var(--size-header)] flex items-center justify-between w-full border-b border-zinc-200 bg-white px-6 shrink-0 mb-6 rounded-lg shadow-xs">
+      <div className="flex flex-col justify-center gap-0.5">
         
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav className="flex items-center text-[10px] font-bold text-slate-500 mb-1 tracking-widest uppercase">
+          <nav className="flex items-center text-micro text-zinc-400 font-medium">
             {breadcrumbs.map((crumb, idx) => (
               <React.Fragment key={idx}>
-                {idx > 0 && <ChevronRight className="w-3 h-3 mx-1.5 text-slate-600 shrink-0" />}
+                {idx > 0 && <ChevronRight className="w-3 h-3 mx-1 text-zinc-400 shrink-0" />}
                 {crumb.href ? (
                   <Link href={crumb.href} className="hover:text-zinc-900 transition-colors">
                     {crumb.label}
                   </Link>
                 ) : (
-                  <span className="text-zinc-600">{crumb.label}</span>
+                  <span className="text-zinc-600 font-semibold">{crumb.label}</span>
                 )}
               </React.Fragment>
             ))}
           </nav>
         )}
 
-        {/* Title Area */}
-        <div className="flex items-center gap-3">
+        {/* Title & Subtitle */}
+        <div className="flex items-center gap-2">
           {icon && (
-            <div className={`w-10 h-10 rounded-xl bg-black/5 text-${colorHint} border border-black/10 flex items-center justify-center shadow-inner`}>
-              {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'w-5 h-5' })}
+            <div className="w-5 h-5 flex items-center justify-center text-zinc-700">
+              {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'w-4 h-4' })}
             </div>
           )}
-          <div>
-            <h1 className="text-3xl font-black tracking-tighter text-zinc-900">
-              {title}
-            </h1>
-            {description && (
-              <h2 className="text-sm text-zinc-500 font-medium tracking-wide mt-0.5">
-                {description}
-              </h2>
-            )}
-          </div>
+          <h1 className="text-section-title font-bold text-zinc-900 tracking-tight leading-none">
+            {title}
+          </h1>
+          {description && (
+            <span className="text-caption text-zinc-500 font-normal border-l border-zinc-200 pl-2.5 ml-1 hidden sm:inline">
+              {description}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Global Actions / Toolbar Area */}
-      <div className="flex items-center gap-4 bg-black/5 p-1.5 rounded-xl border border-black/10 backdrop-blur-md shadow-lg">
+      {/* Global Actions & Utilities */}
+      <div className="flex items-center gap-2">
         {actions}
         
-        {/* Global Utilities (Search hint, Notifications) */}
-        <div className="flex items-center gap-2 pl-2 border-l border-black/10 ml-2">
-          <button className="w-8 h-8 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/10 flex items-center justify-center transition-all" title="Search (Cmd+K)">
-            <Search className="w-4 h-4" />
+        <div className="flex items-center gap-1 pl-2 border-l border-zinc-200 ml-1">
+          <button 
+            className="h-[var(--size-button-secondary)] px-2.5 rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 flex items-center gap-1.5 transition-colors cursor-pointer text-caption font-medium border border-zinc-200" 
+            title="Command Palette (Cmd+K)"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="text-micro bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-500 font-mono">⌘K</span>
           </button>
-          <button className="relative w-8 h-8 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/10 flex items-center justify-center transition-all">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-2 w-1.5 h-1.5 bg-red-500 rounded-full shadow-elevation" />
+          
+          <button 
+            onClick={toggleCenter}
+            className="relative h-[var(--size-button-secondary)] w-8 rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 flex items-center justify-center transition-colors cursor-pointer border border-zinc-200"
+            title="Notification Center"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 bg-red-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
         </div>
       </div>

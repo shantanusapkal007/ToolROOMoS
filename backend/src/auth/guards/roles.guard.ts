@@ -3,11 +3,16 @@ import { Reflector } from '@nestjs/core';
 import { SystemRole } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
+import { PrismaService } from '../../prisma/prisma.service';
+
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<SystemRole[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -17,17 +22,70 @@ export class RolesGuard implements CanActivate {
       return true; // No roles restricted
     }
     
-    const { user } = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
     
     if (!user) {
       return false; // Not authenticated
     }
 
+    // Deduce assigned roles (support single or multiple comma-separated roles e.g. "PRODUCTION, STORES")
+    const userRoles = (user.role || '').split(',').map((r: string) => r.trim());
+
     // Admin can do anything
-    if (user.role === 'ADMIN') {
+    if (userRoles.includes('ADMIN')) {
       return true;
     }
 
-    return requiredRoles.includes(user.role);
+    // Attempt to deduce module from URL path (e.g. /api/v1/projects -> projects)
+    const path = request.route?.path || request.url;
+    let module = '';
+    if (path.includes('/projects')) module = 'projects';
+    else if (path.includes('/master-data')) module = 'master_data';
+    else if (path.includes('/procurement')) module = 'procurement';
+    else if (path.includes('/production')) module = 'production';
+    else if (path.includes('/quality')) module = 'quality';
+    else if (path.includes('/inventory')) module = 'inventory';
+    else if (path.includes('/engineering')) module = 'engineering';
+    else if (path.includes('/logistics-finance')) module = 'finance';
+    else if (path.includes('/reports')) module = 'reports';
+    else if (path.includes('/maintenance')) module = 'maintenance';
+    else if (path.includes('/users') || path.includes('/settings')) module = 'settings';
+    else if (path.includes('/hr')) module = 'hr';
+
+    if (module) {
+      const permissions = await this.prisma.rolePermission.findMany({
+        where: {
+          role: { in: userRoles as SystemRole[] },
+          module
+        }
+      });
+
+      if (permissions.length > 0) {
+        // Determine action based on HTTP method
+        const hasAccess = permissions.some(permission => {
+          switch (request.method) {
+            case 'GET':
+              return permission.canView;
+            case 'POST':
+              return permission.canCreate;
+            case 'PUT':
+            case 'PATCH':
+              return permission.canEdit;
+            case 'DELETE':
+              return permission.canDelete;
+            default:
+              return permission.canView;
+          }
+        });
+
+        if (hasAccess) return true;
+        return false;
+      }
+    }
+
+    // Fallback to hardcoded roles check
+    return requiredRoles.some(r => userRoles.includes(r));
   }
 }
+

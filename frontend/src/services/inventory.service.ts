@@ -9,4 +9,8 @@ export const InventoryService = {
     const res = await api.get(`master-data/inventory-ledger`);
     return res.data;
   },
+  createBatch: async (data: any): Promise<any> => {
+    const res = await api.post(`master-data/inventory-ledger`, data);
+    return res.data;
+  },
 };

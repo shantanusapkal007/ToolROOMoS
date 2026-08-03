@@ -6,6 +6,26 @@ export const ProcurementService = {
     return res.data;
   },
 
+  getAllGlobalPurchaseOrders: async (): Promise<any> => {
+    const res = await api.get(`procurement/purchase-orders`);
+    return res.data;
+  },
+
+  getPoById: async (id: string): Promise<any> => {
+    const res = await api.get(`procurement/purchase-orders/${id}`);
+    return res.data;
+  },
+
+  getGlobalBomItems: async (): Promise<any> => {
+    const res = await api.get(`procurement/bom-items`);
+    return res.data;
+  },
+
+  createMultiProjectPo: async (data: any): Promise<any> => {
+    const res = await api.post(`procurement/purchase-orders`, data);
+    return res.data;
+  },
+
   createPurchaseOrder: async (projectId: string, data: any): Promise<any> => {
     const res = await api.post(`projects/${projectId}/purchase-orders`, data);
     return res.data;
@@ -18,6 +38,11 @@ export const ProcurementService = {
 
   processGRN: async (projectId: string, data: any): Promise<any> => {
     const res = await api.post(`projects/${projectId}/goods-receipts`, data);
+    return res.data;
+  },
+
+  getDeadMaterials: async (): Promise<any> => {
+    const res = await api.get(`procurement/dead-materials`);
     return res.data;
   },
 };

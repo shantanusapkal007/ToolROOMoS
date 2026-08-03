@@ -6,15 +6,16 @@ import { saveAs } from 'file-saver';
 // ─────────────────────────────────────────────────────────────────────────────
 const C = {
   black: 'FF000000',
-  darkText: 'FF1D1D1F',
-  mediumText: 'FF424245',
-  lightText: 'FF86868B',
-  headerBg: 'FFF5F5F7',
-  border: 'FFD2D2D7',
-  lightBorder: 'FFE8E8ED',
+  darkText: 'FF1E293B',
+  mediumText: 'FF475569',
+  lightText: 'FF64748B',
+  headerBg: 'FF0F172A',     // Ultra-dark slate blue header
+  headerText: 'FFFFFFFF',
+  border: 'FFE2E8F0',
+  lightBorder: 'FFF1F5F9',
   white: 'FFFFFFFF',
-  totalBg: 'FFF9FAFB',
-  grandTotalBg: 'FF1D1D1F',
+  totalBg: 'FFF8FAFC',
+  grandTotalBg: 'FF0F172A',
   grandTotalText: 'FFFFFFFF',
 };
 
@@ -54,7 +55,7 @@ export async function exportPremiumBOM(project: any, bomItems: any[], materials:
   if (!project) return;
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'KRUPA TOOLS & STAMPING LTD.';
+  workbook.creator = 'ToolRoomOS Enterprise Engineering';
   workbook.created = new Date();
 
   const sheet = workbook.addWorksheet('BOM Table', {
@@ -69,20 +70,21 @@ export async function exportPremiumBOM(project: any, bomItems: any[], materials:
     },
   });
 
-  // ── Column widths ──────────────────────────────────────────────────────
+  // Column widths
   sheet.columns = [
     { width: 2 },    // A - margin
     { width: 6 },    // B - NO.
-    { width: 35 },   // C - PART NAME
+    { width: 32 },   // C - PART NAME
     { width: 8 },    // D - QTY
-    { width: 25 },   // E - CATALOG/SIZE
+    { width: 22 },   // E - RAW STOCK SIZE
     { width: 22 },   // F - FINISH SIZES
-    { width: 22 },   // G - STOCK SIZES
-    { width: 25 },   // H - MATERIAL
-    { width: 2 },    // I - margin
+    { width: 22 },   // G - MATERIAL
+    { width: 14 },   // H - WEIGHT (KG)
+    { width: 18 },   // I - EST COST (INR)
+    { width: 2 },    // J - margin
   ];
 
-  // ── Embed logo ─────────────────────────────────────────────────────────
+  // Embed logo
   const logoBuffer = await fetchLogo();
   if (logoBuffer) {
     const imageId = workbook.addImage({
@@ -91,128 +93,118 @@ export async function exportPremiumBOM(project: any, bomItems: any[], materials:
     });
     sheet.addImage(imageId, {
       tl: { col: 1, row: 1 },
-      ext: { width: 100, height: 80 },
+      ext: { width: 100, height: 75 },
     });
   }
 
   let row = 2;
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  HEADER SECTION
-  // ═══════════════════════════════════════════════════════════════════════
+  // Title Banner
+  const titleCell = sheet.getCell(`C${row}`);
+  titleCell.value = 'PROJECT BILL OF MATERIALS (BOM)';
+  font(titleCell, 16, true, C.darkText);
+  
+  row++;
+  const subTitleCell = sheet.getCell(`C${row}`);
+  subTitleCell.value = `TOOLING PROJECT: ${project.projectNumber || 'PRJ'} | ${project.partName || ''}`;
+  font(subTitleCell, 10, true, C.mediumText);
 
-  // Row 2: Company name
-  sheet.getRow(row).height = 30;
-  sheet.mergeCells(`C${row}:H${row}`);
-  const companyCell = sheet.getCell(`C${row}`);
-  companyCell.value = 'KRUPA TOOLS & STAMPING LTD.';
-  font(companyCell, 20, true, C.darkText, 'Arial');
-  companyCell.alignment = { vertical: 'middle', horizontal: 'left' };
-
-  // Row 3: Tagline
-  row = 3;
-  sheet.getRow(row).height = 18;
-  sheet.mergeCells(`C${row}:H${row}`);
-  const tagCell = sheet.getCell(`C${row}`);
-  tagCell.value = 'BILL OF MATERIALS (BOM) LEDGER';
-  font(tagCell, 10, true, C.mediumText);
-  tagCell.alignment = { vertical: 'middle' };
-
-  // Row 5: Metadata Banner
-  row = 5;
+  // Metadata Block
+  row += 2;
   sheet.getRow(row).height = 24;
 
-  sheet.mergeCells(`B${row}:C${row}`);
-  const custLabel = sheet.getCell(`B${row}`);
-  custLabel.value = 'CUSTOMER';
-  font(custLabel, 10, true, C.mediumText);
-  custLabel.alignment = { vertical: 'middle' };
-  thinBorder(custLabel, ['left', 'top', 'bottom']);
-  thinBorder(sheet.getCell(`C${row}`), ['top', 'bottom']);
-
-  const custVal = sheet.getCell(`D${row}`);
-  custVal.value = project.customer?.companyName || '';
-  font(custVal, 10, true, C.darkText);
-  custVal.alignment = { vertical: 'middle' };
-  thinBorder(custVal, ['top', 'bottom']);
-
-  const prjLabel = sheet.getCell(`E${row}`);
+  const prjLabel = sheet.getCell(`B${row}`);
   prjLabel.value = 'PROJECT NUMBER';
-  font(prjLabel, 10, true, C.mediumText);
-  prjLabel.alignment = { vertical: 'middle', horizontal: 'right' };
-  thinBorder(prjLabel, ['top', 'bottom']);
+  font(prjLabel, 9, true, C.mediumText);
+  prjLabel.alignment = { vertical: 'middle' };
+  thinBorder(prjLabel, ['top', 'bottom', 'left']);
 
-  const prjVal = sheet.getCell(`F${row}`);
+  const prjVal = sheet.getCell(`C${row}`);
   prjVal.value = project.projectNumber || '';
   font(prjVal, 10, true, C.darkText);
   prjVal.alignment = { vertical: 'middle', indent: 1 };
   thinBorder(prjVal, ['top', 'bottom']);
 
+  const customerLabel = sheet.getCell(`D${row}`);
+  customerLabel.value = 'CUSTOMER';
+  font(customerLabel, 9, true, C.mediumText);
+  customerLabel.alignment = { vertical: 'middle' };
+  thinBorder(customerLabel, ['top', 'bottom']);
+
+  const customerVal = sheet.getCell(`E${row}`);
+  customerVal.value = project.customer?.companyName || 'CLIENT';
+  font(customerVal, 10, true, C.darkText);
+  customerVal.alignment = { vertical: 'middle', indent: 1 };
+  thinBorder(customerVal, ['top', 'bottom']);
+
   const verLabel = sheet.getCell(`G${row}`);
-  verLabel.value = 'VERSION';
-  font(verLabel, 10, true, C.mediumText);
-  verLabel.alignment = { vertical: 'middle', horizontal: 'right' };
+  verLabel.value = 'RELEASE DATE';
+  font(verLabel, 9, true, C.mediumText);
+  verLabel.alignment = { vertical: 'middle' };
   thinBorder(verLabel, ['top', 'bottom']);
 
-  const verVal = sheet.getCell(`H${row}`);
-  verVal.value = 'V1.0';
+  const verVal = sheet.getCell(`I${row}`);
+  verVal.value = new Date().toLocaleDateString('en-IN');
   font(verVal, 10, true, C.darkText);
   verVal.alignment = { vertical: 'middle', indent: 1 };
   thinBorder(verVal, ['top', 'bottom', 'right']);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  TABLE HEADERS
-  // ═══════════════════════════════════════════════════════════════════════
+  // Table Headers
   row += 2;
   sheet.getRow(row).height = 28;
 
   const headers = [
     { col: 'B', text: 'NO.', align: 'center' as const },
-    { col: 'C', text: 'PART NAME', align: 'left' as const },
+    { col: 'C', text: 'PART NAME / COMPONENT', align: 'left' as const },
     { col: 'D', text: 'QTY', align: 'center' as const },
-    { col: 'E', text: 'CATALOG / DESCRIPTION', align: 'left' as const },
-    { col: 'F', text: 'FINISH SIZES (L×W×H)', align: 'center' as const },
-    { col: 'G', text: 'STOCK SIZES (L×W×H)', align: 'center' as const },
-    { col: 'H', text: 'MATERIAL', align: 'left' as const },
+    { col: 'E', text: 'RAW STOCK SIZE (L×W×H mm)', align: 'center' as const },
+    { col: 'F', text: 'FINISH SIZE (L×W×H mm)', align: 'center' as const },
+    { col: 'G', text: 'MATERIAL GRADE', align: 'left' as const },
+    { col: 'H', text: 'EST WEIGHT (KG)', align: 'right' as const },
+    { col: 'I', text: 'EST COST (INR)', align: 'right' as const },
   ];
 
   headers.forEach(h => {
     const cell = sheet.getCell(`${h.col}${row}`);
     cell.value = h.text;
-    font(cell, 10, true, C.white);
-    fill(cell, C.darkText);
+    font(cell, 9, true, C.headerText);
+    fill(cell, C.headerBg);
     cell.alignment = { vertical: 'middle', horizontal: h.align, indent: h.align === 'left' ? 1 : 0 };
-    thinBorder(cell, ['top', 'bottom', 'left', 'right'], C.darkText);
+    thinBorder(cell, ['top', 'bottom', 'left', 'right'], C.headerBg);
   });
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  TABLE ITEMS
-  // ═══════════════════════════════════════════════════════════════════════
+  // Table Items
   row++;
   let totalParts = 0;
+  let totalWeight = 0;
+  let totalCost = 0;
 
   bomItems.forEach((item, idx) => {
     const mat = materials?.find((m: any) => m.id === item.materialId);
-    const matName = mat ? `${mat.materialCode}` : "";
+    const matName = mat ? `${mat.materialName} (${mat.materialGrade || ''})` : "Steel";
     
-    const finishSizes = item.finishL && item.finishW && item.finishH ? `${item.finishL} X ${item.finishW} X ${item.finishH}` : (item.finishL || "");
-    const stockSizes = item.rmL && item.rmW && item.rmH ? `${item.rmL} X ${item.rmW} X ${item.rmH}` : (item.rmL || "");
+    const finishSizes = item.dimensions || item.finishSize || "-";
+    const stockSizes = item.rawSize || item.rawStockSize || "-";
+    const weightNum = Number(item.calculatedWeight || 0);
+    const costNum = Number(item.estimatedCost || 0);
 
-    totalParts += Number(item.requiredQty || 0);
+    totalParts += Number(item.requiredQty || 1);
+    totalWeight += weightNum;
+    totalCost += costNum;
 
     sheet.getRow(row).height = 24;
-
     const isAlt = idx % 2 !== 0;
     const bgColor = isAlt ? C.totalBg : C.white;
 
     const cols = [
-      { col: 'B', val: idx + 1, align: 'center' as const, isMono: false },
-      { col: 'C', val: item.partName || '-', align: 'left' as const, isMono: false },
-      { col: 'D', val: item.requiredQty || 0, align: 'center' as const, isMono: true },
-      { col: 'E', val: item.description || '-', align: 'left' as const, isMono: false },
-      { col: 'F', val: finishSizes || '-', align: 'center' as const, isMono: true },
-      { col: 'G', val: stockSizes || '-', align: 'center' as const, isMono: true },
-      { col: 'H', val: matName || '-', align: 'left' as const, isMono: false },
+      { col: 'B', val: idx + 1, align: 'center' as const, isMono: true },
+      { col: 'C', val: item.customFields?.partName || item.partName || '-', align: 'left' as const, isMono: false },
+      { col: 'D', val: Number(item.requiredQty || 1), align: 'center' as const, isMono: true },
+      { col: 'E', val: stockSizes, align: 'center' as const, isMono: true },
+      { col: 'F', val: finishSizes, align: 'center' as const, isMono: true },
+      { col: 'G', val: matName, align: 'left' as const, isMono: false },
+      { col: 'H', val: weightNum ? `${weightNum.toFixed(2)} kg` : '0.00 kg', align: 'right' as const, isMono: true },
+      { col: 'I', val: costNum ? `₹${costNum.toFixed(2)}` : '₹0.00', align: 'right' as const, isMono: true },
     ];
 
     cols.forEach(c => {
@@ -227,64 +219,40 @@ export async function exportPremiumBOM(project: any, bomItems: any[], materials:
     row++;
   });
 
-  // Empty rows padding
-  const minRows = Math.max(0, 5 - bomItems.length);
-  for (let i = 0; i < minRows; i++) {
-    sheet.getRow(row).height = 24;
-    ['B', 'C', 'D', 'E', 'F', 'G', 'H'].forEach(col => {
-      thinBorder(sheet.getCell(`${col}${row}`), ['left', 'right', 'bottom'], C.lightBorder);
-    });
-    row++;
-  }
+  // Grand Total Summary Row
+  sheet.getRow(row).height = 26;
+  
+  const totalLabelCell = sheet.getCell(`C${row}`);
+  totalLabelCell.value = 'GRAND TOTAL';
+  font(totalLabelCell, 10, true, C.white);
+  fill(totalLabelCell, C.grandTotalBg);
+  totalLabelCell.alignment = { vertical: 'middle', indent: 1 };
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  FOOTER / SIGN OFF
-  // ═══════════════════════════════════════════════════════════════════════
-  row += 3;
-  sheet.getRow(row).height = 24;
+  const totalQtyCell = sheet.getCell(`D${row}`);
+  totalQtyCell.value = totalParts;
+  font(totalQtyCell, 10, true, C.white, 'Consolas');
+  fill(totalQtyCell, C.grandTotalBg);
+  totalQtyCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-  const rDateLabel = sheet.getCell(`B${row}`);
-  rDateLabel.value = 'RELEASE DATE';
-  font(rDateLabel, 10, true, C.mediumText);
-  rDateLabel.alignment = { vertical: 'middle' };
-  thinBorder(rDateLabel, ['left', 'top', 'bottom']);
+  ['E', 'F', 'G'].forEach(col => {
+    const c = sheet.getCell(`${col}${row}`);
+    fill(c, C.grandTotalBg);
+  });
 
-  const rDateVal = sheet.getCell(`C${row}`);
-  rDateVal.value = bomHeader?.releaseDate ? new Date(bomHeader.releaseDate).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
-  font(rDateVal, 10, true, C.darkText);
-  rDateVal.alignment = { vertical: 'middle', indent: 1 };
-  thinBorder(rDateVal, ['top', 'bottom']);
+  const totalWtCell = sheet.getCell(`H${row}`);
+  totalWtCell.value = `${totalWeight.toFixed(2)} kg`;
+  font(totalWtCell, 10, true, C.white, 'Consolas');
+  fill(totalWtCell, C.grandTotalBg);
+  totalWtCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
-  const desLabel = sheet.getCell(`D${row}`);
-  desLabel.value = 'DESIGNED BY';
-  font(desLabel, 10, true, C.mediumText);
-  desLabel.alignment = { vertical: 'middle', horizontal: 'right' };
-  thinBorder(desLabel, ['top', 'bottom']);
+  const totalCostCell = sheet.getCell(`I${row}`);
+  totalCostCell.value = `₹${totalCost.toFixed(2)}`;
+  font(totalCostCell, 10, true, C.white, 'Consolas');
+  fill(totalCostCell, C.grandTotalBg);
+  totalCostCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
-  const desVal = sheet.getCell(`E${row}`);
-  desVal.value = bomHeader?.designerBy || '-';
-  font(desVal, 10, true, C.darkText);
-  desVal.alignment = { vertical: 'middle', indent: 1 };
-  thinBorder(desVal, ['top', 'bottom']);
-
-  sheet.mergeCells(`F${row}:G${row}`);
-  const appLabel = sheet.getCell(`F${row}`);
-  appLabel.value = 'APPROVED BY';
-  font(appLabel, 10, true, C.mediumText);
-  appLabel.alignment = { vertical: 'middle', horizontal: 'right' };
-  thinBorder(appLabel, ['top', 'bottom']);
-  thinBorder(sheet.getCell(`G${row}`), ['top', 'bottom']);
-
-  const appVal = sheet.getCell(`H${row}`);
-  appVal.value = bomHeader?.approvedBy || '-';
-  font(appVal, 10, true, C.darkText);
-  appVal.alignment = { vertical: 'middle', indent: 1 };
-  thinBorder(appVal, ['top', 'bottom', 'right']);
-
-  // ═══════════════════════════════════════════════════════════════════════
-  //  WRITE & DOWNLOAD
-  // ═══════════════════════════════════════════════════════════════════════
+  // Write and Save
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  saveAs(blob, `BOM_${project?.projectNumber || 'Export'}.xlsx`);
+  saveAs(blob, `BOM_${project.projectNumber || 'PRJ'}_${new Date().toISOString().split('T')[0]}.xlsx`);
 }

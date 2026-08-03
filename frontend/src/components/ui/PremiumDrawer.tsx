@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
 export interface PremiumDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -51,56 +52,48 @@ export const PremiumDrawer: React.FC<PremiumDrawerProps> = ({
     full: 'max-w-[95vw]',
   };
 
-  // Apple-like Spring Configuration for Modal pop-in
-  const spring = { type: "spring" as any, stiffness: 400, damping: 30 };
-
   const drawerContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 print:static print:p-0 print:block print:w-full print:min-h-0 print:h-auto print:overflow-visible">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 print:static print:p-0 print:block print:w-full print:min-h-0 print:h-auto print:overflow-visible">
           {/* Backdrop */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/5 backdrop-blur-sm print:hidden" 
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 bg-zinc-900/40 backdrop-blur-xs print:hidden" 
             onClick={onClose} 
           />
           
-          {/* Modal Container */}
+          {/* Modal / Drawer Container */}
           <motion.div 
-            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            initial={{ scale: 0.98, opacity: 0, y: 4 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 10 }}
-            transition={spring}
-            className={`relative w-full ${widthClasses[width]} max-h-[90vh] glass-modal flex flex-col overflow-hidden z-10 print:static print:max-h-none print:h-auto print:w-full print:max-w-none print:shadow-none print:border-none print:bg-white print:text-black print:overflow-visible print:rounded-none`}
+            exit={{ scale: 0.98, opacity: 0, y: 4 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className={`relative w-full ${widthClasses[width]} max-h-[90vh] bg-white border border-zinc-200 rounded-lg flex flex-col overflow-hidden z-10 shadow-modal print:static print:max-h-none print:h-auto print:w-full print:max-w-none print:shadow-none print:border-none print:bg-white print:text-black print:overflow-visible print:rounded-none`}
           >
-            {/* Top Header matching MSDR */}
-            <div className="flex-shrink-0 p-6 border-b border-black/5 bg-white/[0.01] flex justify-between items-center relative overflow-hidden hide-on-print print:hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-50"></div>
-              <div className="relative">
-                <h2 className="text-2xl font-semibold text-zinc-900 tracking-tight flex items-center gap-3">
+            {/* Top Header */}
+            <div className="flex-shrink-0 px-6 py-4 border-b border-zinc-200 flex justify-between items-center bg-white hide-on-print print:hidden">
+              <div>
+                <h2 className="text-section-title font-bold text-zinc-900 tracking-tight flex items-center gap-3">
                   {title}
                 </h2>
-                {subtitle && <p className="text-sm text-zinc-500 mt-1">{subtitle}</p>}
+                {subtitle && <p className="text-caption text-zinc-500 mt-0.5">{subtitle}</p>}
               </div>
               
-              <div className="flex items-center gap-4 ml-4 relative z-10">
-                <motion.button 
-                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.05)' }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={onClose}
-                  className="p-2 rounded-xl text-zinc-500 hover:text-zinc-900 transition-colors focus:outline-none"
-                  title="Close (Esc)"
-                >
-                  <X className="h-5 w-5" />
-                </motion.button>
-              </div>
+              <button 
+                onClick={onClose}
+                className="w-7 h-7 rounded-md hover:bg-zinc-100 flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer"
+                title="Close (Esc)"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
             
             {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 bg-transparent p-6 print:overflow-visible print:h-auto print:min-h-0 print:static print:p-0">
+            <div className="flex-1 overflow-y-auto hide-scrollbar bg-white p-6 print:overflow-visible print:h-auto print:min-h-0 print:static print:p-0">
               {children}
             </div>
           </motion.div>

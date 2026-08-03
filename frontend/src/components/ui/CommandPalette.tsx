@@ -94,7 +94,7 @@ export function CommandPalette() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 z-[100] bg-black/5 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-zinc-950/60 backdrop-blur-md"
           />
 
           {/* Palette */}
@@ -120,9 +120,10 @@ export function CommandPalette() {
                 />
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="p-1 rounded-md text-slate-500 hover:bg-black/10 hover:text-zinc-900 transition-colors"
+                  className="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 border border-black/10 flex items-center justify-center text-slate-500 hover:text-zinc-900 transition-all cursor-pointer shadow-xs active:scale-[0.95]"
+                  title="Close (Esc)"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 

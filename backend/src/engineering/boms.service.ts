@@ -28,9 +28,15 @@ export class BomsService {
       }
 
       // 2. Calculate estimated cost summation and fetch standard costs
-      const materialIds = dto.items.map(i => i.materialId);
-      const materials = await tx.material.findMany({ where: { id: { in: materialIds } } });
+      const validMaterialIds = dto.items.map(i => i.materialId).filter((id): id is string => Boolean(id));
+      const materials = validMaterialIds.length > 0
+        ? await tx.material.findMany({ where: { id: { in: validMaterialIds } } })
+        : [];
       const materialMap = new Map(materials.map(m => [m.id, m]));
+
+      // Fallback material for items without an explicit materialId
+      const defaultMaterial = await tx.material.findFirst();
+      const defaultMatId = defaultMaterial?.id || '';
 
       let totalCost = 0;
       for (const item of dto.items) {
@@ -68,7 +74,7 @@ export class BomsService {
           tx.billOfMaterialItem.create({
             data: {
               bomHeaderId: bomHeader.id,
-              materialId: item.materialId,
+              materialId: item.materialId || defaultMatId,
               rawSize: item.rawSize,
               dimensions: item.dimensions,
               hsnCode: item.hsnCode,
@@ -105,10 +111,10 @@ export class BomsService {
 
   async approveBom(projectId: string, bomId: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Fetch project and BOM
+      // 1. Fetch project, plant company and BOM
       const project = await tx.project.findUniqueOrThrow({ 
         where: { id: projectId },
-        include: { customer: true }
+        include: { customer: true, plant: { include: { company: true } } }
       });
       const bom = await tx.billOfMaterialHeader.findFirstOrThrow({
         where: { id: bomId, projectId },
@@ -213,9 +219,10 @@ export class BomsService {
               return { ...item, calculatedRate: rate, finalCost: estCost, qtyToOrder };
             });
 
-            const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-            const poNumber = `PO-AUTO-${project.projectNumber}-${randomSuffix}`;
-            const rmSlipNo = `PUR/${new Date().getFullYear().toString().slice(-2)}-${(new Date().getFullYear()+1).toString().slice(-2)}/${randomSuffix}`;
+            const poCount = await tx.purchaseOrderHeader.count();
+            const seqStr = (poCount + 1).toString().padStart(4, '0');
+            const poNumber = `PO-AUTO-${project.projectNumber}-${seqStr}`;
+            const rmSlipNo = `PUR/${new Date().getFullYear().toString().slice(-2)}-${(new Date().getFullYear()+1).toString().slice(-2)}/${seqStr}`;
             
             const poHeader = await tx.purchaseOrderHeader.create({
               data: {
@@ -239,6 +246,28 @@ export class BomsService {
 
             await Promise.all(itemsWithRates.map((item, index) => {
               const cf: any = item.customFields || {};
+              const gstPercent = Number(cf?.gstPercent || 18);
+              const finalCost = Number(item.finalCost || 0);
+              const companyGst = project.plant?.company?.gstNumber || '';
+              const vendorGst = defaultVendor?.gstNumber || '';
+              
+              const companyStateCode = companyGst.trim().slice(0, 2);
+              const vendorStateCode = vendorGst.trim().slice(0, 2);
+              
+              // Dynamic intrastate matching: true if state codes match or if state code is unspecified
+              const isIntrastate = !vendorStateCode || !companyStateCode || vendorStateCode === companyStateCode;
+              
+              const round2 = (val: number) => Math.round((val + Number.EPSILON) * 100) / 100;
+              const rawCgst = isIntrastate ? (finalCost * (gstPercent / 100)) / 2 : 0;
+              const rawSgst = isIntrastate ? (finalCost * (gstPercent / 100)) / 2 : 0;
+              const rawIgst = isIntrastate ? 0 : finalCost * (gstPercent / 100);
+
+              const cgst = round2(rawCgst);
+              const sgst = round2(rawSgst);
+              const igst = round2(rawIgst);
+              const totalGst = round2(cgst + sgst + igst);
+              const totalAmount = round2(finalCost + totalGst);
+
               return tx.purchaseOrderItem.create({
                 data: {
                   poHeaderId: poHeader.id,
@@ -248,9 +277,13 @@ export class BomsService {
                   lineTotal: item.finalCost,
                   dimensions: item.dimensions,
                   hsnCode: item.hsnCode,
-                  gstPercent: cf?.gstPercent || 18,
+                  gstPercent: gstPercent,
                   remarks: 'Auto-generated item',
                   customFields: {
+                    cgst,
+                    sgst,
+                    igst,
+                    basicValue: round2(finalCost),
                     srNo: cf.srNo || (index + 1),
                     toolNo: project.projectNumber || "",
                     detNo: cf.srNo || (index + 1),
@@ -262,9 +295,9 @@ export class BomsService {
                     apWt: cf.apWeight || item.calculatedWeight || 0,
                     totalWt: cf.totalWeight || item.calculatedWeight || 0,
                     rate: item.calculatedRate,
-                    basicCost: item.finalCost,
-                    gst: item.finalCost * ((cf?.gstPercent || 18) / 100),
-                    total: item.finalCost + (item.finalCost * ((cf?.gstPercent || 18) / 100))
+                    basicCost: round2(finalCost),
+                    gst: totalGst,
+                    total: totalAmount
                   }
                 }
               })

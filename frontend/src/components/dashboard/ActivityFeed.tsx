@@ -7,11 +7,11 @@ export const ActivityFeed = () => {
       <div className="flex justify-between items-center border-b border-black/10 pb-4 mb-4">
         <h2 className="text-sm font-bold text-zinc-900 tracking-widest uppercase flex items-center">
           <Activity className="w-4 h-4 mr-2 text-blue-600" />
-          Live Factory Feed
+          System Activity Feed
         </h2>
       </div>
       <div className="text-zinc-500 text-sm flex items-center justify-center py-12">
-        Connecting to live telemetry...
+        Loading recent activities...
       </div>
     </div>
   );

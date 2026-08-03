@@ -6,8 +6,8 @@ describe('BomsService', () => {
   let service: BomsService;
   let prisma: PrismaService;
 
-  const mockPrismaService = {
-    $transaction: jest.fn(async (cb) => {
+  const mockPrismaService: any = {
+    $transaction: jest.fn(async (cb: (prisma: any) => Promise<any>) => {
       // Mock transaction client is just the prisma service itself for simplicity
       return await cb(mockPrismaService);
     }),
@@ -35,6 +35,7 @@ describe('BomsService', () => {
       findMany: jest.fn(),
       deleteMany: jest.fn(),
       create: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
     },
     purchaseOrderItem: {
       create: jest.fn(),

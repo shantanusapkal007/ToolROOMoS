@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Users, Briefcase, Plus, TrendingUp, Edit2, X, Search, Sliders, DollarSign } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/api';
+import { Modal } from '../../components/ui/Modal';
 
 export default function HrDashboard() {
   const [employees, setEmployees] = useState<any[]>([]);
@@ -100,9 +101,9 @@ export default function HrDashboard() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#05070A]">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans mission-control-bg">
       <Sidebar />
-      <div className="flex-1 overflow-y-auto px-8 py-8 pl-[5.5rem] pb-32 relative z-0 animate-fade-in">
+      <div className="flex-1 overflow-y-auto px-8 py-8 pl-[5.5rem] pb-32 relative animate-fade-in">
         <PageHeader
           title="HR & Resource Management"
           subtitle="Manage internal staff, outside contractors, and dynamic base hourly charges."
@@ -181,91 +182,87 @@ export default function HrDashboard() {
       </div>
 
       {/* Add Worker Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#0A0F1C] border border-black/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-black/5">
-              <h3 className="text-lg font-bold text-zinc-900">Add New Worker</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-zinc-500 hover:text-zinc-900 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1">Employee Code</label>
-                <input 
-                  type="text" 
-                  value={newWorker.employeeCode}
-                  onChange={e => setNewWorker({...newWorker, employeeCode: e.target.value})}
-                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
-                  placeholder="e.g. EMP-001"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1">Full Name</label>
-                <input 
-                  type="text" 
-                  value={newWorker.name}
-                  onChange={e => setNewWorker({...newWorker, name: e.target.value})}
-                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
-                  placeholder="e.g. John Doe"
-                />
-              </div>
+      <Modal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        title="Add New Worker"
+        maxWidth="md"
+      >
+        <div className="space-y-4 text-zinc-900">
+          <div>
+            <label className="block text-xs font-medium text-zinc-500 mb-1">Employee Code</label>
+            <input 
+              type="text" 
+              value={newWorker.employeeCode}
+              onChange={e => setNewWorker({...newWorker, employeeCode: e.target.value})}
+              className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
+              placeholder="e.g. EMP-001"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-xs font-medium text-zinc-500 mb-1">Full Name</label>
+            <input 
+              type="text" 
+              value={newWorker.name}
+              onChange={e => setNewWorker({...newWorker, name: e.target.value})}
+              className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
+              placeholder="e.g. John Doe"
+            />
+          </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1">Type</label>
-                  <select 
-                    value={newWorker.employeeType}
-                    onChange={e => setNewWorker({...newWorker, employeeType: e.target.value})}
-                    className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500 appearance-none"
-                  >
-                    <option value="INTERNAL">Internal</option>
-                    <option value="EXTERNAL">External / Contract</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1">Hourly Rate (&#8377;)</label>
-                  <input 
-                    type="number" 
-                    value={newWorker.hourlyRate}
-                    onChange={e => setNewWorker({...newWorker, hourlyRate: Number(e.target.value)})}
-                    className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1">Designation</label>
-                <input 
-                  type="text" 
-                  value={newWorker.designation}
-                  onChange={e => setNewWorker({...newWorker, designation: e.target.value})}
-                  className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
-                  placeholder="e.g. CNC Operator"
-                />
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-black/5 flex justify-end space-x-3 bg-black/[0.02]">
-              <button 
-                onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-black/5 transition-colors"
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">Type</label>
+              <select 
+                value={newWorker.employeeType}
+                onChange={e => setNewWorker({...newWorker, employeeType: e.target.value})}
+                className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500 appearance-none"
               >
-                Cancel
-              </button>
-              <button 
-                onClick={handleAddWorker}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-lg shadow-emerald-500/20"
-              >
-                Add Worker
-              </button>
+                <option value="INTERNAL">Internal</option>
+                <option value="EXTERNAL">External / Contract</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">Hourly Rate (&#8377;)</label>
+              <input 
+                type="number" 
+                value={newWorker.hourlyRate}
+                onChange={e => setNewWorker({...newWorker, hourlyRate: (e.target.value === '' ? ('' as any) : Number(e.target.value))})}
+                className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
+              />
             </div>
           </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-500 mb-1">Designation</label>
+            <input 
+              type="text" 
+              value={newWorker.designation}
+              onChange={e => setNewWorker({...newWorker, designation: e.target.value})}
+              className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:border-emerald-500"
+              placeholder="e.g. CNC Operator"
+            />
+          </div>
+
+          <div className="pt-6 flex justify-end space-x-3 border-t border-black/10 mt-6">
+            <button 
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-black/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              type="button"
+              onClick={handleAddWorker}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white transition-all shadow-[0_1px_2px_rgba(0,0,0,0.1),_inset_0_1px_0_rgba(255,255,255,0.2)] border border-emerald-500/30 cursor-pointer"
+            >
+              Add Worker
+            </button>
+          </div>
         </div>
-      )}
+      </Modal>
 
     </div>
   );
@@ -421,7 +418,7 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
           hourlyRate: Number(editingRate)
         });
       }
-      success('Rate Saved', `Successfully updated hourly rate to ₹${editingRate}`);
+      success('Rate Saved', `Successfully updated hourly rate to â‚¹${editingRate}`);
       setEditingId(null);
       onReload();
     } catch (err: any) {
@@ -477,7 +474,7 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
               <th className="px-6 py-4">Category</th>
               <th className="px-6 py-4">Type / Role</th>
               <th className="px-6 py-4">Designation</th>
-              <th className="px-6 py-4">Hourly Rate (₹)</th>
+              <th className="px-6 py-4">Hourly Rate (â‚¹)</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -506,16 +503,16 @@ function HourlyRatesDirectoryTable({ employees, machines, users, onReload }: { e
                   <td className="px-6 py-4">
                     {isEditing ? (
                       <div className="flex items-center space-x-2">
-                        <span className="text-zinc-900 text-xs">₹</span>
+                        <span className="text-zinc-900 text-xs">â‚¹</span>
                         <input 
                           type="number" 
                           value={editingRate}
-                          onChange={e => setEditingRate(Number(e.target.value))}
+                          onChange={e => setEditingRate((e.target.value === '' ? ('' as any) : Number(e.target.value)))}
                           className="w-20 bg-black/5 border border-black/20 rounded px-2 py-1 text-zinc-900 text-xs font-bold font-mono focus:outline-none focus:border-orange-500"
                         />
                       </div>
                     ) : (
-                      <span className="font-mono font-bold text-zinc-900 text-xs">₹{item.rate.toFixed(2)}</span>
+                      <span className="font-mono font-bold text-zinc-900 text-xs">â‚¹{item.rate.toFixed(2)}</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">

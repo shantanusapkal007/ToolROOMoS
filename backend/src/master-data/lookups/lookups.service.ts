@@ -93,4 +93,122 @@ export class LookupsService {
       },
     });
   }
+
+  // --- Dynamic Category Options ---
+
+  async getCategoryOptions(category?: string) {
+    const whereClause = category ? { category } : {};
+    let options = await (this.prisma as any).masterCategoryOption.findMany({
+      where: whereClause,
+      orderBy: [{ category: 'asc' }, { label: 'asc' }],
+    });
+
+    // Auto-seed defaults if requesting a specific category and DB is empty for it
+    if (category && options.length === 0) {
+      options = await this.seedDefaultCategoryOptions(category);
+    }
+
+    return options;
+  }
+
+  async createCategoryOption(dto: { category: string; code?: string; label: string; description?: string }) {
+    const code = (dto.code || dto.label.toUpperCase().replace(/[^A-Z0-9]/g, '_')).trim();
+    return (this.prisma as any).masterCategoryOption.upsert({
+      where: {
+        category_code: {
+          category: dto.category.toUpperCase(),
+          code: code,
+        },
+      },
+      update: {
+        label: dto.label,
+        description: dto.description || '',
+      },
+      create: {
+        category: dto.category.toUpperCase(),
+        code: code,
+        label: dto.label,
+        description: dto.description || '',
+        isSystem: false,
+      },
+    });
+  }
+
+  async deleteCategoryOption(id: string) {
+    return (this.prisma as any).masterCategoryOption.delete({
+      where: { id },
+    });
+  }
+
+  private async seedDefaultCategoryOptions(category: string) {
+    const defaults: Record<string, { code: string; label: string; description?: string }[]> = {
+      PRODUCTION_SECTION: [
+        { code: 'MACHINE_SHOP', label: 'Machine Shop (CNC/VMC/EDM)' },
+        { code: 'PRESS_SHOP', label: 'Press Shop & Tryout' },
+        { code: 'TOOL_ROOM_FITTING', label: 'Tool Room Fitting & Assembly' },
+        { code: 'FABRICATION_INDIAN', label: 'Fabrication (Domestic)' },
+        { code: 'FABRICATION_EXPORT', label: 'Fabrication (Export)' },
+        { code: 'QUALITY_INSPECTION', label: 'Quality & CMM Inspection' },
+        { code: 'OUTSOURCED', label: 'Outsourced / Job Work' },
+      ],
+      CAD_TOOL: [
+        { code: 'SOLIDWORKS', label: 'SolidWorks' },
+        { code: 'UG_NX', label: 'Siemens UG NX' },
+        { code: 'AUTOCAD', label: 'AutoCAD Mechanical' },
+        { code: 'CATIA', label: 'Dassault CATIA' },
+        { code: 'CREO', label: 'PTC Creo' },
+      ],
+      WORK_STAGE: [
+        { code: '3D_CAD_MODELING', label: '3D CAD Modeling' },
+        { code: '2D_DETAILING', label: '2D Detailing & Drafting' },
+        { code: 'ELECTRODE_DESIGN', label: 'Electrode Design & Extract' },
+        { code: 'CAM_TOOLPATH', label: 'CAM Toolpath Generation' },
+        { code: 'FEA_SIMULATION', label: 'FEA & Mold Flow Simulation' },
+        { code: 'TOLERANCE_STACKUP', label: 'Tolerance Stackup & DFM' },
+        { code: 'REVISION_CHANGE', label: 'Revision Change / ECN' },
+        { code: 'BOM_ASSEMBLY', label: 'BOM & Tool Assembly Layout' },
+      ],
+      UOM: [
+        { code: 'NOS', label: 'NOS (Numbers)' },
+        { code: 'SET', label: 'SET (Sets)' },
+        { code: 'PCS', label: 'PCS (Pieces)' },
+        { code: 'MTR', label: 'MTR (Meters)' },
+        { code: 'KG', label: 'KG (Kilograms)' },
+        { code: 'BOX', label: 'BOX (Boxes)' },
+        { code: 'LOT', label: 'LOT (Lots)' },
+      ],
+      ASSET_CONDITION: [
+        { code: 'NEW', label: 'NEW (Brand New)' },
+        { code: 'EXCELLENT', label: 'EXCELLENT (Like New)' },
+        { code: 'GOOD', label: 'GOOD (Operational)' },
+        { code: 'FAIR', label: 'FAIR (Worn / Minor Defect)' },
+        { code: 'POOR', label: 'POOR (Requires Repair)' },
+        { code: 'DAMAGED', label: 'DAMAGED (Out of Order)' },
+      ],
+    };
+
+    const categoryUpper = category.toUpperCase();
+    const itemsToSeed = defaults[categoryUpper];
+    if (!itemsToSeed) return [];
+
+    const createdList = [];
+    for (const item of itemsToSeed) {
+      try {
+        const created = await (this.prisma as any).masterCategoryOption.create({
+          data: {
+            category: categoryUpper,
+            code: item.code,
+            label: item.label,
+            description: item.description || '',
+            isSystem: true,
+          },
+        });
+        createdList.push(created);
+      } catch (e) {
+        // Ignore if already exists
+      }
+    }
+    return createdList;
+  }
 }
+

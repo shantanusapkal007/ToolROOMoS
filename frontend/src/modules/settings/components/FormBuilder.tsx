@@ -187,10 +187,9 @@ export const FormBuilder = () => {
           </div>
         </div>
 
-        {/* Center Canvas */}
-        <div className="flex-1 p-8 overflow-y-auto hide-scrollbar bg-[#02050A] bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.03)_0%,_transparent_100%)] relative">
+        <div className="flex-1 p-8 overflow-y-auto hide-scrollbar bg-zinc-50/50 bg-[radial-gradient(ellipse_at_center,_rgba(15,15,20,0.02)_0%,_transparent_100%)] relative">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-[#F4F4F6]/60 backdrop-blur-2xl border border-black/10 rounded-3xl p-8 shadow-[0_8px_40px_rgba(0,0,0,0.5),_inset_0_1px_0_rgba(255,255,255,0.05)] min-h-[600px] relative overflow-hidden transition-all duration-500">
+            <div className="bg-white/80 backdrop-blur-2xl border border-black/10 rounded-3xl p-8 shadow-floating min-h-[600px] relative overflow-hidden transition-all duration-500">
               
               {/* Canvas Ambient Glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-blue-100/50 blur-[80px] rounded-full pointer-events-none"></div>

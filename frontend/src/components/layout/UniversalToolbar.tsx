@@ -4,7 +4,7 @@ import React from 'react';
 import { 
   Plus, Save, Copy, FileUp, FileDown, 
   Printer, Paperclip, History, 
-  GitBranch, Trash2, MoreHorizontal, Loader2, CheckCircle,
+  GitBranch, Trash2, MoreHorizontal, Loader2,
   RefreshCw, Search
 } from 'lucide-react';
 import { useToolbarStore, ToolbarCommand } from '@/store/useToolbarStore';
@@ -67,13 +67,12 @@ export function UniversalToolbar(props: UniversalToolbarProps) {
 
       return (
         <ToolbarButton 
-          icon={isBusy && cmd === 'save' ? <Loader2 size={15} className="animate-spin" /> : icon} 
+          icon={isBusy && cmd === 'save' ? <Loader2 size={14} className="animate-spin" /> : icon} 
           label={isBusy && cmd === 'save' ? 'Saving...' : label} 
           primary={primary} 
           disabled={disabled}
           onClick={() => handleCommand(cmd)} 
           danger={cmd === 'delete'}
-          glowing={cmd === 'save' && isDirty && !disabled}
         />
       );
     }
@@ -90,94 +89,89 @@ export function UniversalToolbar(props: UniversalToolbarProps) {
   };
 
   return (
-    <div className="flex items-center gap-0.5 overflow-x-auto hide-scrollbar hide-on-print">
-      {renderButton('new', <Plus size={15} />, 'New', props.onNew, true)}
-      {renderButton('save', <Save size={15} />, 'Save', props.onSave)}
-      
-      {activeFeature && isDirty && (
-        <span className="flex items-center text-micro font-bold text-[var(--color-warning)] uppercase tracking-widest mx-1.5 animate-pulse">
-          <span className="w-1 h-1 bg-[var(--color-warning)] rounded-full mr-1 shadow-[var(--shadow-glow)]" />
-          Modified
-        </span>
-      )}
+    <div className="h-[var(--size-toolbar)] flex items-center justify-between px-4 bg-zinc-50 border border-zinc-200 rounded-md mb-4 hide-on-print shadow-xs">
+      <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar">
+        {renderButton('new', <Plus size={14} />, 'New', props.onNew, true)}
+        {renderButton('save', <Save size={14} />, 'Save', props.onSave)}
+        
+        {activeFeature && isDirty && (
+          <span className="flex items-center text-micro font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 ml-1">
+            Modified
+          </span>
+        )}
 
-      <Divider />
-      
-      {renderButton('duplicate', <Copy size={15} />, 'Duplicate', props.onDuplicate, false, true)}
-      {renderButton('revision', <GitBranch size={15} />, 'Revision', props.onRevision)}
-      
-      <Divider />
-      
-      {renderButton('import', <FileUp size={15} />, 'Import', props.onImport)}
-      {renderButton('export', <FileDown size={15} />, 'Export', props.onExport)}
-      
-      <Divider />
-      
-      {renderButton('print', <Printer size={15} />, 'Print', props.onPrint)}
-      {renderButton('attachments', <Paperclip size={15} />, 'Attach', props.onAttach)}
-      {renderButton('history', <History size={15} />, 'History', props.onHistory)}
-      
-      <Divider />
-      
-      {renderButton('refresh', <RefreshCw size={15} />, 'Refresh', props.onRefresh)}
-      {renderButton('search', <Search size={15} />, 'Search', props.onSearch)}
+        <Divider />
+        
+        {renderButton('duplicate', <Copy size={14} />, 'Duplicate', props.onDuplicate, false, true)}
+        {renderButton('revision', <GitBranch size={14} />, 'Revision', props.onRevision)}
+        
+        <Divider />
+        
+        {renderButton('import', <FileUp size={14} />, 'Import', props.onImport)}
+        {renderButton('export', <FileDown size={14} />, 'Export', props.onExport)}
+        
+        <Divider />
+        
+        {renderButton('print', <Printer size={14} />, 'Print', props.onPrint)}
+        {renderButton('attachments', <Paperclip size={14} />, 'Attach', props.onAttach)}
+        {renderButton('history', <History size={14} />, 'History', props.onHistory)}
+        
+        <Divider />
+        
+        {renderButton('refresh', <RefreshCw size={14} />, 'Refresh', props.onRefresh)}
+        {renderButton('search', <Search size={14} />, 'Search', props.onSearch)}
 
-      <Divider />
+        <Divider />
 
-      {renderButton('delete', <Trash2 size={15} />, 'Delete', props.onDelete, false, true)}
-      {renderButton('more', <MoreHorizontal size={15} />, 'More', props.onMore)}
+        {renderButton('delete', <Trash2 size={14} />, 'Delete', props.onDelete, false, true)}
+        {renderButton('more', <MoreHorizontal size={14} />, 'More', props.onMore)}
+      </div>
     </div>
   );
 }
 
 function Divider() {
-  return <div className="w-px h-4 bg-[var(--border-500)] mx-0.5 shrink-0" />;
+  return <div className="w-px h-4 bg-zinc-200 mx-1 shrink-0" />;
 }
 
 function ToolbarButton({ 
-  icon, label, primary, disabled, danger, glowing, onClick 
+  icon, label, primary, disabled, danger, onClick 
 }: { 
-  icon: React.ReactNode; label: string; primary?: boolean; disabled?: boolean; danger?: boolean; glowing?: boolean; onClick?: () => void;
+  icon: React.ReactNode; label: string; primary?: boolean; disabled?: boolean; danger?: boolean; onClick?: () => void;
 }) {
-  const base = "relative flex items-center justify-center w-8 h-8 rounded-lg text-xs transition-all duration-300 ease-out group/btn shrink-0 backdrop-blur-md";
+  const base = "relative flex items-center gap-1.5 h-7 px-2.5 rounded-md text-caption font-medium transition-colors shrink-0 cursor-pointer";
   
   if (disabled) {
     return (
-      <button disabled className={`${base} text-[var(--text-tertiary)] cursor-not-allowed`} title={label} aria-label={label}>
+      <button disabled className={`${base} text-zinc-400 bg-transparent cursor-not-allowed`} title={label}>
         {icon}
+        <span>{label}</span>
       </button>
     );
   }
 
   if (primary) {
     return (
-      <button onClick={onClick} className={`${base} bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-white border border-indigo-500/20 hover:border-indigo-500/40 hover:shadow-elevation`} title={label} aria-label={label}>
+      <button onClick={onClick} className={`${base} bg-zinc-900 text-white hover:bg-zinc-800 shadow-xs font-semibold`} title={label}>
         {icon}
-        {/* Tooltip */}
-        <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/10 backdrop-blur-md text-zinc-900 text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-black/10 shadow-xl z-50">
-          {label}
-        </span>
+        <span>{label}</span>
       </button>
     );
   }
 
   if (danger) {
     return (
-      <button onClick={onClick} className={`${base} text-zinc-500 hover:text-red-400 hover:bg-red-500/10 hover:shadow-elevation`} title={label} aria-label={label}>
+      <button onClick={onClick} className={`${base} text-red-600 hover:bg-red-50 hover:border-red-200 border border-transparent`} title={label}>
         {icon}
-        <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/10 backdrop-blur-md text-zinc-900 text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-black/10 shadow-xl z-50">
-          {label}
-        </span>
+        <span>{label}</span>
       </button>
     );
   }
 
   return (
-    <button onClick={onClick} className={`${base} text-zinc-500 hover:text-white hover:bg-white/[0.05] hover:border hover:border-black/10 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] ${glowing ? 'text-indigo-400 shadow-elevation bg-indigo-500/10' : ''}`} title={label} aria-label={label}>
+    <button onClick={onClick} className={`${base} text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 border border-zinc-200 bg-white`} title={label}>
       {icon}
-      <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/10 backdrop-blur-md text-zinc-900 text-[10px] uppercase tracking-wider rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none border border-black/10 shadow-xl z-50">
-        {label}
-      </span>
+      <span>{label}</span>
     </button>
   );
 }

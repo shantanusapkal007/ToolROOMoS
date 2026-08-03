@@ -37,11 +37,35 @@ export class DispatchesService {
       // 3. Costing Integration: Rollup logistics cost to ProjectCostSummary (Layer 5 - Outcomes)
       // Guard against null/undefined logisticsCost (free deliveries)
       const safeLogisticsCost = dto.logisticsCost || 0;
+      const summary = await tx.projectCostSummary.upsert({
+        where: { projectId },
+        create: {
+          projectId,
+          materialConsumptionCost: 0,
+          totalCost: safeLogisticsCost,
+          estimatedMaterialCost: 0,
+          actualMaterialCost: 0,
+          machineCost: 0,
+          labourCost: 0,
+          outsideProcessCost: 0,
+          inspectionCost: 0,
+          packingCost: 0,
+          dispatchCost: safeLogisticsCost,
+          revenue: 0,
+          profitability: -safeLogisticsCost,
+        },
+        update: {
+          dispatchCost: { increment: safeLogisticsCost },
+          totalCost: { increment: safeLogisticsCost },
+        },
+      });
+
+      const currentRevenue = Number(summary.revenue || 0);
+      const updatedTotalCost = Number(summary.totalCost || 0);
       await tx.projectCostSummary.update({
         where: { projectId },
         data: {
-          dispatchCost: { increment: safeLogisticsCost },
-          totalCost: { increment: safeLogisticsCost },
+          profitability: currentRevenue - updatedTotalCost,
         },
       });
 

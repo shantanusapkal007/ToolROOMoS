@@ -2,11 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { api } from "../../lib/api";
-import { Truck, Plus, CheckCircle2, Factory } from "lucide-react";
-import { EmptyState } from "../../components/ui/EmptyState";
+import { Truck, Plus, CheckCircle2, Trash2 } from "lucide-react";
 import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { Select } from "../../components/ui/Select";
+import { SmartTable } from "../../components/ui/SmartTable";
 import { useToast } from "../../components/ui/Toast";
-import { formatCurrency } from "../../lib/formatters";
+import { formatCurrency, formatDate } from "../../lib/formatters";
 
 interface SubcontractingModuleProps {
   projectId: string;
@@ -20,12 +23,14 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  // Form State
+  // Master Data
   const [vendors, setVendors] = useState<any[]>([]);
   const [operations, setOperations] = useState<any[]>([]);
+
+  // Form State
   const [formData, setFormData] = useState({
     vendorId: "",
-    documentNumber: "",
+    documentNumber: `CHL-${Date.now().toString().slice(-4)}`,
     expectedReturnDate: "",
     remarks: "",
     items: [{ operationId: "", sentQty: 1, rate: 0, remarks: "" }],
@@ -71,14 +76,46 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
       const oRes = await api.get('master-data/operations');
       setOperations(extractArray(oRes));
     } catch (err) {
-      console.error(err);
-      // Fallback operations since endpoint doesn't exist yet
-      setOperations([
-        { id: 'op-ht', operationName: 'Heat Treatment' },
-        { id: 'op-plt', operationName: 'Plating' },
-        { id: 'op-gr', operationName: 'Grinding' },
-      ]);
+      console.error('Failed to load subcontracting master data', err);
     }
+  };
+
+  const addItemRow = () => {
+    setFormData({
+      ...formData,
+      items: [...formData.items, { operationId: "", sentQty: 1, rate: 0, remarks: "" }]
+    });
+  };
+
+  const removeItemRow = (idx: number) => {
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== idx)
+    });
+  };
+
+  const updateItemRow = (idx: number, field: string, value: any) => {
+    const updated = [...formData.items];
+    (updated[idx] as any)[field] = value;
+    setFormData({ ...formData, items: updated });
+  };
+
+  const openReceiptModal = (order: any) => {
+    setSelectedOrder(order);
+    setReceiptData({
+      documentNumber: `REC-${Date.now().toString().slice(-4)}`,
+      remarks: "",
+      items: order.items.map((item: any) => ({
+        orderItemId: item.id,
+        operationName: item.operation?.operationName || 'Subcontract Operation',
+        receivedQty: item.sentQty || 1,
+        acceptedQty: item.sentQty || 1,
+        rejectedQty: 0,
+        actualRate: item.rate || 0,
+        remarks: ""
+      }))
+    });
+    setIsReceiptModalOpen(true);
   };
 
   const handleCreateOrder = async (e: React.FormEvent) => {
@@ -86,331 +123,315 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
     try {
       await api.post(`projects/${projectId}/subcontract-orders`, formData);
       setIsOrderModalOpen(false);
-      success("Challan Generated", "The Subcontract Challan was created successfully.");
       loadData();
-    } catch (err) {
-      console.error(err);
-      error("Action Failed", "Failed to create subcontract order. Please try again.");
+      success("Challan Created", "Subcontracting challan successfully generated.");
+    } catch (err: any) {
+      error("Create Failed", err.response?.data?.message || err.message);
     }
   };
 
-  const handleCreateReceipt = async (e: React.FormEvent) => {
+  const handleProcessReceipt = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedOrder) return;
     try {
-      await api.post(`projects/${projectId}/subcontract-receipts`, {
-        subcontractOrderId: selectedOrder.id,
-        ...receiptData
-      });
+      await api.post(`projects/${projectId}/subcontract-orders/${selectedOrder.id}/receipt`, receiptData);
       setIsReceiptModalOpen(false);
-      success("Receipt Processed", "The Subcontract Receipt was processed and cost has been added to ledger.");
       loadData();
-    } catch (err) {
-      console.error(err);
-      error("Action Failed", "Failed to process receipt. Please verify quantities.");
+      success("Receipt Processed", "Subcontract return receipt successfully posted.");
+    } catch (err: any) {
+      error("Receipt Failed", err.response?.data?.message || err.message);
     }
   };
 
-  const openReceiptModal = (order: any) => {
-    setSelectedOrder(order);
-    setReceiptData({
-      documentNumber: "",
-      remarks: "",
-      items: order.items.map((i: any) => ({
-        orderItemId: i.id,
-        receivedQty: i.sentQty,
-        acceptedQty: i.sentQty,
-        rejectedQty: 0,
-        actualRate: i.rate,
-        remarks: ""
-      }))
-    });
-    setIsReceiptModalOpen(true);
-  };
+  const columns = [
+    {
+      key: 'challanNumber',
+      label: 'Challan #',
+      render: (val: string, row: any) => (
+        <div>
+          <span className="font-mono font-bold text-zinc-900">{val || 'CHL-001'}</span>
+          <div className="text-micro font-mono text-zinc-400">{formatDate(row.createdAt)}</div>
+        </div>
+      )
+    },
+    {
+      key: 'vendor',
+      label: 'Outsource Job Work Vendor',
+      render: (val: any) => <span className="font-semibold text-zinc-800">{val?.vendorName || 'Outsource Vendor'}</span>
+    },
+    {
+      key: 'items',
+      label: 'Outsource Operations',
+      render: (val: any[]) => (
+        <span className="font-mono text-zinc-900">{val?.length || 1} Outsource Line(s)</span>
+      )
+    },
+    {
+      key: 'totalEstimatedCost',
+      label: 'Est Cost',
+      render: (val: number) => <span className="font-mono font-bold text-orange-600">{formatCurrency(val || 0)}</span>
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (val: string) => (
+        <span className={`text-micro font-bold px-2 py-0.5 rounded border ${
+          val === 'CLOSED' 
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+            : 'bg-orange-50 text-orange-700 border-orange-200'
+        }`}>
+          {val || 'OUTSOURCED'}
+        </span>
+      )
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (_: any, row: any) => (
+        row.status !== 'CLOSED' && (
+          <Button variant="secondary" size="sm" onClick={() => openReceiptModal(row)}>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Process Return Receipt</span>
+          </Button>
+        )
+      )
+    }
+  ];
+
+  const totalCost = orders.reduce((sum, o) => sum + Number(o.totalEstimatedCost || 0), 0);
 
   return (
-    <div className="h-full flex flex-col relative z-0">
-      {/* Dense Toolbar Header */}
-      <div className="flex justify-between items-center shrink-0 mb-4 bg-white/[0.01] border border-black/5 rounded-xl p-3">
-        <div className="flex items-center">
-          <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 mr-3 text-orange-400">
-            <Truck className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-zinc-900 tracking-tight">Subcontracting Operations</h2>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">Outside Processing & Receipts</p>
-          </div>
+    <div className="flex-1 flex flex-col space-y-4 pb-12">
+      
+      {/* Header Banner */}
+      <div className="flex justify-between items-center bg-white border border-zinc-200 rounded-lg p-4 shadow-xs">
+        <div>
+          <h3 className="text-card-title font-bold text-zinc-900 flex items-center gap-2">
+            <Truck className="w-4 h-4 text-orange-600" />
+            <span>Subcontracting & Outside Job Work</span>
+          </h3>
+          <p className="text-caption text-zinc-500 mt-0.5">
+            Manage job work challans, outsource vendor heat treatment / plating, and material return receipts.
+          </p>
         </div>
-        <button
-          onClick={() => setIsOrderModalOpen(true)}
-          className="group relative px-4 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-lg transition-all duration-300 shadow-elevation"
-        >
-          <span className="relative z-10 flex items-center text-orange-400 font-bold text-xs">
-            <Plus className="h-3.5 w-3.5 mr-1" /> Create Challan
-          </span>
-        </button>
+
+        <div className="flex items-center gap-2">
+          <Button variant="primary" size="md" onClick={() => setIsOrderModalOpen(true)}>
+            <Plus className="w-4 h-4" />
+            <span>Create Outsource Challan</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
-        {loading ? (
-          <div className="text-zinc-500 text-center py-8">Loading Subcontracting data...</div>
-        ) : orders.length === 0 ? (
-          <EmptyState
-            icon={<Truck className="h-12 w-12 text-slate-500" />}
-            title="No Subcontract Orders Found"
-            description="Generate a challan to send materials out for processing."
-            actionLabel="Create Challan"
-            onAction={() => setIsOrderModalOpen(true)}
-          />
-        ) : (
-          <div className="space-y-2 pr-2">
-            {orders.map((order) => (
-              <div key={order.id} className="bg-white/[0.01] p-4 rounded-xl flex flex-col border border-black/5 hover:border-black/10 transition-all group relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:bg-orange-500/20 transition-all opacity-0 group-hover:opacity-100" />
-                
-                <div className="flex justify-between items-start mb-2 relative z-10">
-                  <div>
-                    <div className="flex items-center space-x-3 mb-1">
-                      <span className="text-sm font-bold text-zinc-900">{order.challanNumber}</span>
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        order.status === 'CLOSED' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </div>
-                    <div className="text-xs text-zinc-500 flex items-center font-bold tracking-wider uppercase">
-                      <Factory className="h-3.5 w-3.5 mr-1 text-slate-500" />
-                      {order.vendor?.vendorName}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Estimated</div>
-                    <div className="text-orange-400 font-mono font-bold text-sm">{formatCurrency(Number(order.totalEstimatedCost))}</div>
-                  </div>
-                </div>
+      {/* KPI Stat Strips */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="enterprise-card p-3.5 flex flex-col justify-between">
+          <span className="text-micro font-semibold uppercase text-zinc-500">Total Subcontract Cost</span>
+          <div className="text-2xl font-bold font-mono text-orange-600 my-0.5">{formatCurrency(totalCost)}</div>
+          <span className="text-micro text-zinc-500">Outsourced Work Value</span>
+        </div>
 
-                <div className="border-t border-black/10 pt-2 mt-2 relative z-10 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                      <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Items Sent:</h4>
-                      <div className="flex space-x-2">
-                        {order.items.map((item: any) => (
-                          <div key={item.id} className="flex items-center text-xs bg-black/20 border border-black/5 px-2 py-1 rounded">
-                            <span className="text-zinc-600 font-semibold mr-2">
-                              {item.operation?.operationName}
-                            </span>
-                            <span className="text-orange-400 font-mono font-bold mr-2">{item.sentQty} pcs</span>
-                            <span className="text-slate-500 font-mono text-[10px]">@{formatCurrency(Number(item.rate))}</span>
-                          </div>
-                        ))}
-                      </div>
-                  </div>
+        <div className="enterprise-card p-3.5 flex flex-col justify-between">
+          <span className="text-micro font-semibold uppercase text-zinc-500">Active Subcontract Orders</span>
+          <div className="text-2xl font-bold font-mono text-zinc-900 my-0.5">{orders.length}</div>
+          <span className="text-micro text-zinc-500">Issued Challans</span>
+        </div>
 
-                  {order.status !== 'CLOSED' && order.status !== 'CANCELLED' && (
-                    <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => openReceiptModal(order)}
-                        className="text-[10px] font-bold uppercase tracking-wider text-orange-400 hover:text-orange-300 flex items-center bg-orange-500/10 border border-orange-500/20 px-2 py-1.5 rounded transition-colors"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                        Process Receipt
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+        <div className="enterprise-card p-3.5 flex flex-col justify-between">
+          <span className="text-micro font-semibold uppercase text-zinc-500">Completed Receipts</span>
+          <div className="text-2xl font-bold font-mono text-emerald-600 my-0.5">
+            {orders.filter(o => o.status === 'CLOSED').length}
           </div>
-        )}
+          <span className="text-micro text-zinc-500">Returned Store Lineage</span>
+        </div>
       </div>
 
-      {/* Order Modal */}
-      {isOrderModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-xl animate-fade-in">
-          <div className="glass-modal w-full max-w-2xl p-6 animate-slide-up border border-orange-500/20 relative overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
-            <h3 className="text-lg font-bold text-zinc-900 mb-5 relative z-10">Create Subcontract Challan</h3>
-        <form onSubmit={handleCreateOrder} className="space-y-4 relative z-10 flex-1 min-h-0 flex flex-col">
-          <div className="grid grid-cols-2 gap-4 shrink-0">
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Vendor</label>
-              <select
-                required
-                className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50"
-                value={formData.vendorId}
-                onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-              >
-                <option value="">Select Vendor...</option>
-                {vendors.map(v => (
-                  <option key={v.id} value={v.id}>{v.vendorName} ({v.vendorType})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Expected Return Date</label>
-              <input
-                type="date"
-                className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50"
-                value={formData.expectedReturnDate}
-                onChange={(e) => setFormData({ ...formData, expectedReturnDate: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="shrink-0">
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Document/Ref Number</label>
-            <input
-              type="text"
-              className="w-full bg-black/5 border border-black/10 rounded-xl px-4 py-2.5 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50"
+      {/* Hero Table */}
+      <SmartTable 
+        title="Subcontracting & Job Work Register"
+        columns={columns}
+        data={orders}
+        isLoading={loading}
+        exportFilename="Subcontract_Orders"
+      />
+
+      {/* Full Multi-Item Create Order Modal */}
+      <Modal
+        isOpen={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        title="Create Outsource Job Work Challan"
+        subtitle="Issue vendor job work order for heat treatment, coating, or machining."
+        maxWidth="lg"
+      >
+        <form onSubmit={handleCreateOrder} className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <Input 
+              label="Challan Number *"
+              required
               value={formData.documentNumber}
               onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
             />
+
+            <Select
+              label="Job Work Vendor *"
+              required
+              value={formData.vendorId}
+              onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
+            >
+              <option value="">Select Vendor...</option>
+              {vendors.map((v: any) => (
+                <option key={v.id} value={v.id}>{v.vendorName}</option>
+              ))}
+            </Select>
+
+            <Input 
+              label="Expected Return Date"
+              type="date"
+              value={formData.expectedReturnDate}
+              onChange={(e) => setFormData({ ...formData, expectedReturnDate: e.target.value })}
+            />
           </div>
-          
-          <div className="border border-black/10 rounded-xl p-4 bg-black/[0.02] flex-1 overflow-y-auto hide-scrollbar space-y-4">
-            <h4 className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider">Challan Items</h4>
-            {formData.items.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-3 gap-3 items-end">
-                <div>
-                  <label className="block text-[10px] text-zinc-500 mb-1">Operation</label>
-                  <select
+
+          {/* Items */}
+          <div className="border border-zinc-200 rounded-lg overflow-hidden bg-white">
+            <div className="p-3 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center">
+              <span className="text-micro font-bold uppercase tracking-wider text-zinc-700">Outsource Operation Items</span>
+              <Button variant="secondary" size="sm" type="button" onClick={addItemRow}>
+                <Plus className="w-3.5 h-3.5" /> Add Operation Line
+              </Button>
+            </div>
+            <div className="p-3 space-y-3">
+              {formData.items.map((item, idx) => (
+                <div key={idx} className="p-3 border border-zinc-200 rounded-md bg-zinc-50/50 grid grid-cols-4 gap-3 items-end">
+                  <Select
+                    label="Operation *"
                     required
-                    className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50"
                     value={item.operationId}
-                    onChange={(e) => {
-                      const newItems = [...formData.items];
-                      newItems[idx].operationId = e.target.value;
-                      setFormData({ ...formData, items: newItems });
-                    }}
+                    onChange={(e) => updateItemRow(idx, 'operationId', e.target.value)}
                   >
-                    <option value="">Select...</option>
-                    {operations.map(o => (
-                      <option key={o.id} value={o.id}>{o.operationName}</option>
+                    <option value="">Select Operation...</option>
+                    {operations.map((op: any) => (
+                      <option key={op.id} value={op.id}>{op.operationName}</option>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] text-zinc-500 mb-1">Qty</label>
-                  <input
+                  </Select>
+
+                  <Input 
+                    label="Sent Qty *"
                     type="number"
                     min="1"
                     required
-                    className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50 font-mono"
                     value={item.sentQty}
-                    onChange={(e) => {
-                      const newItems = [...formData.items];
-                      newItems[idx].sentQty = Number(e.target.value);
-                      setFormData({ ...formData, items: newItems });
-                    }}
+                    onChange={(e) => updateItemRow(idx, 'sentQty', e.target.value === '' ? ('' as any) : (e.target.value === '' ? ('' as any) : Number(e.target.value)))}
                   />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-zinc-500 mb-1">Agreed Rate</label>
-                  <input
+
+                  <Input 
+                    label="Rate (INR) *"
                     type="number"
-                    min="0"
                     step="0.01"
                     required
-                    className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50 font-mono"
                     value={item.rate}
-                    onChange={(e) => {
-                      const newItems = [...formData.items];
-                      newItems[idx].rate = Number(e.target.value);
-                      setFormData({ ...formData, items: newItems });
-                    }}
+                    onChange={(e) => updateItemRow(idx, 'rate', e.target.value === '' ? ('' as any) : (e.target.value === '' ? ('' as any) : Number(e.target.value)))}
                   />
+
+                  <div className="flex justify-end">
+                    {formData.items.length > 1 && (
+                      <Button variant="ghost" size="sm" type="button" onClick={() => removeItemRow(idx)}>
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div className="flex space-x-3 pt-4 border-t border-black/10 shrink-0 mt-4">
-            <button type="button" onClick={() => setIsOrderModalOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-black/5 hover:bg-black/10 font-bold text-sm text-zinc-900 transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 font-bold text-sm text-white shadow-elevation transition-all">Generate Challan</button>
+          <div>
+            <label className="block text-micro font-semibold text-zinc-700 mb-1 uppercase tracking-wider">
+              Challan Remarks / Gate Pass Notes
+            </label>
+            <textarea
+              value={formData.remarks}
+              onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+              placeholder="Record special instructions, hardness specs, or return notes..."
+              className="w-full bg-white border border-zinc-200 rounded-md p-3 text-caption text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 h-20 resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <Button variant="secondary" type="button" onClick={() => setIsOrderModalOpen(false)}>Cancel</Button>
+            <Button type="submit">Create Subcontract Challan</Button>
           </div>
         </form>
-        </div>
-        </div>
-      )}
+      </Modal>
 
-      {/* Receipt Modal */}
-      {isReceiptModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-xl animate-fade-in">
-          <div className="glass-modal w-full max-w-3xl p-6 animate-slide-up border border-orange-500/20 relative overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-[60px] -mr-24 -mt-24 pointer-events-none" />
-            <h3 className="text-lg font-bold text-zinc-900 mb-5 relative z-10">Process Receipt - {selectedOrder?.challanNumber}</h3>
-        <form onSubmit={handleCreateReceipt} className="space-y-4 relative z-10 flex-1 min-h-0 flex flex-col">
-           <div className="border border-black/10 rounded-xl p-4 bg-black/[0.02] flex-1 overflow-y-auto hide-scrollbar space-y-4">
-            {receiptData.items.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-4 gap-3 items-end">
-                <div className="col-span-4 text-[10px] font-bold text-orange-400 uppercase tracking-wider mb-1 border-b border-black/10 pb-1">Item {idx + 1}</div>
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Rcvd Qty</label>
-                  <input
-                    type="number"
-                    required
-                    className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50 font-mono"
-                    value={item.receivedQty}
-                    onChange={(e) => {
-                      const newItems = [...receiptData.items];
-                      newItems[idx].receivedQty = Number(e.target.value);
-                      setReceiptData({ ...receiptData, items: newItems });
-                    }}
-                  />
+      {/* Process Return Receipt Modal */}
+      <Modal
+        isOpen={isReceiptModalOpen}
+        onClose={() => setIsReceiptModalOpen(false)}
+        title="Process Outsource Return Receipt"
+        subtitle="Verify returned quantities, accepted/rejected pcs, and final actual rates."
+        maxWidth="lg"
+      >
+        <form onSubmit={handleProcessReceipt} className="space-y-4">
+          <Input 
+            label="Receipt Document #"
+            required
+            value={receiptData.documentNumber}
+            onChange={(e) => setReceiptData({ ...receiptData, documentNumber: e.target.value })}
+          />
+
+          <div className="border border-zinc-200 rounded-lg overflow-hidden bg-white">
+            <div className="p-3 bg-zinc-50 border-b border-zinc-200 font-bold text-micro uppercase tracking-wider text-zinc-700">
+              Return Line Items Inspection
+            </div>
+            <div className="p-3 space-y-3">
+              {receiptData.items?.map((item: any, idx: number) => (
+                <div key={idx} className="p-3 border border-zinc-200 rounded-md bg-zinc-50/50 space-y-3">
+                  <div className="font-bold text-zinc-900">{item.operationName}</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input 
+                      label="Received Qty"
+                      type="number"
+                      value={item.receivedQty}
+                      onChange={(e) => {
+                        const updated = [...receiptData.items];
+                        updated[idx].receivedQty = e.target.value === '' ? ('' as any) : (e.target.value === '' ? ('' as any) : Number(e.target.value));
+                        updated[idx].acceptedQty = e.target.value === '' ? ('' as any) : (e.target.value === '' ? ('' as any) : Number(e.target.value));
+                        setReceiptData({ ...receiptData, items: updated });
+                      }}
+                    />
+                    <Input 
+                      label="Accepted Qty"
+                      type="number"
+                      value={item.acceptedQty}
+                      onChange={(e) => {
+                        const updated = [...receiptData.items];
+                        updated[idx].acceptedQty = e.target.value === '' ? ('' as any) : (e.target.value === '' ? ('' as any) : Number(e.target.value));
+                        setReceiptData({ ...receiptData, items: updated });
+                      }}
+                    />
+                    <Input 
+                      label="Rejected Qty"
+                      type="number"
+                      value={item.rejectedQty}
+                      onChange={(e) => {
+                        const updated = [...receiptData.items];
+                        updated[idx].rejectedQty = e.target.value === '' ? ('' as any) : (e.target.value === '' ? ('' as any) : Number(e.target.value));
+                        setReceiptData({ ...receiptData, items: updated });
+                      }}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Accpt Qty</label>
-                  <input
-                    type="number"
-                    required
-                    className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50 font-mono text-green-400"
-                    value={item.acceptedQty}
-                    onChange={(e) => {
-                      const newItems = [...receiptData.items];
-                      newItems[idx].acceptedQty = Number(e.target.value);
-                      setReceiptData({ ...receiptData, items: newItems });
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Rej Qty</label>
-                  <input
-                    type="number"
-                    required
-                    className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50 font-mono text-red-400"
-                    value={item.rejectedQty}
-                    onChange={(e) => {
-                      const newItems = [...receiptData.items];
-                      newItems[idx].rejectedQty = Number(e.target.value);
-                      setReceiptData({ ...receiptData, items: newItems });
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Actual Rate</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:border-orange-500/50 font-mono"
-                    value={item.actualRate}
-                    onChange={(e) => {
-                      const newItems = [...receiptData.items];
-                      newItems[idx].actualRate = Number(e.target.value);
-                      setReceiptData({ ...receiptData, items: newItems });
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div className="flex space-x-3 pt-4 border-t border-black/10 shrink-0 mt-4">
-            <button type="button" onClick={() => setIsReceiptModalOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-black/5 hover:bg-black/10 font-bold text-sm text-zinc-900 transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 font-bold text-sm text-white shadow-elevation transition-all">Process Receipt & Costing</button>
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <Button variant="secondary" type="button" onClick={() => setIsReceiptModalOpen(false)}>Cancel</Button>
+            <Button type="submit">Post Return Receipt</Button>
           </div>
         </form>
-        </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

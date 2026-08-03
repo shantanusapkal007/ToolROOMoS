@@ -1,1199 +1,256 @@
 "use client";
 
-import React, { useState } from 'react';
-import { api } from "../../../../lib/api";
-import { ShoppingCart, Plus, FileText, Package, ArrowRight, ChevronRight, CheckCircle2, Clock, X, Calendar, Activity, Info, Download, Trash2, Upload } from "lucide-react";
-import * as XLSX from 'xlsx';
-import { exportPremiumPO } from '../../../../utils/exportPremiumPO';
-import { exportPremiumRMSlip } from '../../../../utils/exportPremiumRMSlip';
-import { Input } from "../../../../components/ui/Input";
-import { Select } from "../../../../components/ui/Select";
-import { useToast } from "../../../../components/ui/Toast";
-import { useProject } from "../../../../hooks/useProjects";
-import { useMasterData } from "../../../../hooks/useMasterData";
-import { usePurchaseOrders, useCreatePurchaseOrder, useProcessGRN, useUpdatePurchaseOrder } from "../../../../hooks/useProcurement";
-import { motion } from 'framer-motion';
-import { PremiumDrawer } from '../../../../components/ui/PremiumDrawer';
-import { Edit2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 
-export default function PurchaseTab({ params }: { params: Promise<{ id: string }> }) {
-  const { error, success } = useToast();
-  const resolvedParams = React.use(params);
-  
-  const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(resolvedParams.id);
-  const { data: vendors } = useMasterData('vendors');
-  const { data: materials } = useMasterData('materials');
-  const { data: warehouses } = useMasterData('warehouses');
-  const { data: purchaseOrders, refetch: refetchPurchaseOrders } = usePurchaseOrders(resolvedParams.id);
+import { useProject } from "@/hooks/useProjects";
+import { useQuery } from "@tanstack/react-query";
+import { ShoppingCart, Plus, Eye, PackageCheck, Edit3 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { SmartTable } from "@/components/ui/SmartTable";
+import { Modal } from "@/components/ui/Modal";
+import { SkeletonBox } from "@/components/ui/SkeletonLoader";
+import { PurchaseOrderForm } from "@/components/purchase/PurchaseOrderForm";
+import { ReceiveGrnModal } from "@/components/purchase/ReceiveGrnModal";
+import { ProcurementService } from "@/services/procurement.service";
+import { AuthenticPoDocument } from "@/modules/procurement/AuthenticPoDocument";
 
-  const createPOMutation = useCreatePurchaseOrder(resolvedParams.id);
-  const updatePOMutation = useUpdatePurchaseOrder(resolvedParams.id);
-  const processGRNMutation = useProcessGRN(resolvedParams.id);
+export default function ProjectPurchasePage() {
+  const params = useParams();
+  const id = params?.id as string;
+  const { data: project, isLoading: isLoadingProject, refetch: refetchProject } = useProject(id);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [previewPo, setPreviewPo] = useState<any | null>(null);
+  const [grnTargetPo, setGrnTargetPo] = useState<any | null>(null);
+  const [editingPo, setEditingPo] = useState<any | null>(null);
 
-  const [showPoModal, setShowPoModal] = useState(false);
-  const [showGrnModal, setShowGrnModal] = useState(false);
-  const [viewingPoDetails, setViewingPoDetails] = useState<any>(null);
-  const [editingPoId, setEditingPoId] = useState<string | null>(null);
-  
-  const [poNum, setPoNum] = useState("");
-  const [selectedVendorId, setSelectedVendorId] = useState("");
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
-  const [poItems, setPoItems] = useState<any[]>([{ materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18, uom: "NOS", discount: 0, cgst: 9, sgst: 9, basicValue: 0 }]);
-  
-  const [selectedPo, setSelectedPo] = useState<any>(null);
-  const [grnData, setGrnData] = useState({
-    grnNumber: "",
-    supplierChallan: "",
-    warehouseId: "DEFAULT-WH",
-    remarks: "",
-    items: [{ poItemId: "", receivedQty: 1, acceptedQty: 1, rejectedQty: 0, actualRate: 0, heatNumber: "", toolNo: "", detNo: "", length: 0, width: 0, height: 0, apWeight: 0, totalWeight: 0, basicCost: 0, gst: 0, total: 0, remarks: "" }]
+  // Fetch live purchase orders directly from procurement API
+  const { data: poResponse, isLoading: isLoadingPos, refetch: refetchPos } = useQuery({
+    queryKey: ['project-pos', id],
+    queryFn: () => ProcurementService.getPurchaseOrders(id),
+    enabled: !!id,
+    staleTime: 0,
   });
 
-  const filteredVendors = (vendors || []).filter((v: any) => v.vendorType === 'MATERIAL_SUPPLIER');
-
-  if (projectLoading || !project) return null;
-
-  const handleSavePo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!project) return;
-    
-    if (poItems.some(i => !i.materialId || i.orderedQty <= 0 || i.agreedRate <= 0)) {
-      return error("Validation Error", "All items must have a material, quantity, and rate > 0.");
-    }
-
-    try {
-      if (editingPoId) {
-        await updatePOMutation.mutateAsync({
-          poId: editingPoId,
-          data: {
-            vendorId: selectedVendorId,
-            poNumber: poNum,
-            expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate).toISOString() : undefined,
-            items: poItems
-          }
-        });
-      } else {
-        await createPOMutation.mutateAsync({
-          vendorId: selectedVendorId,
-          poNumber: poNum,
-          expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate).toISOString() : undefined,
-          items: poItems
-        });
-      }
-      setShowPoModal(false);
+  useEffect(() => {
+    if (id) {
       refetchProject();
-      
-      setPoNum("");
-      setSelectedVendorId("");
-      setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
-      setEditingPoId(null);
-    } catch (err: any) {}
-  };
-
-  const openEditPoModal = (po: any) => {
-    setEditingPoId(po.id);
-    setPoNum(po.poNumber);
-    setSelectedVendorId(po.vendorId || "");
-    setExpectedDeliveryDate(po.expectedDeliveryDate ? new Date(po.expectedDeliveryDate).toISOString().split('T')[0] : "");
-    setPoItems(po.items.map((i: any) => ({
-      materialId: i.materialId,
-      orderedQty: i.orderedQty,
-      agreedRate: i.agreedRate,
-      dimensions: i.dimensions || "",
-      hsnCode: i.hsnCode || "",
-      gstPercent: i.gstPercent || 18,
-      uom: i.uom || "NOS",
-      discount: i.discount || 0,
-      cgst: i.cgst || (i.gstPercent ? i.gstPercent / 2 : 9),
-      sgst: i.sgst || (i.gstPercent ? i.gstPercent / 2 : 9),
-      basicValue: i.basicValue || (i.orderedQty * i.agreedRate - (i.discount || 0))
-    })));
-    setShowPoModal(true);
-    setViewingPoDetails(null);
-  };
-
-  const openGrnModal = (po: any) => {
-    setSelectedPo(po);
-    const defaultWH = warehouses && warehouses.length > 0 ? warehouses[0].id : "DEFAULT-WH";
-    setGrnData({
-      grnNumber: `GRN-${Date.now().toString().slice(-6)}`,
-      supplierChallan: "",
-      warehouseId: defaultWH,
-      remarks: "",
-      items: po.items.map((i: any) => ({
-        poItemId: i.id,
-        receivedQty: i.orderedQty - (i.receivedQty || 0),
-        acceptedQty: i.orderedQty - (i.receivedQty || 0),
-        rejectedQty: 0,
-        heatNumber: "",
-        toolNo: i.customFields?.toolNo || "",
-        detNo: i.customFields?.detNo || "",
-        length: i.customFields?.L || 0,
-        width: i.customFields?.W || 0,
-        height: i.customFields?.H || 0,
-        apWeight: i.customFields?.apWt || 0,
-        totalWeight: i.customFields?.totalWt || 0,
-        actualRate: i.agreedRate,
-        basicCost: i.customFields?.basicCost || 0,
-        gst: i.customFields?.gst || 0,
-        total: i.customFields?.total || 0,
-        remarks: ""
-      }))
-    });
-    setShowGrnModal(true);
-  };
-
-  const handleImportPO = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = new Uint8Array(event.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        const allRows: any[][] = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: '' });
-        if (allRows.length === 0) throw new Error("Empty Excel file");
-
-        let docPoNum = "";
-        let docVendor = "";
-        
-        allRows.forEach(row => {
-          row.forEach((cell, cellIdx) => {
-            if (!cell) return;
-            const strCell = cell.toString().trim().toLowerCase();
-            if (strCell.includes("po number") || strCell.includes("ponumber")) {
-              const val = row[cellIdx + 1] || row[cellIdx + 2];
-              if (val) docPoNum = val.toString().trim();
-            }
-            if (strCell.includes("vendor") || strCell.includes("supplier")) {
-              const val = row[cellIdx + 1] || row[cellIdx + 2];
-              if (val) docVendor = val.toString().trim();
-            }
-          });
-        });
-
-        if (docPoNum) setPoNum(docPoNum);
-        if (docVendor) {
-          const matchedVendor = vendors?.find((v:any) => v.vendorName.toLowerCase().includes(docVendor.toLowerCase()));
-          if (matchedVendor) setSelectedVendorId(matchedVendor.id);
-        }
-
-        let headerRowIndex = -1;
-        let colMapping: any = {};
-        
-        for (let r = 0; r < allRows.length; r++) {
-          const row = allRows[r];
-          let matches = 0;
-          let tempMapping: any = {};
-
-          row.forEach((cell, c) => {
-            if (!cell) return;
-            const clean = cell.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (clean.includes("material") || clean.includes("desc") || clean.includes("part")) { tempMapping.material = c; matches++; }
-            if (clean.includes("qty") || clean.includes("quantity")) { tempMapping.qty = c; matches++; }
-            if (clean.includes("rate") || clean.includes("price")) { tempMapping.rate = c; matches++; }
-            if (clean.includes("discount") || clean.includes("disc")) { tempMapping.disc = c; }
-            if (clean.includes("gst")) { tempMapping.gst = c; }
-            if (clean.includes("uom") || clean.includes("unit")) { tempMapping.uom = c; }
-            if (clean.includes("dim") || clean.includes("size")) { tempMapping.dim = c; }
-            if (clean.includes("hsn")) { tempMapping.hsn = c; }
-          });
-          
-          if (matches >= 2) {
-            headerRowIndex = r;
-            colMapping = tempMapping;
-            break;
-          }
-        }
-
-        if (headerRowIndex === -1) throw new Error("Could not detect table headers automatically.");
-
-        const parsedItems: any[] = [];
-        
-        for (let r = headerRowIndex + 1; r < allRows.length; r++) {
-          const row = allRows[r];
-          const isBlank = row.every(c => c === undefined || c === null || c === '');
-          if (isBlank) continue;
-
-          const matStr = colMapping.material !== undefined ? row[colMapping.material]?.toString() : "";
-          if (!matStr || matStr.toLowerCase().includes("grand total")) continue;
-
-          let matchedMaterialId = "";
-          let hsn = "";
-          let defaultGst = 18;
-          if (matStr) {
-            const mat = materials?.find((m:any) => 
-              (m.materialCode && matStr.toLowerCase().includes(m.materialCode.toLowerCase())) || 
-              (m.materialGrade && matStr.toLowerCase().includes(m.materialGrade.toLowerCase()))
-            );
-            if (mat) {
-              matchedMaterialId = mat.id;
-              hsn = mat.hsnCode || "";
-              defaultGst = mat.gstPercent ? Number(mat.gstPercent) : 18;
-            }
-          }
-
-          const qty = colMapping.qty !== undefined ? (Number(row[colMapping.qty]) || 1) : 1;
-          const rate = colMapping.rate !== undefined ? (Number(row[colMapping.rate]) || 0) : 0;
-          const disc = colMapping.disc !== undefined ? (Number(row[colMapping.disc]) || 0) : 0;
-          const gst = colMapping.gst !== undefined ? (Number(row[colMapping.gst]) || defaultGst) : defaultGst;
-          const uom = colMapping.uom !== undefined ? (row[colMapping.uom]?.toString() || "NOS") : "NOS";
-          const dim = colMapping.dim !== undefined ? (row[colMapping.dim]?.toString() || "") : "";
-          const hsnVal = colMapping.hsn !== undefined ? (row[colMapping.hsn]?.toString() || hsn) : hsn;
-
-          const basicValue = (qty * rate) - disc;
-
-          parsedItems.push({
-            materialId: matchedMaterialId,
-            orderedQty: qty,
-            agreedRate: rate,
-            dimensions: dim,
-            hsnCode: hsnVal,
-            gstPercent: gst,
-            uom: uom,
-            discount: disc,
-            cgst: gst / 2,
-            sgst: gst / 2,
-            basicValue: basicValue
-          });
-        }
-        
-        if (parsedItems.length > 0) {
-          setPoItems(parsedItems);
-          success("PO Imported", `Successfully imported ${parsedItems.length} items from Excel.`);
-        } else {
-          error("PO Import Failed", "No valid items found in the Excel sheet.");
-        }
-      } catch (err: any) {
-        error("PO Import Failed", err.message);
-      }
-      if (e.target) e.target.value = '';
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const handleImportGRN = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = new Uint8Array(event.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        const allRows: any[][] = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: '' });
-        if (allRows.length === 0) throw new Error("Empty Excel file");
-
-        let docRmSlipNo = "";
-        
-        allRows.forEach(row => {
-          row.forEach((cell, cellIdx) => {
-            if (!cell) return;
-            const strCell = cell.toString().trim().toLowerCase();
-            if (strCell.includes("rm slip no") || strCell.includes("rmslip")) {
-              const val = row[cellIdx + 1] || row[cellIdx + 2];
-              if (val) docRmSlipNo = val.toString().trim();
-            }
-          });
-        });
-
-        if (docRmSlipNo) {
-          setGrnData(prev => ({ ...prev, supplierChallan: docRmSlipNo }));
-        }
-
-        let headerRowIndex = -1;
-        let colMapping: any = {};
-        
-        for (let r = 0; r < allRows.length; r++) {
-          const row = allRows[r];
-          let matches = 0;
-          let tempMapping: any = {};
-
-          row.forEach((cell, c) => {
-            if (!cell) return;
-            const clean = cell.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (clean.includes("toolno")) { tempMapping.toolNo = c; matches++; }
-            if (clean.includes("detno")) { tempMapping.detNo = c; matches++; }
-            if (clean === "l") { tempMapping.l = c; }
-            if (clean === "w") { tempMapping.w = c; }
-            if (clean === "h") { tempMapping.h = c; }
-            if (clean.includes("qty") || clean.includes("quantity")) { tempMapping.qty = c; matches++; }
-            if (clean.includes("apwt") || clean.includes("weight")) { tempMapping.apWt = c; matches++; }
-            if (clean.includes("totalwt")) { tempMapping.totalWt = c; }
-          });
-          
-          if (matches >= 2) {
-            headerRowIndex = r;
-            colMapping = tempMapping;
-            break;
-          }
-        }
-
-        if (headerRowIndex === -1) throw new Error("Could not detect table headers automatically.");
-
-        const importedItems: any[] = [];
-        
-        for (let r = headerRowIndex + 1; r < allRows.length; r++) {
-          const row = allRows[r];
-          const isBlank = row.every(c => c === undefined || c === null || c === '');
-          if (isBlank) continue;
-
-          const toolNo = colMapping.toolNo !== undefined ? row[colMapping.toolNo]?.toString() : "";
-          const detNo = colMapping.detNo !== undefined ? row[colMapping.detNo]?.toString() : "";
-          if (toolNo?.toLowerCase().includes("grand total")) continue;
-
-          const qty = colMapping.qty !== undefined ? Number(row[colMapping.qty]) || 0 : 0;
-          const apWt = colMapping.apWt !== undefined ? Number(row[colMapping.apWt]) || 0 : 0;
-          const l = colMapping.l !== undefined ? Number(row[colMapping.l]) || 0 : 0;
-          const w = colMapping.w !== undefined ? Number(row[colMapping.w]) || 0 : 0;
-          const h = colMapping.h !== undefined ? Number(row[colMapping.h]) || 0 : 0;
-          
-          if (qty > 0 || apWt > 0) {
-            importedItems.push({ toolNo, detNo, qty, apWt, l, w, h });
-          }
-        }
-
-        if (importedItems.length > 0) {
-          setGrnData(prev => {
-            const newItems = [...prev.items];
-            importedItems.forEach((imp, idx) => {
-              if (newItems[idx]) {
-                newItems[idx].toolNo = imp.toolNo || newItems[idx].toolNo;
-                newItems[idx].detNo = imp.detNo || newItems[idx].detNo;
-                newItems[idx].length = imp.l || newItems[idx].length;
-                newItems[idx].width = imp.w || newItems[idx].width;
-                newItems[idx].height = imp.h || newItems[idx].height;
-                newItems[idx].apWeight = imp.apWt;
-                newItems[idx].acceptedQty = imp.qty;
-                newItems[idx].receivedQty = imp.qty;
-                newItems[idx].totalWeight = imp.apWt * imp.qty;
-                
-                const rate = newItems[idx].actualRate || 0;
-                const basicCost = newItems[idx].totalWeight * rate;
-                newItems[idx].basicCost = basicCost;
-                
-                const gstPercent = 18; 
-                newItems[idx].gst = basicCost * (gstPercent / 100);
-                newItems[idx].total = newItems[idx].basicCost + newItems[idx].gst;
-              }
-            });
-            return { ...prev, items: newItems };
-          });
-          success("GRN Imported", `Successfully imported ${importedItems.length} items from Excel.`);
-        } else {
-          error("GRN Import Failed", "No valid items found in the Excel sheet.");
-        }
-      } catch (err: any) {
-        error("GRN Import Failed", err.message);
-      }
-      if (e.target) e.target.value = '';
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const handleExportPO = (po: any) => {
-    if (!po) return;
-    exportPremiumPO(po);
-  };
-
-  const handleExportGRN = (po: any) => {
-    if (!po) return;
-    exportPremiumRMSlip(po);
-  };
-
-  const handleIssuePO = async (poId: string) => {
-    try {
-      await api.post(`/projects/${resolvedParams.id}/purchase-orders/${poId}/issue`);
-      success('Purchase Order issued successfully.');
-      setViewingPoDetails(null);
-      refetchPurchaseOrders();
-    } catch (err: any) {
-      error(err.response?.data?.message || 'Failed to issue purchase order.');
+      refetchPos();
     }
+  }, [id, refetchProject, refetchPos]);
+
+  const extractPos = (res: any) => {
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res.data)) return res.data;
+    if (res && res.data && Array.isArray(res.data.data)) return res.data.data;
+    return [];
   };
 
-  const handleDeletePO = async (poId: string) => {
-    if (!window.confirm('Are you sure you want to delete this Purchase Order? This action cannot be undone.')) return;
-    try {
-      await api.delete(`/projects/${resolvedParams.id}/purchase-orders/${poId}`);
-      success('Purchase Order deleted successfully.');
-      refetchPurchaseOrders();
-    } catch (err: any) {
-      error(err.response?.data?.message || 'Failed to delete purchase order.');
+  const fetchedPos = extractPos(poResponse);
+  const projectPos = project?.purchaseOrderHeaders || [];
+
+  // Combine unique POs by id/poNumber
+  const poMap = new Map();
+  [...fetchedPos, ...projectPos].forEach(po => {
+    if (po && (po.id || po.poNumber)) {
+      poMap.set(po.id || po.poNumber, po);
     }
-  };
+  });
+  const purchaseOrders = Array.from(poMap.values());
 
-  const handleProcessGrn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!project || !selectedPo) return;
-    
-    try {
-      await processGRNMutation.mutateAsync({
-        poHeaderId: selectedPo.id,
-        grnNumber: grnData.grnNumber,
-        supplierChallan: grnData.supplierChallan,
-        warehouseId: grnData.warehouseId,
-        remarks: grnData.remarks,
-        items: grnData.items
-      });
-      setShowGrnModal(false);
-      refetchProject();
-    } catch (err: any) {}
-  };
+  const columns = [
+    { key: 'poNumber', label: 'PO #', render: (val: string) => <span className="font-mono font-bold text-zinc-950">{val}</span> },
+    { 
+      key: 'supplierName', 
+      label: 'Vendor / Supplier', 
+      render: (val: string, row: any) => {
+        const vendorName = val || row.vendor?.vendorName || (row.customFields as any)?.vendorName || 'Primary Material Supplier';
+        return <span className="font-semibold text-zinc-800">{vendorName}</span>;
+      }
+    },
+    { 
+      key: 'status', 
+      label: 'Status', 
+      render: (val: string) => (
+        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+          {val || 'ISSUED'}
+        </span>
+      ) 
+    },
+    { 
+      key: 'totalAmount', 
+      label: 'Amount (₹)', 
+      render: (val: number) => (
+        <span className="font-mono font-bold text-zinc-900">
+          ₹{Number(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+        </span>
+      ) 
+    },
+    { 
+      key: 'createdAt', 
+      label: 'Date', 
+      render: (val: string) => <span className="font-mono text-zinc-500 text-xs">{val ? new Date(val).toLocaleDateString('en-GB') : '-'}</span> 
+    },
+    {
+      key: 'actions',
+      label: 'Action',
+      render: (_: any, row: any) => {
+        const custom = (row.customFields as any) || {};
+        const items = row.items || [];
+        const poData = {
+          poNumber: row.poNumber,
+          rmSlipNo: custom.rmSlipNo || row.poNumber,
+          date: row.createdAt ? new Date(row.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
+          vendorName: row.vendor?.vendorName || custom.vendorName || "Primary Supplier",
+          vendorAddress: row.vendor?.address || custom.vendorAddress || "Tooling Hub",
+          deliveryTerms: custom.deliveryTerms || "Standard Delivery",
+          items: items.map((i: any, idx: number) => {
+            const itemCustom = (i.customFields as any) || {};
+            return {
+              toolNo: itemCustom.toolNo || project?.projectNumber || 'TOOL',
+              detNo: itemCustom.detNo || `${idx + 1}`,
+              dimensions: i.dimensions || itemCustom.rawMaterialSize || itemCustom.rawSize || '',
+              length: itemCustom.length || '',
+              width: itemCustom.width || '',
+              height: itemCustom.height || '',
+              materialGrade: itemCustom.materialGrade || i.material?.materialGrade || 'MS',
+              orderedQty: Number(i.orderedQty) || 1,
+              apWt: Number(itemCustom.apWt) || 0,
+              totalWt: Number(itemCustom.totalWt) || 0,
+              agreedRate: Number(i.agreedRate) || 0,
+              basicValue: Number(i.basicValue) || Number(i.lineTotal) || 0,
+              gstAmount: Number(itemCustom.gstAmount) || 0,
+              lineTotal: Number(i.lineTotal) || 0,
+              remarks: i.remarks || '',
+            };
+          })
+        };
 
-  const addPoItemRow = () => setPoItems([...poItems, { materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18 }]);
-  const removePoItemRow = (index: number) => setPoItems(poItems.filter((_, i) => i !== index));
-  const updatePoItem = (index: number, field: string, value: any) => {
-    const newItems = [...poItems] as any[];
-    newItems[index][field] = value;
-    setPoItems(newItems);
-  };
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPreviewPo(poData)}
+              className="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+              title="View Authentic PO Sheet"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>View</span>
+            </button>
+            <button
+              onClick={() => {
+                setEditingPo(row);
+                setIsFormOpen(true);
+              }}
+              className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+              title="Edit Purchase Order"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit</span>
+            </button>
+            <button
+              onClick={() => setGrnTargetPo(row)}
+              className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+              title="Receive Material (GRN)"
+            >
+              <PackageCheck className="w-3.5 h-3.5" />
+              <span>Receive</span>
+            </button>
+          </div>
+        );
+      }
+    }
+  ];
+
+  if (isLoadingProject && isLoadingPos && purchaseOrders.length === 0) {
+    return <SkeletonBox className="h-64 w-full" />;
+  }
 
   return (
-    <div className="flex-1 h-full flex flex-col animate-fade-in min-h-0 max-w-7xl mx-auto w-full px-2">
-      
-      {/* Premium Typographic Header */}
-      <div className="flex justify-between items-end mb-8 px-2 relative z-10">
-        <div>
-          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-zinc-900 to-zinc-600 tracking-tight flex items-center drop-shadow-sm">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 mr-4">
-              <ShoppingCart className="w-5 h-5 text-white" />
-            </div>
-            Procurement & Sourcing
-          </h2>
-          <p className="text-zinc-500 mt-2 font-medium">Manage purchase orders and inbound logistics</p>
-        </div>
-        <button 
-          onClick={() => {
-            setEditingPoId(null);
-            setPoNum("");
-            setSelectedVendorId("");
-            setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
-            setShowPoModal(true);
-          }} 
-          className="group relative px-6 py-3 bg-gradient-to-b from-zinc-900 to-zinc-800 hover:from-zinc-800 hover:to-zinc-700 rounded-xl transition-all duration-300 shadow-xl shadow-black/10 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5 border border-black/10 overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <span className="relative z-10 flex items-center text-white font-bold tracking-wide text-sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Generate Vendor PO
-          </span>
-        </button>
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-12">
-        {purchaseOrders && purchaseOrders.length > 0 ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-            {purchaseOrders.map((po: any, i: number) => (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                key={po.id} 
-                className="group relative rounded-[2rem] glass-panel p-5 flex flex-col overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-1 border border-white/40"
-              >
-                <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 rounded-full blur-[30px] -mr-16 -mt-16 pointer-events-none group-hover:bg-amber-500/15 transition-all duration-700" />
-                
-                <div className="flex justify-between items-start mb-4 relative z-10">
-                  <div>
-                    <div className="flex items-center space-x-3 mb-1.5">
-                      <h3 className="text-sm font-bold text-zinc-900 tracking-tight">{po.poNumber}</h3>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-widest ${
-                        po.status === 'CLOSED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
-                      }`}>
-                        {po.status === 'CLOSED' ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
-                        {po.status}
-                      </span>
-                    </div>
-                    <p className="text-zinc-500 text-xs flex items-center">
-                      <Package className="w-3 h-3 mr-1.5 opacity-50" />
-                      {po.vendor?.vendorName || 'Unknown Vendor'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-black text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Total Value</div>
-                    <div className="text-lg text-amber-700 font-black tracking-widest tracking-tight font-mono">&#8377;{Number(po.totalAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                  </div>
-                </div>
-
-                <div className="flex-1 bg-black/[0.02] rounded-2xl p-4 border border-white/50 mb-4 relative z-10 shadow-inner">
-                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 flex items-center">
-                    <FileText className="w-3 h-3 mr-1.5" />
-                    Order Items
-                  </h4>
-                  <div className="space-y-2">
-                    {po.items?.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center group/item bg-white/60 backdrop-blur-md p-3 rounded-xl border border-white shadow-sm hover:shadow-md transition-all">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-zinc-800">{item.material?.materialName}</span>
-                          <span className="text-[10px] text-zinc-500 mt-0.5 font-medium">{Number(item.orderedQty).toLocaleString(undefined, {maximumFractionDigits:2})} {Number(item.orderedQty) === 1 ? "unit" : "units"} ordered</span>
-                        </div>
-                        <div className="text-right flex flex-col">
-                          <span className="text-xs text-zinc-800 font-mono font-black">&#8377;{Number(item.lineTotal || (item.orderedQty * item.agreedRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                          <span className="text-[10px] text-zinc-400 mt-0.5 font-mono font-medium">@ &#8377;{Number(item.agreedRate).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-auto pt-4 border-t border-black/5 relative z-10 flex gap-2">
-                  <button
-                    onClick={() => setViewingPoDetails(po)}
-                    className="font-bold text-xs py-3 rounded-xl transition-all duration-300 bg-white border border-zinc-200 hover:border-black/20 hover:bg-zinc-50 text-zinc-900 shadow-sm flex-1 hover:shadow-md"
-                  >
-                    View Details
-                  </button>
-                  {po.status === 'DRAFT' && (
-                    <button
-                      onClick={() => handleIssuePO(po.id)}
-                      className="flex-1 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md border border-transparent font-bold text-xs flex items-center justify-center space-x-1 rounded-xl transition-all hover:shadow-lg"
-                    >
-                      <span>Issue PO</span>
-                    </button>
-                  )}
-                  {(po.status === 'ISSUED' || po.status === 'PARTIAL') && (
-                    <button
-                      onClick={() => openGrnModal(po)}
-                      className="flex-1 bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md border border-transparent font-bold text-xs flex items-center justify-center space-x-1 rounded-xl transition-all hover:shadow-lg"
-                    >
-                      <span>Process GRN</span>
-                    </button>
-                  )}
-                  {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
-                    <button
-                      onClick={() => openEditPoModal(po)}
-                      className="px-4 bg-gradient-to-b from-zinc-800 to-zinc-900 hover:from-zinc-900 hover:to-black text-white shadow-md border border-transparent flex items-center justify-center rounded-xl transition-all hover:shadow-lg"
-                      title="Edit Purchase Order"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                  )}
-                  {(po.status === 'DRAFT' || po.status === 'ON_HOLD') && (
-                    <button
-                      onClick={() => handleDeletePO(po.id)}
-                      className="px-4 bg-gradient-to-b from-rose-50 to-rose-100 text-rose-700 border border-rose-200 shadow-sm flex items-center justify-center rounded-xl transition-all hover:shadow-md hover:bg-rose-100"
-                      title="Delete Purchase Order"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-32 px-4 rounded-[2rem] border border-dashed border-black/10 bg-white">
-            <div className="w-24 h-24 mb-6 rounded-3xl bg-amber-50 border border-amber-200 shadow-md flex items-center justify-center">
-              <ShoppingCart className="w-10 h-10 text-amber-400 opacity-80" />
-            </div>
-            <h3 className="text-2xl font-bold text-zinc-900 mb-3 tracking-tight">No Purchase Orders Yet</h3>
-            <p className="text-zinc-500 max-w-md text-center mb-8">Generate a purchase order to begin procuring raw materials and components for this project.</p>
-            <button 
-              onClick={() => setShowPoModal(true)}
-              className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl shadow-elevation transition-all hover:scale-105 active:scale-95"
-            >
-              Create First PO
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Create PO Drawer */}
-      <PremiumDrawer
-        isOpen={showPoModal}
-        onClose={() => {
-          setShowPoModal(false);
-          setEditingPoId(null);
-          setPoNum("");
-          setSelectedVendorId("");
-          setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0 }]);
-        }}
-        title={editingPoId ? "Edit Purchase Order" : "Create Purchase Order"}
-        subtitle={editingPoId ? "Modify PO details" : "Generate a new vendor PO for raw materials"}
-        width="2xl"
-      >
-        <form onSubmit={handleSavePo} className="flex flex-col space-y-6 h-full p-6">
-          <div className="grid grid-cols-2 gap-6 shrink-0 bg-black/[0.02] p-6 rounded-2xl border border-black/5">
-            <Input
-              label="PO Number (Auto-generated if empty)"
-              value={poNum}
-              onChange={(e) => setPoNum(e.target.value)}
-              placeholder="Leave blank to auto-generate"
-            />
+    <div className="space-y-6">
+      {previewPo ? (
+        <AuthenticPoDocument
+          data={previewPo}
+          onBack={() => setPreviewPo(null)}
+        />
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
             <div>
-              <label className="block text-xs font-medium text-zinc-500 mb-2 uppercase tracking-wider">Vendor</label>
-              <Select
-                value={selectedVendorId}
-                onChange={(e) => setSelectedVendorId(e.target.value)}
-                options={filteredVendors.map((v: any) => ({ value: v.id, label: v.vendorName }))}
+              <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-amber-600" />
+                <span>Purchase Orders & Procurement</span>
+              </h2>
+              <p className="text-xs text-zinc-500">Manage supplier purchase orders, steel raw material requisitions, and GRNs.</p>
+            </div>
+
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                setEditingPo(null);
+                setIsFormOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              <span>Generate New PO</span>
+            </Button>
+          </div>
+
+          <SmartTable 
+            title="Project Purchase Orders"
+            columns={columns}
+            data={purchaseOrders}
+            isLoading={isLoadingPos}
+            exportFilename="Purchase_Orders"
+          />
+
+          {isFormOpen && (
+            <Modal 
+              isOpen={isFormOpen} 
+              onClose={() => {
+                setIsFormOpen(false);
+                setEditingPo(null);
+              }}
+              title={editingPo ? `Edit Purchase Order (${editingPo.poNumber})` : "Create Purchase Order"}
+              maxWidth="2xl"
+            >
+              <PurchaseOrderForm 
+                projectId={id} 
+                editingPo={editingPo}
+                onClose={() => {
+                  setIsFormOpen(false);
+                  setEditingPo(null);
+                }}
+                onSuccess={() => {
+                  setIsFormOpen(false);
+                  setEditingPo(null);
+                  refetchProject();
+                  refetchPos();
+                }}
               />
-            </div>
-            <Input
-              label="Expected Delivery Date"
-              type="date"
-              value={expectedDeliveryDate}
-              onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/5 p-6 rounded-2xl border border-black/5">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Order Lines</h4>
-              <label className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors cursor-pointer">
-                <Upload className="w-3.5 h-3.5" />
-                <span>Import PO</span>
-                <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportPO} />
-              </label>
-            </div>
-            <div className="grid grid-cols-12 gap-2 mb-3">
-              <div className="col-span-12 md:col-span-2 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Material</div>
-              <div className="col-span-6 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Dim</div>
-              <div className="col-span-6 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">HSN</div>
-              <div className="col-span-6 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">UOM</div>
-              <div className="col-span-6 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Qty</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Rate</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Disc</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Basic</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider">GST%</div>
-              <div className="col-span-5 md:col-span-1 text-[10px] font-black text-zinc-500 uppercase tracking-wider text-right">Value</div>
-              <div className="col-span-1"></div>
-            </div>
-            
-            <div className="space-y-3">
-              {poItems.map((item, index) => {
-                const basicVal = (Number(item.orderedQty || 0) * Number(item.agreedRate || 0)) - Number(item.discount || 0);
-                const gstVal = basicVal * (Number(item.gstPercent || 0) / 100);
-                const totalVal = basicVal + gstVal;
+            </Modal>
+          )}
 
-                return (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-center bg-black/[0.02] p-2 rounded-xl border border-black/5">
-                    <div className="col-span-12 md:col-span-2">
-                      <Select
-                        value={item.materialId}
-                        onChange={(e) => {
-                           const val = e.target.value;
-                           const mat = materials?.find((m: any) => m.id === val);
-                           const newItems = [...poItems];
-                           newItems[index].materialId = val;
-                           if (mat) {
-                              newItems[index].hsnCode = mat.hsnCode || "";
-                              newItems[index].gstPercent = mat.gstPercent ? Number(mat.gstPercent) : 18;
-                           }
-                           setPoItems(newItems);
-                        }}
-                        options={(materials || []).map((m: any) => ({ value: m.id, label: `${m.materialCode}` }))}
-                      />
-                    </div>
-                    <div className="col-span-6 md:col-span-1">
-                      <input
-                        type="text"
-                        placeholder="Dim"
-                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] focus:shadow-elevation transition-all outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
-                        value={item.dimensions || ""}
-                        onChange={(e) => updatePoItem(index, 'dimensions', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-6 md:col-span-1">
-                      <input
-                        type="text"
-                        placeholder="HSN"
-                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
-                        value={item.hsnCode || ""}
-                        onChange={(e) => updatePoItem(index, 'hsnCode', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-6 md:col-span-1">
-                      <input
-                        type="text"
-                        placeholder="UOM"
-                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
-                        value={item.uom || "NOS"}
-                        onChange={(e) => updatePoItem(index, 'uom', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-6 md:col-span-1">
-                      <input
-                        type="number" min="1" step="0.01" required placeholder="Qty"
-                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
-                        value={item.orderedQty}
-                        onChange={(e) => updatePoItem(index, 'orderedQty', Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="col-span-5 md:col-span-1">
-                      <input
-                        type="number" min="0" step="0.01" required placeholder="Rate"
-                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
-                        value={item.agreedRate}
-                        onChange={(e) => updatePoItem(index, 'agreedRate', Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="col-span-5 md:col-span-1">
-                      <input
-                        type="number" min="0" step="0.01" placeholder="Disc"
-                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
-                        value={item.discount || 0}
-                        onChange={(e) => updatePoItem(index, 'discount', Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="col-span-5 md:col-span-1">
-                      <div className="w-full bg-black/5 border border-black/5 rounded-lg px-2 py-2 text-xs text-zinc-600 font-mono flex items-center h-[34px]">
-                        {basicVal.toFixed(1)}
-                      </div>
-                    </div>
-                    <div className="col-span-5 md:col-span-1">
-                      <input
-                        type="number" min="0" step="0.01" placeholder="GST%"
-                        className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-2 text-xs text-zinc-900 focus:border-amber-500/40 focus:bg-white/[0.04] outline-none"
-                        value={item.gstPercent || ''}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          updatePoItem(index, 'gstPercent', val);
-                          updatePoItem(index, 'cgst', val / 2);
-                          updatePoItem(index, 'sgst', val / 2);
-                        }}
-                      />
-                    </div>
-                    <div className="col-span-5 md:col-span-1 flex justify-end items-center h-[34px]">
-                       <span className="text-amber-700 font-black tracking-widest text-xs font-mono">
-                         {totalVal.toFixed(1)}
-                       </span>
-                    </div>
-                    <div className="col-span-1 flex justify-center">
-                      <button type="button" onClick={() => removePoItemRow(index)} className="w-8 h-8 rounded-lg bg-black/[0.02] border border-black/10/[0.05] text-red-400 flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/30 transition-all" disabled={poItems.length === 1}>
-                        &times;
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            <button 
-              type="button" 
-              onClick={addPoItemRow}
-              className="w-full py-4 mt-6 border-2 border-dashed border-amber-500/20 text-amber-500 rounded-xl font-bold text-sm hover:bg-amber-500/10 hover:border-amber-500/40 transition-all"
+          {grnTargetPo && (
+            <Modal
+              isOpen={!!grnTargetPo}
+              onClose={() => setGrnTargetPo(null)}
+              title={`Goods Receipt Note (GRN) for ${grnTargetPo.poNumber}`}
+              maxWidth="3xl"
             >
-              + Add Another Item
-            </button>
-          </div>
-
-          <div className="flex space-x-4 pt-4 shrink-0 border-t border-black/10 mt-auto">
-            <button type="button" onClick={() => {
-              setShowPoModal(false);
-              setEditingPoId(null);
-              setPoNum("");
-              setSelectedVendorId("");
-              setPoItems([{ materialId: "", orderedQty: 1, agreedRate: 0, dimensions: "", hsnCode: "", gstPercent: 18 }]);
-            }} className="flex-1 px-6 py-4 rounded-xl bg-black/5 hover:bg-black/10 font-bold text-zinc-900 transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 font-bold text-zinc-900 shadow-elevation transition-all">
-              {editingPoId ? "Save Changes" : "Generate Purchase Order"}
-            </button>
-          </div>
-        </form>
-      </PremiumDrawer>
-
-      {/* GRN Drawer */}
-      <PremiumDrawer
-        isOpen={showGrnModal}
-        onClose={() => setShowGrnModal(false)}
-        title="Goods Receipt Note (GRN)"
-        subtitle={`Processing receipt for PO: ${selectedPo?.poNumber}`}
-        width="3xl"
-      >
-        <form onSubmit={handleProcessGrn} className="flex flex-col space-y-6 h-full p-6">
-          <div className="grid grid-cols-4 gap-6 shrink-0 bg-black/[0.02] p-6 rounded-2xl border border-black/5">
-            <Input
-              label="GRN Number"
-              value={grnData.grnNumber}
-              onChange={(e) => setGrnData({...grnData, grnNumber: e.target.value})}
-              required
-            />
-            <Input
-              label="Supplier Challan"
-              value={grnData.supplierChallan}
-              onChange={(e) => setGrnData({...grnData, supplierChallan: e.target.value})}
-              required
-            />
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Target Warehouse</label>
-              <select 
-                className="w-full bg-[#FBFBFC] border border-black/10 rounded-lg p-3 text-sm text-zinc-900 focus:outline-none focus:border-emerald-500/50 transition-all appearance-none" 
-                value={grnData.warehouseId}
-                onChange={e => setGrnData({...grnData, warehouseId: e.target.value})}
-                required
-              >
-                {warehouses?.map((w: any) => (
-                  <option key={w.id} value={w.id} className="bg-[#F4F4F6] text-zinc-900">
-                    {w.warehouseName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Input
-              label="Remarks (Optional)"
-              value={grnData.remarks}
-              onChange={(e) => setGrnData({...grnData, remarks: e.target.value})}
-            />
-          </div>
-          
-          <div className="flex-1 overflow-y-auto hide-scrollbar bg-black/5 p-6 rounded-2xl border border-black/5">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Received Items</h4>
-              <label className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors cursor-pointer">
-                <Upload className="w-3.5 h-3.5" />
-                <span>Import RM Slip</span>
-                <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportGRN} />
-              </label>
-            </div>
-            <div className="space-y-6">
-              {grnData.items.map((item, index) => {
-                const poItem = selectedPo?.items.find((i: any) => i.id === item.poItemId);
-                return (
-                  <div key={index} className="grid grid-cols-6 gap-6 items-end bg-black/[0.02] p-6 rounded-xl border border-black/5">
-                    <div className="col-span-12 border-b border-black/5 pb-3 mb-1 flex justify-between items-center w-full">
-                      <div>
-                        <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded text-xs mr-3">ITEM {index + 1}</span>
-                        <span className="font-bold text-zinc-900 text-lg">{poItem?.material?.materialCode} - {poItem?.material?.materialGrade}</span>
-                      </div>
-                      <div className="text-sm text-zinc-500 bg-black/5 px-3 py-1.5 rounded-lg">
-                        Ordered: <strong className="text-zinc-900">{poItem?.orderedQty}</strong> <span className="mx-2 opacity-50">|</span> Rate: <strong className="text-zinc-900">&#8377;{poItem?.agreedRate}</strong>
-                      </div>
-                    </div>
-                    
-                    <div className="col-span-12 grid grid-cols-12 gap-2 mt-2 w-full">
-                       <div className="col-span-12 md:col-span-2">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 text-red-400">Heat/Batch No *</label>
-                         <input type="text" required className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.heatNumber} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].heatNumber = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Tool No</label>
-                         <input type="text" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.toolNo || ''} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].toolNo = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Det No</label>
-                         <input type="text" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.detNo || ''} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].detNo = e.target.value; setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-4 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">L</label>
-                         <input type="number" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.length || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].length = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-4 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">W</label>
-                         <input type="number" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.width || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].width = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-4 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">H</label>
-                         <input type="number" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.height || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].height = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">AP WT.</label>
-                         <input type="number" step="0.01" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.apWeight || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].apWeight = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1 text-emerald-400">Acc. Qty</label>
-                         <input type="number" step="0.01" required className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-1.5 text-xs text-emerald-100 outline-none" value={item.acceptedQty} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].acceptedQty = Number(e.target.value); newItems[index].receivedQty = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-6 md:col-span-1">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Total Wt</label>
-                         <input type="number" step="0.01" className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.totalWeight || 0} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].totalWeight = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                       <div className="col-span-6 md:col-span-2">
-                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Rate</label>
-                         <input type="number" step="0.01" required className="w-full bg-black/[0.02] border border-black/10/[0.05] rounded-lg px-2 py-1.5 text-xs text-zinc-900 outline-none" value={item.actualRate} onChange={(e) => { const newItems = [...grnData.items]; newItems[index].actualRate = Number(e.target.value); setGrnData({ ...grnData, items: newItems }); }} />
-                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex space-x-4 pt-4 shrink-0 border-t border-black/10 mt-auto">
-            <button type="button" onClick={() => setShowGrnModal(false)} className="flex-1 px-6 py-4 rounded-xl bg-black/5 hover:bg-black/10 font-bold text-zinc-900 transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 font-bold text-white shadow-elevation transition-all">Complete Goods Receipt</button>
-          </div>
-        </form>
-      </PremiumDrawer>
-      {/* View PO Details Modal */}
-      {viewingPoDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/10 backdrop-blur-xl animate-fade-in">
-          <div className="glass-modal w-full max-w-4xl p-6 animate-slide-up border border-black/10 relative overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Ambient decorative glow */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-[90px] -mr-32 -mt-32 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/5 rounded-full blur-[90px] -ml-32 -mb-32 pointer-events-none" />
-
-            {/* Modal Header */}
-            <div className="flex justify-between items-center pb-4 border-b border-black/10 shrink-0 relative z-10">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                  <ShoppingCart className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-zinc-900 tracking-tight flex items-center space-x-2">
-                    <span>Purchase Order Details</span>
-                    <span className="text-xs text-slate-500 font-mono">({viewingPoDetails.poNumber})</span>
-                  </h3>
-                  <p className="text-[10px] text-zinc-500 font-medium">Detailed fulfillment ledger & audit logs</p>
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                {(viewingPoDetails.status === 'DRAFT' || viewingPoDetails.status === 'ON_HOLD') && (
-                  <button 
-                    onClick={() => openEditPoModal(viewingPoDetails)}
-                    className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 font-bold text-xs transition-colors"
-                  >
-                    <span>Edit PO</span>
-                  </button>
-                )}
-                {viewingPoDetails.status === 'ON_HOLD' && (
-                  <button 
-                    onClick={() => handleIssuePO(viewingPoDetails.id)}
-                    className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors"
-                  >
-                    <span>Issue PO</span>
-                  </button>
-                )}
-                <button 
-                  onClick={() => handleExportPO(viewingPoDetails)}
-                  className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 font-bold text-xs transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>PO Export</span>
-                </button>
-                <button 
-                  onClick={() => handleExportGRN(viewingPoDetails)}
-                  className="flex items-center space-x-1.5 h-8 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 font-bold text-xs transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>RM Slip Export</span>
-                </button>
-                <button 
-                  onClick={() => setViewingPoDetails(null)} 
-                  className="w-8 h-8 rounded-lg bg-black/5 hover:bg-black/10 text-zinc-500 hover:text-zinc-900 flex items-center justify-center transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto min-h-0 space-y-6 py-4 pr-1 relative z-10 hide-scrollbar">
-              
-              {/* Metadata Grid (RM Slip Header) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* Vendor Card */}
-                <div className="p-6 rounded-2xl bg-white/60 backdrop-blur-md border border-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[20px] -mr-10 -mt-10 pointer-events-none" />
-                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4 flex items-center relative z-10">
-                    <Package className="w-4 h-4 mr-2 text-amber-500" />
-                    Supplier Information
-                  </h4>
-                  <div className="space-y-3 text-sm relative z-10">
-                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                      <span className="text-zinc-500 font-medium">Vendor Name:</span>
-                      <span className="text-zinc-900 font-black">{viewingPoDetails.customFields?.vendorName || viewingPoDetails.vendor?.vendorName || 'Unknown'}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                      <span className="text-zinc-500 font-medium">Vendor Address:</span>
-                      <span className="text-zinc-700 text-right max-w-[200px] truncate" title={viewingPoDetails.customFields?.vendorAddress || 'N/A'}>{viewingPoDetails.customFields?.vendorAddress || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                      <span className="text-zinc-500 font-medium">Customer Name:</span>
-                      <span className="text-zinc-700">{viewingPoDetails.customFields?.customerName || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-zinc-500 font-medium">Customer Location:</span>
-                      <span className="text-zinc-700">{viewingPoDetails.customFields?.customerLocation || 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* PO Stats Card */}
-                <div className="p-6 rounded-2xl bg-white/60 backdrop-blur-md border border-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-[20px] -mr-10 -mt-10 pointer-events-none" />
-                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4 flex items-center relative z-10">
-                    <Activity className="w-4 h-4 mr-2 text-blue-500" />
-                    RM Slip Details
-                  </h4>
-                  <div className="space-y-3 text-sm relative z-10">
-                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                      <span className="text-zinc-500 font-medium">Status:</span>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black border uppercase tracking-wider shadow-sm ${
-                        viewingPoDetails.status === 'CLOSED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}>
-                        {viewingPoDetails.status}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                      <span className="text-zinc-500 font-medium">RM Slip No:</span>
-                      <span className="text-amber-700 font-black tracking-widest font-mono text-base">{viewingPoDetails.customFields?.rmSlipNo || viewingPoDetails.poNumber}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-zinc-500 font-medium">Date:</span>
-                      <span className="text-zinc-900 font-bold">
-                        {viewingPoDetails.customFields?.date ? new Date(viewingPoDetails.customFields.date).toLocaleDateString() : new Date(viewingPoDetails.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Items Table (RM Slip Format) */}
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center">
-                  <Info className="w-4 h-4 mr-2 text-amber-500" />
-                  Line Items
-                </h4>
-                
-                <div className="bg-white/40 backdrop-blur-xl border border-white shadow-lg rounded-2xl overflow-hidden">
-                  <div className="overflow-x-auto hide-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="text-[10px] font-black text-zinc-500 uppercase tracking-widest bg-zinc-100/50 backdrop-blur-sm border-b border-black/5 whitespace-nowrap">
-                          <th className="px-5 py-4">Sr. No</th>
-                          <th className="px-5 py-4">Tool No</th>
-                          <th className="px-5 py-4">Det No</th>
-                          <th className="px-5 py-4">L</th>
-                          <th className="px-5 py-4">W</th>
-                          <th className="px-5 py-4">H</th>
-                          <th className="px-5 py-4">Material</th>
-                          <th className="px-5 py-4 text-right">Qty</th>
-                          <th className="px-5 py-4 text-right">AP WT.</th>
-                          <th className="px-5 py-4 text-right">Total WT</th>
-                          <th className="px-5 py-4 text-right">Rate</th>
-                          <th className="px-5 py-4 text-right">Basic Cost</th>
-                          <th className="px-5 py-4 text-right">GST</th>
-                          <th className="px-5 py-4 text-right">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-black/5">
-                        {viewingPoDetails.items?.map((item: any, i: number) => {
-                          const cf = item.customFields || {};
-                          return (
-                            <tr key={item.id} className="text-xs text-zinc-600 hover:bg-white/60 transition-colors group">
-                              <td className="px-5 py-3.5 font-medium">{cf.srNo || (i + 1)}</td>
-                              <td className="px-5 py-3.5 font-bold text-zinc-900 whitespace-nowrap">{cf.toolNo || '-'}</td>
-                              <td className="px-5 py-3.5 font-medium">{cf.detNo || (i + 1)}</td>
-                              <td className="px-5 py-3.5 text-zinc-500">{cf.L || '-'}</td>
-                              <td className="px-5 py-3.5 text-zinc-500">{cf.W || '-'}</td>
-                              <td className="px-5 py-3.5 text-zinc-500">{cf.H || '-'}</td>
-                              <td className="px-5 py-3.5 whitespace-nowrap font-medium text-zinc-800">{cf.material || item.material?.materialGrade || item.material?.materialName || '-'}</td>
-                              <td className="px-5 py-3.5 text-right font-bold text-zinc-900">{cf.qty || Number(item.orderedQty)}</td>
-                              <td className="px-5 py-3.5 text-right font-mono text-zinc-500">{cf.apWt ? Number(cf.apWt).toFixed(2) : '-'}</td>
-                              <td className="px-5 py-3.5 text-right font-mono text-zinc-800 font-bold">{cf.totalWt ? Number(cf.totalWt).toFixed(2) : '-'}</td>
-                              <td className="px-5 py-3.5 text-right font-mono">&#8377;{Number(cf.rate || item.agreedRate).toLocaleString()}</td>
-                              <td className="px-5 py-3.5 text-right font-mono">&#8377;{Number(cf.basicCost || item.lineTotal).toLocaleString()}</td>
-                              <td className="px-5 py-3.5 text-right font-mono text-zinc-400">&#8377;{Number(cf.gst || 0).toLocaleString()}</td>
-                              <td className="px-5 py-3.5 text-right font-mono font-black text-amber-700">&#8377;{Number(cf.total || item.lineTotal).toLocaleString()}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                      
-                      {/* Per Tool Summary Footer */}
-                      <tfoot className="bg-amber-50/50 backdrop-blur-md border-t-2 border-amber-500/20">
-                        <tr className="text-xs font-bold text-amber-700">
-                          <td colSpan={7} className="px-5 py-4 text-right uppercase tracking-widest text-[10px]">Per Tool Summary</td>
-                          <td className="px-5 py-4 text-right text-sm">{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.qty) || it.orderedQty || 0), 0)}</td>
-                          <td className="px-5 py-4"></td>
-                          <td className="px-5 py-4 text-right font-mono text-sm">{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.totalWt) || 0), 0).toFixed(2)}</td>
-                          <td className="px-5 py-4"></td>
-                          <td className="px-5 py-4 text-right font-mono text-sm">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.basicCost) || it.lineTotal || 0), 0).toLocaleString()}</td>
-                          <td className="px-5 py-4 text-right font-mono text-sm">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.gst) || 0), 0).toLocaleString()}</td>
-                          <td className="px-5 py-4 text-right font-mono font-black text-base">&#8377;{viewingPoDetails.items?.reduce((sum: number, it: any) => sum + Number((it.customFields?.total) || it.lineTotal || 0), 0).toLocaleString()}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              {/* Goods Receipts Audit Timeline */}
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-emerald-500" />
-                  Goods Receipt Notes (GRN) History
-                </h4>
-
-                {viewingPoDetails.goodsReceiptHeaders && viewingPoDetails.goodsReceiptHeaders.length > 0 ? (
-                  <div className="space-y-4">
-                    {viewingPoDetails.goodsReceiptHeaders.map((grn: any) => (
-                      <div key={grn.id} className="p-5 rounded-2xl bg-white/60 backdrop-blur-md border border-white shadow-sm hover:shadow-md transition-all duration-300 space-y-4 relative overflow-hidden group/grn">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[20px] -mr-10 -mt-10 pointer-events-none group-hover/grn:bg-emerald-500/10 transition-all duration-500" />
-                        
-                        <div className="flex justify-between items-start relative z-10">
-                          <div>
-                            <div className="flex items-center space-x-3 mb-1.5">
-                              <span className="text-sm font-bold text-emerald-600 font-mono tracking-tight">{grn.grnNumber}</span>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider shadow-sm">
-                                Received
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-zinc-500 font-medium flex items-center">
-                              <Calendar className="w-3 h-3 mr-1 opacity-50" />
-                              Processed on <strong className="text-zinc-700 ml-1">{new Date(grn.receiptDate).toLocaleDateString()}</strong>
-                            </p>
-                          </div>
-                          {grn.remarks && (
-                            <div className="text-[10px] bg-white/80 text-zinc-600 px-3 py-1.5 rounded-lg max-w-xs truncate border border-black/5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] font-medium">
-                              {grn.remarks}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Received items checklist */}
-                        <div className="space-y-2 pt-4 border-t border-black/5 relative z-10">
-                          {grn.items?.map((gItem: any) => (
-                            <div key={gItem.id} className="flex justify-between items-center text-xs p-3 bg-white/80 backdrop-blur-sm border border-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                              <div className="flex items-center space-x-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                                <span className="font-bold text-zinc-800">{gItem.poItem?.material?.materialName}</span>
-                              </div>
-                              <div className="flex items-center space-x-4 font-medium text-zinc-500">
-                                <span className="bg-zinc-100/50 px-2 py-1 rounded-md">Rcvd: <strong className="font-mono text-zinc-900 ml-1">{Number(gItem.receivedQty)}</strong></span>
-                                <span className="bg-emerald-50/50 px-2 py-1 rounded-md text-emerald-600">Accpt: <strong className="font-mono text-emerald-700 ml-1">{Number(gItem.acceptedQty)}</strong></span>
-                                {Number(gItem.rejectedQty) > 0 && (
-                                  <span className="bg-red-50/50 px-2 py-1 rounded-md text-red-600">Rej: <strong className="font-mono text-red-700 ml-1">{Number(gItem.rejectedQty)}</strong></span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 bg-white rounded-xl border border-black/5 border-dashed text-xs text-slate-500 italic">
-                    No Goods Receipt Notes processed yet. Delivery is pending.
-                  </div>
-                )}
-              </div>
-
-            </div>
-
-            {/* Modal Footer */}
-            <div className="pt-4 border-t border-black/10 shrink-0 flex justify-end relative z-10">
-              <button 
-                type="button" 
-                onClick={() => setViewingPoDetails(null)} 
-                className="px-5 py-2.5 rounded-xl bg-black/5 hover:bg-black/10 text-xs font-bold text-zinc-900 transition-colors"
-              >
-                Close details
-              </button>
-            </div>
-
-          </div>
-        </div>
+              <ReceiveGrnModal
+                projectId={id}
+                po={grnTargetPo}
+                onClose={() => setGrnTargetPo(null)}
+                onSuccess={() => {
+                  setGrnTargetPo(null);
+                  refetchProject();
+                  refetchPos();
+                }}
+              />
+            </Modal>
+          )}
+        </>
       )}
     </div>
   );

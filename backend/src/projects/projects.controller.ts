@@ -20,6 +20,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { CreateProjectTaskDto } from './dto/create-project-task.dto';
 import { UpdateProjectTaskDto } from './dto/update-project-task.dto';
+import { CreateDesignLogDto, UpdateDesignLogDto } from './dto/create-design-log.dto';
 import { ProjectStatus } from '@prisma/client';
 
 import { WorkflowOrchestratorService } from './workflow-orchestrator.service';
@@ -324,6 +325,75 @@ export class ProjectsController {
     return {
       status: 'success',
       message: 'Engineering stage reopened successfully.',
+      data,
+    };
+  }
+
+  // --- Designer Work Logs APIs ---
+  @Get(':id/design-logs')
+  async getDesignLogs(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('search') search?: string,
+    @Query('designer') designer?: string,
+    @Query('workStage') workStage?: string,
+    @Query('status') status?: string,
+  ) {
+    const data = await this.projectsService.getDesignLogs(id, { search, designer, workStage, status });
+    return {
+      status: 'success',
+      data,
+    };
+  }
+
+  @Get(':id/design-logs/summary')
+  async getDesignSummary(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.projectsService.getDesignSummary(id);
+    return {
+      status: 'success',
+      data,
+    };
+  }
+
+  @Post(':id/design-logs')
+  @Roles('ADMIN', 'ENGINEERING')
+  async createDesignLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateDesignLogDto,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.projectsService.createDesignLog(id, dto, user?.userId);
+    return {
+      status: 'success',
+      message: 'Designer work log created successfully.',
+      data,
+    };
+  }
+
+  @Put(':id/design-logs/:logId')
+  @Roles('ADMIN', 'ENGINEERING')
+  async updateDesignLog(
+    @Param('logId', ParseUUIDPipe) logId: string,
+    @Body() dto: UpdateDesignLogDto,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.projectsService.updateDesignLog(logId, dto, user?.userId);
+    return {
+      status: 'success',
+      message: 'Designer work log updated successfully.',
+      data,
+    };
+  }
+
+  @Delete(':id/design-logs/:logId')
+  @Roles('ADMIN', 'ENGINEERING')
+  async deleteDesignLog(
+    @Param('logId', ParseUUIDPipe) logId: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.projectsService.deleteDesignLog(logId, user?.userId);
+    return {
+      status: 'success',
+      message: 'Designer work log deleted successfully.',
       data,
     };
   }

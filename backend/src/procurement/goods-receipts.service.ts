@@ -11,21 +11,56 @@ export class GoodsReceiptsService {
     return this.prisma.$transaction(async (tx) => {
       // 1. Validate project stage
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      // Phase validation removed to allow independent progression
 
       // 2. Business Rule: Cannot create GRN without a valid, issued PO
-      const po = await tx.purchaseOrderHeader.findUnique({ where: { id: dto.poHeaderId } });
-      if (!po || (po.status !== 'ISSUED' && po.status !== 'PARTIAL_RECEIPT')) {
+      const po = await tx.purchaseOrderHeader.findUnique({
+        where: { id: dto.poHeaderId },
+        include: { items: true },
+      });
+
+      if (!po) {
+        throw new BadRequestException('Purchase Order not found.');
+      }
+
+      if (po.status === 'CLOSED') {
+        throw new BadRequestException('All quantities have already been received.');
+      }
+
+      if (po.status !== 'ISSUED' && po.status !== 'PARTIAL_RECEIPT') {
         throw new BadRequestException('Business Rule Violation: Cannot create GRN without a valid, issued Purchase Order.');
       }
 
-      // 3. Resolve warehouse — use provided warehouseId or fall back to DEFAULT-WH
+      // Check total remaining quantity across all items in the PO
+      const totalPendingInPo = po.items.reduce(
+        (sum, item) => sum + Math.max(0, Number(item.orderedQty) - Number(item.receivedQty)),
+        0
+      );
+
+      if (totalPendingInPo <= 0) {
+        throw new BadRequestException('All quantities have already been received.');
+      }
+
+      // Filter active items with incoming quantity > 0
+      const activeItems = dto.items.filter((item) => {
+        const incomingQty = Number(item.acceptedQty) + Number(item.rejectedQty || 0);
+        return incomingQty > 0;
+      });
+
+      if (activeItems.length === 0) {
+        throw new BadRequestException('Receive quantity must be greater than zero.');
+      }
+
+      // 3. Resolve warehouse dynamically — use provided warehouseId, DEFAULT-WH, or any active warehouse
       const warehouse = dto.warehouseId
-        ? await tx.warehouse.findUniqueOrThrow({ where: { id: dto.warehouseId } })
-        : await tx.warehouse.findFirst({ where: { warehouseCode: 'DEFAULT-WH' } });
+        ? await tx.warehouse.findUnique({ where: { id: dto.warehouseId } })
+        : (await tx.warehouse.findFirst({ where: { warehouseCode: 'DEFAULT-WH' } })) || 
+          (await tx.warehouse.findFirst({ where: { status: 'ACTIVE' } })) || 
+          (await tx.warehouse.findFirst());
 
       if (!warehouse) {
-        throw new BadRequestException('Warehouse not found. Please ensure a default warehouse (DEFAULT-WH) is configured, or provide a warehouseId.');
+        throw new BadRequestException(
+          'Warehouse not found. Please ensure at least one active warehouse exists in the database.'
+        );
       }
 
       // 4. Create GRN Header
@@ -46,9 +81,11 @@ export class GoodsReceiptsService {
       let totalGrnValue = 0;
 
       // 5. Process each GRN Item
-      for (const item of dto.items) {
+      for (const item of activeItems) {
         if (!item.heatNumber || item.heatNumber.trim() === '') {
-          throw new BadRequestException(`GRN Gate Failed: Heat Number (Mill Test Certificate) is strictly required for material traceability.`);
+          throw new BadRequestException(
+            `GRN Gate Failed: Heat Number (Mill Test Certificate) is strictly required for material traceability.`
+          );
         }
 
         const poItem = await tx.purchaseOrderItem.findUniqueOrThrow({
@@ -59,8 +96,12 @@ export class GoodsReceiptsService {
         const remainingQty = Number(poItem.orderedQty) - Number(poItem.receivedQty);
         const incomingQty = Number(item.acceptedQty) + Number(item.rejectedQty || 0);
 
+        if (incomingQty <= 0) {
+          throw new BadRequestException('Receive quantity must be greater than zero.');
+        }
+
         if (incomingQty > remainingQty) {
-          throw new BadRequestException(`GRN Gate Failed: Incoming quantity (${incomingQty}) exceeds the remaining PO quantity (${remainingQty}) for PO Item ${poItem.id}.`);
+          throw new BadRequestException('Receive quantity cannot exceed pending quantity.');
         }
 
         const itemCost = item.acceptedQty * item.actualRate;
@@ -94,12 +135,15 @@ export class GoodsReceiptsService {
         });
 
         // Update PO Item receivedQty
+        const newReceivedQty = Number(poItem.receivedQty) + incomingQty;
+        const isPoItemFulfilled = newReceivedQty >= Number(poItem.orderedQty);
+
         await tx.purchaseOrderItem.update({
           where: { id: item.poItemId },
           data: {
             receivedQty: { increment: incomingQty },
-            status: Number(poItem.receivedQty) + incomingQty >= Number(poItem.orderedQty) ? 'FULFILLED' : 'PARTIAL'
-          }
+            status: isPoItemFulfilled ? 'FULFILLED' : 'PARTIAL',
+          },
         });
 
         // Update Current Stock (upsert)
@@ -157,6 +201,27 @@ export class GoodsReceiptsService {
           },
         });
       }
+
+      // 5.1 Update PO Header Status based on overall fulfillment across all items
+      const updatedPoItems = await tx.purchaseOrderItem.findMany({
+        where: { poHeaderId: dto.poHeaderId },
+      });
+
+      const allFulfilled = updatedPoItems.every(
+        (i) => Number(i.receivedQty) >= Number(i.orderedQty)
+      );
+      const anyReceived = updatedPoItems.some((i) => Number(i.receivedQty) > 0);
+
+      const finalPoStatus = allFulfilled
+        ? 'CLOSED'
+        : anyReceived
+        ? 'PARTIAL_RECEIPT'
+        : 'ISSUED';
+
+      await tx.purchaseOrderHeader.update({
+        where: { id: dto.poHeaderId },
+        data: { status: finalPoStatus },
+      });
 
       // 6. Costing Integration: Rollup actual material cost to ProjectCostSummary (actual column ONLY)
       // NOTE: totalCost is NOT incremented here — it is computed from actual consumption in material issues.

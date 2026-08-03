@@ -36,6 +36,16 @@ export class MaterialsController {
     };
   }
 
+  @Post('inventory-ledger')
+  async createInventoryBatch(@Body() body: any) {
+    const data = await this.inventoryService.createManualBatch(body);
+    return {
+      status: 'success',
+      message: 'Inventory batch created successfully.',
+      data,
+    };
+  }
+
   @Post('materials')
   @Roles('ADMIN')
   async create(@Body() dto: CreateMaterialDto) {

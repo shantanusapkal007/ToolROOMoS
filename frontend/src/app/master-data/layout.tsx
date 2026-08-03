@@ -1,10 +1,9 @@
 "use client";
 
 import React from 'react';
-import { Users, ShoppingCart, Package, Factory, UserCog, Building2, Database } from 'lucide-react';
+import { Users, ShoppingCart, Package, Factory, UserCog, Building2, Database, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { Sidebar } from "@/components/layout/Sidebar";
 import { PageHeader } from "@/components/layout/PageHeader";
 
@@ -18,87 +17,71 @@ const navigation = [
   { id: 'warehouses', label: 'Warehouses', desc: 'Primary storage hubs', icon: <Building2 /> },
   { id: 'locations', label: 'Locations', desc: 'Specific storage bins', icon: <Package /> },
   { id: 'rates', label: 'Resource Rates', desc: 'Hourly cost rate cards', icon: <Database /> },
+  { id: 'inspection-standards', label: 'Inspection Standards', desc: 'Quality audit protocols', icon: <ShieldCheck /> },
 ];
 
 export default function MasterDataLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans mission-control-bg">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#F8F9FA]">
       <Sidebar />
-      <div className="flex-1 h-full flex flex-col relative z-0 pl-[5.5rem] px-8 animate-fade-in py-6 max-h-screen">
-        <PageHeader 
-          title="Master Data" 
-          description="Manage foundational entities and resources."
-          icon={<Database />}
-          colorHint="emerald-500"
-          breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Master Data' }]}
-        />
+      <main className="flex-1 h-full flex flex-col relative pl-16">
+        <div className="w-full max-w-[1440px] mx-auto h-full flex flex-col px-6 py-6 min-h-0 overflow-hidden">
+          
+          <PageHeader 
+            title="Master Data Hub" 
+            description="Manage foundational entities, machines, materials, and resource rates."
+            icon={<Database />}
+            breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Master Data' }]}
+          />
 
-        <div className="flex flex-1 min-h-0 overflow-hidden mt-2 gap-6">
-          {/* Sub Navigation Sidebar */}
-          <div className="w-64 shrink-0 flex flex-col space-y-2 overflow-y-auto pr-2 hide-scrollbar pb-10 relative z-10">
-            <div className="absolute -left-10 top-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-            
-            {navigation.map((item) => {
-              const href = `/master-data/${item.id}`;
-              const isActive = pathname.startsWith(href);
+          <div className="flex flex-1 min-h-0 overflow-hidden gap-4">
+            {/* Sub Navigation Sidebar */}
+            <div className="w-56 shrink-0 flex flex-col space-y-1 overflow-y-auto pr-1 hide-scrollbar bg-white border border-zinc-200 rounded-lg p-2 shadow-xs">
+              <span className="text-micro font-bold text-zinc-400 uppercase tracking-wider px-2 py-1 mb-1 block">
+                Master Registers
+              </span>
               
-              return (
-                <Link
-                  key={item.id}
-                  href={href}
-                  className={`relative group flex items-center w-full p-3 rounded-xl transition-all duration-300 text-left overflow-hidden border ${
-                    isActive 
-                      ? 'bg-emerald-500/10 border-emerald-500/30 shadow-[0_4px_20px_rgba(16,185,129,0.2)]' 
-                      : 'bg-black/5 border-black/5 hover:border-emerald-500/20 hover:bg-white spotlight-card'
-                  }`}
-                >
-                  {/* Hover transform effect */}
-                  <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-[0.98]" />
+              {navigation.map((item) => {
+                const href = `/master-data/${item.id}`;
+                const isActive = pathname.startsWith(href);
+                
+                return (
+                  <Link
+                    key={item.id}
+                    href={href}
+                    className={`flex items-center w-full px-2.5 py-2 rounded-md transition-colors ${
+                      isActive 
+                        ? 'bg-zinc-900 text-white font-semibold shadow-xs' 
+                        : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100'
+                    }`}
+                  >
+                    <div className="flex-shrink-0 w-4 h-4 mr-2.5 flex items-center justify-center">
+                      {React.cloneElement(item.icon as React.ReactElement<{className?: string}>, { 
+                        className: isActive ? 'w-4 h-4 text-white' : 'w-4 h-4 text-zinc-500' 
+                      })}
+                    </div>
+                    
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-caption font-semibold leading-tight truncate">{item.label}</span>
+                      <span className={`text-[10px] truncate ${isActive ? 'text-zinc-300' : 'text-zinc-400'}`}>
+                        {item.desc}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
 
-                  {isActive && (
-                    <>
-                      <motion.div 
-                        layoutId="masterDataActiveTab"
-                        className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none" 
-                        initial={false}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      />
-                      <motion.div 
-                        layoutId="masterDataActiveBar"
-                        className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400 shadow-elevation" 
-                        initial={false}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      />
-                    </>
-                  )}
-                  
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 relative z-10 ${
-                    isActive 
-                      ? 'bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_10px_rgba(16,185,129,0.4)]' 
-                      : 'bg-[#F4F4F6] text-zinc-500 group-hover:bg-emerald-500/10 group-hover:text-emerald-300 border border-black/5 group-hover:border-emerald-500/20'
-                  }`}>
-                    {React.cloneElement(item.icon as React.ReactElement<{className?: string}>, { className: 'w-4 h-4' })}
-                  </div>
-                  
-                  <div className="ml-3 flex-1 relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-                    <h3 className={`text-xs font-bold tracking-wide transition-colors ${isActive ? 'text-zinc-900' : 'text-zinc-600 group-hover:text-zinc-900'}`}>
-                      {item.label}
-                    </h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium group-hover:text-emerald-500/70 transition-colors uppercase tracking-wider">{item.desc}</p>
-                  </div>
-                </Link>
-              );
-            })}
+            {/* Page Content View */}
+            <div className="flex-1 bg-white border border-zinc-200 rounded-lg overflow-y-auto p-4 flex flex-col min-h-0 shadow-xs">
+              {children}
+            </div>
           </div>
 
-          {/* Page Content */}
-          <div className="flex-1 bg-black/5 backdrop-blur-2xl border border-black/5 rounded-3xl overflow-y-auto shadow-2xl relative z-10 flex flex-col min-h-0">
-            {children}
-          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

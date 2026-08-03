@@ -17,26 +17,42 @@ export class MaterialIssuesService {
       const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
       const currentStage = project.currentStage;
 
+      // Determine if header level is marked partial or if items are partials
+      let hasPartialItem = dto.isPartial || false;
+      for (const item of dto.items) {
+        const batch = await tx.inventoryBatch.findUniqueOrThrow({
+          where: { id: item.inventoryBatchId },
+        });
+        if (item.issuedQty < batch.availableQty.toNumber()) {
+          hasPartialItem = true;
+        }
+      }
+
       // 2. Create Material Issue Header
       const issueHeader = await tx.materialIssueHeader.create({
         data: {
           projectId,
           issueNumber: dto.issueNumber,
           documentNumber: dto.issueNumber,
-          status: 'COMPLETED',
+          status: hasPartialItem ? 'PARTIAL' : 'COMPLETED',
+          isPartial: hasPartialItem,
+          productionSection: dto.productionSection || 'MACHINE_SHOP',
+          expectedManufactureQty: dto.expectedManufactureQty || null,
+          jobCardId: dto.jobCardId || null,
+          remarks: dto.remarks || null,
           createdBy: userId,
           updatedBy: userId,
         },
       });
 
-      // 3. BOM Validation Gate (Precompute) - Removed to allow issuing any material
-      
       let totalConsumptionCost = 0;
 
-      // 4. Fallback warehouse (used only if we can't auto-resolve from stock later)
+      // 4. Fallback warehouse (dynamically resolved)
       const defaultWarehouse = dto.warehouseId
-        ? await tx.warehouse.findUniqueOrThrow({ where: { id: dto.warehouseId } })
-        : await tx.warehouse.findFirst({ where: { warehouseCode: 'DEFAULT-WH' } });
+        ? await tx.warehouse.findUnique({ where: { id: dto.warehouseId } })
+        : (await tx.warehouse.findFirst({ where: { warehouseCode: 'DEFAULT-WH' } })) ||
+          (await tx.warehouse.findFirst({ where: { status: 'ACTIVE' } })) ||
+          (await tx.warehouse.findFirst());
 
       // 5. Process each Issued Item
       for (const item of dto.items) {
@@ -45,15 +61,15 @@ export class MaterialIssuesService {
           where: { id: item.inventoryBatchId },
         });
 
-        // Removed bomMaterials.has check
-
-
         if (batch.availableQty.toNumber() < item.issuedQty) {
           throw new BadRequestException(`Insufficient available stock in Batch ${batch.batchNumber}. Available: ${batch.availableQty}, Requested: ${item.issuedQty}`);
         }
 
         const consumptionValue = item.issuedQty * batch.unitCost.toNumber();
         totalConsumptionCost += consumptionValue;
+
+        const remainingBatchQty = batch.availableQty.toNumber() - item.issuedQty;
+        const isItemPartial = item.issuedQty < batch.availableQty.toNumber();
 
         // Create Issue Item
         await tx.materialIssueItem.create({
@@ -62,6 +78,8 @@ export class MaterialIssuesService {
             inventoryBatchId: item.inventoryBatchId,
             issuedQty: item.issuedQty,
             materialValue: consumptionValue,
+            remainingBatchQty: remainingBatchQty,
+            isPartial: isItemPartial,
             remarks: item.remarks,
             createdBy: userId,
             updatedBy: userId,
@@ -78,14 +96,13 @@ export class MaterialIssuesService {
             currentQty: { decrement: item.issuedQty },
             availableQty: { decrement: item.issuedQty },
             issuedQty: { increment: item.issuedQty },
-            status: batch.availableQty.toNumber() === item.issuedQty ? 'CONSUMED' : 'AVAILABLE',
+            status: remainingBatchQty === 0 ? 'CONSUMED' : 'AVAILABLE',
           },
         });
 
         if (updateBatchCount.count === 0) {
           throw new BadRequestException(`Insufficient stock or concurrent modification in Batch ${batch.batchNumber}. Available: ${batch.availableQty}, Requested: ${item.issuedQty}`);
         }
-
 
         // 6. Update Inventory Stock (Layer 4 - Events) with atomic concurrency check
         let currentStock;
@@ -153,9 +170,7 @@ export class MaterialIssuesService {
         }, tx);
       }
 
-      // 7. Costing Integration: Rollup consumption to ProjectCostSummary (Layer 5 - Outcomes)
-      // Using upsert to protect against legacy projects without a cost summary record
-      await tx.projectCostSummary.upsert({
+      const summary = await tx.projectCostSummary.upsert({
         where: { projectId },
         create: {
           projectId,
@@ -170,7 +185,7 @@ export class MaterialIssuesService {
           packingCost: 0,
           dispatchCost: 0,
           revenue: 0,
-          profitability: 0,
+          profitability: -totalConsumptionCost,
         },
         update: {
           materialConsumptionCost: { increment: totalConsumptionCost },
@@ -178,13 +193,22 @@ export class MaterialIssuesService {
         },
       });
 
+      // Synchronize live profitability (revenue - totalCost)
+      const currentRevenue = Number(summary.revenue || 0);
+      const updatedTotalCost = Number(summary.totalCost || 0);
+      await tx.projectCostSummary.update({
+        where: { projectId },
+        data: {
+          profitability: currentRevenue - updatedTotalCost,
+        },
+      });
 
       // Record detailed cost audit trail event
       await tx.projectCostEvent.create({
         data: {
           projectId,
           costType: 'MATERIAL_CONSUMPTION',
-          description: `Material consumed from inventory under Issue Slip ${dto.issueNumber}`,
+          description: `Material consumed under Issue Slip ${dto.issueNumber} (${hasPartialItem ? 'Partial' : 'Full'} Issue)`,
           amount: totalConsumptionCost,
           referenceDocType: 'MATERIAL_ISSUE',
           referenceDocId: issueHeader.id,
@@ -197,7 +221,7 @@ export class MaterialIssuesService {
         data: {
           projectId,
           action: 'MATERIAL_CONSUMED',
-          description: `Material Issue ${dto.issueNumber} completed. Consumption Value booked: ₹${totalConsumptionCost}`,
+          description: `Material Issue ${dto.issueNumber} (${hasPartialItem ? 'Partial' : 'Full'}) recorded. Value: ₹${totalConsumptionCost}`,
           performedBy: userId || 'SYSTEM',
         },
       });
@@ -229,14 +253,42 @@ export class MaterialIssuesService {
         });
       }
 
-      return issueHeader;
+      return tx.materialIssueHeader.findUnique({
+        where: { id: issueHeader.id },
+        include: {
+          jobCard: {
+            include: {
+              routingOperation: { include: { operation: true } },
+              machine: true,
+            },
+          },
+          items: {
+            include: {
+              inventoryBatch: { include: { material: true } },
+            },
+          },
+        },
+      });
     });
   }
 
   async getMaterialIssues(projectId: string) {
     return this.prisma.materialIssueHeader.findMany({
       where: { projectId },
-      include: { items: { include: { inventoryBatch: { include: { material: true } } } } },
+      include: {
+        jobCard: {
+          include: {
+            routingOperation: { include: { operation: true } },
+            machine: true,
+          },
+        },
+        items: {
+          include: {
+            inventoryBatch: { include: { material: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

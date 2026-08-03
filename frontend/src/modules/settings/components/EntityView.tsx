@@ -25,6 +25,8 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [viewingRecord, setViewingRecord] = useState<any | null>(null);
+  const [deletingRecord, setDeletingRecord] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { success, error } = useToast();
 
@@ -93,15 +95,22 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
     setIsViewOpen(true);
   };
 
-  const handleDelete = async (record: any) => {
-    if (confirm(`Are you sure you want to archive this ${registry.singularName}?`)) {
-      try {
-        await api.delete(buildEndpoint(`/${record.id}`));
-        success('Record Archived', `Successfully deleted ${registry.singularName}.`);
-        fetchData();
-      } catch (err: any) {
-        error('Deletion Failed', err.message || 'Failed to delete record');
-      }
+  const handleDelete = (record: any) => {
+    setDeletingRecord(record);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingRecord) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(buildEndpoint(`/${deletingRecord.id}`));
+      success('Record Archived', `Successfully archived ${registry.singularName}.`);
+      setDeletingRecord(null);
+      fetchData();
+    } catch (err: any) {
+      error('Deletion Failed', err.message || 'Failed to archive record.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -270,6 +279,32 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
             { id: '2', action: 'UPDATED', timestamp: editingRecord?.updatedAt || new Date().toISOString(), user: editingRecord?.updatedBy || 'SystemAdmin', details: 'Updated core details' }
           ]} 
         />
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deletingRecord}
+        onClose={() => setDeletingRecord(null)}
+        title={`Archive ${registry.singularName}`}
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-zinc-600 font-medium">
+            Are you sure you want to archive <span className="font-bold text-zinc-900">{deletingRecord?.name || deletingRecord?.companyName || deletingRecord?.customerCode || deletingRecord?.vendorName || deletingRecord?.materialCode || deletingRecord?.machineCode || 'this record'}</span>? This will change its status to INACTIVE.
+          </p>
+          <div className="flex justify-end space-x-3 pt-4 border-t border-black/10">
+            <Button variant="ghost" onClick={() => setDeletingRecord(null)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="danger" 
+              isLoading={isDeleting}
+              onClick={confirmDelete}
+            >
+              Confirm Archive
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

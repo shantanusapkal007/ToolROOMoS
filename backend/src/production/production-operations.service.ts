@@ -75,6 +75,17 @@ export class ProductionOperationsService {
         totalMachineCost += mCost;
         totalLabourCost += lCost;
 
+        // Update WIP Progress (Accrue machine and labor costs)
+        if (item.materialId) {
+          await this.wipService.updateWipProgress({
+            projectId,
+            machineId: dto.machineId,
+            materialId: item.materialId,
+            accruedMachineCost: mCost,
+            accruedLabourCost: lCost
+          }, tx);
+        }
+
         // Cost logging per item
         await tx.projectCostEvent.create({
           data: {
@@ -88,26 +99,51 @@ export class ProductionOperationsService {
           },
         });
 
-        await tx.projectCostEvent.create({
-          data: {
+        // Synchronize matching JobCard status to IN_PROGRESS
+        await tx.jobCard.updateMany({
+          where: {
             projectId,
-            costType: 'LABOUR_COST',
-            description: `Labour cost logged for operator ${employee.employeeCode} for ${machineHrs.toFixed(2)} hrs (Tool: ${item.toolNo || 'N/A'})`,
-            amount: lCost,
-            referenceDocType: 'MSDR_OP',
-            referenceDocId: op.id,
-            createdBy: userId,
+            machineId: dto.machineId,
+            status: 'READY'
           },
+          data: {
+            status: 'IN_PROGRESS',
+            operatorId: dto.employeeId
+          }
         });
       }
 
-      // 4. Rollup costs to ProjectCostSummary
-      await tx.projectCostSummary.update({
+      // 4. Rollup costs to ProjectCostSummary & synchronize live profitability
+      const summary = await tx.projectCostSummary.upsert({
         where: { projectId },
-        data: {
+        create: {
+          projectId,
+          materialConsumptionCost: 0,
+          totalCost: totalMachineCost + totalLabourCost,
+          estimatedMaterialCost: 0,
+          actualMaterialCost: 0,
+          machineCost: totalMachineCost,
+          labourCost: totalLabourCost,
+          outsideProcessCost: 0,
+          inspectionCost: 0,
+          packingCost: 0,
+          dispatchCost: 0,
+          revenue: 0,
+          profitability: -(totalMachineCost + totalLabourCost),
+        },
+        update: {
           machineCost: { increment: totalMachineCost },
           labourCost: { increment: totalLabourCost },
           totalCost: { increment: totalMachineCost + totalLabourCost },
+        },
+      });
+
+      const currentRevenue = Number(summary.revenue || 0);
+      const updatedTotalCost = Number(summary.totalCost || 0);
+      await tx.projectCostSummary.update({
+        where: { projectId },
+        data: {
+          profitability: currentRevenue - updatedTotalCost,
         },
       });
 

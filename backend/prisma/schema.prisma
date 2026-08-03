@@ -287,6 +287,9 @@ model Employee {
   productionOperations ProductionOperation[]
   user                 User?
   msdrHeaders          MsdrHeader[]
+  globalAssetIssues    GlobalAssetIssueTransaction[]
+  globalAssetReturns   GlobalAssetReturnTransaction[]
+  employeeMonthlySalaries EmployeeMonthlySalary[]
 
   @@map("employees")
 }
@@ -463,6 +466,7 @@ model Project {
   assemblyHeaders        AssemblyHeader[]
   projectTrials          ProjectTrial[]
   maintenanceTickets     MaintenanceTicket[]
+  designWorkLogs         DesignWorkLog[]
 
   @@map("projects")
 }
@@ -683,6 +687,7 @@ model PurchaseOrderItem {
   discount Decimal?
   cgst Decimal?
   sgst Decimal?
+  igst Decimal?
   basicValue Decimal?
 
   @@map("purchase_order_items")
@@ -764,10 +769,15 @@ model MaterialIssueHeader {
   issueDate               DateTime                 @default(now())
   status                  String                   @default("COMPLETED")
   remarks                 String?
+  productionSection       String?
+  jobCardId               String?
+  isPartial               Boolean                  @default(false)
+  expectedManufactureQty  Int?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   createdBy               String?
   updatedBy               String?
+  jobCard                 JobCard?                 @relation(fields: [jobCardId], references: [id], onDelete: SetNull)
   machineShopDailyReports MachineShopDailyReport[]
   project                 Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items                   MaterialIssueItem[]
@@ -776,18 +786,20 @@ model MaterialIssueHeader {
 }
 
 model MaterialIssueItem {
-  id               String              @id @default(uuid())
-  issueHeaderId    String
-  inventoryBatchId String
-  issuedQty        Decimal
-  materialValue    Decimal             @default(0)
-  remarks          String?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  createdBy        String?
-  updatedBy        String?
-  inventoryBatch   InventoryBatch      @relation(fields: [inventoryBatchId], references: [id])
-  issueHeader      MaterialIssueHeader @relation(fields: [issueHeaderId], references: [id])
+  id                String              @id @default(uuid())
+  issueHeaderId     String
+  inventoryBatchId  String
+  issuedQty         Decimal
+  materialValue     Decimal             @default(0)
+  remainingBatchQty Decimal?
+  isPartial         Boolean             @default(false)
+  remarks           String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  createdBy         String?
+  updatedBy         String?
+  inventoryBatch    InventoryBatch      @relation(fields: [inventoryBatchId], references: [id])
+  issueHeader       MaterialIssueHeader @relation(fields: [issueHeaderId], references: [id])
 
   @@index([issueHeaderId])
   @@index([inventoryBatchId])
@@ -972,11 +984,11 @@ model InventoryStock {
 model InventoryBatch {
   id                       String                   @id @default(uuid())
   materialId               String
-  grnItemId                String
+  grnItemId                String?
   batchNumber              String                   @unique
   heatNumber               String?
   locationId               String?
-  receivedQty              Decimal
+  receivedQty              Decimal                  @default(0)
   currentQty               Decimal
   unitCost                 Decimal                  @default(0)
   status                   String                   @default("AVAILABLE")
@@ -987,7 +999,7 @@ model InventoryBatch {
   availableQty             Decimal                  @default(0)
   issuedQty                Decimal                  @default(0)
   reservedQty              Decimal                  @default(0)
-  grnItem                  GoodsReceiptItem         @relation(fields: [grnItemId], references: [id])
+  grnItem                  GoodsReceiptItem?        @relation(fields: [grnItemId], references: [id])
   location                 StorageLocation?         @relation(fields: [locationId], references: [id])
   material                 Material                 @relation(fields: [materialId], references: [id])
   subcontractReceiptItem   SubcontractReceiptItem?  @relation(fields: [subcontractReceiptItemId], references: [id])
@@ -1143,6 +1155,7 @@ model JobCard {
 
   productionSchedules ProductionSchedule[]
   timeLogs            JobCardTimeLog[]
+  materialIssues      MaterialIssueHeader[]
 
   @@map("job_cards")
 }
@@ -1171,6 +1184,32 @@ model ProjectActivity {
 
   @@index([projectId])
   @@map("project_activities")
+}
+
+model DesignWorkLog {
+  id            String    @id @default(uuid())
+  projectId     String
+  designerName  String
+  designerId    String?
+  workStage     String
+  partName      String?
+  drawingNumber String?
+  revision      String?
+  description   String
+  workDate      DateTime  @default(now())
+  startTime     String?
+  endTime       String?
+  hoursSpent    Decimal   @default(0)
+  status        String    @default("COMPLETED")
+  cadFileUrl    String?
+  remarks       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  createdBy     String?
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("design_work_logs")
 }
 
 model Approval {
@@ -1568,6 +1607,7 @@ enum SystemRole {
 
 enum ProductionSection {
   MACHINE_SHOP
+  TOOL_ROOM_FITTING
   PRESS_SHOP
   FABRICATION_INDIAN
   FABRICATION_EXPORT
@@ -2120,3 +2160,241 @@ model AuditLog {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+model RolePermission {
+  id         String     @id @default(uuid())
+  role       SystemRole
+  module     String     // e.g., "projects", "master_data", "procurement", etc.
+  canView    Boolean    @default(false)
+  canCreate  Boolean    @default(false)
+  canEdit    Boolean    @default(false)
+  canDelete  Boolean    @default(false)
+  canApprove Boolean    @default(false)
+  canExport  Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  createdBy  String?
+  updatedBy  String?
+
+  @@unique([role, module])
+  @@map("role_permissions")
+}
+
+// =========================================================
+// GLOBAL ASSET & TOOL MANAGEMENT SYSTEM (STANDALONE MODULE)
+// =========================================================
+
+enum GlobalAssetStatus {
+  AVAILABLE
+  ISSUED
+  MAINTENANCE
+  RESERVED
+  LOST
+  SCRAPPED
+}
+
+enum GlobalAssetIssueStatus {
+  ISSUED
+  PARTIALLY_RETURNED
+  RETURNED
+  OVERDUE
+}
+
+enum GlobalAssetMaintenanceStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model GlobalAssetCategory {
+  id           String        @id @default(uuid())
+  categoryCode String        @unique
+  name         String
+  description  String?
+  status       String        @default("ACTIVE")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  createdBy    String?
+  updatedBy    String?
+  assets       GlobalAsset[]
+
+  @@map("global_asset_categories")
+}
+
+model GlobalAssetLocation {
+  id           String        @id @default(uuid())
+  locationCode String        @unique
+  locationName String
+  building     String?
+  room         String?
+  rackBin      String?
+  remarks      String?
+  status       String        @default("ACTIVE")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  createdBy    String?
+  updatedBy    String?
+  assets       GlobalAsset[]
+
+  @@map("global_asset_locations")
+}
+
+model GlobalAsset {
+  id                  String                          @id @default(uuid())
+  assetId             String                          @unique // Auto Generated e.g. AST-10001
+  assetCode           String                          @unique
+  name                String
+  categoryId          String
+  subCategory         String?
+  brand               String?
+  model               String?
+  serialNumber        String?
+  partNumber          String?
+  description         String?
+  quantity            Decimal                         @default(1)
+  availableQty        Decimal                         @default(1)
+  issuedQty           Decimal                         @default(0)
+  unit                String                          @default("NOS")
+  purchaseDate        DateTime?
+  purchaseCost        Decimal                         @default(0)
+  supplier            String?
+  locationId          String?
+  storageRack         String?
+  condition           String                          @default("GOOD")
+  warrantyExpiry      DateTime?
+  status              GlobalAssetStatus               @default(AVAILABLE)
+  qrCode              String?
+  barcode             String?
+  imageUrl            String?
+  documentUrls        Json?
+  createdAt           DateTime                        @default(now())
+  updatedAt           DateTime                        @updatedAt
+  createdBy           String?
+  updatedBy           String?
+
+  category            GlobalAssetCategory             @relation(fields: [categoryId], references: [id])
+  location            GlobalAssetLocation?            @relation(fields: [locationId], references: [id])
+  issueTransactions   GlobalAssetIssueTransaction[]
+  returnTransactions  GlobalAssetReturnTransaction[]
+  maintenanceRequests GlobalAssetMaintenanceRequest[]
+  auditLogs           GlobalAssetAuditLog[]
+
+  @@map("global_assets")
+}
+
+model GlobalAssetIssueTransaction {
+  id                   String                         @id @default(uuid())
+  issueNumber          String                         @unique // e.g. ISS-10001
+  assetId              String
+  employeeId           String
+  quantity             Decimal                        @default(1)
+  issueDate            DateTime                       @default(now())
+  expectedReturnDate   DateTime?
+  actualReturnDate     DateTime?
+  conditionBeforeIssue String                         @default("GOOD")
+  conditionAfterReturn String?
+  status               GlobalAssetIssueStatus         @default(ISSUED)
+  remarks              String?
+  createdAt            DateTime                       @default(now())
+  updatedAt            DateTime                       @updatedAt
+  createdBy            String?
+  updatedBy            String?
+
+  asset                GlobalAsset                    @relation(fields: [assetId], references: [id])
+  employee             Employee                       @relation(fields: [employeeId], references: [id])
+  returns              GlobalAssetReturnTransaction[]
+
+  @@map("global_asset_issue_transactions")
+}
+
+model GlobalAssetReturnTransaction {
+  id                   String                         @id @default(uuid())
+  returnNumber         String                         @unique // e.g. RET-10001
+  issueTransactionId   String
+  assetId              String
+  employeeId           String
+  returnedQty          Decimal                        @default(1)
+  returnDate           DateTime                       @default(now())
+  conditionAfterReturn String                         @default("GOOD")
+  damageDetails        String?
+  remarks              String?
+  createdAt            DateTime                       @default(now())
+  updatedAt            DateTime                       @updatedAt
+  createdBy            String?
+  updatedBy            String?
+
+  issueTransaction     GlobalAssetIssueTransaction    @relation(fields: [issueTransactionId], references: [id])
+  asset                GlobalAsset                    @relation(fields: [assetId], references: [id])
+  employee             Employee                       @relation(fields: [employeeId], references: [id])
+
+  @@map("global_asset_return_transactions")
+}
+
+model GlobalAssetMaintenanceRequest {
+  id                 String                         @id @default(uuid())
+  requestNumber      String                         @unique // e.g. MNT-10001
+  assetId            String
+  issueReported      String
+  assignedTechnician String?
+  maintenanceStart   DateTime?
+  maintenanceEnd     DateTime?
+  cost               Decimal                        @default(0)
+  status             GlobalAssetMaintenanceStatus   @default(PENDING)
+  remarks            String?
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+  createdBy          String?
+  updatedBy          String?
+
+  asset              GlobalAsset                    @relation(fields: [assetId], references: [id])
+
+  @@map("global_asset_maintenance_requests")
+}
+
+model GlobalAssetAuditLog {
+  id          String      @id @default(uuid())
+  assetId     String
+  action      String      // CREATED, UPDATED, ISSUED, RETURNED, TRANSFERRED, MAINTENANCE, DELETED, RESTORED
+  performedBy String
+  oldValues   Json?
+  newValues   Json?
+  timestamp   DateTime    @default(now())
+
+  asset       GlobalAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@map("global_asset_audit_logs")
+}
+
+model EmployeeMonthlySalary {
+  id           String   @id @default(uuid())
+  employeeId   String
+  monthYear    String   // e.g. "2026-08" or "2026-07"
+  actualSalary Decimal  @default(0)
+  baseSalary   Decimal  @default(0)
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdBy    String?
+  updatedBy    String?
+
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, monthYear])
+  @@map("employee_monthly_salaries")
+}
+
+model MasterCategoryOption {
+  id          String   @id @default(uuid())
+  category    String   // e.g. "PRODUCTION_SECTION", "CAD_TOOL", "WORK_STAGE", "UOM", "ASSET_CONDITION", "VENDOR_TYPE", "FINANCIAL_YEAR"
+  code        String
+  label       String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([category, code])
+  @@map("master_category_options")
+}
+
+

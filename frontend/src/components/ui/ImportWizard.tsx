@@ -3,6 +3,8 @@ import Papa from 'papaparse';
 import { Upload, Download, FileSpreadsheet, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { EntityRegistry, EntityField } from '../../modules/settings/types';
 import { api } from '../../lib/api';
+import { Button } from './Button';
+import { Modal } from './Modal';
 
 interface ImportWizardProps {
   isOpen: boolean;
@@ -23,11 +25,9 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDownloadTemplate = () => {
-    // Generate CSV header based on registry fields
     const headers = registry.fields.map(f => f.name);
     const csvContent = headers.join(',') + '\n';
     
-    // Provide a dummy row as example
     const dummyRow = registry.fields.map(f => {
       if (f.type === 'select' && f.options) return f.options[0].value;
       if (f.type === 'number') return '0';
@@ -62,70 +62,54 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
   };
 
   const validateData = (data: any[]) => {
-    const validationErrors: {row: number, message: string}[] = [];
-    
-    const validatedData = data.map((row, index) => {
-      const rowNum = index + 2; // +1 for 0-index, +1 for header row
-      const validatedRow: any = {};
-      
+    const newErrors: {row: number, message: string}[] = [];
+    const validRows: any[] = [];
+
+    data.forEach((row, idx) => {
+      let isRowValid = true;
+      const rowNum = idx + 2;
+
       registry.fields.forEach(field => {
         const val = row[field.name];
         
-        // Required check
-        if (field.required && (!val || val.trim() === '')) {
-          validationErrors.push({ row: rowNum, message: `Missing required field: ${field.name}` });
-        }
-        
-        // Ensure values match expected options for selects
-        if (field.type === 'select' && field.options && val) {
-          const isValidOption = field.options.some(opt => opt.value === val);
-          if (!isValidOption) {
-            validationErrors.push({ row: rowNum, message: `Invalid value for ${field.name}: '${val}'. Expected one of: ${field.options.map(o => o.value).join(', ')}` });
-          }
-        }
-        
-        // Number coercion
-        if (field.type === 'number' && val) {
-          const num = Number(val);
-          if (isNaN(num)) {
-            validationErrors.push({ row: rowNum, message: `Invalid number for ${field.name}: '${val}'` });
-          } else {
-            validatedRow[field.name] = num;
-            return;
-          }
+        if (field.required && (val === undefined || val === null || val === '')) {
+          newErrors.push({ row: rowNum, message: `Missing required field: ${field.label}` });
+          isRowValid = false;
         }
 
-        validatedRow[field.name] = val;
+        if (val && field.type === 'number' && isNaN(Number(val))) {
+          newErrors.push({ row: rowNum, message: `Field ${field.label} must be a valid number` });
+          isRowValid = false;
+        }
       });
-      return validatedRow;
+
+      if (isRowValid) {
+        validRows.push(row);
+      }
     });
 
-    setParsedData(validatedData);
-    setErrors(validationErrors);
+    setParsedData(validRows);
+    setErrors(newErrors);
     setStep(3);
   };
 
-  const handleImport = async () => {
-    if (errors.length > 0) return;
-    
+  const handleExecuteImport = async () => {
     setIsImporting(true);
     setProgress({ current: 0, total: parsedData.length });
 
-    // Batch import: Send individual POST requests using Promise.all in chunks to prevent server overload
-    const chunkSize = 10;
-    let successCount = 0;
+    const endpoint = registry.apiEndpoint || `/master-data/${registry.id}`;
+    const batchSize = 10;
     const importErrors: {row: number, message: string}[] = [];
 
-    for (let i = 0; i < parsedData.length; i += chunkSize) {
-      const chunk = parsedData.slice(i, i + chunkSize);
+    for (let i = 0; i < parsedData.length; i += batchSize) {
+      const chunk = parsedData.slice(i, i + batchSize);
       
-      const promises = chunk.map(async (record, index) => {
+      const promises = chunk.map(async (item, idx) => {
+        const rowNum = i + idx + 2;
         try {
-          await api.post(registry.apiEndpoint, record);
-          successCount++;
-          setProgress(p => ({ ...p, current: successCount }));
+          await api.post(endpoint, item);
+          setProgress(prev => ({ ...prev, current: prev.current + 1 }));
         } catch (err: any) {
-          const rowNum = i + index + 2;
           importErrors.push({ 
             row: rowNum, 
             message: err.response?.data?.message || 'Server error during import'
@@ -146,190 +130,132 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-      <div className="glass-panel w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Import ${registry.pluralName}`}
+      subtitle="Bulk upload records via CSV template"
+      maxWidth="xl"
+    >
+      <div className="space-y-6">
         
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-black/10 bg-black/5">
-          <div>
-            <h2 className="text-xl font-bold text-zinc-900 flex items-center">
-              <FileSpreadsheet className="w-5 h-5 mr-2 text-blue-400" />
-              Import {registry.pluralName}
-            </h2>
-            <p className="text-sm text-zinc-500 mt-1">Bulk upload records via CSV</p>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-zinc-500 hover:text-zinc-900 transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+        {/* Stepper */}
+        <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
+          {[
+            { num: 1, label: 'Download Template' },
+            { num: 2, label: 'Upload CSV File' },
+            { num: 3, label: 'Verify & Confirm' }
+          ].map(s => (
+            <div key={s.num} className="flex items-center gap-2">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-micro font-bold border ${
+                step >= s.num ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-zinc-100 text-zinc-400 border-zinc-200'
+              }`}>
+                {s.num}
+              </div>
+              <span className={`text-caption font-semibold ${step >= s.num ? 'text-zinc-900' : 'text-zinc-400'}`}>
+                {s.label}
+              </span>
+            </div>
+          ))}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Stepper */}
-          <div className="flex items-center justify-between mb-8 relative">
-            <div className="absolute left-0 top-1/2 w-full h-0.5 bg-slate-800 -z-10 -translate-y-1/2"></div>
-            {[
-              { num: 1, label: 'Template' },
-              { num: 2, label: 'Upload' },
-              { num: 3, label: 'Verify' }
-            ].map(s => (
-              <div key={s.num} className={`flex flex-col items-center ${step >= s.num ? 'opacity-100' : 'opacity-50'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-2 transition-colors ${
-                  step >= s.num ? 'bg-blue-500 text-white shadow-elevation' : 'bg-slate-800 text-zinc-500'
-                }`}>
-                  {s.num}
-                </div>
-                <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">{s.label}</span>
-              </div>
-            ))}
-          </div>
-
-          {step === 1 && (
-            <div className="text-center py-12 animate-fade-in">
-              <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Download className="w-8 h-8 text-blue-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-zinc-900 mb-2">Download CSV Template</h3>
-              <p className="text-zinc-500 mb-8 max-w-md mx-auto">
-                Start by downloading the official template. It contains all the required column headers for {registry.pluralName}.
-              </p>
-              <button 
+        {step === 1 && (
+          <div className="text-center py-8 space-y-4">
+            <div className="w-12 h-12 bg-blue-50 border border-blue-200 rounded-full flex items-center justify-center mx-auto text-blue-600">
+              <Download className="w-6 h-6" />
+            </div>
+            <h3 className="text-section-title font-bold text-zinc-900">Download CSV Template</h3>
+            <p className="text-caption text-zinc-500 max-w-md mx-auto">
+              Download the official template pre-formatted with column headers for {registry.pluralName}.
+            </p>
+            <div className="pt-2">
+              <Button 
                 onClick={() => { handleDownloadTemplate(); setStep(2); }}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20"
               >
-                Download Template
-              </button>
+                <Download className="w-4 h-4" />
+                <span>Download Template & Proceed</span>
+              </Button>
             </div>
-          )}
+          </div>
+        )}
 
-          {step === 2 && (
-            <div className="text-center py-12 animate-fade-in">
-              <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Upload className="w-8 h-8 text-blue-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-zinc-900 mb-2">Upload Data</h3>
-              <p className="text-zinc-500 mb-8 max-w-md mx-auto">
-                Upload your completed CSV file. We'll validate the data before importing.
-              </p>
-              
-              <input 
-                type="file" 
-                accept=".csv"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-slate-800 hover:bg-slate-700 text-zinc-900 px-6 py-3 rounded-lg border border-slate-700 font-medium transition-colors"
-              >
-                Select CSV File
-              </button>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="animate-fade-in">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-zinc-900">Validation Results</h3>
-                <span className="px-3 py-1 bg-slate-800 rounded-full text-sm text-zinc-600 border border-slate-700">
-                  {parsedData.length} records found
-                </span>
-              </div>
-
-              {errors.length > 0 ? (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
-                  <div className="flex items-center text-red-400 font-semibold mb-3">
-                    <AlertCircle className="w-5 h-5 mr-2" />
-                    Found {errors.length} validation error(s)
-                  </div>
-                  <ul className="space-y-2 text-sm text-red-300 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                    {errors.map((err, i) => (
-                      <li key={i} className="flex items-start">
-                        <span className="w-16 shrink-0 font-mono text-red-400/70">Row {err.row}:</span>
-                        <span>{err.message}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4 pt-4 border-t border-red-500/20">
-                    <button 
-                      onClick={() => setStep(2)}
-                      className="text-sm font-medium text-red-400 hover:text-red-300"
-                    >
-                      &larr; Upload a corrected file
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-6 mb-6 text-center">
-                  <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-                  <h4 className="text-emerald-400 font-semibold text-lg mb-1">Ready to Import</h4>
-                  <p className="text-emerald-300/70 text-sm">All {parsedData.length} records passed validation.</p>
-                </div>
-              )}
-
-              {/* Data Preview */}
-              <div className="border border-slate-800 rounded-lg overflow-hidden">
-                <div className="overflow-x-auto max-h-64 custom-scrollbar">
-                  <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-slate-800/50 text-zinc-500 sticky top-0 backdrop-blur-md">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">Row</th>
-                        {registry.fields.map(f => (
-                          <th key={f.name} className="px-4 py-3 font-medium">{f.label}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {parsedData.slice(0, 5).map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-800/30 text-zinc-600">
-                          <td className="px-4 py-2 font-mono text-slate-500">{i + 2}</td>
-                          {registry.fields.map(f => (
-                            <td key={f.name} className="px-4 py-2">{row[f.name]}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {parsedData.length > 5 && (
-                  <div className="bg-slate-800/30 text-center py-2 text-xs font-medium text-slate-500 border-t border-slate-800">
-                    Showing 5 of {parsedData.length} records
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-6 border-t border-black/10 bg-black/5 flex justify-end gap-3">
-          <button 
-            onClick={onClose}
-            disabled={isImporting}
-            className="px-5 py-2.5 rounded-lg font-medium text-zinc-600 hover:text-zinc-900 hover:bg-slate-800 transition-colors disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          
-          {step === 3 && errors.length === 0 && (
-            <button 
-              onClick={handleImport}
-              disabled={isImporting}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20 flex items-center disabled:opacity-50"
+        {step === 2 && (
+          <div className="text-center py-8 space-y-4">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              accept=".csv" 
+              className="hidden" 
+            />
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-zinc-300 hover:border-zinc-500 rounded-lg p-8 cursor-pointer transition-colors max-w-md mx-auto bg-zinc-50"
             >
-              {isImporting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Importing ({progress.current}/{progress.total})
-                </>
-              ) : (
-                'Start Import'
+              <Upload className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
+              <p className="text-caption font-bold text-zinc-800">Click to Select CSV File</p>
+              <p className="text-micro text-zinc-400 mt-1">Supports standard CSV spreadsheets</p>
+            </div>
+            <div className="flex justify-center gap-2">
+              <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center bg-zinc-50 border border-zinc-200 p-3 rounded-md">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span className="text-caption font-bold text-zinc-800">{parsedData.length} Valid Records Ready</span>
+              </div>
+              {errors.length > 0 && (
+                <div className="flex items-center gap-1.5 text-red-600 text-caption font-bold">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.length} Errors Found</span>
+                </div>
               )}
-            </button>
-          )}
-        </div>
+            </div>
+
+            {errors.length > 0 && (
+              <div className="max-h-40 overflow-y-auto border border-red-200 bg-red-50/50 rounded-md p-3 space-y-1">
+                <p className="text-micro font-bold text-red-700 uppercase">Validation Warnings:</p>
+                {errors.map((err, i) => (
+                  <div key={i} className="text-caption text-red-600">
+                    Row {err.row}: {err.message}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {isImporting && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-caption font-bold text-zinc-700">
+                  <span>Importing Records...</span>
+                  <span>{progress.current} / {progress.total}</span>
+                </div>
+                <div className="w-full bg-zinc-200 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-blue-600 h-full transition-all" 
+                    style={{ width: `${(progress.current / (progress.total || 1)) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+              <Button variant="secondary" onClick={() => setStep(2)} disabled={isImporting}>Re-upload</Button>
+              <Button 
+                onClick={handleExecuteImport} 
+                disabled={isImporting || parsedData.length === 0}
+              >
+                {isImporting ? 'Importing Records...' : `Confirm & Import ${parsedData.length} Records`}
+              </Button>
+            </div>
+          </div>
+        )}
+
       </div>
-    </div>
+    </Modal>
   );
 };

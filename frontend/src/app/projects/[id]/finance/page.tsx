@@ -1,417 +1,681 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { useParams } from "next/navigation";
 import { 
   DollarSign, 
-  Plus, 
-  TrendingUp, 
-  TrendingDown, 
+  FileText, 
+  ArrowUpRight, 
+  ArrowDownRight, 
   Activity, 
-  FileText,
+  PieChart, 
+  Wrench, 
+  HardHat, 
+  Truck, 
+  TrendingUp, 
+  Percent, 
+  Lock, 
+  Plus, 
+  X, 
+  Info, 
+  Calendar, 
+  Settings, 
+  Download,
   CreditCard,
-  PieChart,
-  Target
+  CheckCircle2
 } from "lucide-react";
-import { SmartTable } from "@/components/ui/SmartTable";
-import { PremiumDrawer } from "@/components/ui/PremiumDrawer";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import * as XLSX from "xlsx";
 import { useToast } from "@/components/ui/Toast";
 import { useProject, useCloseProject } from "@/hooks/useProjects";
-import { useCreateInvoice, useRecordPayment } from "@/hooks/useFinance";
-import { formatDate } from "@/lib/formatters";
+import { useCostEvents, useCreateInvoice, useRecordPayment } from "@/hooks/useFinance";
+import { ProjectLaborTracking } from "@/components/finance/ProjectLaborTracking";
+import { FinanceWaterfall, FinanceData } from "@/components/ui/charts/FinanceWaterfall";
+import { Button } from "@/components/ui/Button";
+import { SmartTable } from "@/components/ui/SmartTable";
+import { Modal } from "@/components/ui/Modal";
+import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 
-export default function FinanceTab({ params }: { params: Promise<{ id: string }> }) {
+export default function ProjectFinancePage() {
+  const params = useParams();
+  const id = params?.id as string;
+
   const { success, error } = useToast();
-  const resolvedParams = React.use(params);
-  const projectId = resolvedParams.id;
-  
-  const { data: project, isLoading: projectLoading } = useProject(projectId);
-  const createInvoiceMutation = useCreateInvoice(projectId);
-  const recordPaymentMutation = useRecordPayment(projectId);
-  
-  const [activeTab, setActiveTab] = useState<'INVOICES' | 'PAYMENTS'>('INVOICES');
-  const [drawerMode, setDrawerMode] = useState<string | null>(null);
-  
-  const [invoiceForm, setInvoiceForm] = useState({ dispatchNoteId: "", invoiceNumber: `INV-${Date.now().toString().slice(-4)}`, amount: "" });
-  const [paymentForm, setPaymentForm] = useState({ invoiceId: "", amount: "", reference: "", remarks: "" });
+  const { data: project, isLoading: projectLoading, refetch: refetchProject } = useProject(id);
+  const { data: costEventsRes = [] } = useCostEvents(id);
+  const createInvoiceMutation = useCreateInvoice(id);
+  const recordPaymentMutation = useRecordPayment(id);
+  const closeProjectMutation = useCloseProject(id);
 
-  if (projectLoading || !project) return null;
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invNum, setInvNum] = useState("");
+  const [invAmount, setInvAmount] = useState<number | "">("");
+  const [selectedDispatchId, setSelectedDispatchId] = useState("");
 
-  const invoices = project.invoiceHeaders || [];
-  const dispatches = project.dispatchNotes || [];
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentRef, setPaymentRef] = useState("");
+  const [paymentRemarks, setPaymentRemarks] = useState("");
 
-  // Finance Calculations
-  const cost = project.projectCostSummary || {};
-  
-  const actualCost = Number(cost.totalCost || 0);
-  
-  const materialCost = Number(cost.actualMaterialCost || 0);
-  const machineCost = Number(cost.machineCost || 0);
-  const labourCost = Number(cost.labourCost || 0);
-  const outsideCost = Number(cost.outsideProcessCost || 0);
+  const [viewingInvoiceDetails, setViewingInvoiceDetails] = useState<any | null>(null);
+  const [viewingCostEventDetails, setViewingCostEventDetails] = useState<any | null>(null);
 
-  // If revenue is 0, fallback to total invoice amount
-  const revenue = Number(cost.revenue || invoices.reduce((acc: number, inv: any) => acc + (Number(inv.totalAmount) || 0), 0));
-  
-  const profitMargin = revenue > 0 ? ((revenue - actualCost) / revenue) * 100 : 0;
-  const isProfitable = revenue >= actualCost;
+  if (projectLoading || !project) {
+    return <SkeletonBox className="h-96 w-full" />;
+  }
 
-  const totalInvoiced = invoices.reduce((acc: number, inv: any) => acc + (Number(inv.totalAmount) || 0), 0);
-  const pendingBilling = Math.max(revenue - totalInvoiced, 0);
+  const costEvents = Array.isArray(costEventsRes) ? costEventsRes : (costEventsRes?.data || []);
+  const costSummary = project.projectCostSummary || {};
 
-  const costToRevenueRatio = revenue > 0 ? (actualCost / revenue) * 100 : 0;
-  const isLossMaking = actualCost > revenue && revenue > 0;
-
-  const handleCreateInvoice = async () => {
+  const handleCreateInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDispatchId) {
+      error("Missing Dispatch Note", "Please select a dispatch note to generate an invoice.");
+      return;
+    }
     try {
       await createInvoiceMutation.mutateAsync({
-        dispatchNoteId: invoiceForm.dispatchNoteId,
-        invoiceNumber: invoiceForm.invoiceNumber,
-        subtotal: Number(invoiceForm.amount),
-        taxAmount: Number(invoiceForm.amount) * 0.18,
-        totalAmount: Number(invoiceForm.amount) * 1.18,
+        dispatchNoteId: selectedDispatchId,
+        invoiceNumber: invNum || `INV-${Date.now().toString().slice(-4)}`,
+        subtotal: Number(invAmount) || 0,
+        taxAmount: (Number(invAmount) || 0) * 0.18,
+        totalAmount: (Number(invAmount) || 0) * 1.18,
       });
-      setDrawerMode(null);
-      success("Invoice Created", "Successfully generated invoice");
-    } catch (err: any) {}
+      success("Invoice Generated", `Tax Invoice ${invNum} created successfully.`);
+      setShowInvoiceModal(false);
+      refetchProject();
+      setInvNum("");
+      setInvAmount("");
+      setSelectedDispatchId("");
+    } catch (err: any) {
+      error("Failed to Create Invoice", err.message || "An error occurred");
+    }
   };
 
-  const handleRecordPayment = async () => {
+  const handleRecordPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoiceId) return;
     try {
       await recordPaymentMutation.mutateAsync({
-        invoiceId: paymentForm.invoiceId,
-        amount: Number(paymentForm.amount),
-        paymentReference: paymentForm.reference,
-        remarks: paymentForm.remarks
+        invoiceId: selectedInvoiceId,
+        amount: paymentAmount,
+        paymentReference: paymentRef,
+        remarks: paymentRemarks
       });
-      setDrawerMode(null);
-      success("Payment Recorded", "Payment processed successfully");
-    } catch (err: any) {}
+      success("Payment Recorded", `Payment of ₹${paymentAmount.toLocaleString()} recorded.`);
+      setShowPaymentModal(false);
+      refetchProject();
+      setSelectedInvoiceId("");
+      setPaymentAmount(0);
+      setPaymentRef("");
+      setPaymentRemarks("");
+    } catch (err: any) {
+      error("Failed to Record Payment", err.message || "An error occurred");
+    }
   };
 
+  const handleCloseProject = async () => {
+    try {
+      await closeProjectMutation.mutateAsync();
+      success("Project Closed", "Project financial ledger has been locked and closed.");
+      refetchProject();
+    } catch (err: any) {
+      error("Failed to Close Project", err.message || "An error occurred");
+    }
+  };
+
+  const handleExportInvoice = (inv: any) => {
+    if (!inv) return;
+    const exportData = [{
+      "Invoice Number": inv.invoiceNumber,
+      "Date": new Date(inv.createdAt).toLocaleDateString('en-GB'),
+      "Status": inv.status || 'ISSUED',
+      "Subtotal (₹)": inv.subtotal,
+      "Tax 18% (₹)": inv.taxAmount,
+      "Total Amount (₹)": inv.totalAmount,
+      "Payment Status": inv.paymentStatus || 'UNPAID',
+      "Payment Reference": inv.paymentReference || '-',
+    }];
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Invoice");
+    XLSX.writeFile(wb, `Invoice_${inv.invoiceNumber}.xlsx`);
+  };
+
+  const financeChartData: FinanceData[] = costEvents.map((evt: any) => ({
+    category: evt.costType ? evt.costType.replace(/_/g, ' ') : (evt.createdAt ? new Date(evt.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Event'),
+    value: Number(evt.amount || evt.cost || 0),
+    type: evt.costType === 'REVENUE' || evt.costType?.includes('INVOICE') ? 'revenue' : 'cost',
+  }));
+
+  const totalCost = Number(costSummary.totalCost || 0);
+  const actualMaterialCost = Number(costSummary.actualMaterialCost || 0);
+  const machineCost = Number(costSummary.machineCost || 0);
+  const labourCost = Number(costSummary.labourCost || 0);
+  const outsideProcessCost = Number(costSummary.outsideProcessCost || 0);
+  const revenue = Number(costSummary.revenue || 0);
+  const profitability = Number(costSummary.profitability || (revenue - totalCost));
+  const marginPct = revenue > 0 ? ((profitability / revenue) * 100).toFixed(1) : "0";
+
+  const kpis = [
+    { title: "Total Cost", value: `₹${totalCost.toLocaleString('en-IN')}`, icon: PieChart, color: "text-zinc-700", bg: "bg-zinc-100 border-zinc-200" },
+    { title: "Material", value: `₹${actualMaterialCost.toLocaleString('en-IN')}`, icon: Wrench, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
+    { title: "Machine", value: `₹${machineCost.toLocaleString('en-IN')}`, icon: Settings, color: "text-purple-600", bg: "bg-purple-50 border-purple-200" },
+    { title: "Labour", value: `₹${labourCost.toLocaleString('en-IN')}`, icon: HardHat, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
+    { title: "Subcontract", value: `₹${outsideProcessCost.toLocaleString('en-IN')}`, icon: Truck, color: "text-orange-600", bg: "bg-orange-50 border-orange-200" },
+    { title: "Revenue", value: `₹${revenue.toLocaleString('en-IN')}`, icon: TrendingUp, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-300", highlight: true },
+    { title: "Margin", value: `${marginPct}%`, icon: Percent, color: "text-emerald-800", bg: "bg-emerald-100 border-emerald-400", highlight: true },
+  ];
+
+  const invoices = project.invoiceHeaders || [];
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      {/* Header */}
-      <div className="flex justify-between items-end">
+    <div className="space-y-6 font-sans text-zinc-900">
+      
+      {/* Header & Main Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs">
         <div>
-          <h2 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center shadow-lg shadow-rose-500/20 mr-4">
-              <DollarSign className="w-5 h-5 text-white" />
-            </div>
-            Financial Dashboard
+          <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-emerald-600" />
+            <span>Finance & Commercial Costing</span>
           </h2>
-          <p className="text-zinc-500 mt-2 font-medium">Real-time costing, revenue margins, and billing</p>
+          <p className="text-xs text-zinc-500">
+            Real-time financial audit trail, tax invoices, customer billing, and profitability analytics.
+          </p>
         </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="glass" 
-            onClick={() => { setPaymentForm({ invoiceId: "", amount: "", reference: "", remarks: "" }); setDrawerMode('PAYMENT'); }}
-            className="border-zinc-200 hover:bg-zinc-50 text-zinc-700 bg-white shadow-sm transition-all rounded-xl"
-          >
-            <CreditCard className="w-4 h-4 mr-2" /> Record Payment
-          </Button>
+
+        <div className="flex items-center gap-2">
+          {project.currentStage === 'INVOICED' && (
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={handleCloseProject}
+              className="text-red-700 border-red-200 hover:bg-red-50 font-bold text-xs"
+            >
+              <Lock className="w-4 h-4 mr-1" />
+              <span>Close Project</span>
+            </Button>
+          )}
+
           <Button 
             variant="primary" 
-            onClick={() => { setInvoiceForm({ dispatchNoteId: "", invoiceNumber: `INV-${Date.now().toString().slice(-4)}`, amount: "" }); setDrawerMode('INVOICE'); }} 
-            className="!bg-zinc-900 hover:!bg-zinc-800 text-white shadow-xl shadow-black/10 transition-all rounded-xl"
+            size="md" 
+            onClick={() => {
+              setInvNum(`INV-${Date.now().toString().slice(-4)}`);
+              setShowInvoiceModal(true);
+            }}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
           >
-            <FileText className="w-4 h-4 mr-2" /> Generate Invoice
+            <Plus className="w-4 h-4" />
+            <span>Generate Tax Invoice</span>
           </Button>
         </div>
       </div>
 
-      {/* Premium KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* 7 KPI Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {kpis.map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <div 
+              key={kpi.title} 
+              className={`p-3.5 rounded-2xl border ${kpi.bg} shadow-2xs flex flex-col justify-between`}
+            >
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">
+                  {kpi.title}
+                </span>
+                <Icon className={`w-4 h-4 ${kpi.color}`} />
+              </div>
+              <span className={`text-base font-extrabold font-mono ${kpi.color}`}>
+                {kpi.value}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Financial Cost Allocation & Variance Chart */}
+      <div className="enterprise-card p-6 bg-white border border-zinc-200/80 rounded-2xl shadow-xs">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 mb-4 flex items-center gap-2">
+          <PieChart className="w-4 h-4 text-purple-600" />
+          <span>Financial Cost Allocation & Cost Variance</span>
+        </h3>
+        <FinanceWaterfall data={financeChartData} />
+      </div>
+
+      {/* Two Column Layout: Financial Audit Trail vs Generated Invoices */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
-        {/* Revenue Card */}
-        <div className="glass-panel p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
-          <div className="flex items-start justify-between relative z-10">
-            <div>
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Total Revenue (PO Value)</p>
-              <h3 className="text-3xl font-black text-zinc-900 tracking-tighter">₹{revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
-            </div>
-            <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl shadow-sm group-hover:scale-110 transition-transform duration-300">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-black/5 flex items-center justify-between text-sm relative z-10">
-            <span className="text-zinc-500 font-medium">Total Project Value</span>
-          </div>
-        </div>
-
-        {/* Actual Cost Card */}
-        <div className="glass-panel p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-[40px] group-hover:bg-amber-500/20 transition-all duration-700 pointer-events-none" />
-          <div className="flex items-start justify-between relative z-10">
-            <div>
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Total Actual Cost</p>
-              <h3 className="text-3xl font-black text-zinc-900 tracking-tighter">₹{actualCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
-            </div>
-            <div className="p-3 bg-amber-50 border border-amber-100 rounded-2xl shadow-sm group-hover:scale-110 transition-transform duration-300">
-              <Activity className="w-5 h-5 text-amber-600" />
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-black/5 flex items-center justify-between text-sm relative z-10">
-            <span className="text-zinc-500 font-medium">Cost to Revenue Ratio</span>
-            {isLossMaking ? (
-              <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md font-bold text-xs flex items-center border border-rose-100"><TrendingUp className="w-3 h-3 mr-1"/> {costToRevenueRatio.toFixed(1)}% (LOSS)</span>
-            ) : (
-              <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md font-bold text-xs flex items-center border border-emerald-100"><TrendingDown className="w-3 h-3 mr-1"/> {costToRevenueRatio.toFixed(1)}% (PROFIT)</span>
-            )}
-          </div>
-        </div>
-
-        {/* Profit Margin Card */}
-        <div className="glass-panel p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-          <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-[40px] transition-all duration-700 pointer-events-none ${isProfitable ? 'bg-blue-500/10 group-hover:bg-blue-500/20' : 'bg-rose-500/10 group-hover:bg-rose-500/20'}`} />
-          <div className="flex items-start justify-between relative z-10">
-            <div>
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Profit Margin</p>
-              <h3 className="text-3xl font-black text-zinc-900 tracking-tighter">{profitMargin.toFixed(1)}%</h3>
-            </div>
-            <div className={`p-3 rounded-2xl shadow-sm group-hover:scale-110 transition-transform duration-300 border ${isProfitable ? 'bg-blue-50 border-blue-100' : 'bg-rose-50 border-rose-100'}`}>
-              <PieChart className={`w-5 h-5 ${isProfitable ? 'text-blue-600' : 'text-rose-600'}`} />
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-black/5 flex items-center justify-between text-sm relative z-10">
-            <span className="text-zinc-500 font-medium">Gross Profit</span>
-            <span className={`font-bold ${isProfitable ? 'text-blue-600' : 'text-rose-600'}`}>
-              ₹{(revenue - actualCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+        {/* Left Column: Financial Audit Trail */}
+        <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+            <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-blue-600" />
+              <span>Financial Audit Trail</span>
+            </h3>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+              {costEvents.length} Events Logged
             </span>
           </div>
+
+          {costEvents && costEvents.length > 0 ? (
+            <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+              {costEvents.map((evt: any) => {
+                const isRevenue = evt.costType === 'REVENUE' || evt.costType?.includes('INVOICE');
+                const isEstimate = evt.costType?.includes('ESTIMATED');
+
+                return (
+                  <div 
+                    key={evt.id}
+                    className="p-3.5 rounded-xl border border-zinc-200/80 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white transition-all flex items-center justify-between"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider border ${
+                          isRevenue 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                            : isEstimate 
+                            ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}>
+                          {evt.costType?.replace(/_/g, ' ') || 'COST EVENT'}
+                        </span>
+                        <span className="text-[10px] text-zinc-400 font-mono">
+                          {new Date(evt.createdAt).toLocaleDateString('en-GB')}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-zinc-800 line-clamp-1">{evt.description}</p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <div className={`text-sm font-bold font-mono flex items-center justify-end ${
+                        isRevenue ? 'text-emerald-600' : 'text-zinc-900'
+                      }`}>
+                        {isRevenue ? <ArrowUpRight className="w-3.5 h-3.5 mr-0.5 text-emerald-600" /> : <ArrowDownRight className="w-3.5 h-3.5 mr-0.5 text-rose-500" />}
+                        ₹{Number(evt.amount || evt.cost || 0).toLocaleString('en-IN')}
+                      </div>
+                      <button
+                        onClick={() => setViewingCostEventDetails(evt)}
+                        className="mt-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 underline"
+                      >
+                        Details
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-8 text-center border border-dashed border-zinc-200 rounded-xl">
+              <Activity className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+              <p className="text-xs text-zinc-500 font-medium">No financial audit events logged yet.</p>
+            </div>
+          )}
         </div>
 
-        {/* Pending Billing Card */}
-        <div className="glass-panel p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] group-hover:bg-purple-500/20 transition-all duration-700 pointer-events-none" />
-          <div className="flex items-start justify-between relative z-10">
+        {/* Right Column: Generated Tax Invoices */}
+        <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+            <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-emerald-600" />
+              <span>Tax Invoices & Billing</span>
+            </h3>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+              {invoices.length} Invoices
+            </span>
+          </div>
+
+          {invoices && invoices.length > 0 ? (
+            <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+              {invoices.map((inv: any) => (
+                <div 
+                  key={inv.id}
+                  className="p-3.5 rounded-xl border border-zinc-200/80 hover:border-emerald-300 bg-zinc-50/50 hover:bg-white transition-all flex items-center justify-between"
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold font-mono text-zinc-950">{inv.invoiceNumber}</span>
+                      <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {inv.status || 'ISSUED'}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-zinc-500 flex items-center gap-1">
+                      <Truck className="w-3 h-3 text-zinc-400" />
+                      <span>Ref Dispatch: {project.dispatchNotes?.find((d: any) => d.id === inv.dispatchNoteId)?.dispatchNumber || 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-xs font-bold font-mono text-emerald-700">
+                      ₹{Number(inv.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </div>
+                    <div className="mt-1 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setViewingInvoiceDetails(inv)}
+                        className="text-[10px] font-bold text-zinc-600 hover:text-zinc-900 underline"
+                      >
+                        Details
+                      </button>
+                      
+                      {inv.paymentStatus === 'PAID' ? (
+                        <span className="px-2 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-800 uppercase">
+                          PAID
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSelectedInvoiceId(inv.id);
+                            const balance = Number(inv.totalAmount) - Number(inv.amountPaid || 0);
+                            setPaymentAmount(balance > 0 ? balance : Number(inv.totalAmount));
+                            setShowPaymentModal(true);
+                          }}
+                          className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-900 hover:bg-zinc-800 text-white transition-colors"
+                        >
+                          Record Payment
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center border border-dashed border-zinc-200 rounded-xl">
+              <FileText className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+              <p className="text-xs text-zinc-500 font-medium">No tax invoices generated yet.</p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setInvNum(`INV-${Date.now().toString().slice(-4)}`);
+                  setShowInvoiceModal(true);
+                }}
+                className="mt-3 text-xs"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Generate Invoice
+              </Button>
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* Labor Tracking Section */}
+      <ProjectLaborTracking projectId={id} />
+
+      {/* Generate Tax Invoice Modal */}
+      {showInvoiceModal && (
+        <Modal
+          isOpen={showInvoiceModal}
+          onClose={() => setShowInvoiceModal(false)}
+          title="Generate Tax Invoice"
+          maxWidth="lg"
+        >
+          <form onSubmit={handleCreateInvoice} className="space-y-4">
             <div>
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Pending Billing</p>
-              <h3 className="text-3xl font-black text-zinc-900 tracking-tighter">
-                ₹{pendingBilling.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </h3>
+              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                Link to Dispatch Note
+              </label>
+              <select
+                required
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 font-medium"
+                value={selectedDispatchId}
+                onChange={(e) => setSelectedDispatchId(e.target.value)}
+              >
+                <option value="">Select Dispatch Note...</option>
+                {project.dispatchNotes?.map((d: any) => (
+                  <option key={d.id} value={d.id}>{d.dispatchNumber} (Qty: {d.dispatchQty})</option>
+                ))}
+              </select>
+              {(!project.dispatchNotes || project.dispatchNotes.length === 0) && (
+                <p className="text-xs text-amber-600 mt-1">Note: No dispatch notes recorded yet. Select any or create a dispatch note first.</p>
+              )}
             </div>
-            <div className="p-3 bg-purple-50 border border-purple-100 rounded-2xl shadow-sm group-hover:scale-110 transition-transform duration-300">
-              <Target className="w-5 h-5 text-purple-600" />
+
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                Invoice Number
+              </label>
+              <input
+                type="text"
+                required
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-sm font-mono text-zinc-900 focus:border-emerald-500"
+                value={invNum}
+                onChange={(e) => setInvNum(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                Subtotal Amount (₹)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-sm font-mono text-zinc-900 focus:border-emerald-500"
+                value={invAmount}
+                onChange={(e) => setInvAmount(e.target.value ? Number(e.target.value) : "")}
+              />
+            </div>
+
+            {invAmount !== "" && Number(invAmount) > 0 && (
+              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 text-xs space-y-1 font-mono">
+                <div className="flex justify-between text-zinc-600">
+                  <span>Subtotal:</span>
+                  <span>₹{Number(invAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-zinc-600">
+                  <span>GST (18%):</span>
+                  <span>₹{(Number(invAmount) * 0.18).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between font-bold text-zinc-900 pt-1 border-t border-zinc-200">
+                  <span>Total Invoice Amount:</span>
+                  <span>₹{(Number(invAmount) * 1.18).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-4 flex justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setShowInvoiceModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                Generate Invoice
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Record Payment Modal */}
+      {showPaymentModal && (
+        <Modal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          title="Record Customer Payment"
+          maxWidth="md"
+        >
+          <form onSubmit={handleRecordPayment} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                Select Invoice
+              </label>
+              <select
+                required
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-sm text-zinc-900 font-medium"
+                value={selectedInvoiceId}
+                onChange={(e) => setSelectedInvoiceId(e.target.value)}
+              >
+                <option value="">Select Invoice...</option>
+                {invoices.map((inv: any) => (
+                  <option key={inv.id} value={inv.id}>
+                    {inv.invoiceNumber} - Total: ₹{Number(inv.totalAmount).toLocaleString()} ({inv.paymentStatus || 'UNPAID'})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                Payment Amount (₹)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-sm font-mono text-zinc-900"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(Number(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                Payment Reference (Cheque / UTR / Bank Ref)
+              </label>
+              <input
+                type="text"
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-sm font-mono text-zinc-900"
+                placeholder="e.g. UTR123456789"
+                value={paymentRef}
+                onChange={(e) => setPaymentRef(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                Remarks
+              </label>
+              <input
+                type="text"
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-sm text-zinc-900"
+                placeholder="Optional notes"
+                value={paymentRemarks}
+                onChange={(e) => setPaymentRemarks(e.target.value)}
+              />
+            </div>
+
+            <div className="pt-4 flex justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setShowPaymentModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                Record Payment
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Cost Event Details Modal */}
+      {viewingCostEventDetails && (
+        <Modal
+          isOpen={!!viewingCostEventDetails}
+          onClose={() => setViewingCostEventDetails(null)}
+          title="Financial Event Narrative"
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2 text-xs font-mono">
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Event Type:</span>
+                <span className="font-bold text-zinc-900 uppercase">{viewingCostEventDetails.costType?.replace(/_/g, ' ')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Recorded Amount:</span>
+                <span className="font-bold text-emerald-700 text-sm">₹{Number(viewingCostEventDetails.amount || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Date:</span>
+                <span>{new Date(viewingCostEventDetails.createdAt).toLocaleDateString('en-GB')}</span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 text-xs">
+              <span className="font-bold text-zinc-600 block mb-1">Description:</span>
+              <p className="text-zinc-800 italic bg-white p-3 rounded border border-zinc-200">{viewingCostEventDetails.description}</p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button variant="secondary" onClick={() => setViewingCostEventDetails(null)}>
+                Close
+              </Button>
             </div>
           </div>
-          <div className="mt-6 pt-4 border-t border-black/5 flex items-center justify-between text-sm relative z-10">
-            <span className="text-zinc-500 font-medium">Total Invoiced:</span>
-            <span className="font-bold text-zinc-900">₹{totalInvoiced.toLocaleString()}</span>
-          </div>
-        </div>
+        </Modal>
+      )}
 
-      </div>
+      {/* Invoice Details Modal */}
+      {viewingInvoiceDetails && (
+        <Modal
+          isOpen={!!viewingInvoiceDetails}
+          onClose={() => setViewingInvoiceDetails(null)}
+          title={`Tax Invoice: ${viewingInvoiceDetails.invoiceNumber}`}
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <div className="flex justify-between items-center pb-2 border-b border-zinc-200">
+              <span className="text-xs font-extrabold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                {viewingInvoiceDetails.status || 'ISSUED'}
+              </span>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => handleExportInvoice(viewingInvoiceDetails)}
+                className="text-xs"
+              >
+                <Download className="w-3.5 h-3.5 mr-1" /> Export Excel
+              </Button>
+            </div>
 
-      {/* Cost Breakdown Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
-        {/* Cost Distribution Bars */}
-        <div className="xl:col-span-2 glass-panel p-8">
-          <h3 className="text-lg font-bold text-zinc-900 mb-8 flex items-center">
-            <Activity className="w-5 h-5 mr-3 text-zinc-400" /> Actual Cost Distribution
-          </h3>
-          
-          <div className="space-y-8">
-            {/* Material */}
-            <div className="group">
-              <div className="flex justify-between items-end mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100">
-                     <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2 text-xs font-mono">
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Invoice Number:</span>
+                <span className="font-bold text-zinc-900">{viewingInvoiceDetails.invoiceNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Subtotal:</span>
+                <span>₹{Number(viewingInvoiceDetails.subtotal || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">GST (18%):</span>
+                <span>₹{Number(viewingInvoiceDetails.taxAmount || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between font-bold text-sm text-emerald-700 pt-1 border-t border-zinc-200">
+                <span>Total Bill Amount:</span>
+                <span>₹{Number(viewingInvoiceDetails.totalAmount || 0).toLocaleString()}</span>
+              </div>
+            </div>
+
+            {viewingInvoiceDetails.paymentReference && (
+              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 text-xs font-mono space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Payment Reference:</span>
+                  <span className="font-bold text-zinc-900">{viewingInvoiceDetails.paymentReference}</span>
+                </div>
+                {viewingInvoiceDetails.paymentRemarks && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Remarks:</span>
+                    <span>{viewingInvoiceDetails.paymentRemarks}</span>
                   </div>
-                  <span className="text-sm font-bold text-zinc-900">Material Cost</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-black text-zinc-900 tracking-tight">₹{materialCost.toLocaleString()}</span>
-                  <span className="text-xs font-medium text-zinc-500 ml-3">/ {actualCost > 0 ? Math.round((materialCost / actualCost) * 100) : 0}% of Total</span>
-                </div>
-              </div>
-              <div className="h-3 bg-zinc-100 rounded-full overflow-hidden border border-black/5 shadow-inner">
-                <div 
-                  className="h-full bg-blue-500 rounded-full shadow-sm transition-all duration-1000 ease-out relative group-hover:bg-blue-400" 
-                  style={{ width: `${actualCost > 0 ? (materialCost / actualCost) * 100 : 0}%` }} 
-                />
-              </div>
-            </div>
-
-            {/* Machine */}
-            <div className="group">
-              <div className="flex justify-between items-end mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center border border-purple-100">
-                     <div className="w-3 h-3 rounded-full bg-purple-500" />
-                  </div>
-                  <span className="text-sm font-bold text-zinc-900">Machine Cost</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-black text-zinc-900 tracking-tight">₹{machineCost.toLocaleString()}</span>
-                  <span className="text-xs font-medium text-zinc-500 ml-3">/ {actualCost > 0 ? Math.round((machineCost / actualCost) * 100) : 0}% of Total</span>
-                </div>
-              </div>
-              <div className="h-3 bg-zinc-100 rounded-full overflow-hidden border border-black/5 shadow-inner">
-                <div 
-                  className="h-full bg-purple-500 rounded-full shadow-sm transition-all duration-1000 ease-out relative group-hover:bg-purple-400" 
-                  style={{ width: `${actualCost > 0 ? (machineCost / actualCost) * 100 : 0}%` }} 
-                />
-              </div>
-            </div>
-
-            {/* Labour */}
-            <div className="group">
-              <div className="flex justify-between items-end mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
-                     <div className="w-3 h-3 rounded-full bg-amber-500" />
-                  </div>
-                  <span className="text-sm font-bold text-zinc-900">Labour Cost</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-black text-zinc-900 tracking-tight">₹{labourCost.toLocaleString()}</span>
-                  <span className="text-xs font-medium text-zinc-500 ml-3">/ {actualCost > 0 ? Math.round((labourCost / actualCost) * 100) : 0}% of Total</span>
-                </div>
-              </div>
-              <div className="h-3 bg-zinc-100 rounded-full overflow-hidden border border-black/5 shadow-inner">
-                <div 
-                  className="h-full bg-amber-500 rounded-full shadow-sm transition-all duration-1000 ease-out relative group-hover:bg-amber-400" 
-                  style={{ width: `${actualCost > 0 ? (labourCost / actualCost) * 100 : 0}%` }} 
-                />
-              </div>
-            </div>
-
-            {/* Outside Process / Subcontract */}
-            <div className="group">
-              <div className="flex justify-between items-end mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                     <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                  </div>
-                  <span className="text-sm font-bold text-zinc-900">Subcontract / Outsource</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-black text-zinc-900 tracking-tight">₹{outsideCost.toLocaleString()}</span>
-                  <span className="text-xs font-medium text-zinc-500 ml-3">/ {actualCost > 0 ? Math.round((outsideCost / actualCost) * 100) : 0}% of Total</span>
-                </div>
-              </div>
-              <div className="h-3 bg-zinc-100 rounded-full overflow-hidden border border-black/5 shadow-inner">
-                <div 
-                  className="h-full bg-emerald-500 rounded-full shadow-sm transition-all duration-1000 ease-out relative group-hover:bg-emerald-400" 
-                  style={{ width: `${actualCost > 0 ? (outsideCost / actualCost) * 100 : 0}%` }} 
-                />
-              </div>
-            </div>
-            
-          </div>
-        </div>
-
-        {/* Summary Mini-chart / Status (Placeholder for visual balance) */}
-        <div className="glass-panel p-8 flex flex-col justify-center items-center relative overflow-hidden bg-gradient-to-br from-white to-zinc-50">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl pointer-events-none translate-x-1/4 -translate-y-1/4" />
-          
-          <div className="relative z-10 text-center w-full">
-            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-8">Cost vs Revenue Ratio</h3>
-            
-            <div className="w-56 h-56 rounded-full border-[12px] border-zinc-100 flex items-center justify-center relative mb-8 mx-auto shadow-sm">
-              <div className={`absolute inset-[-12px] rounded-full border-[12px] ${isLossMaking ? 'border-rose-500' : 'border-emerald-500'}`} style={{ clipPath: 'polygon(50% 50%, 50% 0, 100% 0, 100% 100%, 0 100%, 0 0, 50% 0)' }} />
-              
-              <div className="text-center">
-                <span className="block text-5xl font-black text-zinc-900 tracking-tighter">{costToRevenueRatio > 0 ? Math.round(costToRevenueRatio) : 0}%</span>
-                <span className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mt-2">Consumed</span>
-              </div>
-            </div>
-            
-            <div className={`p-4 rounded-2xl ${isLossMaking ? 'bg-rose-50 border border-rose-100 text-rose-700' : 'bg-emerald-50 border border-emerald-100 text-emerald-700'}`}>
-              <p className="text-sm font-semibold leading-relaxed">
-                {isLossMaking 
-                  ? "Project costs have exceeded the total revenue. You are currently operating at a financial loss."
-                  : "Project costs are within the revenue limit. You are currently operating at a profit."}
-              </p>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Invoice & Payments Management */}
-      <div className="glass-panel p-6">
-        <div className="flex gap-8 border-b border-zinc-200 mb-6 pb-px px-2">
-          {['INVOICES', 'PAYMENTS'].map(tab => (
-            <button 
-              key={tab} 
-              onClick={() => setActiveTab(tab as any)} 
-              className={`pb-4 text-sm font-bold uppercase tracking-wider border-b-2 transition-all duration-300 relative ${activeTab === tab ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-400 hover:text-zinc-600'}`}
-            >
-              {tab === 'INVOICES' ? 'Invoices' : 'Payments'}
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-white rounded-2xl overflow-hidden border border-zinc-100 shadow-sm">
-          {activeTab === 'INVOICES' && (
-            <SmartTable 
-              data={invoices}
-              isLoading={false}
-              columns={[
-                { key: 'invoiceNumber', label: 'Invoice No' },
-                { key: 'status', label: 'Status', render: (v) => (
-                  <span className="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-zinc-100 text-zinc-700">{v}</span>
-                )},
-                { key: 'createdAt', label: 'Date', render: (v) => formatDate(v) },
-                { key: 'totalAmount', label: 'Total Amount', render: (v) => <span className="text-zinc-900 font-black tracking-tight">₹{(Number(v) || 0).toLocaleString()}</span> },
-                { key: 'paymentStatus', label: 'Payment', render: (v) => (
-                  <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${v === 'PAID' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{v}</span>
                 )}
-              ]}
-            />
-          )}
-          {activeTab === 'PAYMENTS' && (
-            <div className="p-16 text-center">
-              <div className="w-16 h-16 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center mx-auto mb-4">
-                <CreditCard className="w-8 h-8 text-zinc-300" />
               </div>
-              <h4 className="text-zinc-900 font-bold text-lg mb-2">Payment Ledger</h4>
-              <p className="text-sm font-medium text-zinc-500">Recorded payments will appear here.</p>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button variant="secondary" onClick={() => setViewingInvoiceDetails(null)}>
+                Close
+              </Button>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Drawers */}
-      <PremiumDrawer isOpen={drawerMode === 'INVOICE'} onClose={() => setDrawerMode(null)} title="Generate Invoice" subtitle="Create a tax invoice against a dispatch note">
-        <div className="space-y-6 p-2">
-          <Select label="Select Dispatch Note" value={invoiceForm.dispatchNoteId} onChange={e => setInvoiceForm({...invoiceForm, dispatchNoteId: e.target.value})}>
-            <option value="">Select dispatch note...</option>
-            {dispatches.map((d: any) => (
-              <option key={d.id} value={d.id}>{d.dispatchNumber} (Qty: {d.dispatchQty})</option>
-            ))}
-          </Select>
-          <Input label="Invoice Number" value={invoiceForm.invoiceNumber} onChange={e => setInvoiceForm({...invoiceForm, invoiceNumber: e.target.value})} />
-          <Input label="Subtotal Amount" type="number" value={invoiceForm.amount} onChange={e => setInvoiceForm({...invoiceForm, amount: e.target.value})} />
-          <div className="pt-8">
-            <Button variant="primary" onClick={handleCreateInvoice} className="w-full !bg-zinc-900 hover:!bg-zinc-800 text-white shadow-xl shadow-black/10 py-3 rounded-xl font-bold">Generate Invoice</Button>
           </div>
-        </div>
-      </PremiumDrawer>
+        </Modal>
+      )}
 
-      <PremiumDrawer isOpen={drawerMode === 'PAYMENT'} onClose={() => setDrawerMode(null)} title="Record Payment" subtitle="Log payment received against an invoice">
-        <div className="space-y-6 p-2">
-          <Select label="Select Invoice" value={paymentForm.invoiceId} onChange={e => setPaymentForm({...paymentForm, invoiceId: e.target.value})}>
-            <option value="">Select invoice...</option>
-            {invoices.map((inv: any) => (
-              <option key={inv.id} value={inv.id}>{inv.invoiceNumber} - Total: ₹{(Number(inv.totalAmount) || 0).toLocaleString()} ({inv.paymentStatus})</option>
-            ))}
-          </Select>
-          <Input label="Payment Amount" type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} />
-          <Input label="Reference (Cheque/UTR)" value={paymentForm.reference} onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} />
-          <Input label="Remarks" value={paymentForm.remarks} onChange={e => setPaymentForm({...paymentForm, remarks: e.target.value})} />
-          <div className="pt-8">
-            <Button variant="primary" onClick={handleRecordPayment} className="w-full !bg-zinc-900 hover:!bg-zinc-800 text-white shadow-xl shadow-black/10 py-3 rounded-xl font-bold">Record Payment</Button>
-          </div>
-        </div>
-      </PremiumDrawer>
     </div>
   );
 }

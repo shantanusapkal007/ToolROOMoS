@@ -6,15 +6,15 @@ import { saveAs } from 'file-saver';
 // ─────────────────────────────────────────────────────────────────────────────
 const C = {
   black: 'FF000000',
-  darkText: 'FF1D1D1F',
-  mediumText: 'FF424245',
-  lightText: 'FF86868B',
-  headerBg: 'FFF5F5F7',
-  border: 'FFD2D2D7',
-  lightBorder: 'FFE8E8ED',
+  darkText: 'FF2C2E88',
+  mediumText: 'FF4A4C9D',
+  lightText: 'FF8688C4',
+  headerBg: 'FFF0F1F8',
+  border: 'FFD2D4E5',
+  lightBorder: 'FFE8E9F2',
   white: 'FFFFFFFF',
-  totalBg: 'FFF9FAFB',
-  grandTotalBg: 'FF1D1D1F',
+  totalBg: 'FFF9FAFD',
+  grandTotalBg: 'FF2C2E88',
   grandTotalText: 'FFFFFFFF',
 };
 
@@ -280,14 +280,20 @@ export async function exportPremiumRMSlip(po: any) {
 
     sheet.getRow(row).height = 24;
 
+    const dimStr = item.rawSize || item.dimensions || item.description || '';
+    const dimParts = dimStr.replace(/[\s]*mm/gi, '').split(/[\s]*[xX×\*][\s]*/);
+    const parsedL = grnItem?.length || dimParts[0] || '-';
+    const parsedW = grnItem?.width || dimParts[1] || '-';
+    const parsedH = grnItem?.height || dimParts[2] || '-';
+
     const cols = [
       { col: 'B', val: idx + 1, fmt: undefined, align: 'center' as const },
-      { col: 'C', val: grnItem?.toolNo || po.customFields?.toolNo || '-', fmt: undefined, align: 'center' as const },
-      { col: 'D', val: grnItem?.detNo || '-', fmt: undefined, align: 'center' as const },
-      { col: 'E', val: grnItem?.length || '-', fmt: undefined, align: 'center' as const },
-      { col: 'F', val: grnItem?.width || '-', fmt: undefined, align: 'center' as const },
-      { col: 'G', val: grnItem?.height || '-', fmt: undefined, align: 'center' as const },
-      { col: 'H', val: item.material?.materialCode || '', fmt: undefined, align: 'left' as const },
+      { col: 'C', val: grnItem?.toolNo || po.customFields?.toolNo || po.project?.projectNumber || '-', fmt: undefined, align: 'center' as const },
+      { col: 'D', val: grnItem?.detNo || item.partName || item.customFields?.partName || `DET-${idx + 1}`, fmt: undefined, align: 'center' as const },
+      { col: 'E', val: parsedL, fmt: undefined, align: 'center' as const },
+      { col: 'F', val: parsedW, fmt: undefined, align: 'center' as const },
+      { col: 'G', val: parsedH, fmt: undefined, align: 'center' as const },
+      { col: 'H', val: item.material?.materialName || item.material?.materialCode || 'STEEL', fmt: undefined, align: 'left' as const },
       { col: 'I', val: qty, fmt: '#,##0.00', align: 'right' as const },
       { col: 'J', val: apWt > 0 ? apWt : '-', fmt: apWt > 0 ? '#,##0.00' : undefined, align: 'right' as const },
       { col: 'K', val: totalWt > 0 ? totalWt : '-', fmt: totalWt > 0 ? '#,##0.00' : undefined, align: 'right' as const },

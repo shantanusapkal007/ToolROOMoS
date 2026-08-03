@@ -2,8 +2,8 @@ import { IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateBomItemDto {
   @IsString()
-  @IsNotEmpty()
-  materialId: string;
+  @IsOptional()
+  materialId?: string;
 
   @IsString()
   @IsOptional()

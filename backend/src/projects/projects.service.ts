@@ -1,7 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { CreateDesignLogDto, UpdateDesignLogDto } from './dto/create-design-log.dto';
 import { ProjectStatus, ApprovalStatus } from '@prisma/client';
 
 const STAGE_ORDER: ProjectStatus[] = [
@@ -19,11 +20,25 @@ export class ProjectsService {
 
     // Use transaction to ensure transactional integrity across objects, timelines, activities, and costs.
     return this.prisma.$transaction(async (tx) => {
-      // Resolve Plant (frontend currently hardcodes PL-01)
+      // Dynamically resolve Plant (by ID, by plantCode, or fallback to first active plant)
       let resolvedPlantId = dto.plantId;
-      if (!resolvedPlantId.includes('-') || resolvedPlantId === 'PL-01') {
-        const plant = await tx.plant.findUnique({ where: { plantCode: 'PL-01' } });
-        if (plant) resolvedPlantId = plant.id;
+      const existingPlant = await tx.plant.findFirst({
+        where: {
+          OR: [
+            { id: resolvedPlantId },
+            { plantCode: resolvedPlantId }
+          ]
+        }
+      });
+
+      if (existingPlant) {
+        resolvedPlantId = existingPlant.id;
+      } else {
+        const fallbackPlant = await tx.plant.findFirst({ where: { status: 'ACTIVE' } }) || await tx.plant.findFirst();
+        if (!fallbackPlant) {
+          throw new BadRequestException('No active manufacturing plant exists in the database. Please create a plant first.');
+        }
+        resolvedPlantId = fallbackPlant.id;
       }
 
       // 1. Create the project
@@ -145,13 +160,26 @@ export class ProjectsService {
     const mtdRevenue = mtdInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
     const mtdSalesWithoutGst = mtdInvoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
 
-    // Management Indicators
-    const monthlyTarget = 15000000; // 15M INR (Mock target)
+    // Management Indicators derived dynamically from active project pipeline estimates & cost summaries
+    const activeProjectSummaries = await this.prisma.projectCostSummary.findMany({
+      where: { project: { currentStage: { notIn: ['CANCELLED', 'CLOSED'] } } }
+    });
+    const totalPipelineEstimatedValue = activeProjectSummaries.reduce(
+      (sum, s) => sum + Number(s.estimatedMaterialCost || 0) + Number(s.revenue || 0), 
+      0
+    );
+
+    // Dynamic Monthly Target based on active open pipeline / 3-month rolling average or minimum baseline
+    const monthlyTarget = totalPipelineEstimatedValue > 0 ? Math.round(totalPipelineEstimatedValue / 3) : 5000000;
     const monthlyRemaining = Math.max(0, monthlyTarget - mtdRevenue);
     
-    // Yearly Projected Revenue (extrapolated based on current month + base pipeline)
-    const currentMonth = now.getMonth() + 1;
-    const yearlyProjectedRevenue = (mtdRevenue * 12) + 85000000; // Mock base pipeline
+    // Dynamic Yearly Projected Revenue (YTD actual revenue + open pipeline estimated value)
+    const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
+    const ytdInvoices = await this.prisma.invoiceHeader.findMany({
+      where: { createdAt: { gte: firstDayOfYear } }
+    });
+    const ytdRevenue = ytdInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const yearlyProjectedRevenue = ytdRevenue + totalPipelineEstimatedValue;
     
     // Open Invoices - Sum of all unpaid InvoiceHeaders
     const openInvoicesList = await this.prisma.invoiceHeader.findMany({
@@ -202,26 +230,41 @@ export class ProjectsService {
       }
     });
 
-    // To prevent a completely flat chart if the DB only has projects from this month
-    if (totalProjects > 0 && Math.max(...revenueHistory) === 0) {
-       revenueHistory[10] = mtdRevenue / 1000;
-    }
+    // 5. Total Purchase Value based on GRN Materials across ALL projects
+    const grnItems = await this.prisma.goodsReceiptItem.findMany({
+      include: {
+        grnHeader: {
+          select: { projectId: true, grnNumber: true }
+        }
+      }
+    });
+
+    const totalGrnPurchaseValue = grnItems.reduce((sum, item) => {
+      const basic = Number(item.total || item.basicCost || 0);
+      const calculated = Number(item.actualMaterialCost || 0) || (Number(item.acceptedQty || 0) * Number(item.actualRate || 0));
+      const val = basic > 0 ? basic : calculated;
+      return sum + val;
+    }, 0);
+
+    const grnMaterialCount = grnItems.length;
+    const grnTotalReceiptsCount = await this.prisma.goodsReceiptHeader.count();
 
     return {
       totalProjects,
       mtdRevenue,
+      mtdSalesWithoutGst,
+      monthlyTarget,
+      monthlyRemaining,
+      yearlyProjectedRevenue,
       openInvoices,
       machineLoad,
-      activeMachines,
-      totalMachines,
       overallYield,
       yieldTrend,
       revenueTrend,
       revenueHistory,
-      mtdSalesWithoutGst,
-      monthlyTarget,
-      monthlyRemaining,
-      yearlyProjectedRevenue
+      totalGrnPurchaseValue,
+      grnMaterialCount,
+      grnTotalReceiptsCount,
     };
   }
 
@@ -654,5 +697,344 @@ export class ProjectsService {
 
       return deletedProject;
     });
+  }
+
+  // --- Designer Work Logs Engine ---
+  private async getDesignerHourlyRate(designerName?: string, designerId?: string): Promise<number> {
+    if (designerId) {
+      const emp = await this.prisma.employee.findUnique({ where: { id: designerId } });
+      if (emp && Number(emp.hourlyRate) > 0) {
+        return Number(emp.hourlyRate);
+      }
+    }
+
+    if (designerName) {
+      const emp = await this.prisma.employee.findFirst({
+        where: {
+          name: { contains: designerName, mode: 'insensitive' },
+        },
+      });
+      if (emp && Number(emp.hourlyRate) > 0) {
+        return Number(emp.hourlyRate);
+      }
+    }
+
+    // Default standard CAD / Tool Engineering hourly rate (₹350 / hr)
+    return 350;
+  }
+
+  private async recalculateProjectCostSummary(projectId: string) {
+    try {
+      // 1. Clean up orphaned design cost events whose design log was deleted
+      const designCostEvents = await this.prisma.projectCostEvent.findMany({
+        where: { projectId, referenceDocType: 'DESIGN_WORK_LOG' },
+      });
+
+      for (const event of designCostEvents) {
+        if (event.referenceDocId) {
+          const logExists = await (this.prisma as any).designWorkLog.findUnique({
+            where: { id: event.referenceDocId },
+          });
+          if (!logExists) {
+            await this.prisma.projectCostEvent.delete({ where: { id: event.id } });
+          }
+        }
+      }
+
+      // 2. Sum up active LABOUR_COST events
+      const labourEvents = await this.prisma.projectCostEvent.findMany({
+        where: { projectId, costType: 'LABOUR_COST' },
+      });
+      const totalLabourCost = labourEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      // 3. Sum up active MACHINE_COST events
+      const machineEvents = await this.prisma.projectCostEvent.findMany({
+        where: { projectId, costType: 'MACHINE_COST' },
+      });
+      const totalMachineCost = machineEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      // 4. Sum up active MATERIAL_CONSUMPTION events
+      const materialEvents = await this.prisma.projectCostEvent.findMany({
+        where: { projectId, costType: 'MATERIAL_CONSUMPTION' },
+      });
+      const totalMaterialCost = materialEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      // 5. Sum up active OUTSIDE_PROCESS events
+      const outsideEvents = await this.prisma.projectCostEvent.findMany({
+        where: { projectId, costType: 'OUTSIDE_PROCESS' },
+      });
+      const totalOutsideCost = outsideEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      const summary = await this.prisma.projectCostSummary.findUnique({ where: { projectId } });
+
+      const grandTotal = totalMaterialCost + totalMachineCost + totalLabourCost + totalOutsideCost + Number(summary?.inspectionCost || 0) + Number(summary?.packingCost || 0) + Number(summary?.dispatchCost || 0);
+
+      await this.prisma.projectCostSummary.upsert({
+        where: { projectId },
+        create: {
+          projectId,
+          actualMaterialCost: totalMaterialCost,
+          materialConsumptionCost: totalMaterialCost,
+          machineCost: totalMachineCost,
+          labourCost: totalLabourCost,
+          outsideProcessCost: totalOutsideCost,
+          totalCost: grandTotal,
+        },
+        update: {
+          labourCost: totalLabourCost,
+          machineCost: totalMachineCost,
+          materialConsumptionCost: totalMaterialCost,
+          outsideProcessCost: totalOutsideCost,
+          totalCost: grandTotal,
+        },
+      });
+    } catch (err) {
+      // Ignore background recalculation errors
+    }
+  }
+
+  private async syncMissingDesignLogCosts(projectId: string) {
+    try {
+      const logs: any[] = await (this.prisma as any).designWorkLog.findMany({
+        where: { projectId },
+      });
+
+      for (const log of logs) {
+        const existingEvent = await this.prisma.projectCostEvent.findFirst({
+          where: { referenceDocType: 'DESIGN_WORK_LOG', referenceDocId: log.id },
+        });
+
+        if (!existingEvent && Number(log.hoursSpent) > 0) {
+          const hourlyRate = await this.getDesignerHourlyRate(log.designerName, log.designerId);
+          const costAmount = Number(log.hoursSpent) * hourlyRate;
+
+          await this.prisma.projectCostEvent.create({
+            data: {
+              projectId,
+              costType: 'LABOUR_COST',
+              description: `Designer ${log.designerName} logged ${log.hoursSpent} hrs for ${log.workStage} (${log.partName || 'CAD Design'}) @ ₹${hourlyRate}/hr`,
+              amount: costAmount,
+              referenceDocType: 'DESIGN_WORK_LOG',
+              referenceDocId: log.id,
+              createdBy: log.createdBy || log.designerName,
+            },
+          });
+        }
+      }
+
+      await this.recalculateProjectCostSummary(projectId);
+    } catch (err) {
+      // Ignore background sync errors
+    }
+  }
+
+  async getDesignLogs(
+    projectId: string,
+    query?: { search?: string; designer?: string; workStage?: string; status?: string }
+  ) {
+    await this.syncMissingDesignLogCosts(projectId);
+
+    const where: any = { projectId };
+
+    if (query?.designer && query.designer !== 'ALL') {
+      where.designerName = query.designer;
+    }
+    if (query?.workStage && query.workStage !== 'ALL') {
+      where.workStage = query.workStage;
+    }
+    if (query?.status && query.status !== 'ALL') {
+      where.status = query.status;
+    }
+    if (query?.search) {
+      where.OR = [
+        { designerName: { contains: query.search, mode: 'insensitive' } },
+        { description: { contains: query.search, mode: 'insensitive' } },
+        { partName: { contains: query.search, mode: 'insensitive' } },
+        { drawingNumber: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
+    return (this.prisma as any).designWorkLog.findMany({
+      where,
+      orderBy: { workDate: 'desc' },
+    });
+  }
+
+  async createDesignLog(projectId: string, dto: CreateDesignLogDto, userId?: string) {
+    const workDate = dto.workDate ? new Date(dto.workDate) : new Date();
+    const hoursSpent = Number(dto.hoursSpent) || 0;
+
+    const log = await (this.prisma as any).designWorkLog.create({
+      data: {
+        projectId,
+        designerName: dto.designerName,
+        designerId: dto.designerId,
+        workStage: dto.workStage,
+        partName: dto.partName,
+        drawingNumber: dto.drawingNumber,
+        revision: dto.revision,
+        description: dto.description,
+        workDate,
+        startTime: dto.startTime,
+        endTime: dto.endTime,
+        hoursSpent,
+        status: dto.status || 'COMPLETED',
+        cadFileUrl: dto.cadFileUrl,
+        remarks: dto.remarks,
+        createdBy: userId,
+      },
+    });
+
+    // 1. Calculate labor cost for designer work
+    const hourlyRate = await this.getDesignerHourlyRate(dto.designerName, dto.designerId);
+    const labourCostAmount = hoursSpent * hourlyRate;
+
+    if (labourCostAmount > 0) {
+      // 2. Record ProjectCostEvent for Financial Audits & Breakdown
+      await this.prisma.projectCostEvent.create({
+        data: {
+          projectId,
+          costType: 'LABOUR_COST',
+          description: `Designer ${dto.designerName} logged ${hoursSpent} hrs for ${dto.workStage} (${dto.partName || 'CAD Design'}) @ ₹${hourlyRate}/hr`,
+          amount: labourCostAmount,
+          referenceDocType: 'DESIGN_WORK_LOG',
+          referenceDocId: log.id,
+          createdBy: userId || dto.designerName,
+        },
+      });
+
+      // 3. Rollup cost to ProjectCostSummary (Finance Section)
+      await this.recalculateProjectCostSummary(projectId);
+    }
+
+    // 4. Also log activity in Project Timeline/Activity for transparency
+    await this.prisma.projectActivity.create({
+      data: {
+        projectId,
+        action: 'DESIGN_WORK_LOGGED',
+        description: `Designer ${dto.designerName} logged ${hoursSpent} hrs for ${dto.workStage} (${dto.partName || 'General'}). Cost: ₹${labourCostAmount.toFixed(2)}`,
+        performedBy: userId || dto.designerName,
+      },
+    });
+
+    return log;
+  }
+
+  async updateDesignLog(logId: string, dto: UpdateDesignLogDto, userId?: string) {
+    const workDate = dto.workDate ? new Date(dto.workDate) : undefined;
+
+    const oldLog = await (this.prisma as any).designWorkLog.findUnique({ where: { id: logId } });
+    if (!oldLog) throw new NotFoundException(`Designer log with ID ${logId} not found.`);
+
+    const oldCostEvent = await this.prisma.projectCostEvent.findFirst({
+      where: { referenceDocType: 'DESIGN_WORK_LOG', referenceDocId: logId },
+    });
+
+    const updatedLog = await (this.prisma as any).designWorkLog.update({
+      where: { id: logId },
+      data: {
+        designerName: dto.designerName,
+        designerId: dto.designerId,
+        workStage: dto.workStage,
+        partName: dto.partName,
+        drawingNumber: dto.drawingNumber,
+        revision: dto.revision,
+        description: dto.description,
+        ...(workDate && { workDate }),
+        startTime: dto.startTime,
+        endTime: dto.endTime,
+        hoursSpent: dto.hoursSpent,
+        status: dto.status,
+        cadFileUrl: dto.cadFileUrl,
+        remarks: dto.remarks,
+      },
+    });
+
+    // Calculate updated cost & financial adjustment
+    const newHours = Number(dto.hoursSpent ?? oldLog.hoursSpent) || 0;
+    const hourlyRate = await this.getDesignerHourlyRate(dto.designerName || oldLog.designerName, dto.designerId || oldLog.designerId);
+    const newAmount = newHours * hourlyRate;
+
+    if (oldCostEvent) {
+      await this.prisma.projectCostEvent.update({
+        where: { id: oldCostEvent.id },
+        data: {
+          description: `Designer ${dto.designerName || oldLog.designerName} logged ${newHours} hrs for ${dto.workStage || oldLog.workStage} (${dto.partName || oldLog.partName || 'CAD Design'}) @ ₹${hourlyRate}/hr`,
+          amount: newAmount,
+        },
+      });
+    } else if (newAmount > 0) {
+      await this.prisma.projectCostEvent.create({
+        data: {
+          projectId: oldLog.projectId,
+          costType: 'LABOUR_COST',
+          description: `Designer ${dto.designerName || oldLog.designerName} logged ${newHours} hrs for ${dto.workStage || oldLog.workStage} (${dto.partName || oldLog.partName || 'CAD Design'}) @ ₹${hourlyRate}/hr`,
+          amount: newAmount,
+          referenceDocType: 'DESIGN_WORK_LOG',
+          referenceDocId: logId,
+          createdBy: userId || dto.designerName,
+        },
+      });
+    }
+
+    await this.recalculateProjectCostSummary(oldLog.projectId);
+
+    return updatedLog;
+  }
+
+  async deleteDesignLog(logId: string, userId?: string) {
+    const oldLog = await (this.prisma as any).designWorkLog.findUnique({ where: { id: logId } });
+    if (!oldLog) return;
+
+    const oldCostEvent = await this.prisma.projectCostEvent.findFirst({
+      where: { referenceDocType: 'DESIGN_WORK_LOG', referenceDocId: logId },
+    });
+
+    const deleted = await (this.prisma as any).designWorkLog.delete({
+      where: { id: logId },
+    });
+
+    if (oldCostEvent) {
+      await this.prisma.projectCostEvent.delete({
+        where: { id: oldCostEvent.id },
+      });
+    }
+
+    if (oldLog.projectId) {
+      await this.recalculateProjectCostSummary(oldLog.projectId);
+    }
+
+    return deleted;
+  }
+
+  async getDesignSummary(projectId: string) {
+    await this.syncMissingDesignLogCosts(projectId);
+
+    const logs: any[] = await (this.prisma as any).designWorkLog.findMany({
+      where: { projectId },
+    });
+
+    const totalHours = logs.reduce((sum: number, log: any) => sum + Number(log.hoursSpent || 0), 0);
+    const uniqueDesigners = Array.from(new Set(logs.map((l: any) => l.designerName))).filter(Boolean);
+    const completedTasks = logs.filter((l: any) => l.status === 'COMPLETED').length;
+    const drawingsCount = Array.from(new Set(logs.map((l: any) => l.drawingNumber))).filter(Boolean).length;
+    const latestLog = logs.length > 0 ? [...logs].sort((a: any, b: any) => new Date(b.workDate).getTime() - new Date(a.workDate).getTime())[0] : null;
+
+    return {
+      totalLogs: logs.length,
+      totalHours,
+      activeDesignersCount: uniqueDesigners.length,
+      designersList: uniqueDesigners,
+      completedTasks,
+      drawingsCount,
+      latestActivity: latestLog
+        ? {
+            designerName: latestLog.designerName,
+            workStage: latestLog.workStage,
+            workDate: latestLog.workDate,
+            description: latestLog.description,
+          }
+        : null,
+    };
   }
 }

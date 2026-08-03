@@ -11,10 +11,10 @@ async function bootstrap() {
   console.log("Starting backend... Please wait.");
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   
-  // Increase payload limits for large BOM files
+  // Standard payload limit for normal requests (prevents DoS via memory exhaustion)
   const express = require('express');
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+  app.use(express.json({ limit: '5mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
   app.useLogger(app.get(Logger));
 
@@ -48,7 +48,7 @@ async function bootstrap() {
   // PrismaExceptionFilter is more specific and registered after, so it catches DB errors first.
   app.useGlobalFilters(new AllExceptionsFilter(), new PrismaExceptionFilter());
 
-  await app.listen(process.env.PORT ?? 4000);
+  await app.listen(process.env.PORT ?? 4000, '0.0.0.0');
 }
 bootstrap();
 

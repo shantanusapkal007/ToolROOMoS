@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Query, Param, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { LookupsService } from './lookups.service';
@@ -67,4 +67,26 @@ export class LookupsController {
     const data = await this.lookupsService.createMaterialShape(dto);
     return { status: 'success', message: 'Material shape created successfully.', data };
   }
+
+  // --- Dynamic Category Options Endpoints ---
+
+  @Get('category-options')
+  async categoryOptions(@Query('category') category?: string) {
+    const data = await this.lookupsService.getCategoryOptions(category);
+    return { status: 'success', message: 'Category options retrieved successfully.', data };
+  }
+
+  @Post('category-options')
+  async createCategoryOption(@Body() dto: any) {
+    const data = await this.lookupsService.createCategoryOption(dto);
+    return { status: 'success', message: 'Category option created successfully.', data };
+  }
+
+  @Delete('category-options/:id')
+  async deleteCategoryOption(@Param('id') id: string) {
+    const data = await this.lookupsService.deleteCategoryOption(id);
+    return { status: 'success', message: 'Category option deleted successfully.', data };
+  }
 }
+
+
