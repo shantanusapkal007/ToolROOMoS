@@ -412,36 +412,39 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
   return (
     <div className="space-y-5 text-zinc-900 font-sans">
       
-      {/* Wizard Step Progress Indicator */}
-      <div className="bg-white border border-zinc-200/80 p-3.5 rounded-2xl shadow-xs flex items-center justify-between hide-on-print">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-zinc-100 text-zinc-800 border border-zinc-200/80 flex items-center justify-center font-bold">
-            <FileText className="w-4 h-4 text-zinc-800" />
+      {/* Wizard Step Progress Indicator - Liquid Glass Stepper */}
+      <div className="bg-white/90 backdrop-blur-xl border border-zinc-200/80 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 hide-on-print">
+        <div className="flex items-center gap-3.5">
+          <div className="h-10 w-10 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold shadow-md">
+            <FileText className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-sm font-extrabold text-zinc-950">Multi-Project PO Generator</h2>
-            <p className="text-xs text-zinc-500">Aggregate materials from across tool projects into a unified supplier purchase order</p>
+            <h2 className="text-sm font-extrabold text-zinc-950 tracking-tight flex items-center gap-2">
+              <span>Multi-Project PO Generator</span>
+              <span className="text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">Interactive</span>
+            </h2>
+            <p className="text-xs text-zinc-500 font-medium">Aggregate materials from across tool projects into a unified supplier purchase order</p>
           </div>
         </div>
 
         {/* Step Tabs */}
-        <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${step === 1 ? "bg-zinc-900 text-white shadow-xs" : "bg-zinc-100 text-zinc-600 border border-zinc-200/60"}`}>
-            <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</span>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all ${step === 1 ? "bg-zinc-950 text-white shadow-sm" : "bg-zinc-100/80 text-zinc-600 border border-zinc-200/60"}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${step === 1 ? "bg-emerald-400 text-zinc-950" : "bg-zinc-200 text-zinc-700"}`}>1</span>
             <span>Select Materials WRT Projects</span>
           </div>
 
-          <ArrowRight className="w-3.5 h-3.5 text-zinc-300" />
+          <ArrowRight className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
 
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${step === 2 ? "bg-zinc-900 text-white shadow-xs" : "bg-zinc-100 text-zinc-600 border border-zinc-200/60"}`}>
-            <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</span>
+          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all ${step === 2 ? "bg-zinc-950 text-white shadow-sm" : "bg-zinc-100/80 text-zinc-600 border border-zinc-200/60"}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${step === 2 ? "bg-emerald-400 text-zinc-950" : "bg-zinc-200 text-zinc-700"}`}>2</span>
             <span>Edit Worksheet</span>
           </div>
 
-          <ArrowRight className="w-3.5 h-3.5 text-zinc-300" />
+          <ArrowRight className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
 
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${step === 3 ? "bg-zinc-900 text-white shadow-xs" : "bg-zinc-100 text-zinc-600 border border-zinc-200/60"}`}>
-            <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">3</span>
+          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all ${step === 3 ? "bg-zinc-950 text-white shadow-sm" : "bg-zinc-100/80 text-zinc-600 border border-zinc-200/60"}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${step === 3 ? "bg-emerald-400 text-zinc-950" : "bg-zinc-200 text-zinc-700"}`}>3</span>
             <span>Document & Print</span>
           </div>
         </div>
@@ -454,7 +457,7 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
           {/* Sticky Top Bar - Total Materials Selected & Proceed Action */}
           <div className="sticky top-0 z-30 flex items-center justify-between bg-zinc-950/95 backdrop-blur-xl p-3.5 px-5 rounded-2xl border border-zinc-800 shadow-xl text-white transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center border border-white/10 text-white">
+              <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center border border-white/10 text-white shadow-xs">
                 <PackageCheck className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="flex items-center gap-2">
@@ -468,7 +471,7 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
             <button
               onClick={handleProceedToWorksheet}
               disabled={selectedItemIds.size === 0}
-              className={`px-5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-5 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
                 selectedItemIds.size > 0
                   ? "bg-white hover:bg-zinc-100 text-zinc-950 shadow-md active:scale-[0.98]"
                   : "bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-70"
@@ -479,88 +482,101 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
             </button>
           </div>
 
-          {/* Supplier Header Box */}
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-zinc-700" />
-              <span>Target Supplier & PO Header Details</span>
-            </h3>
+          {/* Target Supplier & PO Header Details Card */}
+          <div className="bg-white/90 backdrop-blur-xl p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-emerald-600" />
+                <span>Target Supplier & PO Header Details</span>
+              </h3>
+              <span className="text-[10px] text-zinc-400 font-semibold">Header Configuration</span>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-[11px] font-bold text-zinc-600 uppercase mb-1">Supplier / Vendor Name</label>
-                <input
-                  type="text"
-                  value={vendorName}
-                  onChange={(e) => setVendorName(e.target.value)}
-                  placeholder="e.g. RAJDHANI PROFILE"
-                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-900 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none"
-                />
+                <label className="block text-[11px] font-extrabold text-zinc-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <span>Supplier / Vendor Name</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={vendorName}
+                    onChange={(e) => setVendorName(e.target.value)}
+                    placeholder="e.g. RAJDHANI PROFILE"
+                    className="w-full px-3.5 py-2.5 bg-zinc-50/80 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-900 focus:bg-white focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none transition-all"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-zinc-600 uppercase mb-1">Supplier Location / Address</label>
+                <label className="block text-[11px] font-extrabold text-zinc-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <span>Supplier Location / Address</span>
+                </label>
                 <input
                   type="text"
                   value={vendorAddress}
                   onChange={(e) => setVendorAddress(e.target.value)}
                   placeholder="e.g. CHAKAN PUNE"
-                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-zinc-50/80 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:bg-white focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-zinc-600 uppercase mb-1">RM Slip No.</label>
+                <label className="block text-[11px] font-extrabold text-zinc-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <span>RM Slip No.</span>
+                </label>
                 <input
                   type="text"
                   value={rmSlipNo}
                   onChange={(e) => setRmSlipNo(e.target.value)}
                   placeholder="e.g. PUR/26-27/0033"
-                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-mono font-bold text-zinc-900 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-zinc-50/80 border border-zinc-200 rounded-xl text-xs font-mono font-bold text-zinc-900 focus:bg-white focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-zinc-600 uppercase mb-1">Target Delivery Terms</label>
+                <label className="block text-[11px] font-extrabold text-zinc-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <span>Target Delivery Terms</span>
+                </label>
                 <input
                   type="text"
                   value={deliveryTerms}
                   onChange={(e) => setDeliveryTerms(e.target.value)}
                   placeholder="e.g. WITHIN 1 DAYS"
-                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-900 focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-zinc-50/80 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-900 focus:bg-white focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none transition-all"
                 />
               </div>
             </div>
           </div>
 
-          {/* Project Toolbar & Quick Filter */}
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Select Materials WRT Tool Projects Card */}
+          <div className="bg-white/90 backdrop-blur-xl p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
-                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
+                <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
                   <Briefcase className="w-4 h-4 text-blue-600" />
                   <span>Select Materials WRT Tool Projects</span>
                 </h3>
-                <p className="text-xs text-zinc-500">View materials categorized by project number with individual project toggles</p>
+                <p className="text-xs text-zinc-500 font-medium mt-0.5">Categorized by tool project number with individual project toggles</p>
               </div>
 
               {/* Search & Material Filters */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-2.5" />
+                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-3" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search tool code, grade, dimensions..."
-                    className="pl-8 pr-3 py-1.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs focus:ring-2 focus:ring-zinc-900/10 outline-none w-60"
+                    className="pl-9 pr-3.5 py-2 bg-zinc-50/80 border border-zinc-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-zinc-900/10 outline-none w-64 font-medium transition-all"
                   />
                 </div>
 
                 <select
                   value={materialFilter}
                   onChange={(e) => setMaterialFilter(e.target.value)}
-                  className="px-3 py-1.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs focus:ring-2 focus:ring-zinc-900/10 outline-none font-medium"
+                  className="px-3.5 py-2 bg-zinc-50/80 border border-zinc-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-zinc-900/10 outline-none font-bold text-zinc-800 transition-all"
                 >
                   <option value="">All Material Grades</option>
                   {uniqueMaterials.map(m => (
@@ -570,58 +586,110 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
               </div>
             </div>
 
-            {/* Project Quick Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100">
-              <span className="text-[11px] font-bold text-zinc-500 uppercase mr-1">Project Filter:</span>
-              <button
-                onClick={() => setProjectFilter([])}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${projectFilter.length === 0 ? "bg-zinc-900 text-white shadow-xs" : "bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200 border border-zinc-200/60"}`}
-              >
-                All Projects ({availableBomItems.length} Materials)
-              </button>
-
-              {uniqueProjects.map(tool => {
-                const isSelected = projectFilter.includes(tool);
-                const count = availableBomItems.filter(i => i.toolNo === tool).length;
-                return (
+            {/* Premium Project Filter Bar - Horizontal Scrollable Pill Strip */}
+            <div className="space-y-2 pt-3 border-t border-zinc-100">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-extrabold text-zinc-600 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-zinc-500" />
+                  <span>Project Filter ({uniqueProjects.length} Projects Available)</span>
+                </span>
+                
+                {projectFilter.length > 0 && (
                   <button
-                    key={tool}
-                    onClick={() => {
-                      setProjectFilter(prev => 
-                        isSelected ? prev.filter(t => t !== tool) : [...prev, tool]
-                      );
-                    }}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${isSelected ? "bg-zinc-900 text-white shadow-xs" : "bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200 border border-zinc-200/60"}`}
+                    onClick={() => setProjectFilter([])}
+                    className="text-[10px] font-extrabold text-zinc-500 hover:text-zinc-900 underline transition-colors cursor-pointer"
                   >
-                    {tool} ({count})
+                    Clear Filter ({projectFilter.length} Active)
                   </button>
-                );
-              })}
+                )}
+              </div>
+
+              {/* Scrollable Chips Row */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-zinc-200">
+                <button
+                  onClick={() => setProjectFilter([])}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
+                    projectFilter.length === 0 
+                      ? "bg-zinc-950 text-white shadow-xs border border-zinc-950" 
+                      : "bg-zinc-100/90 text-zinc-700 hover:bg-zinc-200 border border-zinc-200/60"
+                  }`}
+                >
+                  All Projects ({availableBomItems.length} Materials)
+                </button>
+
+                {uniqueProjects.map(tool => {
+                  const isSelected = projectFilter.includes(tool);
+                  const count = availableBomItems.filter(i => i.toolNo === tool).length;
+                  return (
+                    <button
+                      key={tool}
+                      onClick={() => {
+                        setProjectFilter(prev => 
+                          isSelected ? prev.filter(t => t !== tool) : [...prev, tool]
+                        );
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isSelected 
+                          ? "bg-zinc-950 text-white shadow-xs border border-zinc-950" 
+                          : "bg-zinc-100/90 text-zinc-700 hover:bg-zinc-200 border border-zinc-200/60"
+                      }`}
+                    >
+                      <span>{tool}</span>
+                      <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${isSelected ? "bg-white/20 text-white" : "bg-zinc-200 text-zinc-700"}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* PROJECT-BASED MATERIAL CARDS (WRT PROJECTS) */}
           <div className="space-y-4">
             
-            {/* Global Selection Counter Header */}
-            <div className="bg-zinc-900 text-white p-4 rounded-2xl flex items-center justify-between shadow-xs">
-              <div className="flex items-center gap-3">
+            {/* Global Selection & Control Action Toolbar */}
+            <div className="bg-zinc-950/90 text-white p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md border border-zinc-800 backdrop-blur-xl">
+              <div className="flex items-center gap-4">
                 <button
                   onClick={toggleSelectAllFiltered}
-                  className="flex items-center gap-2 text-xs font-bold text-zinc-200 hover:text-white cursor-pointer"
+                  className="flex items-center gap-2 text-xs font-extrabold text-zinc-200 hover:text-white cursor-pointer transition-colors"
                 >
                   {filteredItems.length > 0 && filteredItems.every(i => selectedItemIds.has(i.id)) ? (
                     <CheckSquare className="w-4 h-4 text-emerald-400" />
                   ) : (
-                    <div className="w-4 h-4 rounded border-2 border-zinc-500 bg-zinc-800" />
+                    <div className="w-4 h-4 rounded border-2 border-zinc-600 bg-zinc-900" />
                   )}
                   <span>Select All Across Projects ({filteredItems.length} Materials)</span>
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 text-xs">
-                <span className="font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
-                  {selectedItemIds.size} Items Selected across {Array.from(new Set(availableBomItems.filter(i => selectedItemIds.has(i.id)).map(i => i.toolNo))).length} Tool Projects
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold">
+                  <button
+                    onClick={() => {
+                      const newMap: { [toolNo: string]: boolean } = {};
+                      uniqueProjects.forEach(t => { newMap[t] = false; });
+                      setExpandedProjects(newMap);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white border border-white/10 transition-all cursor-pointer"
+                  >
+                    Expand All
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newMap: { [toolNo: string]: boolean } = {};
+                      uniqueProjects.forEach(t => { newMap[t] = true; });
+                      setExpandedProjects(newMap);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white border border-white/10 transition-all cursor-pointer"
+                  >
+                    Collapse All
+                  </button>
+                </div>
+
+                <span className="font-extrabold text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 shadow-2xs">
+                  {selectedItemIds.size} Selected ({Array.from(new Set(availableBomItems.filter(i => selectedItemIds.has(i.id)).map(i => i.toolNo))).length} Tools)
                 </span>
               </div>
             </div>

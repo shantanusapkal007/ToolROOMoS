@@ -99,23 +99,26 @@ export function GlobalPoModule() {
   return (
     <div className="space-y-5 text-zinc-900 font-sans">
       
-      {/* Sleek Enterprise Page Header */}
-      <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hide-on-print">
+      {/* Apple-Level Spatial Glass Header */}
+      <div className="bg-white/90 backdrop-blur-xl border border-zinc-200/80 rounded-2xl p-5 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4 hide-on-print transition-all">
         <div>
           {/* Breadcrumb Navigation */}
-          <nav className="flex items-center text-xs font-semibold text-zinc-400 mb-1">
-            <span>Procurement</span>
+          <nav className="flex items-center text-xs font-semibold text-zinc-400 mb-1.5">
+            <span className="hover:text-zinc-600 transition-colors">Procurement</span>
             <ChevronRight className="w-3.5 h-3.5 mx-1.5 text-zinc-300" />
-            <span className="text-zinc-900 font-bold">Multi-Project Purchase Orders</span>
+            <span className="text-zinc-900 font-bold bg-zinc-100 px-2 py-0.5 rounded-md border border-zinc-200/60">Multi-Project Purchase Orders</span>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold shadow-xs">
-              <ShoppingCart className="w-4 h-4" />
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold shadow-md ring-1 ring-black/5">
+              <ShoppingCart className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-zinc-950 tracking-tight">
-                Global Purchase Order Module
+              <h1 className="text-xl font-extrabold text-zinc-950 tracking-tight flex items-center gap-2">
+                <span>Global Purchase Order Module</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                  Enterprise
+                </span>
               </h1>
               <p className="text-xs text-zinc-500 font-medium">
                 Consolidate material requirements across tool projects into authentic supplier Purchase Orders.
@@ -125,59 +128,59 @@ export function GlobalPoModule() {
         </div>
 
         {/* Clean Metric Stats & Tab Switcher */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
           {/* Metrics */}
-          <div className="flex items-center gap-3 bg-zinc-50 border border-zinc-200/80 rounded-xl px-3.5 py-2">
+          <div className="flex items-center gap-3.5 bg-zinc-50/90 border border-zinc-200/80 rounded-xl px-4 py-2 shadow-2xs">
             <div>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Issued POs</span>
-              <span className="text-xs font-mono font-bold text-zinc-900">{totalCount} Orders</span>
+              <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider block mb-0.5">Issued POs</span>
+              <span className="text-xs font-mono font-extrabold text-zinc-900 bg-zinc-200/60 px-2 py-0.5 rounded-md">{totalCount} Orders</span>
             </div>
-            <div className="h-6 w-px bg-zinc-200" />
+            <div className="h-7 w-px bg-zinc-200" />
             <div>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Total Procurement</span>
-              <span className="text-xs font-mono font-bold text-emerald-700">
+              <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider block mb-0.5">Total Procurement</span>
+              <span className="text-xs font-mono font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md">
                 ₹{totalValue > 0 ? totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '0'}
               </span>
             </div>
-            <div className="h-6 w-px bg-zinc-200" />
+            <div className="h-7 w-px bg-zinc-200" />
             <div>
-              <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider block">Dead Stock (6+ Mths)</span>
-              <span className="text-xs font-mono font-bold text-red-700">{deadCount} Batches</span>
+              <span className="text-[10px] font-extrabold text-red-500 uppercase tracking-wider block mb-0.5">Dead Stock (6+ Mths)</span>
+              <span className="text-xs font-mono font-extrabold text-red-700 bg-red-50 border border-red-200/60 px-2 py-0.5 rounded-md">{deadCount} Batches</span>
             </div>
           </div>
 
           {/* Segmented Control Tabs */}
-          <div className="flex items-center p-1 bg-zinc-100 rounded-xl border border-zinc-200/60">
+          <div className="flex items-center p-1 bg-zinc-100/90 rounded-xl border border-zinc-200/80 shadow-2xs">
             <button
               onClick={() => { setActiveTab('create'); setPreviewPo(null); }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
                 activeTab === 'create'
-                  ? "bg-white text-zinc-950 shadow-xs border border-zinc-200/60"
-                  : "text-zinc-500 hover:text-zinc-900"
+                  ? "bg-zinc-950 text-white shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60"
               }`}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 text-emerald-400" />
               <span>Create PO</span>
             </button>
 
             <button
               onClick={() => { setActiveTab('history'); setPreviewPo(null); }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
                 activeTab === 'history'
-                  ? "bg-white text-zinc-950 shadow-xs border border-zinc-200/60"
-                  : "text-zinc-500 hover:text-zinc-900"
+                  ? "bg-zinc-950 text-white shadow-sm"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60"
               }`}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className="w-3.5 h-3.5 text-blue-400" />
               <span>PO Register ({totalCount})</span>
             </button>
 
             <button
               onClick={() => { setActiveTab('dead'); setPreviewPo(null); }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
                 activeTab === 'dead'
-                  ? "bg-red-600 text-white shadow-xs"
-                  : "text-zinc-500 hover:text-red-600"
+                  ? "bg-red-600 text-white shadow-sm"
+                  : "text-zinc-600 hover:text-red-600 hover:bg-red-50"
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
