@@ -451,6 +451,34 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
       {step === 1 && (
         <div className="space-y-5">
           
+          {/* Sticky Top Bar - Total Materials Selected & Proceed Action */}
+          <div className="sticky top-0 z-30 flex items-center justify-between bg-zinc-950/95 backdrop-blur-xl p-3.5 px-5 rounded-2xl border border-zinc-800 shadow-xl text-white transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center border border-white/10 text-white">
+                <PackageCheck className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-zinc-400">Total Materials Selected:</span>
+                <span className="bg-white/10 text-white font-mono font-bold text-xs px-2.5 py-1 rounded-lg border border-white/10">
+                  {selectedItemIds.size} {selectedItemIds.size === 1 ? 'Item' : 'Items'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleProceedToWorksheet}
+              disabled={selectedItemIds.size === 0}
+              className={`px-5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+                selectedItemIds.size > 0
+                  ? "bg-white hover:bg-zinc-100 text-zinc-950 shadow-md active:scale-[0.98]"
+                  : "bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-70"
+              }`}
+            >
+              <span>Proceed to Calculation Worksheet</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
           {/* Supplier Header Box */}
           <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-4">
             <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
@@ -747,22 +775,6 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
               })
             )}
 
-          </div>
-
-          {/* Proceed Action Footer */}
-          <div className="flex items-center justify-between bg-zinc-900 p-4 rounded-2xl shadow-xs text-white">
-            <div>
-              <span className="text-xs text-zinc-400">Total Materials Selected:</span>
-              <span className="ml-2 font-mono font-bold text-sm text-white">{selectedItemIds.size} Items</span>
-            </div>
-
-            <button
-              onClick={handleProceedToWorksheet}
-              className="px-5 py-2 bg-white hover:bg-zinc-100 text-zinc-950 font-extrabold rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all cursor-pointer"
-            >
-              <span>Proceed to Calculation Worksheet</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
 
         </div>
