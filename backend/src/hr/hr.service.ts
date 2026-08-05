@@ -388,5 +388,144 @@ export class HrService {
       },
     });
   }
+
+  async getPayrollFinanceReconciliation(params: { monthYear?: string }) {
+    const monthYear = params.monthYear || new Date().toISOString().substring(0, 7);
+    const [year, month] = monthYear.split('-').map(Number);
+    const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
+    const end = new Date(year, month, 0, 23, 59, 59, 999);
+
+    // 1. Get payroll data (re-use existing method)
+    const payrollData = await this.getMonthlyPayrollAndWork({ monthYear });
+
+    // 2. Get all LABOUR_COST events in the period
+    const labourCostEvents = await this.prisma.projectCostEvent.findMany({
+      where: {
+        costType: 'LABOUR_COST',
+        createdAt: { gte: start, lte: end },
+      },
+      include: {
+        project: {
+          select: { id: true, projectNumber: true, partName: true },
+        },
+      },
+    });
+
+    // 3. Get all MACHINE_COST events in the period
+    const machineCostEvents = await this.prisma.projectCostEvent.findMany({
+      where: {
+        costType: 'MACHINE_COST',
+        createdAt: { gte: start, lte: end },
+      },
+      include: {
+        project: {
+          select: { id: true, projectNumber: true, partName: true },
+        },
+      },
+    });
+
+    // 4. Aggregate project-level labour costs
+    const projectCostMap = new Map<string, {
+      projectId: string;
+      projectNumber: string;
+      partName: string;
+      labourCost: number;
+      machineCost: number;
+      totalCost: number;
+      eventCount: number;
+    }>();
+
+    for (const evt of labourCostEvents) {
+      const pid = evt.projectId;
+      if (!projectCostMap.has(pid)) {
+        projectCostMap.set(pid, {
+          projectId: pid,
+          projectNumber: evt.project.projectNumber,
+          partName: evt.project.partName,
+          labourCost: 0,
+          machineCost: 0,
+          totalCost: 0,
+          eventCount: 0,
+        });
+      }
+      const rec = projectCostMap.get(pid)!;
+      rec.labourCost += Number(evt.amount);
+      rec.totalCost += Number(evt.amount);
+      rec.eventCount += 1;
+    }
+
+    for (const evt of machineCostEvents) {
+      const pid = evt.projectId;
+      if (!projectCostMap.has(pid)) {
+        projectCostMap.set(pid, {
+          projectId: pid,
+          projectNumber: evt.project.projectNumber,
+          partName: evt.project.partName,
+          labourCost: 0,
+          machineCost: 0,
+          totalCost: 0,
+          eventCount: 0,
+        });
+      }
+      const rec = projectCostMap.get(pid)!;
+      rec.machineCost += Number(evt.amount);
+      rec.totalCost += Number(evt.amount);
+      rec.eventCount += 1;
+    }
+
+    const projectCosts = Array.from(projectCostMap.values()).map(p => ({
+      ...p,
+      labourCost: Math.round(p.labourCost * 100) / 100,
+      machineCost: Math.round(p.machineCost * 100) / 100,
+      totalCost: Math.round(p.totalCost * 100) / 100,
+    }));
+
+    // 5. Calculate totals
+    const totalLabourBooked = projectCosts.reduce((sum, p) => sum + p.labourCost, 0);
+    const totalMachineBooked = projectCosts.reduce((sum, p) => sum + p.machineCost, 0);
+    const totalSalaryPaid = payrollData.summary.totalActualSalary;
+    const reconciliationGap = totalSalaryPaid - totalLabourBooked;
+
+    // 6. Employee-level reconciliation
+    const employeeReconciliation = payrollData.employees.map(emp => {
+      // Find labour cost events attributable to this employee
+      // Cross-reference via work logs / projects
+      const allocatedToProjects = emp.projects.reduce((sum: number, p: any) => {
+        return sum + (p.hours * emp.hourlyRate);
+      }, 0);
+
+      return {
+        id: emp.id,
+        employeeCode: emp.employeeCode,
+        name: emp.name,
+        department: emp.department,
+        hourlyRate: emp.hourlyRate,
+        totalHours: emp.totalHours,
+        salaryPaid: emp.actualSalary,
+        labourCostAllocated: Math.round(allocatedToProjects * 100) / 100,
+        variance: Math.round((emp.actualSalary - allocatedToProjects) * 100) / 100,
+        utilizationPercent: emp.standardHours > 0
+          ? Math.round((emp.totalHours / emp.standardHours) * 100)
+          : 0,
+        projectCount: emp.projectCount,
+      };
+    });
+
+    return {
+      monthYear,
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      summary: {
+        totalSalaryPaid: Math.round(totalSalaryPaid * 100) / 100,
+        totalLabourBooked: Math.round(totalLabourBooked * 100) / 100,
+        totalMachineBooked: Math.round(totalMachineBooked * 100) / 100,
+        reconciliationGap: Math.round(reconciliationGap * 100) / 100,
+        totalEmployees: payrollData.summary.totalEmployees,
+        totalHoursWorked: payrollData.summary.totalHoursWorked,
+      },
+      projectCosts,
+      employeeReconciliation,
+    };
+  }
 }
 

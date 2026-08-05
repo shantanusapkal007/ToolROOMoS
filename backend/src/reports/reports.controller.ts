@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ReportsService } from './reports.service';
@@ -66,5 +66,15 @@ export class ReportsController {
   ) {
     const data = await this.reportsService.createGlobalMsdrLog(dto, user.userId);
     return { data, message: 'MSDR log created successfully' };
+  }
+
+  @Get('project-material-inventory')
+  async getProjectMaterialInventory(
+    @Query('projectId') projectId?: string,
+    @Query('section') section?: string,
+    @Query('search') search?: string,
+  ) {
+    const data = await this.reportsService.getProjectMaterialInventory({ projectId, section, search });
+    return { data };
   }
 }

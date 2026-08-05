@@ -414,32 +414,129 @@ export class ReportsService {
     const workDate = dto.workDate ? new Date(dto.workDate) : new Date();
     const hoursSpent = Number(dto.hoursSpent) || 0;
 
-    const log = await (this.prisma as any).designWorkLog.create({
-      data: {
-        projectId: dto.projectId,
-        designerName: dto.designerName,
-        designerId: dto.designerId,
-        workStage: dto.workStage,
-        partName: dto.partName,
-        drawingNumber: dto.drawingNumber,
-        revision: dto.revision,
-        description: dto.description || 'Global designer log entry',
-        workDate,
-        startTime: dto.startTime,
-        endTime: dto.endTime,
-        hoursSpent,
-        status: dto.status || 'COMPLETED',
-        cadFileUrl: dto.cadFileUrl,
-        remarks: dto.remarks,
-        createdBy: userId,
-      },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const log = await (tx as any).designWorkLog.create({
+        data: {
+          projectId: dto.projectId,
+          designerName: dto.designerName,
+          designerId: dto.designerId,
+          workStage: dto.workStage,
+          partName: dto.partName,
+          drawingNumber: dto.drawingNumber,
+          revision: dto.revision,
+          description: dto.description || 'Global designer log entry',
+          workDate,
+          startTime: dto.startTime,
+          endTime: dto.endTime,
+          hoursSpent,
+          status: dto.status || 'COMPLETED',
+          cadFileUrl: dto.cadFileUrl,
+          remarks: dto.remarks,
+          createdBy: userId,
+        },
+      });
 
-    return log;
+      // --- Finance Integration: Auto-generate labour cost events ---
+      if (dto.projectId && hoursSpent > 0) {
+        let labourRate = 0;
+
+        // Look up employee hourly rate if designerId is provided
+        if (dto.designerId) {
+          try {
+            const employee = await tx.employee.findUnique({ where: { id: dto.designerId } });
+            if (employee) labourRate = Number(employee.hourlyRate || 0);
+          } catch { /* skip if not found */ }
+        }
+
+        // Fallback: try CostRate table for default design rate
+        if (labourRate <= 0) {
+          try {
+            const defaultRate = await tx.costRate.findFirst({
+              where: { rateType: 'DESIGN_LABOUR', status: 'ACTIVE' },
+            });
+            labourRate = defaultRate ? Number(defaultRate.rateValue) : 0;
+          } catch { /* skip */ }
+        }
+
+        const labourCost = hoursSpent * labourRate;
+
+        if (labourCost > 0) {
+          // Create cost event
+          await tx.projectCostEvent.create({
+            data: {
+              projectId: dto.projectId,
+              costType: 'LABOUR_COST',
+              description: `Design labour: ${dto.designerName || 'Designer'} – ${hoursSpent.toFixed(1)}hrs × ₹${labourRate}/hr (${dto.workStage || 'Design'})`,
+              amount: labourCost,
+              referenceDocType: 'DESIGN_WORK_LOG',
+              referenceDocId: log.id,
+              createdBy: userId,
+            },
+          });
+
+          // Update project cost summary
+          await tx.projectCostSummary.upsert({
+            where: { projectId: dto.projectId },
+            create: {
+              projectId: dto.projectId,
+              labourCost: labourCost,
+              totalCost: labourCost,
+              profitability: -labourCost,
+              estimatedMaterialCost: 0,
+              actualMaterialCost: 0,
+              materialConsumptionCost: 0,
+              machineCost: 0,
+              outsideProcessCost: 0,
+              inspectionCost: 0,
+              packingCost: 0,
+              dispatchCost: 0,
+              revenue: 0,
+            },
+            update: {
+              labourCost: { increment: labourCost },
+              totalCost: { increment: labourCost },
+            },
+          });
+
+          // Re-sync profitability
+          const summary = await tx.projectCostSummary.findUnique({ where: { projectId: dto.projectId } });
+          if (summary) {
+            await tx.projectCostSummary.update({
+              where: { projectId: dto.projectId },
+              data: { profitability: Number(summary.revenue) - Number(summary.totalCost) },
+            });
+          }
+        }
+      }
+
+      return log;
+    });
   }
 
   async createGlobalMsdrLog(dto: any, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
+      // Fetch machine and employee rates for cost calculation
+      let machineHourlyRate = 0;
+      let employeeHourlyRate = 0;
+      let machineName = '';
+
+      if (dto.machineId) {
+        try {
+          const machine = await tx.machine.findUnique({ where: { id: dto.machineId } });
+          if (machine) {
+            machineHourlyRate = Number(machine.hourlyRate || 0);
+            machineName = machine.machineCode || '';
+          }
+        } catch { /* skip */ }
+      }
+
+      if (dto.employeeId) {
+        try {
+          const employee = await tx.employee.findUnique({ where: { id: dto.employeeId } });
+          if (employee) employeeHourlyRate = Number(employee.hourlyRate || 0);
+        } catch { /* skip */ }
+      }
+
       const header = await (tx as any).msdrHeader.create({
         data: {
           projectId: dto.projectId,
@@ -452,6 +549,9 @@ export class ReportsService {
           createdBy: userId,
         },
       });
+
+      let totalMachineCost = 0;
+      let totalLabourCost = 0;
 
       const items = dto.items && dto.items.length > 0 ? dto.items : [dto];
       for (const item of items) {
@@ -476,8 +576,9 @@ export class ReportsService {
           runHrs = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
           if (runHrs < 0) runHrs += 24;
         }
+        if (runHrs < 0) runHrs = 0;
 
-        await (tx as any).msdrOperation.create({
+        const op = await (tx as any).msdrOperation.create({
           data: {
             msdrHeaderId: header.id,
             operationId: opId,
@@ -493,9 +594,275 @@ export class ReportsService {
             runningHours: runHrs > 0 ? runHrs : 0,
           },
         });
+
+        // --- Finance Integration: Calculate and log costs ---
+        const setupHrs = Number(item.setupTime || 0) / 60; // setupTime is in minutes
+        const totalHrs = runHrs + setupHrs;
+
+        if (totalHrs > 0 && dto.projectId) {
+          const mCost = totalHrs * machineHourlyRate;
+          const lCost = totalHrs * employeeHourlyRate;
+          totalMachineCost += mCost;
+          totalLabourCost += lCost;
+
+          if (mCost > 0) {
+            await tx.projectCostEvent.create({
+              data: {
+                projectId: dto.projectId,
+                costType: 'MACHINE_COST',
+                description: `Machine cost: ${machineName} – ${totalHrs.toFixed(2)}hrs × ₹${machineHourlyRate}/hr (Tool: ${item.toolNo || 'N/A'})`,
+                amount: mCost,
+                referenceDocType: 'MSDR_OP',
+                referenceDocId: op.id,
+                createdBy: userId,
+              },
+            });
+          }
+        }
+      }
+
+      // --- Update ProjectCostSummary ---
+      if (dto.projectId && (totalMachineCost > 0 || totalLabourCost > 0)) {
+        const totalCostDelta = totalMachineCost + totalLabourCost;
+
+        await tx.projectCostSummary.upsert({
+          where: { projectId: dto.projectId },
+          create: {
+            projectId: dto.projectId,
+            machineCost: totalMachineCost,
+            labourCost: totalLabourCost,
+            totalCost: totalCostDelta,
+            profitability: -totalCostDelta,
+            estimatedMaterialCost: 0,
+            actualMaterialCost: 0,
+            materialConsumptionCost: 0,
+            outsideProcessCost: 0,
+            inspectionCost: 0,
+            packingCost: 0,
+            dispatchCost: 0,
+            revenue: 0,
+          },
+          update: {
+            machineCost: { increment: totalMachineCost },
+            labourCost: { increment: totalLabourCost },
+            totalCost: { increment: totalCostDelta },
+          },
+        });
+
+        // Re-sync profitability
+        const summary = await tx.projectCostSummary.findUnique({ where: { projectId: dto.projectId } });
+        if (summary) {
+          await tx.projectCostSummary.update({
+            where: { projectId: dto.projectId },
+            data: { profitability: Number(summary.revenue) - Number(summary.totalCost) },
+          });
+        }
+
+        // Activity log
+        await tx.projectActivity.create({
+          data: {
+            projectId: dto.projectId,
+            action: 'PRODUCTION_LOGGED',
+            description: `MSDR ${header.msdrNumber} logged via daily reports. Cost: ₹${totalCostDelta.toFixed(2)} (Machine: ₹${totalMachineCost.toFixed(2)} + Labour: ₹${totalLabourCost.toFixed(2)})`,
+            performedBy: userId || 'SYSTEM',
+          },
+        });
       }
 
       return header;
     });
   }
+
+  async getProjectMaterialInventory(query?: {
+    projectId?: string;
+    section?: string;
+    search?: string;
+  }) {
+    const issueWhere: any = {};
+    if (query?.projectId && query.projectId !== 'ALL') {
+      issueWhere.projectId = query.projectId;
+    }
+
+    const materialIssues = await (this.prisma as any).materialIssueHeader.findMany({
+      where: issueWhere,
+      include: {
+        project: {
+          select: { id: true, projectNumber: true, partName: true, customer: { select: { companyName: true } } },
+        },
+        items: {
+          include: {
+            inventoryBatch: {
+              include: {
+                material: true,
+                location: { include: { warehouse: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { issueDate: 'desc' },
+    });
+
+    const batchWhere: any = { status: { in: ['AVAILABLE', 'RESERVED', 'PARTIAL'] } };
+    const batches = await (this.prisma as any).inventoryBatch.findMany({
+      where: batchWhere,
+      include: {
+        material: true,
+        location: { include: { warehouse: true } },
+        grnItem: {
+          include: {
+            grnHeader: {
+              include: {
+                project: { select: { id: true, projectNumber: true, partName: true, customer: { select: { companyName: true } } } }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const allProjects = await this.prisma.project.findMany({
+      select: { id: true, projectNumber: true, partName: true, customer: { select: { companyName: true } } },
+    });
+    const projectMap = new Map(allProjects.map(p => [p.id, p]));
+
+    const items: any[] = [];
+
+    const formatSectionName = (sec?: string | null) => {
+      if (!sec) return 'Shopfloor';
+      switch (sec) {
+        case 'PRESS_SHOP': return 'Press Shop';
+        case 'MACHINE_SHOP': return 'Machine Shop';
+        case 'TOOL_ROOM_FITTING': return 'Tool Room Fitting';
+        case 'FABRICATION_INDIAN': return 'Fabrication (Indian)';
+        case 'FABRICATION_EXPORT': return 'Fabrication (Export)';
+        default: return sec.replace(/_/g, ' ');
+      }
+    };
+
+    // A. Issued items -> Location shows Shopfloor Section (e.g. Press Shop)
+    materialIssues.forEach((issue: any) => {
+      const proj = issue.project;
+      const sectionLabel = formatSectionName(issue.productionSection);
+
+      issue.items?.forEach((item: any) => {
+        const mat = item.inventoryBatch?.material;
+        const batch = item.inventoryBatch;
+
+        items.push({
+          id: `ISSUE-${item.id}`,
+          projectId: issue.projectId,
+          projectCode: proj?.projectNumber || 'N/A',
+          projectName: proj?.partName || 'General Tooling',
+          customerName: proj?.customer?.companyName || 'Internal',
+          materialId: mat?.id || 'N/A',
+          materialCode: mat?.materialCode || 'N/A',
+          materialGrade: mat?.materialGrade || 'Raw Material',
+          batchNumber: batch?.batchNumber || 'N/A',
+          heatNumber: batch?.heatNumber || 'N/A',
+          quantity: Number(item.issuedQty || 0),
+          unitCost: Number(batch?.unitCost || 0),
+          materialValue: Number(item.materialValue || 0),
+          uom: 'NOS',
+          rateUom: 'KG',
+          isIssued: true,
+          section: issue.productionSection || 'MACHINE_SHOP',
+          sectionLabel,
+          // CRITICAL REQUIREMENT: Show location as Press Shop / Machine Shop when issued
+          currentLocation: sectionLabel,
+          warehouseName: batch?.location?.warehouse?.warehouseName || 'Main Store',
+          rackBin: batch?.rack ? `Rack ${batch.rack}` : batch?.location?.locationName || 'N/A',
+          status: `ISSUED TO ${sectionLabel.toUpperCase()}`,
+          issueNumber: issue.issueNumber,
+          date: issue.issueDate,
+          remarks: item.remarks || issue.remarks || `Issued to ${sectionLabel}`,
+        });
+      });
+    });
+
+    // B. Unissued / Store Batches -> Location shows under Project Name / Store
+    batches.forEach((batch: any) => {
+      if (Number(batch.currentQty || 0) <= 0) return;
+
+      const proj = batch.grnItem?.grnHeader?.project || projectMap.get(allProjects[0]?.id);
+      const projCode = proj?.projectNumber || 'GENERAL';
+      const projName = proj?.partName || 'Main Raw Material Store';
+
+      const storeLocation = `${projCode} Project Store (${batch.location?.warehouse?.warehouseName || 'Main Warehouse'})`;
+
+      items.push({
+        id: `BATCH-${batch.id}`,
+        projectId: proj?.id || 'GENERAL',
+        projectCode: projCode,
+        projectName: projName,
+        customerName: proj?.customer?.companyName || 'Internal',
+        materialId: batch.material?.id || 'N/A',
+        materialCode: batch.material?.materialCode || 'N/A',
+        materialGrade: batch.material?.materialGrade || 'Raw Material',
+        batchNumber: batch.batchNumber,
+        heatNumber: batch.heatNumber || 'N/A',
+        quantity: Number(batch.currentQty || 0),
+        unitCost: Number(batch.unitCost || 0),
+        materialValue: Number(batch.currentQty || 0) * Number(batch.unitCost || 0),
+        uom: 'NOS',
+        rateUom: 'KG',
+        isIssued: false,
+        section: 'PROJECT_STORE',
+        sectionLabel: 'Project Store',
+        // CRITICAL REQUIREMENT: Show location under Project Name when not issued
+        currentLocation: storeLocation,
+        warehouseName: batch.location?.warehouse?.warehouseName || 'Main Warehouse',
+        rackBin: batch.rack ? `Rack ${batch.rack}` : batch.location?.locationName || 'Unassigned',
+        status: batch.status === 'RESERVED' ? 'RESERVED FOR PROJECT' : 'IN PROJECT STORE',
+        issueNumber: null,
+        date: batch.createdAt,
+        remarks: `Stored in ${batch.rack || 'Main Bin'}`,
+      });
+    });
+
+    let filtered = items;
+
+    if (query?.projectId && query.projectId !== 'ALL') {
+      filtered = filtered.filter(i => i.projectId === query.projectId);
+    }
+
+    if (query?.section && query.section !== 'ALL') {
+      filtered = filtered.filter(i => i.section === query.section);
+    }
+
+    if (query?.search) {
+      const q = query.search.toLowerCase();
+      filtered = filtered.filter(i =>
+        i.projectCode.toLowerCase().includes(q) ||
+        i.projectName.toLowerCase().includes(q) ||
+        i.materialCode.toLowerCase().includes(q) ||
+        i.materialGrade.toLowerCase().includes(q) ||
+        i.batchNumber.toLowerCase().includes(q) ||
+        i.heatNumber.toLowerCase().includes(q) ||
+        i.currentLocation.toLowerCase().includes(q)
+      );
+    }
+
+    const totalItems = filtered.length;
+    const totalValue = filtered.reduce((sum, i) => sum + i.materialValue, 0);
+    const issuedItems = filtered.filter(i => i.isIssued);
+    const storeItems = filtered.filter(i => !i.isIssued);
+
+    const issuedValue = issuedItems.reduce((sum, i) => sum + i.materialValue, 0);
+    const storeValue = storeItems.reduce((sum, i) => sum + i.materialValue, 0);
+
+    return {
+      summary: {
+        totalItems,
+        totalValue: Math.round(totalValue * 100) / 100,
+        issuedCount: issuedItems.length,
+        issuedValue: Math.round(issuedValue * 100) / 100,
+        storeCount: storeItems.length,
+        storeValue: Math.round(storeValue * 100) / 100,
+      },
+      items: filtered,
+    };
+  }
 }
+

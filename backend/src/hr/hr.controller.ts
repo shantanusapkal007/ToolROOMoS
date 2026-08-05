@@ -54,6 +54,13 @@ export class HrController {
   ) {
     return this.hrService.upsertMonthlySalary(body, user?.userId || 'SYSTEM');
   }
+
+  @Get('payroll-finance-reconciliation')
+  async getPayrollFinanceReconciliation(
+    @Query('monthYear') monthYear?: string,
+  ) {
+    return this.hrService.getPayrollFinanceReconciliation({ monthYear });
+  }
 }
 
 

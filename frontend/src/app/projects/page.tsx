@@ -26,6 +26,7 @@ export default function ProjectsPage() {
   const [newProjectNumber, setNewProjectNumber] = useState("");
   const [newPartName, setNewPartName] = useState("");
   const [newCustomerPo, setNewCustomerPo] = useState("");
+  const [newRevenue, setNewRevenue] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
   useEffect(() => {
@@ -43,11 +44,13 @@ export default function ProjectsPage() {
         customerPoNumber: newCustomerPo,
         customerId: selectedCustomerId,
         plantId: plants?.[0]?.id || "PL-01",
+        revenue: newRevenue ? parseFloat(newRevenue) : 0,
       } as any);
       setShowNewProjectModal(false);
       setNewProjectNumber("");
       setNewPartName("");
       setNewCustomerPo("");
+      setNewRevenue("");
     } catch (err: any) {}
   };
 
@@ -250,6 +253,19 @@ export default function ProjectsPage() {
               value={newCustomerPo}
               onChange={(e) => setNewCustomerPo(e.target.value)}
               className="w-full px-3 py-2 border border-zinc-200 rounded-md font-mono text-caption text-zinc-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-caption font-semibold text-zinc-700 mb-1">Expected Contract / Project Order Value (₹)</label>
+            <input 
+              type="number"
+              min="0"
+              step="1000"
+              placeholder="e.g. 250000 (How much money you will receive for this project)"
+              value={newRevenue}
+              onChange={(e) => setNewRevenue(e.target.value)}
+              className="w-full px-3 py-2 border border-zinc-200 rounded-md text-caption text-zinc-900"
             />
           </div>
 

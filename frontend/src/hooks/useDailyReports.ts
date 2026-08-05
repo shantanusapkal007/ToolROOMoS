@@ -28,7 +28,7 @@ export function useGlobalDailyReports(filters?: {
   return useQuery({
     queryKey: dailyReportKeys.list(filters),
     queryFn: () => DailyReportsService.getGlobalEmployeeDailyReports(filters),
-    refetchInterval: 30000,
+    staleTime: 60000,
   });
 }
 
@@ -36,7 +36,7 @@ export function useDailyReportStats(date?: string) {
   return useQuery({
     queryKey: dailyReportKeys.stats(date),
     queryFn: () => DailyReportsService.getEmployeeDailyReportStats({ date }),
-    refetchInterval: 30000,
+    staleTime: 60000,
   });
 }
 

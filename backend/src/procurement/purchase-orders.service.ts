@@ -256,7 +256,7 @@ export class PurchaseOrdersService {
               sgst: round2(gstAmt / 2),
               dimensions: item.dimensions || item.length ? `${item.length || ''} ${item.width || ''} ${item.height || ''}`.trim() : '',
               hsnCode: item.hsnCode || '7228',
-              uom: item.uom || 'KG',
+              uom: item.uom || 'NOS',
               remarks: item.remarks,
               customFields: {
                 detNo: item.detNo || `${idx + 1}`,

@@ -13,4 +13,8 @@ export const InventoryService = {
     const res = await api.post(`master-data/inventory-ledger`, data);
     return res.data;
   },
+  getProjectMaterialInventory: async (params?: { projectId?: string; section?: string; search?: string }): Promise<any> => {
+    const res = await api.get('reports/project-material-inventory', { params });
+    return (res as any)?.data ?? res;
+  },
 };

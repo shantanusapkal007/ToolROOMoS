@@ -181,10 +181,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
-  // Poll notifications periodically on mount
+  // Poll notifications periodically on mount when document is visible
   useEffect(() => {
-    refreshNotifications();
-    const interval = setInterval(refreshNotifications, 30000); // 30s live telemetry refresh
+    const safeRefresh = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      refreshNotifications();
+    };
+    safeRefresh();
+    const interval = setInterval(safeRefresh, 120000); // 120s background telemetry refresh
     return () => clearInterval(interval);
   }, [refreshNotifications]);
 

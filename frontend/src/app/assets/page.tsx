@@ -10,7 +10,7 @@ import {
   ShieldCheck, FileText, QrCode, Tag, MapPin, Building, ChevronRight,
   TrendingUp, BarChart3, PieChart, Layers, Download, Check, AlertCircle, X,
   Edit, Eye, Image as ImageIcon, Link as LinkIcon, DollarSign, Archive, History,
-  Sparkles, Sliders, Shield, Zap
+  Sparkles, Sliders, Shield, Zap, Boxes
 } from 'lucide-react';
 import { 
   useAssetsDashboardStats, useAssets, useAsset, useCreateAsset, 
@@ -21,9 +21,10 @@ import {
 } from '../../hooks/useAssets';
 import { useMasterData } from '../../hooks/useMasterData';
 import { useMasterLookups } from '../../hooks/useMasterLookups';
+import { ProjectMaterialInventoryTab } from '../../components/inventory/ProjectMaterialInventoryTab';
 
 export default function GlobalAssetsPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'issues' | 'returns' | 'employees' | 'categories' | 'maintenance' | 'reports'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'material-inventory' | 'inventory' | 'issues' | 'returns' | 'employees' | 'categories' | 'maintenance' | 'reports'>('dashboard');
   
   const { options: uomOptions } = useMasterLookups('UOM');
   const { options: conditionOptions } = useMasterLookups('ASSET_CONDITION');
@@ -419,6 +420,7 @@ export default function GlobalAssetsPage() {
           <div className="flex items-center space-x-1 border-b border-zinc-200 shrink-0 overflow-x-auto hide-scrollbar bg-zinc-50/50 px-2 pt-1 rounded-t-md">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+              { id: 'material-inventory', label: 'Material Inventory', icon: Boxes },
               { id: 'inventory', label: 'Asset Register', icon: Package },
               { id: 'issues', label: 'Issue Register', icon: ArrowUpRight },
               { id: 'returns', label: 'Return Register', icon: ArrowDownLeft },
@@ -445,6 +447,11 @@ export default function GlobalAssetsPage() {
               );
             })}
           </div>
+
+        {/* TAB: MATERIAL INVENTORY W.R.T PROJECTS */}
+        {activeTab === 'material-inventory' && (
+          <ProjectMaterialInventoryTab />
+        )}
 
         {/* TAB 1: DASHBOARD */}
         {activeTab === 'dashboard' && (

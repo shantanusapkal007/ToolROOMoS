@@ -272,7 +272,7 @@ export default function InventoryPage() {
                          <div className="flex items-center justify-end space-x-2">
                            {isLowStock && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
                            <span className="font-mono text-zinc-900 font-black text-sm">{availQty}</span>
-                           <span className="text-[10px] text-zinc-500 uppercase font-bold">{batch.material?.defaultUom || 'KG'}</span>
+                           <span className="text-[10px] text-zinc-500 uppercase font-bold">{batch.material?.defaultUom || 'NOS'}</span>
                          </div>
                        </td>
                        <td className="p-4 text-right font-mono text-zinc-600">

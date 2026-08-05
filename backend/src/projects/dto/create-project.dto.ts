@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNotEmpty, IsDateString, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsDateString, IsUUID, IsNumber } from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
@@ -36,6 +36,14 @@ export class CreateProjectDto {
   @IsString()
   @IsNotEmpty()
   plantId: string;
+
+  @IsNumber()
+  @IsOptional()
+  revenue?: number;
+
+  @IsNumber()
+  @IsOptional()
+  contractValue?: number;
 
   @IsString()
   @IsOptional()

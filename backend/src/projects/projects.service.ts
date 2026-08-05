@@ -61,6 +61,7 @@ export class ProjectsService {
       });
 
       // 2. Initialize Project Cost Summary (Outcome Layer)
+      const initialRevenue = Number(dto.revenue ?? dto.contractValue ?? 0);
       await tx.projectCostSummary.create({
         data: {
           projectId: project.id,
@@ -74,8 +75,8 @@ export class ProjectsService {
           packingCost: 0,
           dispatchCost: 0,
           totalCost: 0,
-          revenue: 0,
-          profitability: 0,
+          revenue: initialRevenue,
+          profitability: initialRevenue,
         },
       });
 

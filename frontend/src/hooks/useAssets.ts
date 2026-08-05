@@ -17,7 +17,7 @@ export function useAssetsDashboardStats() {
   return useQuery({
     queryKey: assetKeys.stats(),
     queryFn: () => AssetsService.getDashboardStats(),
-    refetchInterval: 15000,
+    staleTime: 60000,
   });
 }
 

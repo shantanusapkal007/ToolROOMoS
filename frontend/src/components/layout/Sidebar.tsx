@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Package, Wrench, FileText, CreditCard, Sliders, ClipboardList, ShoppingCart } from "lucide-react";
+import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Package, Wrench, FileText, CreditCard, Sliders, ClipboardList, ShoppingCart, DollarSign } from "lucide-react";
 import { useAuth } from '../auth/AuthProvider';
 import { usePermissions } from '../auth/PermissionProvider';
 import { useDensityStore } from '../../store/useDensityStore';
@@ -112,10 +112,10 @@ export function Sidebar() {
             isExpanded={isHovered}
           />
           <NavItem 
-            href="/payroll"
-            icon={<CreditCard className="h-4 w-4 text-emerald-600" />} 
-            label="Payroll & Work" 
-            active={pathname.startsWith("/payroll")} 
+            href="/finance"
+            icon={<DollarSign className="h-4 w-4 text-emerald-600" />} 
+            label="Finance & Payroll" 
+            active={pathname.startsWith("/finance") || pathname.startsWith("/payroll")} 
             isExpanded={isHovered}
           />
           
