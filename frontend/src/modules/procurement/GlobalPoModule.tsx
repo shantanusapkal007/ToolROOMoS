@@ -215,8 +215,34 @@ export function GlobalPoModule() {
       {/* Main Content Body */}
       {previewPo ? (
         <AuthenticPoDocument 
-          po={previewPo} 
-          onClose={() => setPreviewPo(null)} 
+          data={{
+            poNumber: previewPo.poNumber || "PUR/26-27/001",
+            rmSlipNo: previewPo.rmSlipNo || "-",
+            date: new Date(previewPo.createdAt || Date.now()).toLocaleDateString('en-GB'),
+            vendorName: previewPo.vendor?.vendorName || previewPo.vendorName || "Standard Vendor",
+            vendorAddress: previewPo.vendor?.address || "Pune",
+            deliveryTerms: previewPo.deliveryTerms || "Immediate",
+            items: (previewPo.items || []).map((item: any, idx: number) => ({
+              id: item.id || `item-${idx}`,
+              projectId: item.projectId || '',
+              toolNo: item.project?.projectNumber || item.toolNo || 'KTD-GENERAL',
+              detNo: item.detNo || `${idx + 1}`,
+              length: item.length || '-',
+              width: item.width || '-',
+              height: item.height || '-',
+              materialGrade: item.materialGrade || item.material?.materialGrade || 'MS',
+              orderedQty: item.orderedQty || item.quantity || 1,
+              apWt: item.apWt || item.unitWeight || 10,
+              totalWt: item.totalWt || item.weight || 10,
+              agreedRate: item.agreedRate || item.rate || 85,
+              basicValue: item.basicValue || item.amount || 850,
+              gstPercent: item.gstPercent || 18,
+              gstAmount: item.gstAmount || 153,
+              lineTotal: item.lineTotal || 1003,
+              remarks: item.remarks || '',
+            })),
+          }}
+          onBack={() => setPreviewPo(null)} 
         />
       ) : activeTab === 'create' ? (
         <MultiProjectPoWizard onSuccess={fetchGlobalOrders} />
