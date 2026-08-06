@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import { useGlobalDailyReports } from "@/hooks/useDailyReports";
-import { useProject } from "@/hooks/useProjects";
+import { useProject, useCompleteProduction } from "@/hooks/useProjects";
 import {
   Wrench,
   Cpu,
@@ -13,8 +13,10 @@ import {
   RefreshCw,
   FileSpreadsheet,
   Plus,
+  CheckCircle2,
 } from "lucide-react";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
+import { Modal } from "@/components/ui/Modal";
 import Link from "next/link";
 
 import { ToolroomSection } from "@/components/production/sections/ToolroomSection";
@@ -120,6 +122,26 @@ export default function ProjectProductionPage() {
     setMoveModalOpen(true);
   };
 
+  // Complete Production Phase state & mutation
+  const completeProductionMutation = useCompleteProduction(id);
+  const [showCompleteConfirmModal, setShowCompleteConfirmModal] = useState(false);
+  const [completionRemarks, setCompletionRemarks] = useState("");
+
+  const isProductionCompleted = project?.currentStage === "INSPECTION" || 
+    project?.currentStage === "DISPATCH_READY" || 
+    project?.currentStage === "DISPATCHED" || 
+    project?.currentStage === "INVOICED" || 
+    project?.currentStage === "CLOSED";
+
+  const handleConfirmCompleteProduction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await completeProductionMutation.mutateAsync(completionRemarks);
+      setShowCompleteConfirmModal(false);
+      setCompletionRemarks("");
+    } catch (err) {}
+  };
+
   if (isLoading) {
     return <SkeletonBox className="h-96 w-full" />;
   }
@@ -139,6 +161,21 @@ export default function ProjectProductionPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {isProductionCompleted ? (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Production Completed ({project?.currentStage?.replace(/_/g, ' ')})</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowCompleteConfirmModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm hover:shadow transition-all cursor-pointer active:scale-98"
+            >
+              <CheckCircle2 className="w-4 h-4 text-white" />
+              <span>Mark Production Completed</span>
+            </button>
+          )}
+
           <Link
             href="/employee-daily-report"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-bold shadow-xs transition-colors"
@@ -207,6 +244,57 @@ export default function ProjectProductionPage() {
         currentSection={moveCurrentSection}
         projectCode={project?.projectNumber || id}
       />
+
+      {/* Mark Production Completed Confirmation Modal */}
+      <Modal
+        isOpen={showCompleteConfirmModal}
+        onClose={() => setShowCompleteConfirmModal(false)}
+        title="Complete Production Phase"
+        subtitle={`Mark production phase as finished for ${project?.projectNumber || id} based on shopfloor daily reports.`}
+      >
+        <form onSubmit={handleConfirmCompleteProduction} className="space-y-4 font-sans">
+          <div className="p-3.5 bg-emerald-50/80 rounded-xl border border-emerald-200 text-xs text-emerald-950 space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Production Stage Milestone</span>
+            </div>
+            <p className="text-emerald-800">
+              This action will mark the production phase as <strong>COMPLETED</strong> ({allMsdrs.length} daily report log(s) recorded) and advance project <strong>{project?.projectNumber}</strong> from <strong>{project?.currentStage}</strong> to the <strong>QUALITY INSPECTION</strong> stage.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1">
+              Completion Remarks / Notes (Optional)
+            </label>
+            <textarea
+              rows={3}
+              placeholder="e.g. All machining, fitting & shopfloor trials completed successfully. Ready for quality inspection."
+              value={completionRemarks}
+              onChange={(e) => setCompletionRemarks(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <button
+              type="button"
+              onClick={() => setShowCompleteConfirmModal(false)}
+              className="px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={completeProductionMutation.isPending}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4 text-white" />
+              <span>{completeProductionMutation.isPending ? "Submitting..." : "Confirm & Complete Production"}</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

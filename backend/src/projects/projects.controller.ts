@@ -140,6 +140,21 @@ export class ProjectsController {
     };
   }
 
+  @Post(':id/complete-production')
+  @Roles('ADMIN', 'SALES_ENGINEER', 'PRODUCTION')
+  async completeProduction(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('remarks') remarks?: string,
+    @CurrentUser() user?: any,
+  ) {
+    const data = await this.projectsService.completeProduction(id, remarks, user?.userId);
+    return {
+      status: 'success',
+      message: 'Production phase marked as completed. Advanced to Quality Inspection.',
+      data,
+    };
+  }
+
   @Get(':id/timeline')
   async getTimeline(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.projectsService.getTimeline(id);

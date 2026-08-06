@@ -434,6 +434,69 @@ export class ProjectsService {
     });
   }
 
+  async completeProduction(id: string, remarks?: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.findUniqueOrThrow({
+        where: { id },
+      });
+
+      const fromStage = project.currentStage;
+      let msdrCount = 0;
+      try {
+        msdrCount = await (tx as any).msdrHeader.count({ where: { projectId: id } });
+      } catch {
+        /* skip if table not found */
+      }
+
+      // 1. Advance project stage to INSPECTION (Quality Inspection stage)
+      const updatedProject = await tx.project.update({
+        where: { id },
+        data: {
+          currentStage: ProjectStatus.INSPECTION,
+          progress: 85,
+          updatedBy: userId,
+        },
+      });
+
+      // 2. Record stage transition in project timeline
+      const timelineRemarks = remarks 
+        ? remarks 
+        : `Production phase marked completed after ${msdrCount} shopfloor daily report log(s). Advanced to Quality Inspection.`;
+
+      await tx.projectTimeline.create({
+        data: {
+          projectId: id,
+          fromStage,
+          toStage: ProjectStatus.INSPECTION,
+          transitionedBy: userId || 'SYSTEM',
+          remarks: timelineRemarks,
+        },
+      });
+
+      // 3. Record project activity log
+      await tx.projectActivity.create({
+        data: {
+          projectId: id,
+          action: 'PRODUCTION_COMPLETED',
+          description: `Production phase marked complete (${msdrCount} daily report logs). Advanced stage from ${fromStage} to INSPECTION.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      // 4. Update status of any related job cards to COMPLETED
+      try {
+        await (tx as any).jobCard.updateMany({
+          where: { projectId: id, status: { not: 'COMPLETED' } },
+          data: { status: 'COMPLETED' },
+        });
+      } catch {
+        /* skip if job card table not active */
+      }
+
+      return updatedProject;
+    });
+  }
+
   async getTimeline(id: string) {
     return this.prisma.projectTimeline.findMany({
       where: { projectId: id },

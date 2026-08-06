@@ -136,3 +136,20 @@ export function useReopenEngineering(id: string) {
     },
   });
 }
+
+export function useCompleteProduction(id: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: (remarks?: string) => ProjectsService.completeProduction(id, remarks),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      success('Production Completed', 'Production phase marked as completed. Advanced to Quality Inspection.');
+    },
+    onError: (err: any) => {
+      error('Completion Failed', err.message || 'Failed to complete production phase');
+    },
+  });
+}

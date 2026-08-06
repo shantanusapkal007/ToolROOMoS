@@ -53,5 +53,12 @@ export const ProjectsService = {
   reopenEngineering: async (id: string): Promise<any> => {
     const res = await api.patch<any>(`projects/${id}/reopen-engineering`);
     return res.data;
+  },
+
+  completeProduction: async (id: string, remarks?: string): Promise<Project> => {
+    const res = await api.post<any>(`projects/${id}/complete-production`, { remarks });
+    const body = res?.data;
+    if (body && body.data) return body.data;
+    return body as Project;
   }
 };
