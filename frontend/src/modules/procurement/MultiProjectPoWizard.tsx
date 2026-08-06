@@ -117,7 +117,9 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Load available BOM items on mount
+  const [allProjectsList, setAllProjectsList] = useState<any[]>([]);
+
+  // Load available BOM items & all active projects on mount
   useEffect(() => {
     fetchBomItems();
   }, []);
@@ -129,6 +131,10 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
         ProcurementService.getGlobalBomItems().catch(() => ({ data: [] })),
         ProjectsService.getAllProjects().catch(() => [])
       ]);
+
+      if (Array.isArray(projectsList)) {
+        setAllProjectsList(projectsList);
+      }
 
       const items: any[] = [];
       const idSet = new Set<string>();
@@ -184,7 +190,14 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
     }
   };
 
-  const uniqueProjects = Array.from(new Set(availableBomItems.map(i => i.toolNo))).filter(Boolean);
+  // Combine unique projects from all active database projects and BOM items
+  const uniqueProjects = Array.from(
+    new Set([
+      ...allProjectsList.map((p: any) => p.projectNumber),
+      ...availableBomItems.map((i: any) => i.toolNo)
+    ])
+  ).filter(Boolean);
+
   const uniqueMaterials = Array.from(new Set(availableBomItems.map(i => i.materialGrade))).filter(Boolean);
 
   // Filtered available items
@@ -200,8 +213,23 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
     return matchesProj && matchesMat && matchesSearch;
   });
 
-  // Group filtered items by project (WRT Project)
+  // Group filtered items by project (WRT Project) — Seed ALL active projects first
   const projectGroups: { [toolNo: string]: { toolNo: string; projectName: string; customerName: string; stage: string; items: any[] } } = {};
+
+  allProjectsList.forEach((proj: any) => {
+    const toolNo = proj.projectNumber || 'PRJ-UNNAMED';
+    if (projectFilter.length === 0 || projectFilter.includes(toolNo)) {
+      const custName = proj.customer?.companyName || proj.customerName || proj.clientName || 'Project Customer';
+      projectGroups[toolNo] = {
+        toolNo,
+        projectName: proj.partName || proj.projectName || 'Tool Assembly',
+        customerName: custName,
+        stage: proj.currentStage || 'PRODUCTION',
+        items: []
+      };
+    }
+  });
+
   filteredItems.forEach(item => {
     const key = item.toolNo || 'KTD-GENERAL';
     if (!projectGroups[key]) {
@@ -811,48 +839,56 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-100">
-                            {projItems.map(item => {
-                              const isChecked = selectedItemIds.has(item.id);
-                              
-                              const { lVal, wVal, hVal } = parseLwh(item.dimensions || item.rawSize || "");
+                            {projItems.length === 0 ? (
+                              <tr>
+                                <td colSpan={10} className="p-6 text-center text-zinc-400 italic">
+                                  No pre-requisitioned BOM items for project {projGroup.toolNo} yet. You can proceed to Step 2 or click 'Add Custom Row' to include materials for this project.
+                                </td>
+                              </tr>
+                            ) : (
+                              projItems.map(item => {
+                                const isChecked = selectedItemIds.has(item.id);
+                                
+                                const { lVal, wVal, hVal } = parseLwh(item.dimensions || item.rawSize || "");
 
-                              return (
-                                <tr 
-                                  key={item.id} 
-                                  onClick={() => toggleSelectItem(item.id)}
-                                  className={`hover:bg-zinc-50/80 transition-colors cursor-pointer ${isChecked ? "bg-zinc-50/90 font-semibold" : ""}`}
-                                >
-                                  <td className="p-2.5 text-center">
-                                    {isChecked ? (
-                                      <CheckSquare className="w-4 h-4 text-zinc-950 inline" />
-                                    ) : (
-                                      <div className="w-4 h-4 rounded border-2 border-zinc-300 bg-white inline-block" />
-                                    )}
-                                  </td>
-                                  <td className="p-2.5 text-center font-mono font-bold text-zinc-900">{item.detNo || "1"}</td>
-                                  <td className="p-2.5 text-center font-mono font-extrabold text-zinc-950 bg-zinc-50/60 border-x border-zinc-200/60">{lVal}</td>
-                                  <td className="p-2.5 text-center font-mono font-extrabold text-zinc-950 bg-zinc-50/60 border-r border-zinc-200/60">{wVal}</td>
-                                  <td className="p-2.5 text-center font-mono font-extrabold text-zinc-950 bg-zinc-50/60 border-r border-zinc-200/60">{hVal}</td>
-                                  <td className="p-2.5">
-                                    <span className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-900 font-bold text-[11px] border border-zinc-200/80">
-                                      {item.materialGrade || "MS"}
-                                    </span>
-                                  </td>
-                                  <td className="p-3 text-center font-bold text-zinc-900 font-mono">{item.requiredQty || 1}</td>
-                                  <td className="p-3 text-right font-mono font-bold text-zinc-900">{Number(item.calculatedWeight || 10).toFixed(2)}</td>
-                                  <td className="p-3">
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                      item.status === 'ORDERED' 
-                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
-                                        : "bg-amber-50 text-amber-800 border border-amber-200"
-                                    }`}>
-                                      {item.status || "PENDING"}
-                                    </span>
-                                  </td>
-                                  <td className="p-3 text-zinc-500 text-xs italic">{item.remarks || "-"}</td>
-                                </tr>
-                              );
-                            })}
+                                return (
+                                  <tr 
+                                    key={item.id} 
+                                    onClick={() => toggleSelectItem(item.id)}
+                                    className={`hover:bg-zinc-50/80 transition-colors cursor-pointer ${isChecked ? "bg-zinc-50/90 font-semibold" : ""}`}
+                                  >
+                                    <td className="p-2.5 text-center">
+                                      {isChecked ? (
+                                        <CheckSquare className="w-4 h-4 text-zinc-950 inline" />
+                                      ) : (
+                                        <div className="w-4 h-4 rounded border-2 border-zinc-300 bg-white inline-block" />
+                                      )}
+                                    </td>
+                                    <td className="p-2.5 text-center font-mono font-bold text-zinc-900">{item.detNo || "1"}</td>
+                                    <td className="p-2.5 text-center font-mono font-extrabold text-zinc-950 bg-zinc-50/60 border-x border-zinc-200/60">{lVal}</td>
+                                    <td className="p-2.5 text-center font-mono font-extrabold text-zinc-950 bg-zinc-50/60 border-r border-zinc-200/60">{wVal}</td>
+                                    <td className="p-2.5 text-center font-mono font-extrabold text-zinc-950 bg-zinc-50/60 border-r border-zinc-200/60">{hVal}</td>
+                                    <td className="p-2.5">
+                                      <span className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-900 font-bold text-[11px] border border-zinc-200/80">
+                                        {item.materialGrade || "MS"}
+                                      </span>
+                                    </td>
+                                    <td className="p-3 text-center font-bold text-zinc-900 font-mono">{item.requiredQty || 1}</td>
+                                    <td className="p-3 text-right font-mono font-bold text-zinc-900">{Number(item.calculatedWeight || 10).toFixed(2)}</td>
+                                    <td className="p-3">
+                                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                        item.status === 'ORDERED' 
+                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                                          : "bg-amber-50 text-amber-800 border border-amber-200"
+                                      }`}>
+                                        {item.status || "PENDING"}
+                                      </span>
+                                    </td>
+                                    <td className="p-3 text-zinc-500 text-xs italic">{item.remarks || "-"}</td>
+                                  </tr>
+                                );
+                              })
+                            )}
                           </tbody>
                         </table>
                       </div>
