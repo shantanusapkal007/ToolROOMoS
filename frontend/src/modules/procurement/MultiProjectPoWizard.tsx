@@ -132,31 +132,33 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
         ProjectsService.getAllProjects().catch(() => [])
       ]);
 
-      if (Array.isArray(projectsList)) {
-        setAllProjectsList(projectsList);
-      }
+      const actualProjects = Array.isArray(projectsList) ? projectsList : (projectsList?.data || []);
+      setAllProjectsList(actualProjects);
 
       const items: any[] = [];
       const idSet = new Set<string>();
 
       // 1. Primary real items from backend procurement API
-      if (Array.isArray(bomRes?.data)) {
-        bomRes.data.forEach((i: any) => {
+      const rawBomData = Array.isArray(bomRes) ? bomRes : (bomRes?.data || []);
+      if (Array.isArray(rawBomData)) {
+        rawBomData.forEach((i: any) => {
           items.push(i);
           idSet.add(i.id);
         });
       }
 
       // 2. Real BOM items embedded in project entities
-      if (Array.isArray(projectsList)) {
-        projectsList.forEach((proj: any) => {
+      if (Array.isArray(actualProjects)) {
+        actualProjects.forEach((proj: any) => {
           const toolNo = proj.projectNumber || 'PRJ-UNNAMED';
           const custName = proj.customer?.companyName || proj.customerName || proj.clientName || 'Project Customer';
+          const headers = proj.billOfMaterialHeaders || proj.boms || [];
           
-          if (proj.boms && Array.isArray(proj.boms)) {
-            proj.boms.forEach((b: any) => {
-              if (b.items && Array.isArray(b.items)) {
-                b.items.forEach((item: any, idx: number) => {
+          if (Array.isArray(headers)) {
+            headers.forEach((b: any) => {
+              const bItems = b.items || b.billOfMaterialItems || [];
+              if (Array.isArray(bItems)) {
+                bItems.forEach((item: any, idx: number) => {
                   if (!idSet.has(item.id)) {
                     idSet.add(item.id);
                     items.push({
@@ -166,7 +168,7 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                       projectName: proj.partName || proj.projectName || 'Tool Assembly',
                       customerName: custName,
                       projectStage: proj.currentStage || 'PRODUCTION',
-                      detNo: item.detNo || `${idx + 1}`,
+                      detNo: item.customFields?.detNo || item.detNo || `${idx + 1}`,
                       dimensions: item.dimensions || item.rawSize || item.partName || '-',
                       materialGrade: item.materialGrade || item.material?.materialGrade || 'Standard Steel',
                       requiredQty: item.requiredQty || item.quantity || 1,
