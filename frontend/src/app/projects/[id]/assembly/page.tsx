@@ -138,6 +138,20 @@ export default function ProjectAssemblyPage() {
     } catch (err) {}
   };
 
+  const formatSectionName = (sec?: string) => {
+    if (!sec) return "Toolroom Fitting Shop";
+    switch (sec) {
+      case "MACHINE_SHOP": return "Machine Shop";
+      case "TOOL_ROOM_FITTING": return "Toolroom Fitting Shop";
+      case "PRESS_SHOP": return "Press Shop";
+      case "FABRICATION_INDIAN":
+      case "FABRICATION": return "Fabrication Shop";
+      case "FABRICATION_EXPORT": return "Fab Export Shop";
+      case "PROJECT_STORE": return "Project Store";
+      default: return sec.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+    }
+  };
+
   return (
     <div className="space-y-6 font-sans text-zinc-900">
       {/* Top Header & Master Action Bar */}
@@ -330,7 +344,7 @@ export default function ProjectAssemblyPage() {
                       <td className="p-3 font-bold text-zinc-900">{item.inventoryBatch?.material?.materialName || item.inventoryBatch?.material?.materialGrade || "Raw Material Block"}</td>
                       <td className="p-3 text-zinc-600 font-mono text-[11px]">{item.inventoryBatch?.material?.materialGrade || "Tool Steel"}</td>
                       <td className="p-3 font-semibold text-zinc-800">{item.issuedQty || 1} NOS</td>
-                      <td className="p-3 text-zinc-500 text-[11px]">{item.section || "Toolroom Fitting Shop"}</td>
+                      <td className="p-3 text-zinc-500 text-[11px]">{formatSectionName(item.section)}</td>
                       <td className="p-3 text-center">
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
