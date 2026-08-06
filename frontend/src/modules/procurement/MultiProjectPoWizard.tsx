@@ -129,10 +129,11 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
     try {
       const [bomRes, projectsList] = await Promise.all([
         ProcurementService.getGlobalBomItems().catch(() => ({ data: [] })),
-        ProjectsService.getAllProjects().catch(() => [])
+        ProjectsService.getAllProjects().catch(() => ({ data: [] }))
       ]);
 
-      const actualProjects = Array.isArray(projectsList) ? projectsList : (projectsList?.data || []);
+      const rawProj = projectsList as any;
+      const actualProjects: any[] = Array.isArray(rawProj) ? rawProj : (rawProj?.data || []);
       setAllProjectsList(actualProjects);
 
       const items: any[] = [];
