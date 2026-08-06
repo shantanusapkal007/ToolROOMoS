@@ -66,37 +66,7 @@ export class PurchaseOrdersService {
         });
       });
 
-      // Fallback: If project does not have BOM items yet, generate initial raw material requisition items
-      if (!hasItems) {
-        const sampleRaws = [
-          { detNo: '1', dimensions: '450 x 400 x 50', materialGrade: 'MS', weight: 70.65, remarks: 'Top Die Plate' },
-          { detNo: '2', dimensions: '450 x 400 x 50', materialGrade: 'MS', weight: 70.65, remarks: 'Bottom Die Plate' },
-          { detNo: '3', dimensions: 'Ø 40 x 120', materialGrade: 'EN31', weight: 1.18, remarks: 'Guide Pillars' },
-        ];
-        sampleRaws.forEach((s, idx) => {
-          resultItems.push({
-            id: `proj-${project.id}-item-${idx + 1}`,
-            bomHeaderId: null,
-            projectId: project.id,
-            toolNo: project.projectNumber,
-            projectName: project.partName || 'Press Tool',
-            customerName: project.customer?.companyName || 'Internal',
-            projectStage: project.currentStage || 'DESIGN',
-            detNo: s.detNo,
-            rawSize: s.dimensions,
-            dimensions: s.dimensions,
-            materialId: '',
-            materialGrade: s.materialGrade,
-            materialName: s.materialGrade,
-            hsnCode: '7228',
-            calculatedWeight: s.weight,
-            requiredQty: 1,
-            estimatedCost: s.weight * 85,
-            remarks: s.remarks,
-            status: 'PENDING',
-          });
-        });
-      }
+      // No fake fallbacks - return only authentic database BOM items
     });
 
     return resultItems;

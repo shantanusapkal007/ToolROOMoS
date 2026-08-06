@@ -130,35 +130,55 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
         ProjectsService.getAllProjects().catch(() => [])
       ]);
 
-      let items = bomRes?.data || [];
+      const items: any[] = [];
+      const idSet = new Set<string>();
 
-      // Merge real projects from system database
-      if (Array.isArray(projectsList) && projectsList.length > 0) {
-        const existingToolNos = new Set(items.map((i: any) => i.toolNo));
+      // 1. Primary real items from backend procurement API
+      if (Array.isArray(bomRes?.data)) {
+        bomRes.data.forEach((i: any) => {
+          items.push(i);
+          idSet.add(i.id);
+        });
+      }
 
+      // 2. Real BOM items embedded in project entities
+      if (Array.isArray(projectsList)) {
         projectsList.forEach((proj: any) => {
           const toolNo = proj.projectNumber || 'PRJ-UNNAMED';
-          if (!existingToolNos.has(toolNo)) {
-            const custName = proj.customer?.companyName || proj.customerName || proj.clientName || 'Project Customer';
-            const defaultMaterials = [
-              { id: `db-p-${proj.id}-1`, projectId: proj.id, toolNo, projectName: proj.partName || proj.projectName || 'Tool Assembly', customerName: custName, projectStage: proj.currentStage || 'PRODUCTION', detNo: '1', dimensions: '450 x 400 x 50', materialGrade: 'MS', requiredQty: 1, calculatedWeight: 70.65, remarks: 'Main Die Base' },
-              { id: `db-p-${proj.id}-2`, projectId: proj.id, toolNo, projectName: proj.partName || proj.projectName || 'Tool Assembly', customerName: custName, projectStage: proj.currentStage || 'PRODUCTION', detNo: '2', dimensions: 'Ø 40 x 120', materialGrade: 'EN31', requiredQty: 4, calculatedWeight: 1.18, remarks: 'Guide Pillars' },
-            ];
-            items = [...items, ...defaultMaterials];
-            existingToolNos.add(toolNo);
-
+          const custName = proj.customer?.companyName || proj.customerName || proj.clientName || 'Project Customer';
+          
+          if (proj.boms && Array.isArray(proj.boms)) {
+            proj.boms.forEach((b: any) => {
+              if (b.items && Array.isArray(b.items)) {
+                b.items.forEach((item: any, idx: number) => {
+                  if (!idSet.has(item.id)) {
+                    idSet.add(item.id);
+                    items.push({
+                      id: item.id,
+                      projectId: proj.id,
+                      toolNo,
+                      projectName: proj.partName || proj.projectName || 'Tool Assembly',
+                      customerName: custName,
+                      projectStage: proj.currentStage || 'PRODUCTION',
+                      detNo: item.detNo || `${idx + 1}`,
+                      dimensions: item.dimensions || item.rawSize || item.partName || '-',
+                      materialGrade: item.materialGrade || item.material?.materialGrade || 'Standard Steel',
+                      requiredQty: item.requiredQty || item.quantity || 1,
+                      calculatedWeight: item.calculatedWeight || item.unitWeight || 1.0,
+                      remarks: item.remarks || item.partName || '',
+                    });
+                  }
+                });
+              }
+            });
           }
         });
       }
 
-      if (items.length > 0) {
-        setAvailableBomItems(items);
-      } else {
-        setAvailableBomItems(getSampleBomItems());
-      }
+      setAvailableBomItems(items);
     } catch (err) {
-      console.warn("Could not fetch global BOM items, using toolroom samples:", err);
-      setAvailableBomItems(getSampleBomItems());
+      console.warn("Could not fetch global BOM items:", err);
+      setAvailableBomItems([]);
     } finally {
       setIsLoadingItems(false);
     }
