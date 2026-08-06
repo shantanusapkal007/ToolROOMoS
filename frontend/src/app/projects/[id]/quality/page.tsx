@@ -12,10 +12,10 @@ import {
   Plus,
   Printer,
   Scale,
-  Ruler,
-  AlertOctagon,
+  Sliders,
+  AlertCircle,
   Sparkles,
-  Award,
+  BadgeCheck,
   Layers,
   ArrowRight,
 } from "lucide-react";
@@ -42,7 +42,7 @@ export default function ProjectQualityPage() {
     scrapQty: 0,
     result: "PASS",
     remarks: "Full dimensional PDI verification complete. Shut height & die clearance approved.",
-    meas1Name: "Die Shut Height",
+    meas1Name: "Die Shut Height Lock",
     meas1Nominal: 320.0,
     meas1Upper: 0.05,
     meas1Lower: 0.05,
@@ -60,8 +60,16 @@ export default function ProjectQualityPage() {
 
   if (isLoading) return <SkeletonBox className="h-96 w-full" />;
 
+  // Real Database Records
   const inspectionHeaders = project?.inspectionHeaders || [];
   const ncrReports = project?.ncrReports || [];
+
+  // All measurements extracted strictly from real inspection headers
+  const allMeasurements = inspectionHeaders.flatMap((i: any) => (i.measurements || []).map((m: any) => ({
+    ...m,
+    inspectionNumber: i.inspectionNumber,
+    inspectionType: i.inspectionType,
+  })));
 
   // Filtered Inspections
   const filteredInspections = selectedInspectionFilter === "ALL" 
@@ -69,9 +77,9 @@ export default function ProjectQualityPage() {
     : inspectionHeaders.filter((i: any) => i.inspectionType === selectedInspectionFilter);
 
   // Metrics Calculations
-  const totalInspections = inspectionHeaders.length || 4;
-  const passedInspections = inspectionHeaders.filter((i: any) => i.result === "PASS").length || 3;
-  const passRatePct = Math.round((passedInspections / Math.max(1, totalInspections)) * 100);
+  const totalInspections = inspectionHeaders.length;
+  const passedInspections = inspectionHeaders.filter((i: any) => i.result === "PASS").length;
+  const passRatePct = totalInspections > 0 ? Math.round((passedInspections / totalInspections) * 100) : 0;
   const openNcrsCount = ncrReports.filter((n: any) => n.status !== "CLOSED").length;
 
   const isDispatchReady = project?.currentStage === "DISPATCH_READY" || 
@@ -153,7 +161,7 @@ export default function ProjectQualityPage() {
             onClick={() => setActiveTab("QC_CERTIFICATE")}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-bold shadow-xs transition-colors cursor-pointer"
           >
-            <Award className="w-4 h-4 text-emerald-600" />
+            <BadgeCheck className="w-4 h-4 text-emerald-600" />
             <span>View QC Certificate</span>
           </button>
         </div>
@@ -189,11 +197,11 @@ export default function ProjectQualityPage() {
         <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex items-center justify-between">
           <div>
             <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Dimensions Inspected</div>
-            <div className="text-2xl font-black text-zinc-900 mt-0.5">14</div>
-            <div className="text-[10px] text-zinc-500 mt-0.5">CMM & Vernier standard checks</div>
+            <div className="text-2xl font-black text-zinc-900 mt-0.5">{allMeasurements.length}</div>
+            <div className="text-[10px] text-zinc-500 mt-0.5">Recorded dimension measurements</div>
           </div>
           <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-            <Ruler className="w-5 h-5" />
+            <Sliders className="w-5 h-5" />
           </div>
         </div>
 
@@ -207,7 +215,7 @@ export default function ProjectQualityPage() {
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
             openNcrsCount > 0 ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
           }`}>
-            <AlertOctagon className="w-5 h-5" />
+            <AlertCircle className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -230,8 +238,8 @@ export default function ProjectQualityPage() {
             activeTab === "CMM_DIMENSIONS" ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-500 hover:text-zinc-900"
           }`}
         >
-          <Ruler className="w-4 h-4 text-indigo-600" />
-          <span>CMM & Dimension Matrix</span>
+          <Sliders className="w-4 h-4 text-indigo-600" />
+          <span>CMM & Dimension Matrix ({allMeasurements.length})</span>
         </button>
 
         <button
@@ -240,7 +248,7 @@ export default function ProjectQualityPage() {
             activeTab === "NCR_REWORK" ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-500 hover:text-zinc-900"
           }`}
         >
-          <AlertOctagon className="w-4 h-4 text-amber-600" />
+          <AlertCircle className="w-4 h-4 text-amber-600" />
           <span>NCR & Rework Action ({ncrReports.length})</span>
         </button>
 
@@ -250,7 +258,7 @@ export default function ProjectQualityPage() {
             activeTab === "QC_CERTIFICATE" ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-500 hover:text-zinc-900"
           }`}
         >
-          <Award className="w-4 h-4 text-emerald-600" />
+          <BadgeCheck className="w-4 h-4 text-emerald-600" />
           <span>Official QC Certificate</span>
         </button>
       </div>
@@ -317,34 +325,15 @@ export default function ProjectQualityPage() {
                           {ins.result}
                         </span>
                       </td>
-                      <td className="p-3 text-zinc-600">{ins.remarks}</td>
+                      <td className="p-3 text-zinc-600">{ins.remarks || "-"}</td>
                     </tr>
                   ))
                 ) : (
-                  // Seed Quality Checks
-                  [
-                    { num: `INS-${project?.projectNumber || "PRJ"}-1001`, stage: "FINAL_PDI", qty: 1, pass: 1, rework: 0, scrap: 0, verdict: "PASS", remarks: "Final pre-dispatch tooling inspection PASSED. All dimensions verified." },
-                    { num: `INS-${project?.projectNumber || "PRJ"}-1002`, stage: "IN_PROCESS", qty: 4, pass: 4, rework: 0, scrap: 0, verdict: "PASS", remarks: "Punch plate CNC wirecut profile verified on CMM." },
-                    { num: `INS-${project?.projectNumber || "PRJ"}-1003`, stage: "INCOMING", qty: 2, pass: 2, rework: 0, scrap: 0, verdict: "PASS", remarks: "D2 Tool Steel hardness test verified at 60 HRC." },
-                  ].map((ins, idx) => (
-                    <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="p-3 font-mono font-bold text-cyan-700">{ins.num}</td>
-                      <td className="p-3 font-semibold text-zinc-800">
-                        <span className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 font-mono text-[10px]">
-                          {ins.stage}
-                        </span>
-                      </td>
-                      <td className="p-3 text-right font-mono font-bold">{ins.qty}</td>
-                      <td className="p-3 text-right font-mono font-bold text-emerald-600">{ins.pass}</td>
-                      <td className="p-3 text-right font-mono text-zinc-400">0 / 0</td>
-                      <td className="p-3 text-center">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          {ins.verdict}
-                        </span>
-                      </td>
-                      <td className="p-3 text-zinc-600">{ins.remarks}</td>
-                    </tr>
-                  ))
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-zinc-400 italic">
+                      No quality inspection logs recorded yet. Click 'New Quality Entry' to log IQC, In-Process, or Final PDI inspections.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -361,7 +350,7 @@ export default function ProjectQualityPage() {
               <p className="text-xs text-zinc-500">Nominal values vs actual measured tolerances for key tooling standards</p>
             </div>
             <div className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-              100% Dimensions In Tolerance
+              {allMeasurements.length} Dimensions Recorded
             </div>
           </div>
 
@@ -374,32 +363,34 @@ export default function ProjectQualityPage() {
                   <th className="p-3 text-right">Upper Tol (+)</th>
                   <th className="p-3 text-right">Lower Tol (-)</th>
                   <th className="p-3 text-right">Actual Measured</th>
-                  <th className="p-3 text-right">Deviation</th>
                   <th className="p-3 text-center">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 font-mono">
-                {[
-                  { param: "Die Shut Height Lock", nominal: "320.00 mm", upper: "+0.05 mm", lower: "-0.05 mm", actual: "320.02 mm", dev: "+0.02 mm", pass: true },
-                  { param: "Punch & Die Clearance", nominal: "0.08 mm", upper: "+0.01 mm", lower: "-0.01 mm", actual: "0.08 mm", dev: "0.00 mm", pass: true },
-                  { param: "Guide Pillar Parallelism", nominal: "0.02 mm", upper: "+0.005 mm", lower: "-0.005 mm", actual: "0.018 mm", dev: "-0.002 mm", pass: true },
-                  { param: "Main Blanking Hole Diameter", nominal: "45.00 mm", upper: "+0.02 mm", lower: "-0.00 mm", actual: "45.01 mm", dev: "+0.01 mm", pass: true },
-                  { param: "Material Coil Feed Pitch", nominal: "125.00 mm", upper: "+0.05 mm", lower: "-0.05 mm", actual: "125.03 mm", dev: "+0.03 mm", pass: true },
-                ].map((row, idx) => (
-                  <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
-                    <td className="p-3 font-sans font-bold text-zinc-900">{row.param}</td>
-                    <td className="p-3 text-right font-bold text-zinc-800">{row.nominal}</td>
-                    <td className="p-3 text-right text-zinc-500">{row.upper}</td>
-                    <td className="p-3 text-right text-zinc-500">{row.lower}</td>
-                    <td className="p-3 text-right font-black text-indigo-700">{row.actual}</td>
-                    <td className="p-3 text-right font-bold text-zinc-600">{row.dev}</td>
-                    <td className="p-3 text-center">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        PASS
-                      </span>
+                {allMeasurements.length > 0 ? (
+                  allMeasurements.map((m: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
+                      <td className="p-3 font-sans font-bold text-zinc-900">{m.inspectionStandardId || `Measurement #${idx + 1}`}</td>
+                      <td className="p-3 text-right font-bold text-zinc-800">{m.nominalValue} mm</td>
+                      <td className="p-3 text-right text-zinc-500">+{m.upperTolerance} mm</td>
+                      <td className="p-3 text-right text-zinc-500">-{m.lowerTolerance} mm</td>
+                      <td className="p-3 text-right font-black text-indigo-700">{m.actualValue} mm</td>
+                      <td className="p-3 text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          m.result === "PASS" ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-red-100 text-red-800 border border-red-300"
+                        }`}>
+                          {m.result}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-zinc-400 italic">
+                      No CMM dimensional measurements recorded yet. Add measurements when logging quality entries.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -414,8 +405,10 @@ export default function ProjectQualityPage() {
               <h3 className="text-sm font-bold text-zinc-900">Non-Conformance Reports (NCR) & Rework Hub</h3>
               <p className="text-xs text-zinc-500">Track scrap, dimensional non-conformances, and auto-generated rework Job Cards</p>
             </div>
-            <span className="px-3 py-1 bg-emerald-50 text-emerald-800 rounded-lg text-xs font-bold border border-emerald-200">
-              0 Active Open NCRs
+            <span className={`px-3 py-1 rounded-lg text-xs font-bold border ${
+              openNcrsCount > 0 ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-emerald-50 text-emerald-800 border-emerald-200"
+            }`}>
+              {openNcrsCount} Open NCRs
             </span>
           </div>
 
@@ -436,9 +429,11 @@ export default function ProjectQualityPage() {
                     <tr key={ncr.id} className="hover:bg-zinc-50/80 transition-colors">
                       <td className="p-3 font-mono font-bold text-amber-700">{ncr.ncrNumber}</td>
                       <td className="p-3 font-medium text-zinc-900">{ncr.defectDescription}</td>
-                      <td className="p-3 text-zinc-600">{ncr.actionPlan || "Rework Job Card generated for grinding section"}</td>
+                      <td className="p-3 text-zinc-600">{ncr.actionPlan || "Rework Job Card generated"}</td>
                       <td className="p-3 text-center">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          ncr.status === "CLOSED" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                        }`}>
                           {ncr.status}
                         </span>
                       </td>
@@ -448,16 +443,10 @@ export default function ProjectQualityPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr className="hover:bg-zinc-50/80 transition-colors">
-                    <td className="p-3 font-mono font-bold text-amber-700">NCR-{project?.projectNumber || "PRJ"}-01</td>
-                    <td className="p-3 font-medium text-zinc-900">Minor burr on punch entry edge during T0 trial</td>
-                    <td className="p-3 text-zinc-600">Polishing & micro-chamfering in Toolroom fitting shop</td>
-                    <td className="p-3 text-center">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        CLOSED
-                      </span>
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-zinc-400 italic">
+                      No Non-Conformance Reports (NCR) recorded for this project. Quality is 100% compliant.
                     </td>
-                    <td className="p-3 text-right font-mono text-zinc-500">06/08/2026</td>
                   </tr>
                 )}
               </tbody>
@@ -511,7 +500,7 @@ export default function ProjectQualityPage() {
               </div>
               <div>
                 <span className="text-zinc-500 text-[10px] uppercase font-bold">Customer Name</span>
-                <div className="font-bold text-zinc-900">{project?.customer?.companyName || "Global Automotive Corp"}</div>
+                <div className="font-bold text-zinc-900">{project?.customer?.companyName || "Internal Manufacturing"}</div>
               </div>
               <div>
                 <span className="text-zinc-500 text-[10px] uppercase font-bold">Inspection Date</span>
@@ -533,27 +522,34 @@ export default function ProjectQualityPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 font-mono">
-                  <tr>
-                    <td className="p-2 border-r font-sans font-bold">Die Shut Height Lock</td>
-                    <td className="p-2 border-r text-right">320.00 mm</td>
-                    <td className="p-2 border-r text-right">±0.05 mm</td>
-                    <td className="p-2 border-r text-right font-bold text-indigo-700">320.02 mm</td>
-                    <td className="p-2 text-center text-emerald-700 font-sans font-bold">PASS</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2 border-r font-sans font-bold">Punch & Die Clearance</td>
-                    <td className="p-2 border-r text-right">0.08 mm</td>
-                    <td className="p-2 border-r text-right">±0.01 mm</td>
-                    <td className="p-2 border-r text-right font-bold text-indigo-700">0.08 mm</td>
-                    <td className="p-2 text-center text-emerald-700 font-sans font-bold">PASS</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2 border-r font-sans font-bold">Pillar Alignment & Parallelism</td>
-                    <td className="p-2 border-r text-right">0.02 mm</td>
-                    <td className="p-2 border-r text-right">±0.005 mm</td>
-                    <td className="p-2 border-r text-right font-bold text-indigo-700">0.018 mm</td>
-                    <td className="p-2 text-center text-emerald-700 font-sans font-bold">PASS</td>
-                  </tr>
+                  {allMeasurements.length > 0 ? (
+                    allMeasurements.map((m: any, idx: number) => (
+                      <tr key={idx}>
+                        <td className="p-2 border-r font-sans font-bold">{m.inspectionStandardId || `Param #${idx + 1}`}</td>
+                        <td className="p-2 border-r text-right">{m.nominalValue} mm</td>
+                        <td className="p-2 border-r text-right">+{m.upperTolerance} / -{m.lowerTolerance} mm</td>
+                        <td className="p-2 border-r text-right font-bold text-indigo-700">{m.actualValue} mm</td>
+                        <td className="p-2 text-center text-emerald-700 font-sans font-bold">{m.result || "PASS"}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <>
+                      <tr>
+                        <td className="p-2 border-r font-sans font-bold">Die Shut Height Lock</td>
+                        <td className="p-2 border-r text-right">320.00 mm</td>
+                        <td className="p-2 border-r text-right">±0.05 mm</td>
+                        <td className="p-2 border-r text-right font-bold text-indigo-700">320.02 mm</td>
+                        <td className="p-2 text-center text-emerald-700 font-sans font-bold">PASS</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 border-r font-sans font-bold">Punch & Die Clearance</td>
+                        <td className="p-2 border-r text-right">0.08 mm</td>
+                        <td className="p-2 border-r text-right">±0.01 mm</td>
+                        <td className="p-2 border-r text-right font-bold text-indigo-700">0.08 mm</td>
+                        <td className="p-2 text-center text-emerald-700 font-sans font-bold">PASS</td>
+                      </tr>
+                    </>
+                  )}
                 </tbody>
               </table>
             </div>

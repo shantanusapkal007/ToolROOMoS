@@ -5,9 +5,9 @@ import { useParams } from "next/navigation";
 import { useProject, useCompleteProduction } from "@/hooks/useProjects";
 import {
   useAssemblyOrders,
-  useAssemblyTrials,
+  useProjectTrials,
   useCreateAssemblyOrder,
-  useCreateAssemblyTrial,
+  useCreateProjectTrial,
   useSignOffTrial,
 } from "@/hooks/useAssembly";
 import { useGlobalDailyReports } from "@/hooks/useDailyReports";
@@ -25,7 +25,6 @@ import {
   Gauge,
   Sparkles,
   ArrowRight,
-  ShieldAlert,
 } from "lucide-react";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { Modal } from "@/components/ui/Modal";
@@ -46,7 +45,7 @@ export default function ProjectAssemblyPage() {
   // Form States
   const [trialForm, setTrialForm] = useState({
     trialNumber: "T0-INITIAL",
-    machineName: "150T Mechanical Press Binny",
+    machineName: "150T Mechanical Press",
     spmRate: "35",
     tonnage: "120",
     sampleQty: "10",
@@ -64,11 +63,11 @@ export default function ProjectAssemblyPage() {
   // Data Queries
   const { data: project, isLoading: isProjectLoading } = useProject(id);
   const { data: assemblyOrders = [], isLoading: isOrdersLoading } = useAssemblyOrders(id);
-  const { data: trials = [], isLoading: isTrialsLoading } = useAssemblyTrials(id);
+  const { data: trials = [], isLoading: isTrialsLoading } = useProjectTrials(id);
   const { data: msdrsResponse } = useGlobalDailyReports({ projectId: id, type: "MSDR", section: "TOOL_ROOM_FITTING" });
 
   const completeProductionMutation = useCompleteProduction(id);
-  const createTrialMutation = useCreateAssemblyTrial(id);
+  const createTrialMutation = useCreateProjectTrial(id);
   const createOrderMutation = useCreateAssemblyOrder(id);
   const signOffMutation = useSignOffTrial(id);
 
@@ -83,14 +82,21 @@ export default function ProjectAssemblyPage() {
 
   if (isProjectLoading) return <SkeletonBox className="h-96 w-full" />;
 
-  // Calculated KPI Metrics
-  const totalBomItems = project?.boms?.[0]?.items?.length || 8;
-  const issuedMaterialsCount = project?.materialIssueHeaders?.flatMap((h: any) => h.items || []).length || 5;
-  const kittingReadinessPct = Math.min(100, Math.round((issuedMaterialsCount / Math.max(1, totalBomItems)) * 100));
+  // Real BOM items & issued materials
+  const bomItems = project?.boms?.[0]?.items || [];
+  const materialIssues = (project?.materialIssueHeaders || []).flatMap((h: any) => (h.items || []).map((item: any) => ({
+    ...item,
+    section: h.productionSection,
+    issueNumber: h.issueNumber,
+  })));
+
+  const totalBomItems = bomItems.length || materialIssues.length;
+  const issuedMaterialsCount = materialIssues.length;
+  const kittingReadinessPct = totalBomItems > 0 ? Math.min(100, Math.round((issuedMaterialsCount / totalBomItems) * 100)) : 0;
 
   const totalTrials = trials.length;
   const passedTrials = trials.filter((t: any) => t.result === "PASS" || t.status === "APPROVED").length;
-  const trialSuccessRate = totalTrials > 0 ? Math.round((passedTrials / totalTrials) * 100) : 100;
+  const trialSuccessRate = totalTrials > 0 ? Math.round((passedTrials / totalTrials) * 100) : 0;
 
   const totalFitterHours = fittingMsdrLogs.reduce((acc: number, log: any) => {
     return acc + (Number(log.hoursSpent) || Number(log.cuttingHours) || 0) + (Number(log.setupHours) || 0);
@@ -197,8 +203,8 @@ export default function ProjectAssemblyPage() {
         <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex items-center justify-between">
           <div>
             <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Sub-Assemblies</div>
-            <div className="text-2xl font-black text-zinc-900 mt-0.5">{assemblyOrders.length || 3}</div>
-            <div className="text-[10px] text-zinc-500 mt-0.5">Punch, Die & Guide Bush units</div>
+            <div className="text-2xl font-black text-zinc-900 mt-0.5">{assemblyOrders.length}</div>
+            <div className="text-[10px] text-zinc-500 mt-0.5">Sub-assembly work orders</div>
           </div>
           <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
             <Layers className="w-5 h-5" />
@@ -249,7 +255,7 @@ export default function ProjectAssemblyPage() {
           }`}
         >
           <Layers className="w-4 h-4 text-indigo-600" />
-          <span>Sub-Assemblies ({assemblyOrders.length || 3})</span>
+          <span>Sub-Assemblies ({assemblyOrders.length})</span>
         </button>
 
         <button
@@ -298,28 +304,48 @@ export default function ProjectAssemblyPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {/* Seed BOM or fallback list */}
-                {[
-                  { name: "Top Die Base Block", grade: "Aluminium Grade 7075", qty: "1 NOS", loc: "Toolroom Fitting Shop", status: "READY" },
-                  { name: "Punch Plate Insert", grade: "D2 Die Steel", qty: "2 NOS", loc: "Machine Shop (Finished)", status: "READY" },
-                  { name: "Die Button & Stripper Plate", grade: "H13 Die Steel", qty: "2 NOS", loc: "Toolroom Fitting Shop", status: "READY" },
-                  { name: "Guide Pillar Ø40 x 180", grade: "EN31 Hardened", qty: "4 NOS", loc: "Project Store", status: "READY" },
-                  { name: "Heavy Duty Gas Springs", grade: "Bought Out Standard", qty: "6 NOS", loc: "Project Store", status: "READY" },
-                  { name: "Dowels & Allen Screws", grade: "Standard Hardware", qty: "24 NOS", loc: "Project Store", status: "READY" },
-                ].map((row, idx) => (
-                  <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
-                    <td className="p-3 font-bold text-zinc-900">{row.name}</td>
-                    <td className="p-3 text-zinc-600 font-mono text-[11px]">{row.grade}</td>
-                    <td className="p-3 font-semibold text-zinc-800">{row.qty}</td>
-                    <td className="p-3 text-zinc-500 text-[11px]">{row.loc}</td>
-                    <td className="p-3 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        Ready for Fitting
-                      </span>
+                {bomItems.length > 0 ? (
+                  bomItems.map((item: any, idx: number) => {
+                    const isIssued = materialIssues.some((m: any) => m.inventoryBatch?.materialId === item.materialId || m.materialName?.includes(item.partName));
+                    return (
+                      <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
+                        <td className="p-3 font-bold text-zinc-900">{item.partName || item.partNumber || `Item #${idx + 1}`}</td>
+                        <td className="p-3 text-zinc-600 font-mono text-[11px]">{item.materialGrade || item.material?.materialGrade || "Standard Steel"}</td>
+                        <td className="p-3 font-semibold text-zinc-800">{item.quantity || item.requiredQty || 1} NOS</td>
+                        <td className="p-3 text-zinc-500 text-[11px]">{isIssued ? "Toolroom Fitting Shop" : "Project Store"}</td>
+                        <td className="p-3 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            isIssued ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-amber-100 text-amber-800 border border-amber-300"
+                          }`}>
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            {isIssued ? "Ready for Fitting" : "In Project Store"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : materialIssues.length > 0 ? (
+                  materialIssues.map((item: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
+                      <td className="p-3 font-bold text-zinc-900">{item.inventoryBatch?.material?.materialName || item.inventoryBatch?.material?.materialGrade || "Raw Material Block"}</td>
+                      <td className="p-3 text-zinc-600 font-mono text-[11px]">{item.inventoryBatch?.material?.materialGrade || "Tool Steel"}</td>
+                      <td className="p-3 font-semibold text-zinc-800">{item.issuedQty || 1} NOS</td>
+                      <td className="p-3 text-zinc-500 text-[11px]">{item.section || "Toolroom Fitting Shop"}</td>
+                      <td className="p-3 text-center">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Issued & Ready
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-zinc-400 italic">
+                      No BOM items or material issues recorded for this project yet.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -344,41 +370,40 @@ export default function ProjectAssemblyPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Assembly Cards */}
-            {[
-              { code: "ASM-001", name: "Bottom Bolster & Die Set", status: "COMPLETED", compCount: 4, leadFitter: "Rajesh Sharma", progress: 100 },
-              { code: "ASM-002", name: "Punch Plate & Stripper Unit", status: "IN_PROGRESS", compCount: 5, leadFitter: "Amit Verma", progress: 75 },
-              { code: "ASM-003", name: "Top Bolster & Pillar Assembly", status: "COMPLETED", compCount: 4, leadFitter: "Suresh Patil", progress: 100 },
-            ].map((asm, idx) => (
-              <div key={idx} className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-indigo-600" />
-                    <span className="font-mono text-xs font-bold text-zinc-500">{asm.code}</span>
+            {assemblyOrders.length > 0 ? (
+              assemblyOrders.map((asm: any, idx: number) => (
+                <div key={idx} className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-indigo-600" />
+                      <span className="font-mono text-xs font-bold text-zinc-500">{asm.assemblyNumber || `ASM-${idx + 1}`}</span>
+                    </div>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      asm.status === "COMPLETED" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                    }`}>
+                      {asm.status || "IN_PROGRESS"}
+                    </span>
                   </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    asm.status === "COMPLETED" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                  }`}>
-                    {asm.status}
-                  </span>
-                </div>
 
-                <div>
-                  <h4 className="text-sm font-bold text-zinc-900">{asm.name}</h4>
-                  <p className="text-xs text-zinc-500">Lead Fitter: <span className="font-semibold text-zinc-700">{asm.leadFitter}</span></p>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-zinc-500">Fitting Completion</span>
-                    <span className="font-bold text-zinc-900">{asm.progress}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
-                    <div className={`h-full ${asm.progress === 100 ? "bg-emerald-500" : "bg-indigo-500"}`} style={{ width: `${asm.progress}%` }} />
+                  <div>
+                    <h4 className="text-sm font-bold text-zinc-900">{asm.assemblyName}</h4>
+                    <p className="text-xs text-zinc-500">Target Date: <span className="font-semibold text-zinc-700">{asm.targetDate ? new Date(asm.targetDate).toLocaleDateString() : "Ongoing"}</span></p>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="col-span-2 bg-white p-8 rounded-2xl border border-zinc-200/80 text-center text-zinc-500 space-y-2">
+                <Layers className="w-8 h-8 text-zinc-300 mx-auto" />
+                <p className="font-semibold text-xs">No sub-assembly work orders created for this project yet.</p>
+                <button
+                  onClick={() => setShowOrderModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create Sub-Assembly Work Order</span>
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </div>
       )}
@@ -432,7 +457,7 @@ export default function ProjectAssemblyPage() {
                           </span>
                         ) : (
                           <button
-                            onClick={() => signOffMutation.mutate({ id: t.id })}
+                            onClick={() => signOffMutation.mutate(t.id)}
                             className="px-2.5 py-1 text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors"
                           >
                             Sign Off
@@ -442,25 +467,11 @@ export default function ProjectAssemblyPage() {
                     </tr>
                   ))
                 ) : (
-                  // Demo Seed Tryouts
-                  [
-                    { number: "T0-INITIAL", machine: "150T Mechanical Press (35 SPM)", verdict: "PASS", remarks: "T0 Initial stamping trial complete. Component dimensions verified.", signed: true },
-                    { number: "T1-POST-MOD", machine: "200T Hydraulic Press (25 SPM)", verdict: "PASS", remarks: "T1 Clearance adjustments done. Formed radius clean.", signed: true },
-                  ].map((t, idx) => (
-                    <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="p-3 font-mono font-bold text-purple-700">{t.number}</td>
-                      <td className="p-3 font-semibold text-zinc-800">{t.machine}</td>
-                      <td className="p-3">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          {t.verdict}
-                        </span>
-                      </td>
-                      <td className="p-3 text-zinc-600">{t.remarks}</td>
-                      <td className="p-3 text-right text-emerald-700 font-bold flex items-center justify-end gap-1 text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Signed Off
-                      </td>
-                    </tr>
-                  ))
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-zinc-400 italic">
+                      No press tryouts recorded yet for this project. Click 'Record Trial Run' to log tryouts.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -503,24 +514,66 @@ export default function ProjectAssemblyPage() {
                     </tr>
                   ))
                 ) : (
-                  [
-                    { date: "05/08/2026", name: "Rajesh Sharma", stage: "Blue Matching & Bedding", hrs: "6.5", desc: "Top bolster punch plate bedding and pillar alignment" },
-                    { date: "06/08/2026", name: "Amit Verma", stage: "Die Clearance Setting", hrs: "7.0", desc: "Setting uniform 0.08mm clearance between punch and die" },
-                  ].map((log, idx) => (
-                    <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="p-3 font-mono text-zinc-600">{log.date}</td>
-                      <td className="p-3 font-bold text-zinc-900">{log.name}</td>
-                      <td className="p-3 font-semibold text-purple-700">{log.stage}</td>
-                      <td className="p-3 text-right font-mono font-bold text-zinc-900">{log.hrs} hrs</td>
-                      <td className="p-3 text-zinc-600">{log.desc}</td>
-                    </tr>
-                  ))
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-zinc-400 italic">
+                      No fitting shopfloor logs recorded yet for this project.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
       )}
+
+      {/* Add Sub-Assembly Modal */}
+      <Modal
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        title="Create Sub-Assembly Work Order"
+        subtitle={`Define a fitting sub-assembly for project ${project?.projectNumber || id}`}
+      >
+        <form onSubmit={handleCreateOrder} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1">Sub-Assembly Name</label>
+            <input
+              type="text"
+              required
+              value={orderForm.assemblyName}
+              onChange={(e) => setOrderForm({ ...orderForm, assemblyName: e.target.value })}
+              className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg text-zinc-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1">Remarks / Scope</label>
+            <textarea
+              rows={3}
+              value={orderForm.remarks}
+              onChange={(e) => setOrderForm({ ...orderForm, remarks: e.target.value })}
+              className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg text-zinc-900"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <button
+              type="button"
+              onClick={() => setShowOrderModal(false)}
+              className="px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createOrderMutation.isPending}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm"
+            >
+              <Layers className="w-4 h-4 text-white" />
+              <span>{createOrderMutation.isPending ? "Creating..." : "Create Work Order"}</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Record Press Trial Modal */}
       <Modal
