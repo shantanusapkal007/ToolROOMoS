@@ -110,8 +110,8 @@ export function GlobalPoModule() {
           </nav>
 
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold shadow-md ring-1 ring-black/5">
-              <ShoppingCart className="w-5 h-5 text-emerald-400" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center font-bold shadow-xs">
+              <ShoppingCart className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-xl font-extrabold text-zinc-950 tracking-tight flex items-center gap-2">
@@ -128,62 +128,66 @@ export function GlobalPoModule() {
         </div>
 
         {/* Clean Metric Stats & Tab Switcher */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
-          {/* Metrics */}
-          <div className="flex items-center gap-3.5 bg-zinc-50/90 border border-zinc-200/80 rounded-xl px-4 py-2 shadow-2xs">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+          {/* Metrics Strip */}
+          <div className="flex items-center gap-4 bg-zinc-50 p-2.5 px-4 rounded-2xl border border-zinc-200/80 shadow-2xs">
             <div>
-              <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider block mb-0.5">Issued POs</span>
-              <span className="text-xs font-mono font-extrabold text-zinc-900 bg-zinc-200/60 px-2 py-0.5 rounded-md">{totalCount} Orders</span>
+              <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider block">Issued POs</span>
+              <div className="text-xs font-bold text-zinc-900 mt-0.5 font-mono">{totalCount} Orders</div>
             </div>
-            <div className="h-7 w-px bg-zinc-200" />
+
+            <div className="h-8 w-px bg-zinc-200" />
+
             <div>
-              <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider block mb-0.5">Total Procurement</span>
-              <span className="text-xs font-mono font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md">
+              <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider block">Total Procurement</span>
+              <div className="text-xs font-bold text-emerald-700 mt-0.5 font-mono">
                 ₹{totalValue > 0 ? totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '0'}
-              </span>
+              </div>
             </div>
-            <div className="h-7 w-px bg-zinc-200" />
+
+            <div className="h-8 w-px bg-zinc-200" />
+
             <div>
-              <span className="text-[10px] font-extrabold text-red-500 uppercase tracking-wider block mb-0.5">Dead Stock (6+ Mths)</span>
-              <span className="text-xs font-mono font-extrabold text-red-700 bg-red-50 border border-red-200/60 px-2 py-0.5 rounded-md">{deadCount} Batches</span>
+              <span className="text-[10px] font-extrabold text-rose-500 uppercase tracking-wider block">Dead Stock (6+ Mths)</span>
+              <div className="text-xs font-bold text-rose-700 mt-0.5 font-mono">{deadCount} Batches</div>
             </div>
           </div>
 
           {/* Segmented Control Tabs */}
-          <div className="flex items-center p-1 bg-zinc-100/90 rounded-xl border border-zinc-200/80 shadow-2xs">
+          <div className="flex items-center p-1 bg-zinc-100 rounded-2xl border border-zinc-200/80 shadow-2xs">
             <button
               onClick={() => { setActiveTab('create'); setPreviewPo(null); }}
-              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'create'
-                  ? "bg-zinc-950 text-white shadow-sm"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-white/60"
               }`}
             >
-              <Plus className="w-3.5 h-3.5 text-emerald-400" />
+              <Plus className="w-4 h-4" />
               <span>Create PO</span>
             </button>
 
             <button
               onClick={() => { setActiveTab('history'); setPreviewPo(null); }}
-              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'history'
-                  ? "bg-zinc-950 text-white shadow-sm"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-white/60"
               }`}
             >
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
+              <FileText className="w-4 h-4" />
               <span>PO Register ({totalCount})</span>
             </button>
 
             <button
               onClick={() => { setActiveTab('dead'); setPreviewPo(null); }}
-              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'dead'
-                  ? "bg-red-600 text-white shadow-sm"
-                  : "text-zinc-600 hover:text-red-600 hover:bg-red-50"
+                  ? "bg-rose-600 text-white shadow-xs"
+                  : "text-zinc-600 hover:text-rose-600 hover:bg-rose-50"
               }`}
             >
-              <AlertTriangle className="w-3.5 h-3.5" />
+              <AlertTriangle className="w-4 h-4" />
               <span>Dead Material ({deadCount})</span>
             </button>
           </div>
