@@ -40,12 +40,12 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
 
   const handleStartTimeChange = (val: string) => {
     const newForm = { ...formData, startTime: val };
-    calcHours(newForm.startTime, newForm.endTime, newForm.setupTime);
+    calcHours(newForm.startTime, newForm.endTime);
   };
 
   const handleEndTimeChange = (val: string) => {
     const newForm = { ...formData, endTime: val };
-    calcHours(newForm.startTime, newForm.endTime, newForm.setupTime);
+    calcHours(newForm.startTime, newForm.endTime);
   };
 
   const calcHours = (startStr: string, endStr: string) => {
