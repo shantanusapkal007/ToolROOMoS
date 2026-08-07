@@ -689,6 +689,20 @@ export class ReportsService {
               },
             });
           }
+
+          if (lCost > 0) {
+            await tx.projectCostEvent.create({
+              data: {
+                projectId: validProjectId,
+                costType: 'LABOUR_COST',
+                description: `Shopfloor labour: ${employee.name || 'Operator'} – ${totalHrs.toFixed(2)}hrs × ₹${employeeHourlyRate}/hr (${item.description || 'Production'})`,
+                amount: lCost,
+                referenceDocType: 'MSDR_OP',
+                referenceDocId: op.id,
+                createdBy: userId,
+              },
+            });
+          }
         }
       }
 
