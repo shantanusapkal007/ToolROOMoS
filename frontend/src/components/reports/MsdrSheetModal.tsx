@@ -44,16 +44,14 @@ export interface MsdrSheetRow {
   remarks: string;
 }
 
-function calcCuttingHours(startStr: string, endStr: string, setupHrs: number): number {
-
-  if (!startStr || !endStr) return 7.5;
+function calcHours(startStr: string, endStr: string): number {
+  if (!startStr || !endStr) return 8;
   const [sH, sM] = startStr.split(':').map(Number);
   const [eH, eM] = endStr.split(':').map(Number);
-  if (isNaN(sH) || isNaN(eH)) return 7.5;
+  if (isNaN(sH) || isNaN(eH)) return 8;
   let diffMinutes = eH * 60 + (eM || 0) - (sH * 60 + (sM || 0));
   if (diffMinutes < 0) diffMinutes += 24 * 60;
-  const totalHrs = Number((diffMinutes / 60).toFixed(1));
-  return Math.max(0, Number((totalHrs - (setupHrs || 0)).toFixed(1)));
+  return Number((diffMinutes / 60).toFixed(1));
 }
 
 interface MsdrSheetModalProps {
