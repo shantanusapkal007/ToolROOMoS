@@ -438,8 +438,8 @@ export function UnifiedSheetEntry({ onComplete }: { onComplete?: () => void }) {
     producedQty: 1,
     startTime: startTimeOverride || '08:30',
     endTime: addHoursToTime(startTimeOverride || '08:30', 9),
-    setupTime: 0.5,
-    cuttingTime: 8.5,
+    setupTime: 0,
+    cuttingTime: 9,
     remarks: '',
   });
 
@@ -453,12 +453,9 @@ export function UnifiedSheetEntry({ onComplete }: { onComplete?: () => void }) {
         if (r.id !== id) return r;
         const updated = { ...r, [field]: value };
         if (field === 'startTime' || field === 'endTime') {
-          updated.cuttingTime = calcCuttingHours(updated.startTime, updated.endTime, Number(updated.setupTime) || 0);
-        } else if (field === 'setupTime') {
-          // Keep end time fixed, adjust cutting time
-          updated.cuttingTime = calcCuttingHours(updated.startTime, updated.endTime, Number(value) || 0);
+          updated.cuttingTime = calcHours(updated.startTime, updated.endTime);
         } else if (field === 'cuttingTime') {
-          updated.endTime = addHoursToTime(updated.startTime, (Number(updated.setupTime) || 0) + (Number(value) || 0));
+          updated.endTime = addHoursToTime(updated.startTime, Number(value) || 0);
         }
         return updated;
       })
@@ -729,8 +726,7 @@ export function UnifiedSheetEntry({ onComplete }: { onComplete?: () => void }) {
             <th className="py-2.5 px-3 min-w-[110px] border-r border-slate-200/60 dark:border-slate-700/60">Det No</th>
             <th className="py-2.5 px-3 min-w-[85px] border-r border-slate-200/60 dark:border-slate-700/60 text-center">Start</th>
             <th className="py-2.5 px-3 min-w-[85px] border-r border-slate-200/60 dark:border-slate-700/60 text-center">End</th>
-            <th className="py-2.5 px-3 min-w-[100px] border-r border-slate-200/60 dark:border-slate-700/60 text-right">Setup</th>
-            <th className="py-2.5 px-3 min-w-[100px] border-r border-slate-200/60 dark:border-slate-700/60 text-right">Cut</th>
+            <th className="py-2.5 px-3 min-w-[100px] border-r border-slate-200/60 dark:border-slate-700/60 text-right">Hrs</th>
             <th className="py-2.5 px-3 w-14 border-r border-slate-200/60 dark:border-slate-700/60 text-center">Qty</th>
             <th className="py-2.5 px-3 min-w-[200px] border-r border-slate-200/60 dark:border-slate-700/60">Machining / Fitting Description</th>
             <th className="py-2.5 px-3 w-20 text-center">Actions</th>
@@ -811,15 +807,6 @@ export function UnifiedSheetEntry({ onComplete }: { onComplete?: () => void }) {
                   value={row.endTime}
                   onChange={(e) => handleMsdrRowChange(row.id, 'endTime', e.target.value)}
                   className="w-full h-8 px-1 text-center font-mono text-[11px] rounded-lg bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus:outline-none transition-all"
-                />
-              </td>
-              <td className="p-1 border-r border-slate-200/60 dark:border-slate-700/60 text-right">
-                <input
-                  type="number"
-                  step="0.1"
-                  value={row.setupTime}
-                  onChange={(e) => handleMsdrRowChange(row.id, 'setupTime', (e.target.value === '' ? ('' as any) : Number(e.target.value)))}
-                  className="w-full h-8 px-1 text-right font-mono font-semibold text-amber-600 dark:text-amber-400 rounded-lg bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-emerald-500 focus:outline-none transition-all"
                 />
               </td>
               <td className="p-1 border-r border-slate-200/60 dark:border-slate-700/60 text-right">
@@ -1014,15 +1001,9 @@ export function UnifiedSheetEntry({ onComplete }: { onComplete?: () => void }) {
             ) : (
               <>
                 <span>
-                  Total Setup Hrs:{' '}
-                  <strong className="text-amber-600 dark:text-amber-400">
-                    {msdrRows.reduce((sum, r) => sum + (Number(r.setupTime) || 0), 0).toFixed(1)} h
-                  </strong>
-                </span>
-                <span>
-                  Total Cutting Hrs:{' '}
+                  Total Hours:{' '}
                   <strong className="text-emerald-600 dark:text-emerald-400">
-                    {msdrRows.reduce((sum, r) => sum + (Number(r.cuttingTime) || 0), 0).toFixed(1)} h
+                    {msdrRows.reduce((sum, r) => sum + (Number(r.cuttingTime) || 0), 0).toFixed(1)} hrs
                   </strong>
                 </span>
               </>

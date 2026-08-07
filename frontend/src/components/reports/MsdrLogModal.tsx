@@ -48,19 +48,19 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
     calcHours(newForm.startTime, newForm.endTime, newForm.setupTime);
   };
 
-  const calcHours = (startStr: string, endStr: string, setupHrs: number) => {
+  const calcHours = (startStr: string, endStr: string) => {
     if (!startStr || !endStr) return;
     const [sH, sM] = startStr.split(':').map(Number);
     const [eH, eM] = endStr.split(':').map(Number);
     let diffMinutes = (eH * 60 + eM) - (sH * 60 + sM);
     if (diffMinutes < 0) diffMinutes += 24 * 60;
     const totalHrs = Number((diffMinutes / 60).toFixed(1));
-    const cutHrs = Math.max(0, Number((totalHrs - setupHrs).toFixed(1)));
     setFormData((prev) => ({
       ...prev,
       startTime: startStr,
       endTime: endStr,
-      cuttingTime: cutHrs,
+      cuttingTime: totalHrs,
+      setupTime: 0,
     }));
   };
 
@@ -280,24 +280,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
 
               <div>
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  Setup Hrs
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={formData.setupTime}
-                  onChange={(e) => {
-                    const setup = (e.target.value === '' ? ('' as any) : Number(e.target.value));
-                    setFormData((prev) => ({ ...prev, setupTime: setup }));
-                    calcHours(formData.startTime, formData.endTime, setup);
-                  }}
-                  className="w-full h-9 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-amber-600 dark:text-amber-400 focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  Cutting Hrs
+                  Hours Spent (h)
                 </label>
                 <input
                   type="number"

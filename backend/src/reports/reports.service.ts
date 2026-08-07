@@ -667,8 +667,7 @@ export class ReportsService {
         });
 
         // --- Finance Integration: Calculate and log costs ---
-        const setupHrs = Number(item.setupTime || 0) / 60; // setupTime is in minutes
-        const totalHrs = runHrs + setupHrs;
+        const totalHrs = runHrs;
 
         if (totalHrs > 0 && validProjectId) {
           const mCost = totalHrs * machineHourlyRate;

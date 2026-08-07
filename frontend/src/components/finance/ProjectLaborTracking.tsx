@@ -339,9 +339,6 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
                 <tr>
                   <th className="p-3">Machine Code / Equipment</th>
                   <th className="p-3">Production Section</th>
-                  <th className="p-3 text-center">Shift Logs</th>
-                  <th className="p-3 text-center">Setup Hrs</th>
-                  <th className="p-3 text-center">Run / Cutting Hrs</th>
                   <th className="p-3 text-center">Total Machine Hrs</th>
                   <th className="p-3 text-right">Machine Rate (₹/hr)</th>
                   <th className="p-3 text-right">Calculated Machine Expense</th>
@@ -358,8 +355,6 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
                         </span>
                       </td>
                       <td className="p-3 text-center font-mono font-bold text-zinc-700">{row.logsCount}</td>
-                      <td className="p-3 text-center font-mono text-amber-600">{row.setupHours.toFixed(1)}h</td>
-                      <td className="p-3 text-center font-mono font-bold text-emerald-600">{row.runningHours.toFixed(1)}h</td>
                       <td className="p-3 text-center font-mono font-bold text-purple-700">{row.totalHours.toFixed(1)} hrs</td>
                       <td className="p-3 text-right font-mono text-zinc-800">₹{row.rate.toFixed(2)}/hr</td>
                       <td className="p-3 text-right font-mono font-bold text-emerald-600">

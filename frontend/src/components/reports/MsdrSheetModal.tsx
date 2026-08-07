@@ -111,8 +111,8 @@ export function MsdrSheetModal({ isOpen, onClose, onSuccess }: MsdrSheetModalPro
       prevRows.map((r) => {
         if (r.id !== id) return r;
         const updated = { ...r, [field]: value };
-        if (field === 'startTime' || field === 'endTime' || field === 'setupTime') {
-          updated.cuttingTime = calcCuttingHours(updated.startTime, updated.endTime, Number(updated.setupTime) || 0);
+        if (field === 'startTime' || field === 'endTime') {
+          updated.cuttingTime = calcHours(updated.startTime, updated.endTime);
         }
         return updated;
       })
@@ -454,11 +454,8 @@ export function MsdrSheetModal({ isOpen, onClose, onSuccess }: MsdrSheetModalPro
                 <th className="py-2 px-2.5 min-w-[80px] text-center border-r border-slate-300 dark:border-slate-700">
                   End
                 </th>
-                <th className="py-2 px-2.5 w-16 text-right border-r border-slate-300 dark:border-slate-700">
-                  Setup(h)
-                </th>
-                <th className="py-2 px-2.5 w-16 text-right border-r border-slate-300 dark:border-slate-700">
-                  Cut(h)
+                <th className="py-2 px-2.5 w-20 text-right border-r border-slate-300 dark:border-slate-700">
+                  Hours (h)
                 </th>
                 <th className="py-2 px-2.5 w-14 text-center border-r border-slate-300 dark:border-slate-700">
                   Qty
@@ -584,18 +581,7 @@ export function MsdrSheetModal({ isOpen, onClose, onSuccess }: MsdrSheetModalPro
                     />
                   </td>
 
-                  {/* Setup Hrs */}
-                  <td className="p-0.5 border-r border-slate-200 dark:border-slate-800 text-right">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={row.setupTime}
-                      onChange={(e) => handleRowChange(row.id, 'setupTime', (e.target.value === '' ? ('' as any) : Number(e.target.value)))}
-                      className="w-full h-8 px-1 text-right font-mono font-semibold text-amber-600 dark:text-amber-400 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-emerald-500 focus:outline-none transition-all"
-                    />
-                  </td>
-
-                  {/* Cutting Hrs */}
+                  {/* Hours */}
                   <td className="p-0.5 border-r border-slate-200 dark:border-slate-800 text-right">
                     <input
                       type="number"
@@ -659,13 +645,7 @@ export function MsdrSheetModal({ isOpen, onClose, onSuccess }: MsdrSheetModalPro
               Total Rows: <strong className="text-slate-900 dark:text-slate-100 font-bold">{rows.length}</strong>
             </span>
             <span>
-              Total Setup Hrs:{' '}
-              <strong className="text-amber-600 dark:text-amber-400 font-bold text-sm">
-                {rows.reduce((sum, r) => sum + (Number(r.setupTime) || 0), 0).toFixed(1)} h
-              </strong>
-            </span>
-            <span>
-              Total Cutting Hrs:{' '}
+              Total Hours:{' '}
               <strong className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                 {rows.reduce((sum, r) => sum + (Number(r.cuttingTime) || 0), 0).toFixed(1)} h
               </strong>

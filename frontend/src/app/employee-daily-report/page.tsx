@@ -387,15 +387,14 @@ export default function EmployeeDailyReportPage() {
                     <th className="py-3.5 px-4">Operation / Stage</th>
                     <th className="py-3.5 px-4">Part / Drawing</th>
                     <th className="py-3.5 px-4 text-center">Start – End</th>
-                    <th className="py-3.5 px-4 text-right">Setup (h)</th>
-                    <th className="py-3.5 px-4 text-right">Cutting / Spent (h)</th>
+                    <th className="py-3.5 px-4 text-right">Hours Spent</th>
                     <th className="py-3.5 px-4 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
                   {reportsLoading ? (
                     <tr>
-                      <td colSpan={11} className="py-12 text-center text-slate-400">
+                      <td colSpan={10} className="py-12 text-center text-slate-400">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <Activity className="w-6 h-6 animate-spin text-indigo-500" />
                           <span>Loading employee daily logs...</span>
@@ -404,7 +403,7 @@ export default function EmployeeDailyReportPage() {
                     </tr>
                   ) : reports.length === 0 ? (
                     <tr>
-                      <td colSpan={11} className="py-12 text-center text-slate-400">
+                      <td colSpan={10} className="py-12 text-center text-slate-400">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <ClipboardList className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                           <span className="font-semibold text-slate-600 dark:text-slate-300">
@@ -490,12 +489,7 @@ export default function EmployeeDailyReportPage() {
                             {item.startTime} – {item.endTime}
                           </td>
 
-                          {/* Setup Hrs */}
-                          <td className="py-3.5 px-4 text-right font-mono font-medium text-amber-600 dark:text-amber-400">
-                            {item.setupTime > 0 ? `${item.setupTime}h` : '–'}
-                          </td>
-
-                          {/* Cutting / Spent Hrs */}
+                          {/* Hours Spent */}
                           <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                             {item.hoursSpent} hrs
                           </td>
