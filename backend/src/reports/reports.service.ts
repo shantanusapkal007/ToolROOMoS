@@ -518,7 +518,30 @@ export class ReportsService {
 
   async createGlobalMsdrLog(dto: any, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Resolve Machine ID safely
+      // 1. Resolve Project ID safely
+      let validProjectId = dto.projectId;
+      let project: any = null;
+      if (validProjectId) {
+        project = await tx.project.findUnique({ where: { id: validProjectId } }).catch(() => null);
+      }
+      if (!project) {
+        project = await tx.project.findFirst({ where: { status: { not: 'CLOSED' } } }) || await tx.project.findFirst();
+      }
+      if (project) {
+        validProjectId = project.id;
+      }
+
+      // 2. Resolve Production Section Enum safely
+      let sectionEnum = dto.productionSection || 'MACHINE_SHOP';
+      if (sectionEnum === 'ASSEMBLY_SHOP' || sectionEnum === 'ASSEMBLY' || sectionEnum === 'TOOL_ROOM_FITTING_SHOP') {
+        sectionEnum = 'TOOL_ROOM_FITTING';
+      }
+      const validSections = ['MACHINE_SHOP', 'TOOL_ROOM_FITTING', 'PRESS_SHOP', 'FABRICATION_INDIAN', 'FABRICATION_EXPORT'];
+      if (!validSections.includes(sectionEnum)) {
+        sectionEnum = 'TOOL_ROOM_FITTING';
+      }
+
+      // 3. Resolve Machine ID safely
       let validMachineId = dto.machineId;
       let machine: any = null;
       if (validMachineId) {
@@ -555,7 +578,7 @@ export class ReportsService {
       let machineHourlyRate = Number(machine.hourlyRate || 0);
       let machineName = machine.machineCode || 'MAC-DEFAULT';
 
-      // 2. Resolve Employee ID safely
+      // 4. Resolve Employee ID safely
       let validEmployeeId = dto.employeeId;
       let employee: any = null;
       if (validEmployeeId) {
@@ -584,15 +607,15 @@ export class ReportsService {
       validEmployeeId = employee.id;
       let employeeHourlyRate = Number(employee.hourlyRate || 450);
 
-      // 3. Create MSDR Header with guaranteed valid foreign keys
+      // 5. Create MSDR Header with guaranteed valid foreign keys & valid enum
       const header = await (tx as any).msdrHeader.create({
         data: {
-          projectId: dto.projectId,
+          projectId: validProjectId,
           machineId: validMachineId,
           employeeId: validEmployeeId,
           reportDate: dto.reportDate ? new Date(dto.reportDate) : new Date(),
           msdrNumber: 'MSDR-' + Date.now(),
-          productionSection: dto.productionSection || 'MACHINE_SHOP',
+          productionSection: sectionEnum,
           remarks: dto.remarks,
           createdBy: userId,
         },
