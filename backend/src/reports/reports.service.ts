@@ -670,7 +670,7 @@ export class ReportsService {
         const setupHrs = Number(item.setupTime || 0) / 60; // setupTime is in minutes
         const totalHrs = runHrs + setupHrs;
 
-        if (totalHrs > 0 && dto.projectId) {
+        if (totalHrs > 0 && validProjectId) {
           const mCost = totalHrs * machineHourlyRate;
           const lCost = totalHrs * employeeHourlyRate;
           totalMachineCost += mCost;
@@ -679,7 +679,7 @@ export class ReportsService {
           if (mCost > 0) {
             await tx.projectCostEvent.create({
               data: {
-                projectId: dto.projectId,
+                projectId: validProjectId,
                 costType: 'MACHINE_COST',
                 description: `Machine cost: ${machineName} – ${totalHrs.toFixed(2)}hrs × ₹${machineHourlyRate}/hr (Tool: ${item.toolNo || 'N/A'})`,
                 amount: mCost,
@@ -693,13 +693,13 @@ export class ReportsService {
       }
 
       // --- Update ProjectCostSummary ---
-      if (dto.projectId && (totalMachineCost > 0 || totalLabourCost > 0)) {
+      if (validProjectId && (totalMachineCost > 0 || totalLabourCost > 0)) {
         const totalCostDelta = totalMachineCost + totalLabourCost;
 
         await tx.projectCostSummary.upsert({
-          where: { projectId: dto.projectId },
+          where: { projectId: validProjectId },
           create: {
-            projectId: dto.projectId,
+            projectId: validProjectId,
             machineCost: totalMachineCost,
             labourCost: totalLabourCost,
             totalCost: totalCostDelta,
@@ -721,10 +721,10 @@ export class ReportsService {
         });
 
         // Re-sync profitability
-        const summary = await tx.projectCostSummary.findUnique({ where: { projectId: dto.projectId } });
+        const summary = await tx.projectCostSummary.findUnique({ where: { projectId: validProjectId } });
         if (summary) {
           await tx.projectCostSummary.update({
-            where: { projectId: dto.projectId },
+            where: { projectId: validProjectId },
             data: { profitability: Number(summary.revenue) - Number(summary.totalCost) },
           });
         }
@@ -732,7 +732,7 @@ export class ReportsService {
         // Activity log
         await tx.projectActivity.create({
           data: {
-            projectId: dto.projectId,
+            projectId: validProjectId,
             action: 'PRODUCTION_LOGGED',
             description: `MSDR ${header.msdrNumber} logged via daily reports. Cost: ₹${totalCostDelta.toFixed(2)} (Machine: ₹${totalMachineCost.toFixed(2)} + Labour: ₹${totalLabourCost.toFixed(2)})`,
             performedBy: userId || 'SYSTEM',

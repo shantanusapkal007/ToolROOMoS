@@ -39,6 +39,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       status = HttpStatus.BAD_REQUEST;
       message = 'Validation error: Invalid data provided to the database.';
       code = 'VALIDATION_ERROR';
+      console.error('[PRISMA VALIDATION ERROR]', exception.message);
     }
 
     response.status(status).json({
