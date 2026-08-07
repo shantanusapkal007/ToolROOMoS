@@ -56,6 +56,8 @@ export function useCreateGlobalDesignerLog() {
     mutationFn: (payload: GlobalDesignerLogPayload) => DailyReportsService.createGlobalDesignerLog(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dailyReportKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['finance'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       success('Designer Log Created', 'Designer daily work log saved successfully across projects.');
     },
     onError: (err: any) => {
@@ -72,6 +74,8 @@ export function useCreateGlobalMsdrLog() {
     mutationFn: (payload: GlobalMsdrLogPayload) => DailyReportsService.createGlobalMsdrLog(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dailyReportKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['finance'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       success('MSDR Log Recorded', 'Shopfloor daily machining/fitting log recorded successfully.');
     },
     onError: (err: any) => {

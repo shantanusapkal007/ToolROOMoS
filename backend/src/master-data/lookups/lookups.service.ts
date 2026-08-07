@@ -98,7 +98,7 @@ export class LookupsService {
 
   async getCategoryOptions(category?: string) {
     const whereClause = category ? { category } : {};
-    let options = await (this.prisma as any).masterCategoryOption.findMany({
+    let options = await this.prisma.masterCategoryOption.findMany({
       where: whereClause,
       orderBy: [{ category: 'asc' }, { label: 'asc' }],
     });
@@ -113,7 +113,7 @@ export class LookupsService {
 
   async createCategoryOption(dto: { category: string; code?: string; label: string; description?: string }) {
     const code = (dto.code || dto.label.toUpperCase().replace(/[^A-Z0-9]/g, '_')).trim();
-    return (this.prisma as any).masterCategoryOption.upsert({
+    return this.prisma.masterCategoryOption.upsert({
       where: {
         category_code: {
           category: dto.category.toUpperCase(),
@@ -135,7 +135,7 @@ export class LookupsService {
   }
 
   async deleteCategoryOption(id: string) {
-    return (this.prisma as any).masterCategoryOption.delete({
+    return this.prisma.masterCategoryOption.delete({
       where: { id },
     });
   }
@@ -194,7 +194,7 @@ export class LookupsService {
     const createdList = [];
     for (const item of itemsToSeed) {
       try {
-        const created = await (this.prisma as any).masterCategoryOption.create({
+        const created = await this.prisma.masterCategoryOption.create({
           data: {
             category: categoryUpper,
             code: item.code,
