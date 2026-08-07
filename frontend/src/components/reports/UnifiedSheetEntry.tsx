@@ -103,10 +103,7 @@ function calcHours(startStr: string, endStr: string): number {
   return Number((diffMinutes / 60).toFixed(1));
 }
 
-function calcCuttingHours(startStr: string, endStr: string, setupHrs: number): number {
-  const totalHrs = calcHours(startStr, endStr);
-  return Math.max(0, Number((totalHrs - (setupHrs || 0)).toFixed(1)));
-}
+
 
 function addHoursToTime(startStr: string, addHours: number): string {
   if (!startStr) return startStr;

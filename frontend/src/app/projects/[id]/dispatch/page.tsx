@@ -33,14 +33,14 @@ export default function ProjectDispatchPage() {
 
   // Form States
   const [challanForm, setChallanForm] = useState({
-    vehicleNumber: "MH-12-PQ-8842",
-    driverName: "Ramesh Pawar",
-    driverPhone: "+91 98234 56789",
-    transporterName: "VRL Logistics Ltd",
-    itemDescription: "Main Press Tooling Die Set Assembly & Tryout Samples",
-    quantity: "1 NOS",
-    grossWeight: "450 KG",
-    remarks: "Outward delivery to Mahindra & Mahindra Chakan Plant",
+    vehicleNumber: "",
+    driverName: "",
+    driverPhone: "",
+    transporterName: "",
+    itemDescription: "",
+    quantity: "",
+    grossWeight: "",
+    remarks: "",
   });
 
   const [invoiceForm, setInvoiceForm] = useState({
@@ -355,9 +355,9 @@ export default function ProjectDispatchPage() {
                 <div className="text-zinc-500">Chakan Industrial Area, Pune - 410501</div>
               </div>
               <div className="space-y-1">
-                <div><span className="text-zinc-500 text-[10px] uppercase font-bold">Vehicle No:</span> <span className="font-bold font-mono text-zinc-900">MH-12-PQ-8842</span></div>
-                <div><span className="text-zinc-500 text-[10px] uppercase font-bold">Driver Name:</span> <span className="font-bold text-zinc-900">Ramesh Pawar</span></div>
-                <div><span className="text-zinc-500 text-[10px] uppercase font-bold">Transporter:</span> <span className="font-bold text-zinc-900">VRL Logistics Ltd.</span></div>
+                <div><span className="text-zinc-500 text-[10px] uppercase font-bold">Vehicle No:</span> <span className="font-bold font-mono text-zinc-900">{challanForm.vehicleNumber || "N/A"}</span></div>
+                <div><span className="text-zinc-500 text-[10px] uppercase font-bold">Driver Name:</span> <span className="font-bold text-zinc-900">{challanForm.driverName || "N/A"}</span></div>
+                <div><span className="text-zinc-500 text-[10px] uppercase font-bold">Transporter:</span> <span className="font-bold text-zinc-900">{challanForm.transporterName || "N/A"}</span></div>
               </div>
             </div>
 

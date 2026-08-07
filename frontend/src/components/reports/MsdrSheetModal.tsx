@@ -275,8 +275,8 @@ export function MsdrSheetModal({ isOpen, onClose, onSuccess }: MsdrSheetModalPro
             producedQty: Number(item.Qty) || 1,
             startTime: item.StartTime || '08:30',
             endTime: item.EndTime || '17:30',
-            setupTime: Number(item.SetupTime) || 0.5,
-            cuttingTime: Number(item.CuttingTime) || calcCuttingHours(item.StartTime || '08:30', item.EndTime || '17:30', Number(item.SetupTime) || 0.5),
+            setupTime: 0,
+            cuttingTime: Number(item.CuttingTime) || calcHours(item.StartTime || '08:30', item.EndTime || '17:30'),
             remarks: '',
           };
         });
