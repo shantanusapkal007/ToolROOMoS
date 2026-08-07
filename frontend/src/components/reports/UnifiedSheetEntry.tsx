@@ -358,7 +358,7 @@ export function UnifiedSheetEntry({ onComplete }: { onComplete?: () => void }) {
   const createMsdrLogMutation = useCreateGlobalMsdrLog();
   const { success, error } = useToast();
 
-  const [activeRole, setActiveRole] = useState<'DESIGNER' | 'MSDR'>('DESIGNER');
+  const [activeRole, setActiveRole] = useState<'DESIGNER' | 'MSDR' | 'ASSEMBLY'>('DESIGNER');
   const [batchDate, setBatchDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [batchEmployeeId, setBatchEmployeeId] = useState<string>('');
   const [batchMachineId, setBatchMachineId] = useState<string>('');
@@ -888,7 +888,10 @@ export function UnifiedSheetEntry({ onComplete }: { onComplete?: () => void }) {
               <Cpu className="w-4 h-4" /> Designer (CAD/CAM)
             </button>
             <button
-              onClick={() => setActiveRole('MSDR')}
+              onClick={() => {
+                setActiveRole('MSDR');
+                setMsdrRows((prev) => prev.map((r) => ({ ...r, productionSection: 'MACHINE_SHOP' })));
+              }}
               className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all ${
                 activeRole === 'MSDR'
                   ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
@@ -896,6 +899,23 @@ export function UnifiedSheetEntry({ onComplete }: { onComplete?: () => void }) {
               }`}
             >
               <Wrench className="w-4 h-4" /> Shopfloor (MSDR)
+            </button>
+            <button
+              onClick={() => {
+                setActiveRole('ASSEMBLY');
+                setMsdrRows((prev) => prev.map((r) => ({ 
+                  ...r, 
+                  productionSection: 'TOOL_ROOM_FITTING',
+                  description: r.description || 'Tool Assembly & Fitting'
+                })));
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all ${
+                activeRole === 'ASSEMBLY'
+                  ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <Layers className="w-4 h-4" /> Assembly Shop
             </button>
           </div>
         </div>

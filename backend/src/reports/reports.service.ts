@@ -174,8 +174,11 @@ export class ReportsService {
     }
 
     if (query?.section && query.section !== 'ALL') {
-      if (query.section === 'ENGINEERING') {
+      if (query.section === 'ENGINEERING' || query.section === 'DESIGNER') {
         msdrWhere.id = 'NO_MATCH'; // Exclude MSDR if specifically searching engineering
+      } else if (query.section === 'ASSEMBLY' || query.section === 'TOOL_ROOM_FITTING' || query.section === 'ASSEMBLY_SHOP') {
+        designerWhere.id = 'NO_MATCH'; // Exclude designer logs if searching assembly shop
+        msdrWhere.productionSection = { in: ['TOOL_ROOM_FITTING', 'ASSEMBLY_SHOP', 'ASSEMBLY', 'TOOL_ROOM_FITTING_SHOP'] };
       } else {
         designerWhere.id = 'NO_MATCH'; // Exclude designer logs if searching shopfloor sections
         msdrWhere.productionSection = query.section;

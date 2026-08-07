@@ -64,7 +64,7 @@ export default function ProjectAssemblyPage() {
   const { data: project, isLoading: isProjectLoading } = useProject(id);
   const { data: assemblyOrders = [], isLoading: isOrdersLoading } = useAssemblyOrders(id);
   const { data: trials = [], isLoading: isTrialsLoading } = useProjectTrials(id);
-  const { data: msdrsResponse } = useGlobalDailyReports({ projectId: id, type: "MSDR", section: "TOOL_ROOM_FITTING" });
+  const { data: msdrsResponse } = useGlobalDailyReports({ projectId: id, type: "MSDR" });
 
   const completeProductionMutation = useCompleteProduction(id);
   const createTrialMutation = useCreateProjectTrial(id);
@@ -78,7 +78,15 @@ export default function ProjectAssemblyPage() {
     return [];
   };
 
-  const fittingMsdrLogs = extractMSDRs(msdrsResponse);
+  const rawLogs = extractMSDRs(msdrsResponse);
+  const fittingMsdrLogs = rawLogs.filter((log: any) => 
+    !log.section || 
+    log.section === "TOOL_ROOM_FITTING" || 
+    log.section === "ASSEMBLY_SHOP" || 
+    log.section === "ASSEMBLY" ||
+    log.section === "TOOL_ROOM_FITTING_SHOP" ||
+    log.section === "ALL"
+  );
 
   if (isProjectLoading) return <SkeletonBox className="h-96 w-full" />;
 

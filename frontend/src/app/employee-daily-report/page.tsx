@@ -430,6 +430,10 @@ export default function EmployeeDailyReportPage() {
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                                 <Cpu className="w-3 h-3" /> Designer
                               </span>
+                            ) : item.section === 'TOOL_ROOM_FITTING' || item.section === 'ASSEMBLY_SHOP' || item.section === 'ASSEMBLY' ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                <Layers className="w-3 h-3" /> Assembly
+                              </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                 <Wrench className="w-3 h-3" /> MSDR
