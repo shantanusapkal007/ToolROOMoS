@@ -11,6 +11,7 @@ import {
   Upload,
   Cpu,
   Wrench,
+  Layers,
   Search,
   ChevronDown,
 } from 'lucide-react';
