@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye, Edit2, Trash2, AlertCircle, History, Download } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Edit2, Trash2, AlertCircle, History, Download } from 'lucide-react';
 import { Button } from './Button';
 
 export interface Column<T> {
@@ -71,7 +71,7 @@ export function SmartTable<T extends { id?: string | number }>({
   const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
   const paginatedData = sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const hasActions = onView || onEdit || onDelete || onHistory;
+  const hasActions = onEdit || onDelete || onHistory;
 
   const handleExportCSV = () => {
     if (!data.length) return;
@@ -160,7 +160,12 @@ export function SmartTable<T extends { id?: string | number }>({
               paginatedData.map((row, idx) => (
                 <tr
                   key={row.id || idx}
-                  className="hover:bg-[rgba(148,151,169,0.06)] transition-colors text-ink"
+                  onClick={() => onView && onView(row)}
+                  className={`transition-colors text-ink border-l-2 border-l-transparent ${
+                    onView
+                      ? 'cursor-pointer hover:bg-[rgba(148,151,169,0.06)] hover:border-l-primary'
+                      : 'hover:bg-[rgba(148,151,169,0.06)]'
+                  }`}
                 >
                   {columns.map((col) => (
                     <td key={col.key} className="py-3.5 px-4">
@@ -172,25 +177,16 @@ export function SmartTable<T extends { id?: string | number }>({
                       <div className="flex items-center justify-end gap-1">
                         {onHistory && (
                           <button
-                            onClick={() => onHistory(row)}
+                            onClick={(e) => { e.stopPropagation(); onHistory(row); }}
                             className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
                             title="Audit History"
                           >
                             <History className="w-4 h-4" />
                           </button>
                         )}
-                        {onView && (
-                          <button
-                            onClick={() => onView(row)}
-                            className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
                         {onEdit && (
                           <button
-                            onClick={() => onEdit(row)}
+                            onClick={(e) => { e.stopPropagation(); onEdit(row); }}
                             className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
                             title="Edit Record"
                           >
@@ -199,7 +195,7 @@ export function SmartTable<T extends { id?: string | number }>({
                         )}
                         {onDelete && (
                           <button
-                            onClick={() => onDelete(row)}
+                            onClick={(e) => { e.stopPropagation(); onDelete(row); }}
                             className="p-1.5 text-cool-gray hover:text-accent-red hover:bg-red-50 rounded-[8px] transition-colors"
                             title="Delete Record"
                           >
