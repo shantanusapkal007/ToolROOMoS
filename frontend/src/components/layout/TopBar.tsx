@@ -72,17 +72,17 @@ export function TopBar() {
       {/* Right Section: Live Telemetry, Utilities & User Menu */}
       <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Combined Clock, Date & Live FX Rates Telemetry Pill */}
-        <div className="hidden md:flex items-center gap-2.5 px-2.5 py-1 bg-neutral-50/60 border border-border-gray rounded-[8px] text-caption font-mono text-ink">
+        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 bg-canvas border border-border-gray rounded-[8px] text-caption font-mono text-ink shadow-micro">
           {time && (
             <div className="flex flex-col text-right leading-none">
-              <span className="font-bold text-ink text-[12px] leading-none">{time}</span>
-              <span className="text-[9px] font-semibold text-primary tracking-wider leading-none mt-0.5">{date}</span>
+              <span className="font-bold text-ink text-[14px] leading-none">{time}</span>
+              <span className="text-[11px] font-semibold text-primary tracking-wider leading-none mt-0.5">{date}</span>
             </div>
           )}
           {time && (
             <span className="text-border-gray">|</span>
           )}
-          <div className="flex items-center gap-2 text-[12px] leading-none">
+          <div className="flex items-center gap-2.5 text-[14px] leading-none">
             <span><strong className="text-silver-blue mr-0.5">USD</strong>₹{rates.usd.toFixed(1)}</span>
             <span className="text-border-gray">|</span>
             <span><strong className="text-silver-blue mr-0.5">EUR</strong>₹{rates.eur.toFixed(1)}</span>

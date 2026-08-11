@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@custom-variant dark (&:is(.dark *));
 :root {
   /* Primary Brand & Variants (Kraken Theme) */
   --color-primary: #7132f5;

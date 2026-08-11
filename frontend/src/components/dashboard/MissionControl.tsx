@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Clock, DollarSign, CheckCircle2, AlertCircle, Zap, Edit3, PackageCheck, TrendingUp } from "lucide-react";
+import { Clock, DollarSign, CheckCircle2, AlertCircle, Zap, Edit3, PackageCheck, TrendingUp, Activity } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { DepartmentLoadOverview } from './DepartmentLoadOverview';
 import { useDashboardMetrics } from '../../hooks/useDashboardMetrics';
@@ -85,10 +85,15 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
       {/* 1. Operational Narrative Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border-gray pb-4 gap-4">
         <div>
-          <h1 className="text-display-sm font-semibold text-ink tracking-tight">
-            Manufacturing Command Center
-          </h1>
-          <p className="text-body-md text-mute mt-0.5">
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+              <Activity className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold text-ink tracking-tight">
+              Manufacturing Command Center
+            </h1>
+          </div>
+          <p className="text-xs text-mute ml-[42px]">
             Real-time shopfloor capacity, project schedule, and financial telemetry.
           </p>
         </div>
@@ -97,89 +102,108 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
       {/* 2. Analytical KPI Ribbon */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         
-        {/* KPI 1: Net Sales */}
-        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col justify-between">
-          <div className="flex justify-between items-center text-mute mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Monthly Sales (Excl. GST)</span>
-            <DollarSign className="w-4 h-4 text-ink" />
+        {/* KPI 1: Net Sales (Revenue - Success Theme) */}
+        <div className="bg-white border border-border-gray rounded-[12px] p-4 sm:p-5 shadow-subtle flex flex-col justify-between hover:shadow-md hover:border-semantic-success/30 transition-all duration-200 group">
+          <div className="flex justify-between items-start mb-3 gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-cool-gray leading-tight">Monthly Sales (Excl. GST)</span>
+            <div className="w-8 h-8 rounded-lg bg-semantic-success-subtle text-semantic-success-dark flex items-center justify-center shrink-0">
+              <DollarSign className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-ink tracking-tight mb-1 truncate" title={metrics ? formatCurrency(metrics.mtdSalesWithoutGst) : '₹0'}>
+          <div className="text-2xl lg:text-3xl font-bold font-mono text-semantic-success-dark tracking-tight mb-1 truncate" title={metrics ? formatCurrency(metrics.mtdSalesWithoutGst) : '₹0'}>
             {metrics ? formatCompactCurrency(metrics.mtdSalesWithoutGst) : "₹0.0 L"}
           </div>
-          <div className="text-caption text-silver-blue truncate">
-            Net tax-free realized invoices
+          <div className="text-caption text-silver-blue flex items-center justify-between mt-2 pt-2 border-t border-hairline/60 gap-1.5">
+            <span className="truncate min-w-0" title="Net Tax-Free Realized">Net Realized</span>
+            <span className="shrink-0 text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20">Invoiced</span>
           </div>
         </div>
 
-        {/* KPI 2: Monthly Realization */}
-        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col justify-between">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Monthly Realization</span>
-            <span className={`inline-flex items-center text-caption font-medium px-2 py-0.5 rounded-sm border ${targetPct >= 80 ? 'text-accent-green bg-canvas border-hairline' : 'text-accent-orange bg-canvas border-hairline'}`}>
-              {targetPct}% Target
+        {/* KPI 2: Monthly Realization (Target Tracking - Info Theme) */}
+        <div className="bg-white border border-border-gray rounded-[12px] p-4 sm:p-5 shadow-subtle flex flex-col justify-between hover:shadow-md hover:border-semantic-info/30 transition-all duration-200">
+          <div className="flex justify-between items-start mb-3 gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-cool-gray leading-tight">Monthly Realization</span>
+            <div className="w-8 h-8 rounded-lg bg-semantic-info-subtle text-semantic-info-dark flex items-center justify-center shrink-0">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between mb-1 gap-2">
+            <div className="text-2xl lg:text-3xl font-bold font-mono text-semantic-info-dark tracking-tight truncate" title={formatCurrency(mtdRevenue)}>
+              {formatCompactCurrency(mtdRevenue)}
+            </div>
+            <span className="shrink-0 inline-flex items-center text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full text-semantic-info-dark bg-semantic-info-subtle border border-semantic-info/20">
+              {targetPct}% Met
             </span>
           </div>
-          <div className="text-2xl font-bold font-mono text-ink tracking-tight mb-1 truncate" title={formatCurrency(mtdRevenue)}>
-            {formatCompactCurrency(mtdRevenue)}
+          {/* Micro Progress Bar */}
+          <div className="w-full bg-hairline rounded-full h-1.5 mt-2 mb-1.5 overflow-hidden">
+            <div 
+              className="h-full rounded-full transition-all duration-500 bg-semantic-info-dark" 
+              style={{ width: `${Math.min(100, targetPct)}%` }} 
+            />
           </div>
-          <div className="text-caption text-silver-blue flex justify-between items-center truncate">
-            <span>Target: {formatCompactCurrency(monthlyTarget)}</span>
-            <span className="font-medium text-accent-green">{targetPct}% Met</span>
+          <div className="text-caption text-silver-blue flex justify-between items-center gap-1">
+            <span className="truncate">Target: <strong className="font-mono text-ink">{formatCompactCurrency(monthlyTarget)}</strong></span>
           </div>
         </div>
 
-        {/* KPI 3: GRN Purchase Realization (All Projects) */}
-        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col justify-between">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-eyebrow-uppercase-sm font-medium uppercase text-ink">GRN Material Purchase</span>
-            <PackageCheck className="w-4.5 h-4.5 text-accent-green" />
+        {/* KPI 3: GRN Material Purchase (Procurement - Warning Theme) */}
+        <div className="bg-white border border-border-gray rounded-[12px] p-4 sm:p-5 shadow-subtle flex flex-col justify-between hover:shadow-md hover:border-semantic-warning/30 transition-all duration-200">
+          <div className="flex justify-between items-start mb-3 gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-cool-gray leading-tight">GRN Material Purchase</span>
+            <div className="w-8 h-8 rounded-lg bg-semantic-warning-subtle text-semantic-warning-dark flex items-center justify-center shrink-0">
+              <PackageCheck className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-ink tracking-tight mb-1 truncate" title={metrics ? formatCurrency(metrics.totalGrnPurchaseValue) : '₹0'}>
+          <div className="text-2xl lg:text-3xl font-bold font-mono text-semantic-warning-dark tracking-tight mb-1 truncate" title={metrics ? formatCurrency(metrics.totalGrnPurchaseValue) : '₹0'}>
             {metrics ? formatCompactCurrency(metrics.totalGrnPurchaseValue) : "₹0.0 L"}
           </div>
-          <div className="text-caption text-silver-blue font-medium flex items-center justify-between truncate">
-            <span>All Projects GRN Total</span>
-            <span className="font-mono text-caption text-ink bg-canvas px-1.5 py-0.5 rounded-sm border border-border-gray">
+          <div className="text-caption text-silver-blue flex items-center justify-between mt-2 pt-2 border-t border-hairline/60 gap-1.5">
+            <span className="truncate min-w-0">GRN Total</span>
+            <span className="shrink-0 font-mono text-[10px] sm:text-[11px] font-semibold text-semantic-warning-dark bg-semantic-warning-subtle px-1.5 py-0.5 rounded border border-semantic-warning/20 shadow-2xs">
               {metrics?.grnTotalReceiptsCount || 0} Receipts
             </span>
           </div>
         </div>
 
-        {/* KPI 4: Deficit */}
-        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col justify-between">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Target Deficit</span>
-            <AlertCircle className="w-4 h-4 text-accent-orange" />
+        {/* KPI 4: Target Deficit (Deficit & Risk Alert - Danger Theme) */}
+        <div className="bg-white border border-border-gray rounded-[12px] p-4 sm:p-5 shadow-subtle flex flex-col justify-between hover:shadow-md hover:border-semantic-danger/30 transition-all duration-200">
+          <div className="flex justify-between items-start mb-3 gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-cool-gray leading-tight">Target Deficit</span>
+            <div className="w-8 h-8 rounded-lg bg-semantic-danger-subtle text-semantic-danger-dark flex items-center justify-center shrink-0">
+              <AlertCircle className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-ink tracking-tight mb-1 truncate" title={metrics ? formatCurrency(metrics.monthlyRemaining) : '₹0'}>
+          <div className="text-2xl lg:text-3xl font-bold font-mono text-semantic-danger-dark tracking-tight mb-1 truncate" title={metrics ? formatCurrency(metrics.monthlyRemaining) : '₹0'}>
             {metrics ? formatCompactCurrency(metrics.monthlyRemaining) : "₹0.0 L"}
           </div>
-          <div className="text-caption text-silver-blue truncate">
-            Deficit left to achieve target
+          <div className="text-caption text-silver-blue flex items-center justify-between mt-2 pt-2 border-t border-hairline/60 gap-1.5">
+            <span className="truncate min-w-0">Goal Deficit</span>
+            <span className="shrink-0 text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-semantic-danger-subtle text-semantic-danger-dark border border-semantic-danger/20">
+              Deficit
+            </span>
           </div>
         </div>
 
-        {/* KPI 5: Annual Revenue Target */}
+        {/* KPI 5: Annual Revenue Target (Executive Target - Primary Kraken Theme) */}
         <div 
           onClick={() => { setEditInputValue(String(estimatedRevenue)); setIsEditModalOpen(true); }}
-          className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col justify-between cursor-pointer hover:border-primary/40 transition-colors group"
+          className="bg-white border border-border-gray rounded-[12px] p-4 sm:p-5 shadow-subtle flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200 group relative overflow-hidden"
         >
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Annual Target</span>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setEditInputValue(String(estimatedRevenue)); setIsEditModalOpen(true); }}
-              className="p-1 text-mute hover:text-ink rounded-sm transition-colors"
-              title="Edit Target Amount"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-            </button>
+          <div className="flex justify-between items-start mb-3 gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-cool-gray leading-tight">Annual Target</span>
+            <div className="w-8 h-8 rounded-lg bg-primary-subtle text-primary-dark flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <Edit3 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-ink tracking-tight mb-1 truncate" title={formatCurrency(estimatedRevenue)}>
+          <div className="text-2xl lg:text-3xl font-bold font-mono text-primary-dark tracking-tight mb-1 truncate" title={formatCurrency(estimatedRevenue)}>
             {formatCompactCurrency(estimatedRevenue)}
           </div>
-          <div className="text-caption text-accent-blue-info font-medium flex items-center justify-between">
-            <span>Estimated Goal</span>
-            <span className="underline group-hover:text-accent-blue-deep">Edit</span>
+          <div className="text-caption text-accent-blue-info font-medium flex items-center justify-between mt-2 pt-2 border-t border-hairline/60 gap-1.5">
+            <span className="text-silver-blue truncate min-w-0">Estimated Goal</span>
+            <span className="shrink-0 text-primary-dark font-semibold underline text-caption group-hover:text-primary-hover flex items-center gap-1">
+              Edit
+            </span>
           </div>
         </div>
 
