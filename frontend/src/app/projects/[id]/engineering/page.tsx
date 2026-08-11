@@ -9,6 +9,7 @@ import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { useUpdateBOM } from "@/hooks/useEngineering";
 import { useToast } from "@/components/ui/Toast";
 import { ProcurementService } from "@/services/procurement.service";
+import { Cpu } from "lucide-react";
 
 export default function ProjectEngineeringPage() {
   const params = useParams();
@@ -127,6 +128,23 @@ export default function ProjectEngineeringPage() {
 
   return (
     <div className="space-y-6">
+      {/* Standard Module Header Card */}
+      <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+              <Cpu className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold text-ink tracking-tight">
+              Engineering BOM & Procurement Converter
+            </h1>
+          </div>
+          <p className="text-xs text-mute ml-[42px]">
+            Upload, convert, validate and sign off project Bill of Materials (BOM) to generate purchase requisitions.
+          </p>
+        </div>
+      </div>
+
       <BomConverter
         projectId={id}
         project={project}

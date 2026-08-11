@@ -150,7 +150,7 @@ export default function ProjectsPage() {
       render: (val: string, row: any) => (
         <button 
           onClick={() => router.push(`/projects/${row.id}/overview`)} 
-          className="font-semibold text-ink font-mono hover:text-blue-600 cursor-pointer"
+          className="font-semibold text-primary font-mono hover:text-primary-hover cursor-pointer"
         >
           {val}
         </button>
@@ -159,23 +159,23 @@ export default function ProjectsPage() {
     {
       key: 'partName',
       label: 'Part / Component Name',
-      render: (val: string) => <span className="font-semibold text-zinc-800">{val || 'N/A'}</span>
+      render: (val: string) => <span className="font-semibold text-ink">{val || 'N/A'}</span>
     },
     {
       key: 'customer',
       label: 'Customer',
-      render: (val: any) => <span>{val?.companyName || 'Pending'}</span>
+      render: (val: any) => <span className="text-ink font-medium">{val?.companyName || 'Pending'}</span>
     },
     {
       key: 'customerPoNumber',
       label: 'Customer PO',
-      render: (val: string) => <span className="font-mono text-zinc-600">{val || 'N/A'}</span>
+      render: (val: string) => <span className="font-mono text-cool-gray">{val || 'N/A'}</span>
     },
     {
       key: 'currentStage',
       label: 'Stage',
       render: (val: string) => (
-        <span className="text-micro font-semibold px-2 py-0.5 rounded bg-zinc-100 border border-hairline text-zinc-700">
+        <span className="text-micro font-semibold px-2 py-0.5 rounded bg-primary-subtle border border-primary/20 text-primary uppercase">
           {val?.replace('_', ' ')}
         </span>
       )
@@ -184,8 +184,8 @@ export default function ProjectsPage() {
       key: 'targetDeliveryDate',
       label: 'Target Delivery',
       render: (val: string) => (
-        <span className="font-mono text-mute">
-          {val ? formatDate(val) : <span className="text-zinc-300">Not Set</span>}
+        <span className="font-mono text-ink">
+          {val ? formatDate(val) : <span className="text-cool-gray">Not Set</span>}
         </span>
       )
     },
@@ -196,11 +196,11 @@ export default function ProjectsPage() {
         const hasDate = !!row.targetDeliveryDate;
         const isDelayed = hasDate && new Date(row.targetDeliveryDate).getTime() < new Date().getTime();
         return isDelayed ? (
-          <span className="text-micro font-semibold px-2 py-0.5 rounded border text-red-700 bg-red-50 border-red-200">
+          <span className="text-micro font-semibold px-2 py-0.5 rounded border text-semantic-danger-dark bg-semantic-danger-subtle border-semantic-danger/20">
             OVERDUE
           </span>
         ) : (
-          <span className="text-micro font-semibold px-2 py-0.5 rounded border text-emerald-700 bg-emerald-50 border-emerald-200">
+          <span className="text-micro font-semibold px-2 py-0.5 rounded border text-semantic-success-dark bg-semantic-success-subtle border-semantic-success/20">
             ON TRACK
           </span>
         );
@@ -303,42 +303,42 @@ export default function ProjectsPage() {
       >
         <form onSubmit={handleCreateProject} className="space-y-4">
           <div>
-            <label className="block text-caption font-semibold text-zinc-700 mb-1">Project Number / Code *</label>
+            <label className="block text-caption font-semibold text-ink mb-1">Project Number / Code *</label>
             <input 
               type="text"
               required
               placeholder="KTD-"
               value={newProjectNumber}
               onChange={handleProjectNumberChange}
-              className="w-full px-3 py-2 border border-hairline rounded-md font-mono text-caption text-ink"
+              className="w-full px-3 py-2 border border-border-gray rounded-md font-mono text-caption text-ink bg-canvas"
             />
           </div>
 
           <div>
-            <label className="block text-caption font-semibold text-zinc-700 mb-1">Part / Tooling Component Name *</label>
+            <label className="block text-caption font-semibold text-ink mb-1">Part / Tooling Component Name *</label>
             <input 
               type="text"
               required
               placeholder="e.g. Fender Panel Draw Die"
               value={newPartName}
               onChange={(e) => setNewPartName(e.target.value)}
-              className="w-full px-3 py-2 border border-hairline rounded-md text-caption text-ink"
+              className="w-full px-3 py-2 border border-border-gray rounded-md text-caption text-ink bg-canvas"
             />
           </div>
 
           <div>
-            <label className="block text-caption font-semibold text-zinc-700 mb-1">Customer PO Number</label>
+            <label className="block text-caption font-semibold text-ink mb-1">Customer PO Number</label>
             <input 
               type="text"
               placeholder="e.g. PO-88992"
               value={newCustomerPo}
               onChange={(e) => setNewCustomerPo(e.target.value)}
-              className="w-full px-3 py-2 border border-hairline rounded-md font-mono text-caption text-ink"
+              className="w-full px-3 py-2 border border-border-gray rounded-md font-mono text-caption text-ink bg-canvas"
             />
           </div>
 
           <div>
-            <label className="block text-caption font-semibold text-zinc-700 mb-1">Expected Contract / Project Order Value (₹)</label>
+            <label className="block text-caption font-semibold text-ink mb-1">Expected Contract / Project Order Value (₹)</label>
             <input 
               type="number"
               min="0"
@@ -346,27 +346,27 @@ export default function ProjectsPage() {
               placeholder="e.g. 250000 (How much money you will receive for this project)"
               value={newRevenue}
               onChange={(e) => setNewRevenue(e.target.value)}
-              className="w-full px-3 py-2 border border-hairline rounded-md text-caption text-ink"
+              className="w-full px-3 py-2 border border-border-gray rounded-md text-caption text-ink bg-canvas"
             />
           </div>
 
           <div>
-            <label className="block text-caption font-semibold text-zinc-700 mb-1">Target Delivery Date</label>
+            <label className="block text-caption font-semibold text-ink mb-1">Target Delivery Date</label>
             <input 
               type="date"
               value={newTargetDeliveryDate}
               onChange={(e) => setNewTargetDeliveryDate(e.target.value)}
-              className="w-full px-3 py-2 border border-hairline rounded-md text-caption text-ink bg-white"
+              className="w-full px-3 py-2 border border-border-gray rounded-md text-caption text-ink bg-canvas"
             />
           </div>
 
           {customers && customers.length > 0 && (
             <div>
-              <label className="block text-caption font-semibold text-zinc-700 mb-1">Customer / Client</label>
+              <label className="block text-caption font-semibold text-ink mb-1">Customer / Client</label>
               <select
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="w-full px-3 py-2 border border-hairline rounded-md text-caption text-ink bg-white"
+                className="w-full px-3 py-2 border border-border-gray rounded-md text-caption text-ink bg-canvas"
               >
                 {customers.map((c: any) => (
                   <option key={c.id} value={c.id}>{c.companyName}</option>
@@ -375,9 +375,9 @@ export default function ProjectsPage() {
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-hairline">
-            <Button variant="secondary" onClick={() => setShowNewProjectModal(false)}>Cancel</Button>
-            <Button type="submit">Create Project Mission</Button>
+          <div className="flex justify-end gap-2 pt-4 border-t border-border-gray">
+            <Button variant="white" type="button" onClick={() => setShowNewProjectModal(false)}>Cancel</Button>
+            <Button variant="primary" type="submit" isLoading={createProjectMutation.isPending}>Create Project Mission</Button>
           </div>
         </form>
       </Modal>

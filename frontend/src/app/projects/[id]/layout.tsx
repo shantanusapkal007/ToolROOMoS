@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "@/lib/formatters";
+import { Button } from "@/components/ui/Button";
 
 export default function ProjectDetailLayout({
   children,
@@ -60,13 +61,14 @@ export default function ProjectDetailLayout({
             {/* Upper Action Bar & Breadcrumb */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <button
+                <Button
+                  variant="white"
+                  size="sm"
                   onClick={() => router.push('/projects')}
-                  className="px-2.5 py-1.5 rounded-[10px] border border-border-gray hover:bg-[rgba(148,151,169,0.08)] text-cool-gray hover:text-ink transition-colors flex items-center gap-1.5 text-caption font-medium shadow-subtle"
+                  leftIcon={<ArrowLeft className="w-4 h-4" />}
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Back to Projects</span>
-                </button>
+                  Back to Projects
+                </Button>
 
                 <span className="text-silver-blue/60">/</span>
 
@@ -126,7 +128,7 @@ export default function ProjectDetailLayout({
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-[10px] text-caption font-medium transition-all whitespace-nowrap ${
                       isActive
                         ? "bg-primary text-white font-semibold shadow-subtle"
-                        : "text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)]"
+                        : "text-cool-gray hover:text-ink hover:bg-cool-gray/10"
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
