@@ -3,37 +3,108 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "../../components/layout/Sidebar";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { Plus, Download, Briefcase, Clock, AlertTriangle, CheckCircle2, FileSpreadsheet } from "lucide-react";
+import { Plus, Download, Briefcase, Clock, AlertTriangle, CheckCircle2, FileSpreadsheet, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { exportPremiumProjects } from "../../utils/exportPremiumProjects";
 import { useToast } from "../../components/ui/Toast";
-import { useProjects, useCreateProject } from "../../hooks/useProjects";
+import { useProjects, useCreateProject, projectKeys } from "../../hooks/useProjects";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMasterData } from "../../hooks/useMasterData";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { SmartTable } from "../../components/ui/SmartTable";
 import { formatDate } from "../../lib/formatters";
 
+import { api } from "../../lib/api";
+
 export default function ProjectsPage() {
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const { data: customers } = useMasterData('customers');
   const { data: plants } = useMasterData('plants');
   const createProjectMutation = useCreateProject();
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
   const router = useRouter();
 
   // New Project Form State
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [deletingProject, setDeletingProject] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newProjectNumber, setNewProjectNumber] = useState("");
+  const [projectPrefix, setProjectPrefix] = useState("KTD-");
   const [newPartName, setNewPartName] = useState("");
   const [newCustomerPo, setNewCustomerPo] = useState("");
   const [newRevenue, setNewRevenue] = useState("");
+  const [newTargetDeliveryDate, setNewTargetDeliveryDate] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
-  useEffect(() => {
-    if (showNewProjectModal && customers && customers.length > 0) {
-      setSelectedCustomerId(customers[0].id);
+  const computeNextProjectNumber = (currentProjects: any[], prefix: string, startingNum: number) => {
+    const cleanPrefix = prefix.endsWith('-') ? prefix : `${prefix}-`;
+    let maxSeq = 0;
+
+    const prefixEscaped = cleanPrefix.replace(/[-[\]{}()*+?.:\\^$|]/g, '\\$&');
+    const seqRegex = new RegExp(`^${prefixEscaped}(\\d+)`, 'i');
+
+    if (Array.isArray(currentProjects)) {
+      currentProjects.forEach((p) => {
+        const num = p?.projectNumber;
+        if (num && typeof num === 'string') {
+          const match = num.match(seqRegex) || num.match(/KTD-?(\d+)/i) || num.match(/(\d+)/);
+          if (match && match[1]) {
+            const seq = parseInt(match[1], 10);
+            if (!isNaN(seq) && seq > maxSeq) {
+              maxSeq = seq;
+            }
+          }
+        }
+      });
     }
-  }, [showNewProjectModal, customers]);
+
+    const nextSeqNum = maxSeq > 0 ? Math.max(startingNum, maxSeq + 1) : startingNum;
+    const formattedSeq = nextSeqNum < 10 ? `0${nextSeqNum}` : `${nextSeqNum}`;
+
+    return `${cleanPrefix}${formattedSeq}`;
+  };
+
+  useEffect(() => {
+    if (showNewProjectModal) {
+      let isMounted = true;
+      async function initProjectNumber() {
+        let prefix = 'KTD-';
+        let startingNum = 1;
+
+        try {
+          const res: any = await api.get('settings/preferences');
+          const data = res?.data || res;
+          if (data) {
+            if (data.projectNumberPrefix) prefix = String(data.projectNumberPrefix);
+            if (data.projectStartingNumber) startingNum = Number(data.projectStartingNumber);
+          }
+        } catch (err) {}
+
+        if (isMounted) {
+          setProjectPrefix(prefix);
+          const autoNum = computeNextProjectNumber(projects, prefix, startingNum);
+          setNewProjectNumber(autoNum);
+          if (customers && customers.length > 0 && !selectedCustomerId) {
+            setSelectedCustomerId(customers[0].id);
+          }
+        }
+      }
+      initProjectNumber();
+      return () => { isMounted = false; };
+    }
+  }, [showNewProjectModal, projects, customers]);
+
+  const handleProjectNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    const cleanPrefix = projectPrefix.endsWith('-') ? projectPrefix : `${projectPrefix}-`;
+    if (!val.toUpperCase().startsWith(cleanPrefix.toUpperCase())) {
+      const raw = val.replace(new RegExp(`^${cleanPrefix.replace('-', '')}-?`, 'i'), '');
+      val = `${cleanPrefix}${raw}`;
+    }
+    setNewProjectNumber(val);
+  };
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,12 +116,27 @@ export default function ProjectsPage() {
         customerId: selectedCustomerId,
         plantId: plants?.[0]?.id || "PL-01",
         revenue: newRevenue ? parseFloat(newRevenue) : 0,
+        targetDeliveryDate: newTargetDeliveryDate ? new Date(newTargetDeliveryDate).toISOString() : undefined,
       } as any);
+
+      // Auto update next starting project counter in settings
+      const numMatch = newProjectNumber.match(/\d+/);
+      if (numMatch) {
+        const currentNum = parseInt(numMatch[0], 10);
+        if (!isNaN(currentNum)) {
+          api.post('settings/preferences', {
+            key: 'projectStartingNumber',
+            value: currentNum + 1,
+          }).catch(() => {});
+        }
+      }
+
       setShowNewProjectModal(false);
       setNewProjectNumber("");
       setNewPartName("");
       setNewCustomerPo("");
       setNewRevenue("");
+      setNewTargetDeliveryDate("");
     } catch (err: any) {}
   };
 
@@ -120,6 +206,22 @@ export default function ProjectsPage() {
           </span>
         );
       }
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (_: any, row: any) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setDeletingProject(row);
+          }}
+          className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+          title="Delete Project"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )
     }
   ];
 
@@ -226,9 +328,9 @@ export default function ProjectsPage() {
             <input 
               type="text"
               required
-              placeholder="e.g. PRJ-2026-009"
+              placeholder="KTD-"
               value={newProjectNumber}
-              onChange={(e) => setNewProjectNumber(e.target.value)}
+              onChange={handleProjectNumberChange}
               className="w-full px-3 py-2 border border-zinc-200 rounded-md font-mono text-caption text-zinc-900"
             />
           </div>
@@ -269,6 +371,16 @@ export default function ProjectsPage() {
             />
           </div>
 
+          <div>
+            <label className="block text-caption font-semibold text-zinc-700 mb-1">Target Delivery Date</label>
+            <input 
+              type="date"
+              value={newTargetDeliveryDate}
+              onChange={(e) => setNewTargetDeliveryDate(e.target.value)}
+              className="w-full px-3 py-2 border border-zinc-200 rounded-md text-caption text-zinc-900 bg-white"
+            />
+          </div>
+
           {customers && customers.length > 0 && (
             <div>
               <label className="block text-caption font-semibold text-zinc-700 mb-1">Customer / Client</label>
@@ -289,6 +401,47 @@ export default function ProjectsPage() {
             <Button type="submit">Create Project Mission</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Project Modal */}
+      <Modal
+        isOpen={!!deletingProject}
+        onClose={() => setDeletingProject(null)}
+        title="Delete Project Confirmation"
+        subtitle="This action is permanent and cannot be undone."
+      >
+        <div className="space-y-4">
+          <p className="text-caption text-zinc-700">
+            Are you sure you want to permanently delete project <strong className="font-mono text-zinc-900">{deletingProject?.projectNumber}</strong> ({deletingProject?.partName})?
+          </p>
+          <p className="text-micro text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+            <strong>Warning:</strong> Deleting this project will remove all associated Bill of Materials (BOM), routings, job cards, and cost summaries from the system.
+          </p>
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <Button variant="secondary" onClick={() => setDeletingProject(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+              disabled={isDeleting}
+              onClick={async () => {
+                if (!deletingProject) return;
+                setIsDeleting(true);
+                try {
+                  await api.delete(`projects/${deletingProject.id}`);
+                  queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+                  success("Project Deleted", `Project ${deletingProject.projectNumber} has been permanently deleted.`);
+                  setDeletingProject(null);
+                } catch (err: any) {
+                  error("Delete Failed", err?.response?.data?.message || err.message || "Failed to delete project");
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+            >
+              {isDeleting ? "Deleting..." : "Confirm & Delete Project"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

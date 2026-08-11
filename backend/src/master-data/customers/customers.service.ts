@@ -18,9 +18,14 @@ export class CustomersService {
     let { companyId, ...rest } = dto;
     
     if (!companyId) {
-      const defaultCompany = await this.prisma.company.findFirst();
+      let defaultCompany = await this.prisma.company.findFirst();
       if (!defaultCompany) {
-        throw new BadRequestException('System configuration error: No company found to attach customer to.');
+        defaultCompany = await this.prisma.company.create({
+          data: {
+            companyCode: 'COMP-01',
+            companyName: 'Enterprise Toolroom Organization',
+          },
+        });
       }
       companyId = defaultCompany.id;
     }

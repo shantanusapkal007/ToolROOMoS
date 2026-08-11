@@ -182,7 +182,7 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
       </div>
 
       {/* Entity Table */}
-      <div className="flex-1 overflow-y-auto p-4 hide-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         <SmartTable 
           columns={registry.columns} 
           data={data} 
@@ -234,18 +234,39 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
             
             <div className="bg-black/5 p-4 rounded-xl border border-black/5 space-y-3">
               <h4 className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 border-b border-black/10 pb-1.5">All Data Fields</h4>
-              {registry.fields.map(field => (
-                <div key={field.name} className="grid grid-cols-3 gap-3 border-b border-black/5 pb-2 last:border-0 last:pb-0 hover:bg-black/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center">{field.label}</div>
-                  <div className="col-span-2 text-xs text-zinc-900 font-medium">
-                    {viewingRecord[field.name] !== undefined && viewingRecord[field.name] !== null && viewingRecord[field.name] !== '' 
-                      ? (typeof viewingRecord[field.name] === 'boolean' 
-                          ? (viewingRecord[field.name] ? <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">Yes</span> : <span className="text-slate-500 bg-black/5 border border-black/10 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">No</span>) 
-                          : viewingRecord[field.name])
-                      : '-'}
+              {registry.fields.map(field => {
+                const rawVal = viewingRecord[field.name];
+                let displayVal: any = '-';
+
+                if (rawVal !== undefined && rawVal !== null && rawVal !== '') {
+                  if (typeof rawVal === 'boolean') {
+                    displayVal = rawVal ? (
+                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">Yes</span>
+                    ) : (
+                      <span className="text-slate-500 bg-black/5 border border-black/10 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">No</span>
+                    );
+                  } else if (field.name.endsWith('Id')) {
+                    const relKey = field.name.slice(0, -2);
+                    const relObj = viewingRecord[relKey];
+                    if (relObj && typeof relObj === 'object') {
+                      displayVal = relObj.departmentName || relObj.plantName || relObj.shiftName || relObj.companyName || relObj.name || rawVal;
+                    } else {
+                      displayVal = rawVal;
+                    }
+                  } else {
+                    displayVal = rawVal;
+                  }
+                }
+
+                return (
+                  <div key={field.name} className="grid grid-cols-3 gap-3 border-b border-black/5 pb-2 last:border-0 last:pb-0 hover:bg-black/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center">{field.label}</div>
+                    <div className="col-span-2 text-xs text-zinc-900 font-medium">
+                      {displayVal}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex justify-end pt-2 border-t border-black/10">

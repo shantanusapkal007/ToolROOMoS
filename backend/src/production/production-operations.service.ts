@@ -99,6 +99,20 @@ export class ProductionOperationsService {
           },
         });
 
+        if (lCost > 0) {
+          await tx.projectCostEvent.create({
+            data: {
+              projectId,
+              costType: 'LABOUR_COST',
+              description: `Shopfloor labour: ${employee.name || 'Operator'} – ${machineHrs.toFixed(2)} hrs @ ₹${employee.hourlyRate.toNumber()}/hr on ${machine.machineCode}`,
+              amount: lCost,
+              referenceDocType: 'MSDR_OP',
+              referenceDocId: op.id,
+              createdBy: userId,
+            },
+          });
+        }
+
         // Synchronize matching JobCard status to IN_PROGRESS
         await tx.jobCard.updateMany({
           where: {

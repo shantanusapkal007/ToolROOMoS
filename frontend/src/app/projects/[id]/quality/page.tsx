@@ -484,7 +484,7 @@ export default function ProjectQualityPage() {
                 <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-black rounded-lg uppercase tracking-wider border border-emerald-300">
                   QC CERTIFIED & APPROVED
                 </span>
-                <p className="text-[11px] font-mono text-zinc-500 mt-1">Cert #: QC-{project?.projectNumber || "PRJ"}-2026</p>
+                <p className="text-[11px] font-mono text-zinc-500 mt-1">Cert #: QC-{project?.projectNumber || "KTD"}-2026</p>
               </div>
             </div>
 
@@ -492,7 +492,7 @@ export default function ProjectQualityPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-zinc-50 rounded-xl border border-zinc-200 text-xs font-sans">
               <div>
                 <span className="text-zinc-500 text-[10px] uppercase font-bold">Project Number</span>
-                <div className="font-bold text-zinc-900">{project?.projectNumber || "PRJ-2026-001"}</div>
+                <div className="font-bold text-zinc-900">{project?.projectNumber || "KTD-2026-001"}</div>
               </div>
               <div>
                 <span className="text-zinc-500 text-[10px] uppercase font-bold">Tool / Part Name</span>

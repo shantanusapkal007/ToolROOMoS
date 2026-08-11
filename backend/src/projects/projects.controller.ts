@@ -289,6 +289,53 @@ export class ProjectsController {
     };
   }
 
+  // --- Project Completion ---
+  @Post(':id/complete-project')
+  @Roles('ADMIN', 'SALES_ENGINEER', 'STORES', 'PRODUCTION')
+  async completeProject(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('remarks') remarks?: string,
+    @CurrentUser() user?: any,
+  ) {
+    const data = await this.projectsService.completeProject(id, remarks, user?.userId);
+    return {
+      status: 'success',
+      message: 'Project marked as completed successfully. All deliverables shipped.',
+      data,
+    };
+  }
+
+  // --- Dispatch Notes (Delivery Challans) & Tax Invoices ---
+  @Post(':id/dispatch-notes')
+  @Roles('ADMIN', 'STORES', 'PRODUCTION', 'SALES_ENGINEER')
+  async createDispatchNote(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: any,
+    @CurrentUser() user?: any,
+  ) {
+    const data = await this.projectsService.createDispatchNote(id, dto, user?.userId);
+    return {
+      status: 'success',
+      message: 'Delivery Challan generated successfully.',
+      data,
+    };
+  }
+
+  @Post(':id/invoices')
+  @Roles('ADMIN', 'FINANCE', 'SALES_ENGINEER')
+  async createInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: any,
+    @CurrentUser() user?: any,
+  ) {
+    const data = await this.projectsService.createInvoice(id, dto, user?.userId);
+    return {
+      status: 'success',
+      message: 'Tax Invoice generated successfully.',
+      data,
+    };
+  }
+
   // --- Closing Engine ---
   @Post(':id/close')
   @Roles('ADMIN', 'FINANCE')

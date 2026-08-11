@@ -103,6 +103,7 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
   const openReceiptModal = (order: any) => {
     setSelectedOrder(order);
     setReceiptData({
+      subcontractOrderId: order.id,
       documentNumber: `REC-${Date.now().toString().slice(-4)}`,
       remarks: "",
       items: order.items.map((item: any) => ({
@@ -134,12 +135,25 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
     e.preventDefault();
     if (!selectedOrder) return;
     try {
-      await api.post(`projects/${projectId}/subcontract-orders/${selectedOrder.id}/receipt`, receiptData);
+      const payload = {
+        ...receiptData,
+        subcontractOrderId: selectedOrder.id,
+        items: (receiptData.items || []).map((item: any) => ({
+          orderItemId: item.orderItemId,
+          receivedQty: Number(item.receivedQty) || 0,
+          acceptedQty: Number(item.acceptedQty) || 0,
+          rejectedQty: Number(item.rejectedQty) || 0,
+          actualRate: Number(item.actualRate) || 0,
+          remarks: item.remarks || ""
+        }))
+      };
+      await api.post(`projects/${projectId}/subcontract-orders/${selectedOrder.id}/receipt`, payload);
       setIsReceiptModalOpen(false);
       loadData();
       success("Receipt Processed", "Subcontract return receipt successfully posted.");
     } catch (err: any) {
-      error("Receipt Failed", err.response?.data?.message || err.message);
+      const msg = err.response?.data?.message;
+      error("Receipt Failed", Array.isArray(msg) ? msg.join(', ') : (msg || err.message));
     }
   };
 

@@ -59,6 +59,26 @@ export class SubcontractingController {
     };
   }
 
+  @Post('subcontract-orders/:orderId/receipt')
+  @Roles('ADMIN', 'PRODUCTION', 'PURCHASE')
+  async createReceiptForOrder(
+    @Param('projectId') projectId: string,
+    @Param('orderId') orderId: string,
+    @Body() dto: CreateSubcontractReceiptDto,
+    @CurrentUser() user: any,
+  ) {
+    const receiptDto = {
+      ...dto,
+      subcontractOrderId: dto.subcontractOrderId || orderId,
+    };
+    const data = await this.subcontractingService.createReceipt(projectId, receiptDto);
+    return {
+      status: 'success',
+      message: 'Subcontract Receipt generated successfully.',
+      data,
+    };
+  }
+
   @Get('subcontract-receipts')
   async getReceipts(@Param('projectId') projectId: string) {
     const data = await this.subcontractingService.getReceipts(projectId);

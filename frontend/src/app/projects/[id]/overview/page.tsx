@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { useParams } from "next/navigation";
-import { useProject, useAdvanceProjectStage } from "@/hooks/useProjects";
+import React, { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useProject, useAdvanceProjectStage, useDeleteProject, useCompleteProject } from "@/hooks/useProjects";
 import { 
   Briefcase, 
   Clock, 
@@ -22,9 +22,12 @@ import {
   ChevronRight,
   CheckSquare,
   Sparkles,
-  Factory
+  Factory,
+  Trash2,
+  BadgeCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { formatDate, formatCurrency } from "@/lib/formatters";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 
@@ -32,10 +35,16 @@ import { useGlobalDailyReports } from "@/hooks/useDailyReports";
 
 export default function ProjectOverviewPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
   const { data: project, isLoading, error } = useProject(id);
   const { data: globalReportsRes = [] } = useGlobalDailyReports({ projectId: id });
   const advanceStageMutation = useAdvanceProjectStage(id);
+  const deleteProjectMutation = useDeleteProject(id);
+  const completeProjectMutation = useCompleteProject(id);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completionRemarks, setCompletionRemarks] = useState("");
 
   if (isLoading) {
     return (
@@ -149,8 +158,30 @@ export default function ProjectOverviewPage() {
           </div>
         </div>
 
-        {/* Stage Advancement Action */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Stage Advancement & Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => setShowDeleteModal(true)}
+            className="border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+          >
+            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+            <span>Delete Project</span>
+          </Button>
+
+          {project.currentStage !== 'CLOSED' && project.currentStage !== 'CANCELLED' && (
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setShowCompleteModal(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+            >
+              <BadgeCheck className="w-4 h-4 mr-1.5" />
+              <span>Mark Project Completed</span>
+            </Button>
+          )}
+
           <Button
             variant="primary"
             size="md"
@@ -163,6 +194,83 @@ export default function ProjectOverviewPage() {
           </Button>
         </div>
       </div>
+
+      {/* Complete Project Modal */}
+      <Modal
+        isOpen={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        title="Mark Project as Completed"
+        subtitle="This will close the project and record final completion."
+      >
+        <div className="space-y-4">
+          <p className="text-caption text-zinc-700">
+            Are you sure you want to mark project <strong className="font-mono text-zinc-900">{project?.projectNumber}</strong> ({project?.partName}) as <strong>COMPLETED</strong>?
+          </p>
+          <div>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1 uppercase tracking-wider">
+              Completion Remarks (Optional)
+            </label>
+            <textarea
+              rows={3}
+              value={completionRemarks}
+              onChange={(e) => setCompletionRemarks(e.target.value)}
+              placeholder="e.g. All tooling deliverables approved by customer CMM inspection..."
+              className="w-full bg-white border border-zinc-200 px-3 py-2 text-sm text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 resize-none"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <Button variant="secondary" onClick={() => setShowCompleteModal(false)}>Cancel</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              isLoading={completeProjectMutation.isPending}
+              onClick={() => {
+                completeProjectMutation.mutate(completionRemarks || undefined, {
+                  onSuccess: () => {
+                    setShowCompleteModal(false);
+                    setCompletionRemarks("");
+                  }
+                });
+              }}
+            >
+              Confirm Project Completion
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Project Confirmation"
+        subtitle="This action is permanent and cannot be undone."
+      >
+        <div className="space-y-4">
+          <p className="text-caption text-zinc-700">
+            Are you sure you want to permanently delete project <strong className="font-mono text-zinc-900">{project?.projectNumber}</strong> ({project?.partName})?
+          </p>
+          <p className="text-micro text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+            <strong>Warning:</strong> All associated Bill of Materials (BOM), routings, job cards, and cost summaries will be permanently deleted.
+          </p>
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+            <Button
+              variant="danger"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+              disabled={deleteProjectMutation.isPending}
+              onClick={async () => {
+                try {
+                  await deleteProjectMutation.mutateAsync();
+                  setShowDeleteModal(false);
+                  router.push('/projects');
+                } catch (err) {}
+              }}
+            >
+              {deleteProjectMutation.isPending ? "Deleting..." : "Confirm & Delete Project"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* 4 HIGHLY RELEVANT TOOLROOM PROJECT KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

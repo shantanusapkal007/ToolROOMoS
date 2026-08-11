@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand --forceExit --detectOpenHandles"
+    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand --forceExit --detectOpenHandles",
+    "db:clean": "ts-node prisma/clean-db.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -37,6 +38,7 @@
     "class-validator": "^0.15.1",
     "compression": "^1.8.1",
     "cron": "^4.4.0",
+    "exceljs": "^4.4.0",
     "helmet": "^8.2.0",
     "nestjs-cls": "^6.2.1",
     "nestjs-pino": "^4.6.1",

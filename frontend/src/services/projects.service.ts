@@ -60,5 +60,12 @@ export const ProjectsService = {
     const body = res?.data;
     if (body && body.data) return body.data;
     return body as Project;
+  },
+
+  completeProject: async (id: string, remarks?: string): Promise<Project> => {
+    const res = await api.post<any>(`projects/${id}/complete-project`, { remarks });
+    const body = res?.data;
+    if (body && body.data) return body.data;
+    return body as Project;
   }
 };

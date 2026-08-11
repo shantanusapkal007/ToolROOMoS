@@ -5,15 +5,19 @@ class SubcontractReceiptItemDto {
   @IsString()
   orderItemId: string;
 
+  @Type(() => Number)
   @IsNumber()
   receivedQty: number;
 
+  @Type(() => Number)
   @IsNumber()
   acceptedQty: number;
 
+  @Type(() => Number)
   @IsNumber()
   rejectedQty: number;
 
+  @Type(() => Number)
   @IsNumber()
   actualRate: number;
 

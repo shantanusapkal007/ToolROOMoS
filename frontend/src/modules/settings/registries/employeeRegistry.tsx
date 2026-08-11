@@ -12,6 +12,7 @@ export const employeeRegistry: EntityRegistry = {
     { key: 'employeeCode', label: 'Emp ID' },
     { key: 'name', label: 'Name' },
     { key: 'designation', label: 'Designation' },
+    { key: 'department', label: 'Department', render: (val, record) => record.department?.departmentName || record.departmentId || '-' },
     { key: 'employeeType', label: 'Type' },
     { key: 'hourlyRate', label: 'Hourly Rate' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
@@ -21,7 +22,8 @@ export const employeeRegistry: EntityRegistry = {
     { name: 'employeeCode', label: 'Employee ID', type: 'text', required: true },
     { name: 'name', label: 'Employee Name', type: 'text', required: true },
     { name: 'designation', label: 'Designation', type: 'text' },
-    { name: 'departmentId', label: 'Department', type: 'select', required: true, optionsEndpoint: 'master-data/departments', optionsLabelKey: 'departmentName', optionsValueKey: 'id' },
+    { name: 'department', label: 'Department Name', type: 'text' },
+    { name: 'departmentId', label: 'Department', type: 'select', required: false, optionsEndpoint: 'master-data/departments', optionsLabelKey: 'departmentName', optionsValueKey: 'id' },
     { name: 'shiftId', label: 'Shift', type: 'select', optionsEndpoint: 'master-data/shifts', optionsLabelKey: 'shiftName', optionsValueKey: 'id' },
     { name: 'employeeType', label: 'Employee Type', type: 'select', options: [
       { label: 'Internal', value: 'INTERNAL' },

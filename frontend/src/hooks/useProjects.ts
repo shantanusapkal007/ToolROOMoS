@@ -153,3 +153,20 @@ export function useCompleteProduction(id: string) {
     },
   });
 }
+
+export function useCompleteProject(id: string) {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: (remarks?: string) => ProjectsService.completeProject(id, remarks),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      success('Project Completed', 'Project has been marked as completed. All deliverables shipped successfully.');
+    },
+    onError: (err: any) => {
+      error('Completion Failed', err.message || 'Failed to mark project as completed');
+    },
+  });
+}

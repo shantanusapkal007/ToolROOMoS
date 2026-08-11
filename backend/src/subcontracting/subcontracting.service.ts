@@ -129,7 +129,7 @@ export class SubcontractingService {
         const actualProcessCost = item.acceptedQty * item.actualRate;
         totalProcessCost += actualProcessCost;
 
-        return {
+        const baseData: any = {
           orderItemId: item.orderItemId,
           receivedQty: item.receivedQty,
           acceptedQty: item.acceptedQty,
@@ -137,22 +137,27 @@ export class SubcontractingService {
           actualRate: item.actualRate,
           actualProcessCost,
           remarks: item.remarks,
-          // Create new batch for accepted quantity
-          inventoryBatches: {
+        };
+
+        // Only create a return batch when the source order item has a valid linked inventory batch
+        if (orderItem.inventoryBatch?.materialId && item.acceptedQty > 0) {
+          baseData.inventoryBatches = {
             create: [
               {
-                materialId: orderItem.inventoryBatch?.materialId || 'UNKNOWN_MATERIAL_SHOULD_NOT_HAPPEN', // We assume material exists
-                grnItemId: orderItem.inventoryBatch?.grnItemId || 'UNKNOWN_GRN',
-                batchNumber: `${orderItem.inventoryBatch?.batchNumber || 'B'}-S-${this.generateNumber('R').slice(-4)}`,
-                heatNumber: orderItem.inventoryBatch?.heatNumber,
+                materialId: orderItem.inventoryBatch.materialId,
+                grnItemId: orderItem.inventoryBatch.grnItemId || null,
+                batchNumber: `${orderItem.inventoryBatch.batchNumber || 'B'}-S-${this.generateNumber('R').slice(-4)}`,
+                heatNumber: orderItem.inventoryBatch.heatNumber,
                 receivedQty: item.acceptedQty,
                 currentQty: item.acceptedQty,
-                unitCost: (Number(orderItem.inventoryBatch?.unitCost) || 0) + (Number(item.actualRate) || 0),
+                unitCost: (Number(orderItem.inventoryBatch.unitCost) || 0) + (Number(item.actualRate) || 0),
                 status: 'AVAILABLE',
               },
             ],
-          },
-        };
+          };
+        }
+
+        return baseData;
       });
 
       const receipt = await tx.subcontractReceipt.create({

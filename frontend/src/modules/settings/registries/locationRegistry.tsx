@@ -16,14 +16,14 @@ export const locationRegistry: EntityRegistry = {
   columns: [
     { key: 'locationCode', label: 'Location Code' },
     { key: 'locationName', label: 'Name' },
-    { key: 'warehouseId', label: 'Warehouse' },
+    { key: 'warehouseId', label: 'Plant' },
     { key: 'status', label: 'Status' },
   ],
 
   fields: [
     { name: 'locationCode', label: 'Location Code', type: 'text', required: true, placeholder: 'e.g., WH1-R1-S2-B3' },
     { name: 'locationName', label: 'Name', type: 'text', required: true },
-    { name: 'warehouseId', label: 'Warehouse', type: 'select', optionsEndpoint: 'master-data/warehouses', optionsLabelKey: 'warehouseName', optionsValueKey: 'id', required: true },
+    { name: 'warehouseId', label: 'Plant', type: 'select', optionsEndpoint: 'master-data/warehouses', optionsLabelKey: 'warehouseName', optionsValueKey: 'id', required: true },
     { name: 'remarks', label: 'Remarks', type: 'textarea', gridCols: 2 },
     {
       name: 'status',

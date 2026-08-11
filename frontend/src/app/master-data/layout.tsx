@@ -14,7 +14,7 @@ const navigation = [
   { id: 'machines', label: 'Machines', desc: 'Shop floor assets', icon: <Factory /> },
   { id: 'operations', label: 'Operations', desc: 'Manufacturing processes', icon: <UserCog /> },
   { id: 'employees', label: 'Employees', desc: 'Workforce & operators', icon: <UserCog /> },
-  { id: 'warehouses', label: 'Warehouses', desc: 'Primary storage hubs', icon: <Building2 /> },
+  { id: 'warehouses', label: 'Plants', desc: 'Primary plants & facilities', icon: <Building2 /> },
   { id: 'locations', label: 'Locations', desc: 'Specific storage bins', icon: <Package /> },
   { id: 'rates', label: 'Resource Rates', desc: 'Hourly cost rate cards', icon: <Database /> },
   { id: 'inspection-standards', label: 'Inspection Standards', desc: 'Quality audit protocols', icon: <ShieldCheck /> },
@@ -75,7 +75,7 @@ export default function MasterDataLayout({ children }: { children: React.ReactNo
             </div>
 
             {/* Page Content View */}
-            <div className="flex-1 bg-white border border-zinc-200 rounded-lg overflow-y-auto p-4 flex flex-col min-h-0 shadow-xs">
+            <div className="flex-1 bg-white border border-zinc-200 rounded-lg flex flex-col min-h-0 shadow-xs overflow-hidden">
               {children}
             </div>
           </div>

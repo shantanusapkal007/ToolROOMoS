@@ -22,12 +22,12 @@ export class CreateMachineDto {
   capacity?: string;
 
   @IsString()
-  @IsNotEmpty()
-  plantId: string;
+  @IsOptional()
+  plantId?: string;
 
   @IsString()
-  @IsNotEmpty()
-  departmentId: string;
+  @IsOptional()
+  departmentId?: string;
 
   @IsString()
   @IsOptional()

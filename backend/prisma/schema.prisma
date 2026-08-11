@@ -912,7 +912,7 @@ model DispatchItem {
 model InvoiceHeader {
   id             String           @id @default(uuid())
   projectId      String
-  dispatchNoteId String
+  dispatchNoteId String?
   invoiceNumber  String           @unique
   documentNumber String?
   invoiceDate    DateTime         @default(now())
@@ -929,7 +929,7 @@ model InvoiceHeader {
   paidAt         DateTime?
   paymentStatus  String           @default("PENDING")
   amountPaid     Decimal          @default(0)
-  dispatchNote   DispatchNote     @relation(fields: [dispatchNoteId], references: [id])
+  dispatchNote   DispatchNote?    @relation(fields: [dispatchNoteId], references: [id])
   project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items          InvoiceItem[]
   payments       InvoicePayment[]
@@ -1569,6 +1569,7 @@ enum CostEventType {
   INSPECTION_COST
   PACKING_COST
   DISPATCH_COST
+  REVENUE
 }
 
 enum VendorType {

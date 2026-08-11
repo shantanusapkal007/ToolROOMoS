@@ -2,7 +2,10 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import { useProject } from "@/hooks/useProjects";
+import { useProject, useCompleteProject, projectKeys } from "@/hooks/useProjects";
+import { api } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/Toast";
 import {
   Truck,
   Plus,
@@ -16,6 +19,10 @@ import {
   Calendar,
   ShieldCheck,
   ArrowRight,
+  BadgeCheck,
+  AlertTriangle,
+  Sparkles,
+  Lock,
 } from "lucide-react";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { Modal } from "@/components/ui/Modal";
@@ -26,10 +33,15 @@ type DispatchTab = "CHALLANS" | "INVOICES" | "PRINTABLE_DC";
 export default function ProjectDispatchPage() {
   const params = useParams();
   const id = params?.id as string;
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [activeTab, setActiveTab] = useState<DispatchTab>("CHALLANS");
   const [showChallanModal, setShowChallanModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completionRemarks, setCompletionRemarks] = useState("");
 
   // Form States
   const [challanForm, setChallanForm] = useState({
@@ -44,12 +56,13 @@ export default function ProjectDispatchPage() {
   });
 
   const [invoiceForm, setInvoiceForm] = useState({
-    basicValue: 220000,
+    basicValue: 0,
     gstPercent: 18,
-    remarks: "Final billing against Taxable Tooling Supply Order",
+    remarks: "",
   });
 
   const { data: project, isLoading } = useProject(id);
+  const completeProjectMutation = useCompleteProject(id);
 
   if (isLoading) return <SkeletonBox className="h-96 w-full" />;
 
@@ -59,15 +72,67 @@ export default function ProjectDispatchPage() {
   const totalDispatches = dispatchNotes.length;
   const totalInvoices = invoices.length;
   const invoicedRevenue = invoices.reduce((acc: number, inv: any) => acc + (Number(inv.totalValue) || Number(inv.subtotal) || 0), 0);
+  const totalWeight = dispatchNotes.reduce((acc: number, dc: any) => acc + (Number(dc.grossWeight) || 0), 0);
 
   const handleCreateChallan = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowChallanModal(false);
+    setIsSubmitting(true);
+    try {
+      await api.post(`projects/${id}/dispatch-notes`, challanForm);
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      setShowChallanModal(false);
+      setChallanForm({
+        vehicleNumber: "",
+        driverName: "",
+        driverPhone: "",
+        transporterName: "",
+        itemDescription: "",
+        quantity: "",
+        grossWeight: "",
+        remarks: "",
+      });
+      success("Delivery Challan Created", "Outward dispatch note generated successfully.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      error("Challan Creation Failed", Array.isArray(msg) ? msg.join(", ") : (msg || err.message));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'CANCELLED';
+  const canCompleteProject = !isProjectClosed;
+
+  const handleCompleteProject = () => {
+    completeProjectMutation.mutate(completionRemarks || undefined, {
+      onSuccess: () => {
+        setShowCompleteModal(false);
+        setCompletionRemarks("");
+      },
+    });
   };
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowInvoiceModal(false);
+    setIsSubmitting(true);
+    try {
+      await api.post(`projects/${id}/invoices`, invoiceForm);
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      setShowInvoiceModal(false);
+      setInvoiceForm({
+        basicValue: 0,
+        gstPercent: 18,
+        remarks: "",
+      });
+      success("Tax Invoice Issued", "Customer Tax Invoice created successfully.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      error("Invoice Creation Failed", Array.isArray(msg) ? msg.join(", ") : (msg || err.message));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePrintChallan = () => {
@@ -94,21 +159,42 @@ export default function ProjectDispatchPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <button
-            onClick={() => setShowChallanModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Generate Delivery Challan</span>
-          </button>
+          {!isProjectClosed && (
+            <>
+              <button
+                onClick={() => setShowChallanModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Generate Delivery Challan</span>
+              </button>
 
-          <button
-            onClick={() => setShowInvoiceModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
-          >
-            <DollarSign className="w-4 h-4" />
-            <span>Issue Tax Invoice</span>
-          </button>
+              <button
+                onClick={() => setShowInvoiceModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              >
+                <DollarSign className="w-4 h-4" />
+                <span>Issue Tax Invoice</span>
+              </button>
+            </>
+          )}
+
+          {canCompleteProject && (
+            <button
+              onClick={() => setShowCompleteModal(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-600 hover:via-yellow-600 hover:to-amber-700 text-white text-xs font-black shadow-md hover:shadow-lg transition-all cursor-pointer border border-amber-400/30 uppercase tracking-wider"
+            >
+              <BadgeCheck className="w-4 h-4" />
+              <span>Mark Project Completed</span>
+            </button>
+          )}
+
+          {isProjectClosed && (
+            <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-500 text-xs font-bold border border-zinc-200">
+              <Lock className="w-4 h-4" />
+              <span>Project Completed</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -130,8 +216,8 @@ export default function ProjectDispatchPage() {
         <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex items-center justify-between">
           <div>
             <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Outward Tool Weight</div>
-            <div className="text-2xl font-black text-zinc-900 mt-0.5">450 KG</div>
-            <div className="text-[10px] text-zinc-500 mt-0.5">Die set & tryout samples</div>
+            <div className="text-2xl font-black text-zinc-900 mt-0.5">{totalWeight > 0 ? `${totalWeight} KG` : '—'}</div>
+            <div className="text-[10px] text-zinc-500 mt-0.5">Total dispatched weight</div>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
             <Package className="w-5 h-5" />
@@ -154,7 +240,7 @@ export default function ProjectDispatchPage() {
         <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex items-center justify-between">
           <div>
             <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Invoiced Revenue</div>
-            <div className="text-2xl font-black text-emerald-700 mt-0.5">{formatCurrency(invoicedRevenue || 220000)}</div>
+            <div className="text-2xl font-black text-emerald-700 mt-0.5">{formatCurrency(invoicedRevenue)}</div>
             <div className="text-[10px] text-zinc-500 mt-0.5">Total billed to customer</div>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -231,8 +317,8 @@ export default function ProjectDispatchPage() {
                     <tr key={dc.id} className="hover:bg-zinc-50/80 transition-colors">
                       <td className="p-3 font-mono font-bold text-orange-700">{dc.dispatchNumber}</td>
                       <td className="p-3 font-bold text-zinc-900">{dc.vehicleNumber}</td>
-                      <td className="p-3 text-zinc-600">{dc.driverName || "VRL Logistics"}</td>
-                      <td className="p-3 font-mono font-bold text-zinc-800">{dc.grossWeight || "450 KG"}</td>
+                      <td className="p-3 text-zinc-600">{dc.driverName || '—'}</td>
+                      <td className="p-3 font-mono font-bold text-zinc-800">{dc.grossWeight ? `${dc.grossWeight} KG` : '—'}</td>
                       <td className="p-3 text-center">
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
                           {dc.status || "DISPATCHED"}
@@ -373,18 +459,18 @@ export default function ProjectDispatchPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200">
-                  <tr>
-                    <td className="p-2 border-r font-bold text-zinc-900">{project?.partName || "Main Press Tooling Die Set Assembly"}</td>
-                    <td className="p-2 border-r text-right font-mono font-bold">1 NOS</td>
-                    <td className="p-2 border-r text-right font-mono font-bold">450 KG</td>
-                    <td className="p-2 text-zinc-600">Final Tool Delivery against Customer PO</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2 border-r font-bold text-zinc-900">Stamped Component Samples (T0 / T1 Tryout)</td>
-                    <td className="p-2 border-r text-right font-mono font-bold">25 NOS</td>
-                    <td className="p-2 border-r text-right font-mono font-bold">12 KG</td>
-                    <td className="p-2 text-zinc-600">Initial Tryout Samples for CMM Approval</td>
-                  </tr>
+                  {dispatchNotes.length > 0 ? dispatchNotes.map((dc: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="p-2 border-r font-bold text-zinc-900">{dc.itemDescription || project?.partName || '—'}</td>
+                      <td className="p-2 border-r text-right font-mono font-bold">{dc.quantity || '—'}</td>
+                      <td className="p-2 border-r text-right font-mono font-bold">{dc.grossWeight ? `${dc.grossWeight} KG` : '—'}</td>
+                      <td className="p-2 text-zinc-600">{dc.remarks || '—'}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={4} className="p-4 text-center text-zinc-400 italic">No dispatch records to display</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -549,6 +635,90 @@ export default function ProjectDispatchPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Mark Project Completed Confirmation Modal */}
+      <Modal
+        isOpen={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        title="Mark Project as Completed"
+        subtitle={`Confirm completion for ${project?.projectNumber || id}`}
+      >
+        <div className="space-y-5">
+          {/* Completion Summary Banner */}
+          <div className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-200 space-y-3">
+            <div className="flex items-center gap-2 text-amber-800">
+              <BadgeCheck className="w-5 h-5" />
+              <span className="text-sm font-black uppercase tracking-wide">Project Completion Summary</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-white/70 p-3 rounded-lg border border-amber-100">
+                <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Project</div>
+                <div className="font-black text-zinc-900 mt-0.5">{project?.projectNumber}</div>
+                <div className="text-zinc-500 text-[10px]">{project?.partName}</div>
+              </div>
+              <div className="bg-white/70 p-3 rounded-lg border border-amber-100">
+                <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Customer</div>
+                <div className="font-black text-zinc-900 mt-0.5">{project?.customer?.companyName || "—"}</div>
+              </div>
+              <div className="bg-white/70 p-3 rounded-lg border border-amber-100">
+                <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Dispatch Challans</div>
+                <div className="font-black text-zinc-900 mt-0.5 text-lg">{totalDispatches}</div>
+              </div>
+              <div className="bg-white/70 p-3 rounded-lg border border-amber-100">
+                <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Invoiced Revenue</div>
+                <div className="font-black text-emerald-700 mt-0.5">{formatCurrency(invoicedRevenue || 0)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Warning */}
+          <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div>
+              <span className="font-bold">This action will close the project permanently.</span> The project stage will be set to CLOSED, actual delivery date will be recorded, and progress will be set to 100%. This action cannot be undone.
+            </div>
+          </div>
+
+          {/* Completion Remarks */}
+          <div>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1">Completion Remarks (Optional)</label>
+            <textarea
+              rows={2}
+              value={completionRemarks}
+              onChange={(e) => setCompletionRemarks(e.target.value)}
+              placeholder="e.g. All deliverables shipped and accepted by customer..."
+              className="w-full px-3 py-2 text-xs border border-zinc-200 rounded-lg text-zinc-900 placeholder:text-zinc-400"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+            <button
+              type="button"
+              onClick={() => setShowCompleteModal(false)}
+              className="px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleCompleteProject}
+              disabled={completeProjectMutation.isPending}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-black text-white bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-600 hover:via-yellow-600 hover:to-amber-700 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {completeProjectMutation.isPending ? (
+                <span>Processing...</span>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Confirm & Complete Project</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

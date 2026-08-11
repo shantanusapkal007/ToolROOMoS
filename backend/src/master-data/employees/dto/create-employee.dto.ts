@@ -22,8 +22,16 @@ export class CreateEmployeeDto {
   shiftId?: string;
 
   @IsString()
-  @IsNotEmpty()
-  departmentId: string;
+  @IsOptional()
+  departmentId?: string;
+
+  @IsString()
+  @IsOptional()
+  departmentName?: string;
+
+  @IsString()
+  @IsOptional()
+  department?: string;
 
   @IsString()
   @IsOptional()

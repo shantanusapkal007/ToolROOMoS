@@ -8,9 +8,39 @@ export class MachinesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateMachineDto, userId?: string) {
+    let { plantId, departmentId, ...rest } = dto;
+
+    if (!plantId) {
+      let plant = await this.prisma.plant.findFirst();
+      if (!plant) {
+        let company = await this.prisma.company.findFirst();
+        if (!company) {
+          company = await this.prisma.company.create({
+            data: { companyCode: 'COMP-01', companyName: 'Enterprise Toolroom Organization' },
+          });
+        }
+        plant = await this.prisma.plant.create({
+          data: { plantCode: 'PLANT-01', plantName: 'Main Toolroom Plant', companyId: company.id },
+        });
+      }
+      plantId = plant.id;
+    }
+
+    if (!departmentId) {
+      let department = await this.prisma.department.findFirst({ where: { plantId } });
+      if (!department) {
+        department = await this.prisma.department.create({
+          data: { departmentCode: 'DEPT-TOOLROOM', departmentName: 'Toolroom Machine Shop', plantId },
+        });
+      }
+      departmentId = department.id;
+    }
+
     return this.prisma.machine.create({
       data: {
-        ...dto,
+        ...rest,
+        plantId,
+        departmentId,
         createdBy: userId,
         updatedBy: userId,
       },

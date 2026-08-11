@@ -38,17 +38,30 @@ export class InvoicesService {
       });
 
       // 3. Costing & Profitability Integration (Layer 5 - Outcomes)
-      const costSummary = await tx.projectCostSummary.findUniqueOrThrow({
+      const allInvoices = await tx.invoiceHeader.findMany({
         where: { projectId },
       });
+      const totalRevenue = allInvoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
 
-      const newRevenue = dto.subtotal; // Use subtotal as pre-tax revenue for margins
-      const newProfitability = newRevenue - costSummary.totalCost.toNumber();
+      const costSummary = await tx.projectCostSummary.upsert({
+        where: { projectId },
+        create: {
+          projectId,
+          revenue: totalRevenue,
+          totalCost: 0,
+          profitability: totalRevenue,
+        },
+        update: {
+          revenue: totalRevenue,
+        },
+      });
+
+      const totalCost = Number(costSummary.totalCost || 0);
+      const newProfitability = totalRevenue - totalCost;
 
       await tx.projectCostSummary.update({
         where: { projectId },
         data: {
-          revenue: newRevenue,
           profitability: newProfitability,
         },
       });
@@ -59,12 +72,25 @@ export class InvoicesService {
         data: { profit: newProfitability }
       });
 
+      // Log financial audit trail event for invoice generation
+      await tx.projectCostEvent.create({
+        data: {
+          projectId,
+          costType: 'REVENUE',
+          description: `Customer Tax Invoice ${dto.invoiceNumber} generated for ₹${Number(dto.subtotal || 0).toLocaleString('en-IN')}`,
+          amount: dto.subtotal,
+          referenceDocType: 'INVOICE',
+          referenceDocId: invoice.id,
+          createdBy: userId,
+        },
+      });
+
       // 4. Log project activity
       await tx.projectActivity.create({
         data: {
           projectId,
           action: 'INVOICE_GENERATED',
-          description: `Invoice ${dto.invoiceNumber} billed. Revenue: ₹${newRevenue}. Live Project Profitability: ₹${newProfitability}`,
+          description: `Invoice ${dto.invoiceNumber} billed. Subtotal: ₹${dto.subtotal}. Total Revenue: ₹${totalRevenue}. Live Project Profitability: ₹${newProfitability}`,
           performedBy: userId || 'SYSTEM',
         },
       });
@@ -144,6 +170,19 @@ export class InvoicesService {
           description: `Payment recorded against Invoice ${invoice.invoiceNumber}. Amount: ₹${paymentAmount}. Status: ${paymentStatus}`,
           performedBy: userId || 'SYSTEM',
         }
+      });
+
+      // Log financial audit event for payment received
+      await tx.projectCostEvent.create({
+        data: {
+          projectId,
+          costType: 'REVENUE',
+          description: `Customer payment received for Invoice ${invoice.invoiceNumber}. Ref: ${dto.paymentReference || 'N/A'}. Amount: ₹${Number(paymentAmount).toLocaleString('en-IN')}`,
+          amount: paymentAmount,
+          referenceDocType: 'INVOICE_PAYMENT',
+          referenceDocId: dto.invoiceId,
+          createdBy: userId,
+        },
       });
 
       // Update project stage to PAYMENT_PENDING if it was INVOICED

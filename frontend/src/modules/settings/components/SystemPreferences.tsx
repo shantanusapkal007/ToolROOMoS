@@ -14,6 +14,8 @@ export const SystemPreferences = () => {
     slackIntegration: false,
     autoBackup: true,
     maintenanceMode: false,
+    projectNumberPrefix: 'KTD-',
+    projectStartingNumber: 1,
   });
 
   useEffect(() => {
@@ -30,6 +32,8 @@ export const SystemPreferences = () => {
             ...(data.slackIntegration !== undefined && { slackIntegration: Boolean(data.slackIntegration) }),
             ...(data.autoBackup !== undefined && { autoBackup: Boolean(data.autoBackup) }),
             ...(data.maintenanceMode !== undefined && { maintenanceMode: Boolean(data.maintenanceMode) }),
+            ...(data.projectNumberPrefix !== undefined && { projectNumberPrefix: String(data.projectNumberPrefix) }),
+            ...(data.projectStartingNumber !== undefined && { projectStartingNumber: Number(data.projectStartingNumber) }),
           }));
         }
       } catch (err) {
@@ -81,13 +85,45 @@ export const SystemPreferences = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold text-zinc-900 tracking-tight">System Preferences</h2>
-            <p className="text-sm text-zinc-500">Configure global OS behavior and integrations.</p>
+            <p className="text-sm text-zinc-500">Configure global OS behavior and project numbering setup.</p>
           </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-8 hide-scrollbar">
         <div className="max-w-3xl space-y-8">
+
+          {/* Project Numbering Configuration Card */}
+          <div className="space-y-4 border border-black/10 p-6 rounded-2xl bg-[#F4F4F6]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-4 mb-4">Project Numbering Setup</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-caption font-semibold text-zinc-800 mb-1">Project Number Prefix</label>
+                <input 
+                  type="text"
+                  value={preferences.projectNumberPrefix}
+                  onChange={(e) => setPreferences(prev => ({ ...prev, projectNumberPrefix: e.target.value }))}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-caption bg-white font-mono text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. KTD-"
+                />
+                <p className="text-micro text-zinc-500 mt-1">Default prefix attached to newly initialized projects.</p>
+              </div>
+
+              <div>
+                <label className="block text-caption font-semibold text-zinc-800 mb-1">Starting / Next Project Number</label>
+                <input 
+                  type="number"
+                  min="1"
+                  value={preferences.projectStartingNumber}
+                  onChange={(e) => setPreferences(prev => ({ ...prev, projectStartingNumber: parseInt(e.target.value, 10) || 1 }))}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-caption bg-white font-mono text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. 33"
+                />
+                <p className="text-micro text-zinc-500 mt-1">Set to 33 to start project sequence from KTD-33.</p>
+              </div>
+            </div>
+          </div>
           
           <div className="space-y-4 border border-black/10 p-6 rounded-2xl bg-[#F4F4F6]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
             <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-4 mb-4">Notifications</h3>

@@ -41,10 +41,17 @@ export class ProjectsService {
         resolvedPlantId = fallbackPlant.id;
       }
 
-      // 1. Create the project
+      // 1. Ensure projectNumber uses KTD- prefix
+      let formattedProjectNumber = (dto.projectNumber || '').trim();
+      if (!formattedProjectNumber.toUpperCase().startsWith('KTD-')) {
+        const rawNum = formattedProjectNumber.replace(/^KTD-?/i, '');
+        formattedProjectNumber = `KTD-${rawNum}`;
+      }
+
+      // Create the project
       const project = await tx.project.create({
         data: {
-          projectNumber: dto.projectNumber,
+          projectNumber: formattedProjectNumber,
           customerPoNumber: dto.customerPoNumber,
           partName: dto.partName,
           description: dto.description,
@@ -669,9 +676,16 @@ export class ProjectsService {
   }
 
   async createTask(projectId: string, data: any, userId?: string) {
+    const { title, dueDate, priority, estimatedHours, remarks, ...rest } = data;
     return this.prisma.projectTask.create({
       data: {
-        ...data,
+        taskName: title || rest.taskName,
+        description: rest.description,
+        assignedTo: rest.assignedTo,
+        startDate: rest.startDate ? new Date(rest.startDate) : null,
+        endDate: dueDate ? new Date(dueDate) : (rest.endDate ? new Date(rest.endDate) : null),
+        status: rest.status || 'PENDING',
+        dependsOn: rest.dependsOn,
         projectId,
         createdBy: userId,
       },
@@ -679,12 +693,21 @@ export class ProjectsService {
   }
 
   async updateTask(taskId: string, data: any, userId?: string) {
+    const { title, dueDate, priority, estimatedHours, remarks, ...rest } = data;
+    const updateData: any = { updatedBy: userId };
+    if (title !== undefined) updateData.taskName = title;
+    if (rest.taskName !== undefined) updateData.taskName = rest.taskName;
+    if (rest.description !== undefined) updateData.description = rest.description;
+    if (rest.assignedTo !== undefined) updateData.assignedTo = rest.assignedTo;
+    if (rest.startDate !== undefined) updateData.startDate = rest.startDate ? new Date(rest.startDate) : null;
+    if (dueDate !== undefined) updateData.endDate = dueDate ? new Date(dueDate) : null;
+    if (rest.endDate !== undefined) updateData.endDate = rest.endDate ? new Date(rest.endDate) : null;
+    if (rest.status !== undefined) updateData.status = rest.status;
+    if (rest.dependsOn !== undefined) updateData.dependsOn = rest.dependsOn;
+
     return this.prisma.projectTask.update({
       where: { id: taskId },
-      data: {
-        ...data,
-        updatedBy: userId,
-      },
+      data: updateData,
     });
   }
 
@@ -742,6 +765,169 @@ export class ProjectsService {
       return closedProject;
     });
   }
+
+  // --- Project Completion Engine (from Dispatch page or Overview) ---
+  async completeProject(projectId: string, remarks?: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.findUniqueOrThrow({
+        where: { id: projectId },
+        include: { dispatchNotes: true },
+      });
+
+      // Guard: Cannot complete if already CLOSED or CANCELLED
+      if (project.currentStage === 'CLOSED' || project.currentStage === 'CANCELLED') {
+        throw new BadRequestException('Project is already closed or cancelled.');
+      }
+
+      // Guard: No open NCRs
+      const openNcr = await tx.ncrReport.findFirst({
+        where: { projectId, status: 'OPEN' },
+      });
+      if (openNcr) {
+        throw new BadRequestException('Cannot complete project with an OPEN NCR.');
+      }
+
+      const fromStage = project.currentStage;
+
+      // 1. Update project to CLOSED with completion metadata
+      const completedProject = await tx.project.update({
+        where: { id: projectId },
+        data: {
+          currentStage: 'CLOSED',
+          closedAt: new Date(),
+          actualDeliveryDate: new Date(),
+          progress: 100,
+          updatedBy: userId,
+        },
+      });
+
+      // 2. Record stage transition in project timeline
+      await tx.projectTimeline.create({
+        data: {
+          projectId,
+          fromStage,
+          toStage: 'CLOSED',
+          transitionedBy: userId || 'SYSTEM',
+          remarks: remarks || `Project marked as completed. All deliverables fulfilled.`,
+        },
+      });
+
+      // 3. Record project activity log
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'PROJECT_COMPLETED',
+          description: `Project marked as completed. Stage transitioned from ${fromStage} to CLOSED.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      // 4. Finalize cost summary profitability snapshot
+      const summary = await tx.projectCostSummary.findUnique({ where: { projectId } });
+      if (summary) {
+        const finalRevenue = Number(summary.revenue || 0);
+        const finalCost = Number(summary.totalCost || 0);
+        await tx.projectCostSummary.update({
+          where: { projectId },
+          data: {
+            profitability: finalRevenue - finalCost,
+          },
+        });
+      }
+
+      return completedProject;
+    });
+  }
+
+  // --- Dispatch & Invoicing Engine ---
+  async createDispatchNote(projectId: string, dto: any, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const dispatchNumber = `DC-${Date.now().toString().slice(-6)}`;
+
+      const dispatchNote = await tx.dispatchNote.create({
+        data: {
+          projectId,
+          customerId: project.customerId,
+          dispatchNumber,
+          vehicleNumber: dto.vehicleNumber,
+          driverDetails: dto.driverName ? `${dto.driverName} (${dto.driverPhone || ''})` : null,
+          transporterName: dto.transporterName,
+          dispatchQty: Number(dto.quantity) || 1,
+          remarks: dto.remarks,
+          createdBy: userId,
+          items: {
+            create: [
+              {
+                partDescription: dto.itemDescription || project.partName,
+                quantity: Number(dto.quantity) || 1,
+                remarks: dto.remarks,
+                createdBy: userId,
+              },
+            ],
+          },
+        },
+        include: { items: true },
+      });
+
+      // Update stage to DISPATCHED
+      await tx.project.update({
+        where: { id: projectId },
+        data: { currentStage: 'DISPATCHED' },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'DISPATCH_NOTE_CREATED',
+          description: `Delivery Challan ${dispatchNumber} created for vehicle ${dto.vehicleNumber || 'transport'}.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return dispatchNote;
+    });
+  }
+
+  async createInvoice(projectId: string, dto: any, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.findUniqueOrThrow({
+        where: { id: projectId },
+        include: { dispatchNotes: true },
+      });
+
+      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+      const basicValue = Number(dto.basicValue) || 0;
+      const gstPercent = Number(dto.gstPercent) || 18;
+      const taxAmount = (basicValue * gstPercent) / 100;
+      const totalAmount = basicValue + taxAmount;
+
+      const invoice = await tx.invoiceHeader.create({
+        data: {
+          projectId,
+          dispatchNoteId: project.dispatchNotes[0]?.id || null,
+          invoiceNumber,
+          subtotal: basicValue,
+          taxAmount,
+          totalAmount,
+          remarks: dto.remarks,
+          createdBy: userId,
+        },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId,
+          action: 'INVOICE_ISSUED',
+          description: `Tax Invoice ${invoiceNumber} issued for ₹${totalAmount.toLocaleString()}`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return invoice;
+    });
+  }
+
   async getCostEvents(id: string) {
     return this.prisma.projectCostEvent.findMany({
       where: { projectId: id },
@@ -829,9 +1015,25 @@ export class ProjectsService {
       });
       const totalOutsideCost = outsideEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
+      // 6. Sum up active DISPATCH_COST events
+      const dispatchEvents = await this.prisma.projectCostEvent.findMany({
+        where: { projectId, costType: 'DISPATCH_COST' },
+      });
+      const totalDispatchCost = dispatchEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      // 7. Calculate total revenue from all issued invoices for the project
+      const projectInvoices = await this.prisma.invoiceHeader.findMany({
+        where: { projectId },
+      });
+      const totalRevenue = projectInvoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
+
       const summary = await this.prisma.projectCostSummary.findUnique({ where: { projectId } });
 
-      const grandTotal = totalMaterialCost + totalMachineCost + totalLabourCost + totalOutsideCost + Number(summary?.inspectionCost || 0) + Number(summary?.packingCost || 0) + Number(summary?.dispatchCost || 0);
+      const safeDispatchCost = totalDispatchCost > 0 ? totalDispatchCost : Number(summary?.dispatchCost || 0);
+      const grandTotal = totalMaterialCost + totalMachineCost + totalLabourCost + totalOutsideCost + Number(summary?.inspectionCost || 0) + Number(summary?.packingCost || 0) + safeDispatchCost;
+      
+      const effectiveRevenue = totalRevenue > 0 ? totalRevenue : Number(summary?.revenue || 0);
+      const calculatedProfitability = effectiveRevenue - grandTotal;
 
       await this.prisma.projectCostSummary.upsert({
         where: { projectId },
@@ -842,14 +1044,20 @@ export class ProjectsService {
           machineCost: totalMachineCost,
           labourCost: totalLabourCost,
           outsideProcessCost: totalOutsideCost,
+          dispatchCost: safeDispatchCost,
           totalCost: grandTotal,
+          revenue: effectiveRevenue,
+          profitability: calculatedProfitability,
         },
         update: {
           labourCost: totalLabourCost,
           machineCost: totalMachineCost,
           materialConsumptionCost: totalMaterialCost,
           outsideProcessCost: totalOutsideCost,
+          dispatchCost: safeDispatchCost,
           totalCost: grandTotal,
+          revenue: effectiveRevenue,
+          profitability: calculatedProfitability,
         },
       });
     } catch (err) {

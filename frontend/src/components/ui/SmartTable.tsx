@@ -19,6 +19,7 @@ interface SmartTableProps {
   exportFilename?: string;
   title?: string;
   actions?: React.ReactNode;
+  maxHeight?: string;
 }
 
 export const SmartTable: React.FC<SmartTableProps> = ({ 
@@ -32,7 +33,8 @@ export const SmartTable: React.FC<SmartTableProps> = ({
   exportable = true, 
   exportFilename = 'ToolRoomOS_Export',
   title,
-  actions
+  actions,
+  maxHeight
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const { density } = useDensityStore();
@@ -127,7 +129,10 @@ export const SmartTable: React.FC<SmartTableProps> = ({
       </div>
 
       {/* Main Table Grid */}
-      <div className="w-full overflow-x-auto max-h-[550px] overflow-y-auto">
+      <div 
+        className="w-full overflow-x-auto" 
+        style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
+      >
         <table className="w-full text-left border-collapse min-w-max">
           <thead className="sticky top-0 z-20">
             <tr className="bg-zinc-100 border-b border-zinc-200 text-micro font-bold text-zinc-500 uppercase tracking-wider">

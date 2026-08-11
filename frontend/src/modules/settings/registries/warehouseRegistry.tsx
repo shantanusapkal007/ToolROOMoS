@@ -2,8 +2,8 @@ import { EntityRegistry } from '../types';
 
 export const warehouseRegistry: EntityRegistry = {
   id: 'warehouses',
-  singularName: 'Warehouse',
-  pluralName: 'Warehouses',
+  singularName: 'Plant',
+  pluralName: 'Plants',
   apiEndpoint: 'master-data/warehouses',
 
   permissions: {
@@ -14,26 +14,26 @@ export const warehouseRegistry: EntityRegistry = {
   },
 
   columns: [
-    { key: 'warehouseCode', label: 'Warehouse Code' },
-    { key: 'warehouseName', label: 'Name' },
-    { key: 'warehouseType', label: 'Type' },
+    { key: 'warehouseCode', label: 'Plant Code' },
+    { key: 'warehouseName', label: 'Plant Name' },
+    { key: 'warehouseType', label: 'Plant Type' },
     { key: 'status', label: 'Status' },
   ],
 
   fields: [
-    { name: 'warehouseCode', label: 'Warehouse Code', type: 'text', required: true },
-    { name: 'warehouseName', label: 'Name', type: 'text', required: true },
-    { name: 'plantId', label: 'Plant', type: 'select', required: true, optionsEndpoint: 'master-data/plants', optionsLabelKey: 'plantName', optionsValueKey: 'id' },
+    { name: 'warehouseCode', label: 'Plant Code', type: 'text', required: true },
+    { name: 'warehouseName', label: 'Plant Name', type: 'text', required: true },
+    { name: 'plantId', label: 'Manufacturing Facility', type: 'select', required: true, optionsEndpoint: 'master-data/plants', optionsLabelKey: 'plantName', optionsValueKey: 'id' },
     {
       name: 'warehouseType',
-      label: 'Type',
+      label: 'Plant Type',
       type: 'select',
       options: [
-        { label: 'General', value: 'GENERAL' },
-        { label: 'Raw Material', value: 'RAW_MATERIAL' },
-        { label: 'Finished Goods', value: 'FINISHED_GOODS' },
-        { label: 'WIP', value: 'WIP' },
-        { label: 'Quarantine', value: 'QUARANTINE' },
+        { label: 'General Plant', value: 'GENERAL' },
+        { label: 'Raw Material Stores', value: 'RAW_MATERIAL' },
+        { label: 'Finished Goods Plant', value: 'FINISHED_GOODS' },
+        { label: 'WIP Shopfloor', value: 'WIP' },
+        { label: 'Quarantine Yard', value: 'QUARANTINE' },
       ],
     },
     { name: 'remarks', label: 'Remarks', type: 'textarea', gridCols: 2 },
