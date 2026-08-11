@@ -8,44 +8,45 @@ interface EmptyStateProps {
   description: string;
   actionLabel?: string;
   onAction?: () => void;
+  className?: string;
 }
 
 /**
- * EmptyState Component matching Design System specs:
- * - Clean layout, display-sm/display-md typography, circular icon container, button-primary CTA
+ * EmptyState Component matching ToolRoomOS Design System:
+ * - 8pt spacing rhythm, named heading typography, circular icon surface, and single primary CTA.
  */
-export const EmptyState: React.FC<EmptyStateProps> = ({ 
-  icon = <PackageOpen className="h-6 w-6 text-ink" />, 
-  title, 
-  description, 
-  actionLabel, 
-  onAction 
+export const EmptyState: React.FC<EmptyStateProps> = ({
+  icon = <PackageOpen className="h-6 w-6 text-cool-gray" />,
+  title,
+  description,
+  actionLabel,
+  onAction,
+  className = '',
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center w-full max-w-lg mx-auto">
+    <div
+      className={`flex flex-col items-center justify-center py-16 px-6 text-center w-full max-w-md mx-auto ${className}`}
+    >
       {/* Circular Icon Container */}
-      <div className="h-14 w-14 rounded-full bg-canvas border border-border-gray flex items-center justify-center mb-6 text-ink">
-        {React.cloneElement(icon as React.ReactElement<{className?: string}>, { 
-          className: 'h-6 w-6 text-ink' 
+      <div className="h-14 w-14 rounded-full bg-white border border-border-gray flex items-center justify-center mb-4 text-cool-gray shadow-subtle">
+        {React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
+          className: 'h-6 w-6 text-cool-gray',
         })}
       </div>
 
       {/* Typography Section */}
-      <div className="mb-8">
-        <h3 className="text-display-sm font-medium text-ink mb-2 tracking-tight">
+      <div className="mb-6 space-y-1">
+        <h3 className="text-display-xs font-semibold text-ink tracking-tight">
           {title}
         </h3>
-        <p className="text-body-md text-mute max-w-sm mx-auto">
+        <p className="text-body-sm text-silver-blue max-w-xs mx-auto">
           {description}
         </p>
       </div>
 
-      {/* Action Button */}
+      {/* Primary Action Button */}
       {actionLabel && onAction && (
-        <Button 
-          variant="primary"
-          onClick={onAction}
-        >
+        <Button variant="primary" size="md" onClick={onAction}>
           {actionLabel}
         </Button>
       )}

@@ -6,41 +6,76 @@ export interface SelectOption {
   value: string | number;
 }
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   label?: string;
   options?: SelectOption[];
   error?: string;
+  helperText?: string;
   creatable?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  containerClassName?: string;
 }
 
 /**
- * Select component matching Design_System.md (Kraken theme):
- * - bg white, text ink (#101114), border border-gray (#dedee5), radius 10px, focus primary (#7132f5)
+ * Select Component matching ToolRoomOS Design System:
+ * - Shared height tokens (`sm`: 36px / `h-9`, `md`: 40px / `h-10`), `rounded-[10px]` border radius.
+ * - Interactive states: hover, focus-visible, and animated rotating chevron indicator on focus/open.
  */
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, options = [], error, creatable = false, className = '', children, id, required, ...props }, ref) => {
+  (
+    {
+      label,
+      options = [],
+      error,
+      helperText,
+      creatable = false,
+      size = 'sm',
+      className = '',
+      containerClassName = '',
+      children,
+      id,
+      required,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     const selectId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
+    const sizeStyles = {
+      sm: 'h-9 text-body-sm px-3 pr-9',
+      md: 'h-10 text-body-sm px-4 pr-10',
+      lg: 'h-12 text-body-md px-4 pr-10',
+    };
+
     return (
-      <div className="w-full">
+      <div className={`w-full flex flex-col ${containerClassName}`}>
         {label && (
           <label htmlFor={selectId} className="block text-caption font-medium text-ink mb-1.5">
-            {label} {required && <span className="text-accent-red">*</span>}
+            {label} {required && <span className="text-semantic-danger">*</span>}
           </label>
         )}
-        <div className="relative">
+
+        <div className="relative flex items-center group">
           <select
             ref={ref}
             id={selectId}
             required={required}
-            className={`w-full bg-white border ${
-              error ? 'border-accent-red focus:border-accent-red focus:ring-accent-red/20' : 'border-border-gray hover:border-cool-gray/50 focus:border-primary focus:ring-primary/20'
-            } text-ink text-body-sm rounded-[10px] px-4 py-2.5 pr-10 appearance-none transition-all focus:outline-none focus:ring-2 cursor-pointer ${className}`}
+            disabled={disabled}
+            className={`peer w-full bg-white border ${
+              error
+                ? 'border-semantic-danger focus:border-semantic-danger focus:ring-semantic-danger/20'
+                : 'border-border-gray hover:border-cool-gray/50 focus:border-primary focus:ring-primary/20'
+            } text-ink rounded-[10px] appearance-none transition-all duration-150 focus:outline-none focus:ring-2 cursor-pointer shadow-subtle disabled:opacity-50 disabled:cursor-not-allowed ${
+              sizeStyles[size] || sizeStyles.sm
+            } ${className}`}
             {...props}
           >
             {children || (
               <>
-                <option value="" disabled>Select option...</option>
+                <option value="" disabled>
+                  Select option...
+                </option>
                 {options.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -54,11 +89,15 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               </>
             )}
           </select>
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-silver-blue">
-            <ChevronDown className="w-4 h-4" />
+
+          {/* Rotating Chevron Icon Indicator */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-silver-blue peer-hover:text-ink peer-focus:text-primary transition-colors">
+            <ChevronDown className="w-4 h-4 transition-transform duration-200 ease-in-out peer-focus:rotate-180" />
           </div>
         </div>
-        {error && <p className="mt-1 text-xs text-accent-red">{error}</p>}
+
+        {error && <p className="mt-1 text-xs text-semantic-danger">{error}</p>}
+        {helperText && !error && <p className="mt-1 text-xs text-silver-blue">{helperText}</p>}
       </div>
     );
   }

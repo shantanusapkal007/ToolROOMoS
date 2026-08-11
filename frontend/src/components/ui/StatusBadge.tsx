@@ -21,10 +21,12 @@ interface StatusBadgeProps {
 }
 
 /**
- * StatusBadge component matching Design_System.md (Kraken theme):
- * - Success: rgba(20,158,97,0.16) bg, #026b3f text, 6px radius
- * - Neutral: rgba(104,107,130,0.12) bg, #484b5e text, 8px radius
- * - Purple / Info: rgba(133,91,251,0.16) bg, #7132f5 text, 8px radius
+ * StatusBadge Component matching ToolRoomOS Design System:
+ * - Semantic Success: bg-semantic-success-subtle, text-semantic-success-dark, 6px radius
+ * - Semantic Warning: bg-semantic-warning-subtle, text-semantic-warning-dark, 6px radius
+ * - Semantic Danger: bg-semantic-danger-subtle, text-semantic-danger-dark, 6px radius
+ * - Semantic Info / Purple: bg-primary-subtle, text-primary, 6px radius
+ * - Neutral: bg-neutral-100/80, text-cool-gray, 6px radius
  */
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
@@ -35,7 +37,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const normalized = (variant || status || 'neutral').toLowerCase().replace(/\s+/g, '_');
 
-  let variantClass = 'bg-[rgba(104,107,130,0.12)] text-[#484b5e] rounded-[8px]'; // default neutral
+  let variantClass = 'bg-neutral-100/80 text-cool-gray border border-border-gray rounded-[6px]'; // default neutral
 
   if (
     normalized === 'success' ||
@@ -43,37 +45,39 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     normalized === 'active' ||
     normalized === 'in_stock' ||
     normalized === 'paid' ||
-    normalized === 'running'
+    normalized === 'running' ||
+    normalized === 'operational'
   ) {
-    variantClass = 'bg-[rgba(20,158,97,0.16)] text-[#026b3f] rounded-[6px]';
+    variantClass = 'bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20 rounded-[6px]';
   } else if (
     normalized === 'purple' ||
     normalized === 'info' ||
     normalized === 'production' ||
     normalized === 'engineering'
   ) {
-    variantClass = 'bg-[rgba(133,91,251,0.16)] text-[#7132f5] rounded-[8px]';
+    variantClass = 'bg-primary-subtle text-primary border border-primary/20 rounded-[6px]';
   } else if (
     normalized === 'warning' ||
     normalized === 'pending' ||
     normalized === 'maintenance' ||
     normalized === 'low_stock'
   ) {
-    variantClass = 'bg-amber-50 text-amber-800 border border-amber-200 rounded-[8px]';
+    variantClass = 'bg-semantic-warning-subtle text-semantic-warning-dark border border-semantic-warning/20 rounded-[6px]';
   } else if (
     normalized === 'danger' ||
     normalized === 'cancelled' ||
     normalized === 'breakdown' ||
     normalized === 'overdue' ||
+    normalized === 'offline' ||
     normalized === 'out_of_stock'
   ) {
-    variantClass = 'bg-red-50 text-red-700 border border-red-200 rounded-[8px]';
+    variantClass = 'bg-semantic-danger-subtle text-semantic-danger-dark border border-semantic-danger/20 rounded-[6px]';
   }
 
-  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
+  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-caption font-medium' : 'px-2.5 py-1 text-body-sm font-medium';
 
   return (
-    <span className={`inline-flex items-center gap-1.5 font-medium select-none ${variantClass} ${sizeClass} ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 select-none font-mono ${variantClass} ${sizeClass} ${className}`}>
       {children || status}
     </span>
   );

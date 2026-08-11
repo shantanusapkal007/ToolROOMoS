@@ -3,9 +3,10 @@
 :root {
   /* Primary Brand & Variants (Kraken Theme) */
   --color-primary: #7132f5;
+  --color-primary-hover: #5741d8;
   --color-primary-dark: #5741d8;
   --color-primary-deep: #5b1ecf;
-  --color-primary-subtle: rgba(133, 91, 251, 0.16);
+  --color-primary-subtle: rgba(113, 50, 245, 0.12);
   --color-ink: #101114;
   --color-on-primary: #ffffff;
 
@@ -21,9 +22,23 @@
   --color-mute: #9497a9;
   --color-mute-soft: #dedee5;
 
-  /* Semantic */
+  /* Semantic Status Tokens */
+  --color-semantic-success: #149e61;
+  --color-semantic-success-subtle: rgba(20, 158, 97, 0.12);
+  --color-semantic-success-dark: #026b3f;
+  --color-semantic-warning: #f59e0b;
+  --color-semantic-warning-subtle: rgba(245, 158, 11, 0.12);
+  --color-semantic-warning-dark: #b45309;
+  --color-semantic-danger: #ee1d36;
+  --color-semantic-danger-subtle: rgba(238, 29, 54, 0.12);
+  --color-semantic-danger-dark: #b91c1c;
+  --color-semantic-info: #7132f5;
+  --color-semantic-info-subtle: rgba(113, 50, 245, 0.12);
+  --color-semantic-info-dark: #5741d8;
+
+  /* Legacy & Flat Semantic Tokens */
   --color-green: #149e61;
-  --color-green-subtle: rgba(20, 158, 97, 0.16);
+  --color-green-subtle: rgba(20, 158, 97, 0.12);
   --color-green-dark: #026b3f;
   --color-neutral-badge-bg: rgba(104, 107, 130, 0.12);
   --color-neutral-badge-text: #484b5e;
@@ -49,6 +64,7 @@
   --font-mono: var(--font-inconsolata), "Inconsolata", monospace;
 
   --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
   --color-primary-dark: var(--color-primary-dark);
   --color-primary-deep: var(--color-primary-deep);
   --color-primary-subtle: var(--color-primary-subtle);
@@ -66,6 +82,19 @@
   --color-mute: var(--color-mute);
   --color-mute-soft: var(--color-mute-soft);
 
+  --color-semantic-success: var(--color-semantic-success);
+  --color-semantic-success-subtle: var(--color-semantic-success-subtle);
+  --color-semantic-success-dark: var(--color-semantic-success-dark);
+  --color-semantic-warning: var(--color-semantic-warning);
+  --color-semantic-warning-subtle: var(--color-semantic-warning-subtle);
+  --color-semantic-warning-dark: var(--color-semantic-warning-dark);
+  --color-semantic-danger: var(--color-semantic-danger);
+  --color-semantic-danger-subtle: var(--color-semantic-danger-subtle);
+  --color-semantic-danger-dark: var(--color-semantic-danger-dark);
+  --color-semantic-info: var(--color-semantic-info);
+  --color-semantic-info-subtle: var(--color-semantic-info-subtle);
+  --color-semantic-info-dark: var(--color-semantic-info-dark);
+
   --color-green: var(--color-green);
   --color-green-subtle: var(--color-green-subtle);
   --color-green-dark: var(--color-green-dark);
@@ -78,9 +107,10 @@
 
   --radius-xs: 3px;
   --radius-sm: 6px;
-  --radius-md: 12px;
+  --radius-md: 10px;
+  --radius-control: 10px;
   --radius-lg: 16px;
-  --radius-button: 12px;
+  --radius-button: 10px;
   --radius-card: 12px;
   --radius-modal: 16px;
 
@@ -96,6 +126,13 @@
 /* ==========================================================================
    Typography Hierarchy Utilities
    ========================================================================== */
+
+.text-heading-xl {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
 
 .text-display-hero {
   font-size: 48px;
@@ -187,80 +224,86 @@
 .button-primary-purple {
   background-color: var(--color-primary);
   color: #ffffff;
-  padding: 13px 16px;
-  border-radius: 12px;
+  padding: 10px 16px;
+  border-radius: 10px;
   font-weight: 500;
-  font-size: 16px;
-  line-height: 1.38;
-  transition: all 0.2s ease;
+  font-size: 14px;
+  line-height: 1.43;
+  transition: all 0.15s ease-in-out;
 }
 .button-primary-purple:hover {
-  background-color: var(--color-primary-dark);
+  background-color: var(--color-primary-hover);
+}
+.button-primary-purple:active {
+  background-color: var(--color-primary-deep);
+  transform: scale(0.98);
 }
 
-.button-purple-outlined {
-  background-color: #ffffff;
-  color: var(--color-primary-dark);
-  border: 1px solid var(--color-primary-dark);
-  padding: 13px 16px;
-  border-radius: 12px;
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1.38;
-  transition: all 0.2s ease;
-}
-.button-purple-outlined:hover {
-  background-color: rgba(133, 91, 251, 0.08);
-}
-
-.button-purple-subtle {
-  background-color: var(--color-primary-subtle);
-  color: var(--color-primary);
-  padding: 8px;
-  border-radius: 12px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-.button-purple-subtle:hover {
-  background-color: rgba(133, 91, 251, 0.24);
-}
-
-.button-white {
+.button-secondary-outlined {
   background-color: #ffffff;
   color: var(--color-ink);
-  border-radius: 10px;
-  padding: 13px 16px;
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1.38;
-  box-shadow: var(--shadow-subtle);
   border: 1px solid var(--color-border-gray);
-  transition: all 0.2s ease;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.43;
+  box-shadow: var(--shadow-subtle);
+  transition: all 0.15s ease-in-out;
 }
-.button-white:hover {
-  border-color: rgba(104, 107, 130, 0.4);
+.button-secondary-outlined:hover {
+  background-color: rgba(148, 151, 169, 0.08);
+  border-color: var(--color-cool-gray);
+}
+.button-secondary-outlined:active {
+  background-color: rgba(148, 151, 169, 0.16);
+  transform: scale(0.98);
 }
 
-.button-secondary-gray {
-  background-color: rgba(148, 151, 169, 0.08);
-  color: var(--color-ink);
-  padding: 13px 16px;
-  border-radius: 12px;
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1.38;
-  transition: all 0.2s ease;
+.button-icon-only {
+  background-color: #ffffff;
+  color: var(--color-cool-gray);
+  border: 1px solid var(--color-border-gray);
+  height: 36px;
+  width: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-subtle);
+  transition: all 0.15s ease-in-out;
 }
-.button-secondary-gray:hover {
+.button-icon-only:hover {
+  color: var(--color-ink);
+  background-color: rgba(148, 151, 169, 0.08);
+}
+.button-icon-only:active {
   background-color: rgba(148, 151, 169, 0.16);
+  transform: scale(0.95);
 }
 
 /* Badges */
-.badge-success {
-  background-color: var(--color-green-subtle);
-  color: var(--color-green-dark);
+.badge-semantic-success {
+  background-color: var(--color-semantic-success-subtle);
+  color: var(--color-semantic-success-dark);
   border-radius: 6px;
-  font-weight: 500;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+
+.badge-semantic-warning {
+  background-color: var(--color-semantic-warning-subtle);
+  color: var(--color-semantic-warning-dark);
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+
+.badge-semantic-danger {
+  background-color: var(--color-semantic-danger-subtle);
+  color: var(--color-semantic-danger-dark);
+  border-radius: 6px;
+  font-weight: 600;
   padding: 2px 8px;
 }
 
