@@ -15,40 +15,65 @@ import {
   Calendar,
   PieChart,
   ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import { useSidebarStore } from '../../store/useSidebarStore';
+
+const EXPANDED_WIDTH = 240;
+const COLLAPSED_WIDTH = 68;
+
+const sidebarVariants = {
+  expanded: {
+    width: EXPANDED_WIDTH,
+    transition: { type: 'spring' as const, stiffness: 300, damping: 30, mass: 0.8 },
+  },
+  collapsed: {
+    width: COLLAPSED_WIDTH,
+    transition: { type: 'spring' as const, stiffness: 300, damping: 30, mass: 0.8 },
+  },
+};
+
+const labelVariants = {
+  visible: { opacity: 1, x: 0, transition: { duration: 0.15, delay: 0.05 } },
+  hidden: { opacity: 0, x: -8, transition: { duration: 0.1 } },
+};
 
 export function Sidebar() {
   const pathname = usePathname();
   const { isExpanded, toggleSidebar } = useSidebarStore();
 
   return (
-    <aside 
-      className="fixed left-0 top-0 bottom-0 z-40 bg-white border-r border-border-gray transition-all duration-200 ease-out shadow-subtle flex flex-col justify-between p-3 select-none"
-      style={{ width: isExpanded ? '240px' : '68px' }}
+    <motion.aside 
+      initial={false}
+      animate={isExpanded ? 'expanded' : 'collapsed'}
+      variants={sidebarVariants}
+      className="fixed left-0 top-0 bottom-0 z-40 bg-white border-r border-border-gray shadow-subtle flex flex-col justify-between p-3 select-none will-change-[width]"
     >
       {/* Top Section: Logo & Navigation */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Brand Wordmark */}
+        {/* Brand Logo */}
         <Link 
           href="/" 
-          className={`flex items-center h-10 mb-4 shrink-0 overflow-hidden cursor-pointer rounded-[10px] hover:bg-[rgba(148,151,169,0.06)] transition-colors ${
-            isExpanded ? 'px-2 justify-start' : 'px-0 justify-center'
-          }`}
+          className="flex items-center h-12 mb-3.5 shrink-0 overflow-hidden cursor-pointer rounded-[10px] hover:bg-[rgba(148,151,169,0.06)] transition-colors px-1 justify-start"
           title="ToolRoomOS"
         >
-          <div className="w-8 h-8 rounded-[10px] bg-primary flex items-center justify-center text-white shrink-0 font-bold text-base shadow-subtle">
-            T
+          {/* Permanent Icon - Never unmounts, zero flicker */}
+          <div className="w-9 h-10 shrink-0 flex items-center justify-center">
+            <img 
+              src="/short_logo.png" 
+              alt="ToolRoomOS Icon" 
+              className="w-10 h-10 object-contain"
+            />
           </div>
+
+          {/* Smooth Wordmark Text Reveal */}
           <AnimatePresence>
             {isExpanded && (
-              <motion.div
+              <motion.div 
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -6 }}
                 transition={{ duration: 0.15 }}
-                className="ml-3 font-bold text-base tracking-tight text-ink whitespace-nowrap overflow-hidden"
+                className="ml-2 font-bold text-[20px] tracking-tight text-[#7d849b] whitespace-nowrap overflow-hidden flex items-center select-none"
               >
                 ToolRoom<span className="text-primary">OS</span>
               </motion.div>
@@ -129,25 +154,26 @@ export function Sidebar() {
         {/* Collapse / Expand Toggle Button */}
         <button
           onClick={toggleSidebar}
-          className={`flex items-center w-full h-9 rounded-[10px] text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)] transition-colors cursor-pointer ${
-            isExpanded ? 'px-2.5 justify-start' : 'px-0 justify-center'
-          }`}
+          className="flex items-center w-full h-9 rounded-[10px] text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)] transition-colors cursor-pointer px-1 justify-start"
           title={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
         >
-          <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
-            {isExpanded 
-              ? <ChevronLeft className="w-4 h-4 text-silver-blue" /> 
-              : <ChevronRight className="w-4 h-4 text-silver-blue" />
-            }
+          <div className="w-9 h-9 shrink-0 flex items-center justify-center">
+            <motion.div 
+              className="w-4 h-4 flex items-center justify-center"
+              animate={{ rotate: isExpanded ? 0 : 180 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            >
+              <ChevronLeft className="w-4 h-4 text-silver-blue" />
+            </motion.div>
           </div>
           <AnimatePresence>
             {isExpanded && (
               <motion.div 
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -6 }}
-                transition={{ duration: 0.1 }}
-                className="ml-3 whitespace-nowrap text-caption font-medium tracking-tight"
+                variants={labelVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                className="ml-2.5 whitespace-nowrap overflow-hidden text-caption font-medium tracking-tight"
               >
                 Collapse
               </motion.div>
@@ -156,15 +182,18 @@ export function Sidebar() {
         </button>
 
         {/* Version */}
-        <div className={`flex items-center h-8 ${isExpanded ? 'px-2 justify-start' : 'px-0 justify-center'}`}>
-          <div className="w-2 h-2 rounded-full bg-accent-green shrink-0" />
+        <div className="flex items-center h-8 px-1 justify-start">
+          <div className="w-9 h-8 shrink-0 flex items-center justify-center">
+            <div className="w-2 h-2 rounded-full bg-accent-green shrink-0" />
+          </div>
           <AnimatePresence>
             {isExpanded && (
               <motion.div 
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -6 }}
-                className="ml-3 text-[11px] font-mono text-silver-blue truncate"
+                variants={labelVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                className="ml-2.5 text-[11px] font-mono text-silver-blue truncate"
               >
                 v2.4.0 • Enterprise
               </motion.div>
@@ -172,7 +201,7 @@ export function Sidebar() {
           </AnimatePresence>
         </div>
       </div>
-    </aside>
+    </motion.aside>
   );
 }
 
@@ -191,14 +220,12 @@ function NavItem({
 }) {
   return (
     <Link href={href} className="w-full block" title={!isExpanded ? label : undefined}>
-      <div className={`flex items-center h-9 rounded-[10px] transition-colors ${
-        isExpanded ? 'px-2.5 justify-start' : 'px-0 justify-center'
-      } ${
+      <div className={`flex items-center h-9 rounded-[10px] transition-colors px-1 ${
         active 
           ? 'bg-primary text-white font-medium shadow-subtle' 
           : 'text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)]'
       }`}>
-        <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
+        <div className="w-9 h-9 shrink-0 flex items-center justify-center">
           {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { 
             className: active ? 'w-4 h-4 text-white' : 'w-4 h-4 text-silver-blue' 
           })}
@@ -207,11 +234,11 @@ function NavItem({
         <AnimatePresence>
           {isExpanded && (
             <motion.div 
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -6 }}
-              transition={{ duration: 0.1 }}
-              className="ml-3 whitespace-nowrap flex-1 text-caption font-medium tracking-tight"
+              variants={labelVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="ml-2.5 whitespace-nowrap overflow-hidden flex-1 text-caption font-medium tracking-tight pr-2"
             >
               {label}
             </motion.div>

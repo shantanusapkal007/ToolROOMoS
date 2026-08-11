@@ -28,6 +28,14 @@ const fontInconsolata = Inconsolata({
 export const metadata: Metadata = {
   title: "ToolRoomOS | Manufacturing Operating System",
   description: "Enterprise Manufacturing and Toolroom Operating System",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
