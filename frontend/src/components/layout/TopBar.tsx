@@ -6,16 +6,20 @@ import {
   Bell, 
   Settings, 
   FileText, 
-  LogOut, 
+  LogOut,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { useNotifications } from '../../context/NotificationContext';
+import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../ui/Button';
 import { SearchInput } from '../ui/SearchInput';
 
 export function TopBar() {
   const { user, logout } = useAuth();
   const { unreadCount, toggleCenter } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
   const [time, setTime] = useState<string>('');
   const [date, setDate] = useState<string>('');
   const [rates, setRates] = useState<{ usd: number; eur: number }>({ usd: 95.4, eur: 110.1 });
@@ -87,6 +91,21 @@ export function TopBar() {
 
         {/* Utility Icon Actions Cluster */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Light / Dark Mode Toggle */}
+          <Button
+            variant="icon-only"
+            size="sm"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-silver-blue" />
+            )}
+          </Button>
+
           {/* Activity Logs */}
           <Link href="/activity-log" title="System Activity Logs" aria-label="System Activity Logs">
             <Button

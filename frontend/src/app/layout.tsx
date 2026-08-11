@@ -8,6 +8,7 @@ import QueryProvider from "../providers/QueryProvider";
 import { CommandPalette } from "../components/ui/CommandPalette";
 import { SpotlightWrapper } from "../components/ui/SpotlightWrapper";
 import { NotificationProvider } from "../context/NotificationContext";
+import { ThemeProvider } from "../context/ThemeContext";
 import { NotificationCenter } from "../components/ui/NotificationCenter";
 
 const fontPlexSans = IBM_Plex_Sans({
@@ -40,21 +41,23 @@ export default function RootLayout({
       className={`${fontPlexSans.variable} ${fontInconsolata.variable} antialiased`}
     >
       <body className="bg-canvas min-h-screen text-ink font-sans antialiased selection:bg-primary/20">
-        <AuthProvider>
-          <PermissionProvider>
-            <QueryProvider>
-              <ToastProvider>
-                <NotificationProvider>
-                  <SpotlightWrapper>
-                    {children}
-                    <CommandPalette />
-                    <NotificationCenter />
-                  </SpotlightWrapper>
-                </NotificationProvider>
-              </ToastProvider>
-            </QueryProvider>
-          </PermissionProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <PermissionProvider>
+              <QueryProvider>
+                <ToastProvider>
+                  <NotificationProvider>
+                    <SpotlightWrapper>
+                      {children}
+                      <CommandPalette />
+                      <NotificationCenter />
+                    </SpotlightWrapper>
+                  </NotificationProvider>
+                </ToastProvider>
+              </QueryProvider>
+            </PermissionProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
