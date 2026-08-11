@@ -31,7 +31,7 @@ export const HistoryTimeline: React.FC<HistoryTimelineProps> = ({ events }) => {
   const getActionIcon = (action: string) => {
     switch (action) {
       case 'CREATED': return <FileText className="h-4 w-4 text-emerald-600" />;
-      case 'UPDATED': return <Edit2 className="h-4 w-4 text-blue-600" />;
+      case 'UPDATED': return <Edit2 className="h-4 w-4 text-primary" />;
       case 'DELETED':
       case 'ARCHIVED': return <Trash2 className="h-4 w-4 text-red-600" />;
       case 'APPROVED': return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
@@ -43,7 +43,7 @@ export const HistoryTimeline: React.FC<HistoryTimelineProps> = ({ events }) => {
   const getActionColor = (action: string) => {
     switch (action) {
       case 'CREATED': return 'bg-emerald-50 border-emerald-200';
-      case 'UPDATED': return 'bg-blue-50 border-blue-200';
+      case 'UPDATED': return 'bg-primary-subtle border-blue-200';
       case 'DELETED':
       case 'ARCHIVED': return 'bg-red-50 border-red-200';
       case 'APPROVED': return 'bg-emerald-50 border-emerald-200';
@@ -100,7 +100,7 @@ export const HistoryTimeline: React.FC<HistoryTimelineProps> = ({ events }) => {
               </div>
               
               {event.entityType && (
-                <div className="text-xs font-medium text-blue-600 mb-1">
+                <div className="text-xs font-medium text-primary mb-1">
                   {event.entityType} <span className="text-zinc-400 font-normal">#{event.entityId}</span>
                 </div>
               )}

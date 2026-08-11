@@ -156,13 +156,13 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
     <form onSubmit={handleSubmit} className="space-y-6">
       
       {/* Form Header Title */}
-      <div className="flex items-center gap-2 pb-3 border-b border-zinc-200">
+      <div className="flex items-center gap-2 pb-3 border-b border-border-gray">
         {editingPo ? (
-          <Edit3 className="w-5 h-5 text-blue-600" />
+          <Edit3 className="w-5 h-5 text-primary" />
         ) : (
           <ShoppingCart className="w-5 h-5 text-amber-600" />
         )}
-        <h3 className="text-base font-bold text-zinc-900">
+        <h3 className="text-base font-semibold text-ink">
           {editingPo ? `Edit Purchase Order (${editingPo.poNumber})` : "Create New Purchase Order"}
         </h3>
       </div>
@@ -170,7 +170,7 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
       {/* Header Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+          <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
             PO Number
           </label>
           <input
@@ -178,12 +178,12 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
             value={poNumber}
             onChange={(e) => setPoNumber(e.target.value)}
             required
-            className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-mono font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+            className="w-full px-3 py-2 bg-canvas border border-border-gray rounded-[12px] text-xs font-mono font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+          <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
             Supplier / Vendor Name
           </label>
           <input
@@ -192,18 +192,18 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
             onChange={(e) => setVendorName(e.target.value)}
             placeholder="e.g. Krupa Steel / Misumi India"
             required
-            className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+            className="w-full px-3 py-2 bg-canvas border border-border-gray rounded-[12px] text-xs text-ink focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+          <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
             Procurement Category
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+            className="w-full px-3 py-2 bg-canvas border border-border-gray rounded-[12px] text-xs text-ink focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
           >
             <option value="Raw Material Steel">Raw Material Steel (EN24 / P20 / D2)</option>
             <option value="Standard Die Components">Standard Die Components (Pillars / Springs)</option>
@@ -213,14 +213,14 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+          <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
             Target Delivery Date
           </label>
           <input
             type="date"
             value={deliveryDate}
             onChange={(e) => setDeliveryDate(e.target.value)}
-            className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-mono text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+            className="w-full px-3 py-2 bg-canvas border border-border-gray rounded-[12px] text-xs font-mono text-ink focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
           />
         </div>
       </div>
@@ -228,20 +228,20 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
       {/* Line Items Table */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Purchase Line Items</h4>
+          <h4 className="text-xs font-semibold text-ink uppercase tracking-wider">Purchase Line Items</h4>
           <button
             type="button"
             onClick={handleAddItem}
-            className="text-xs text-amber-600 font-bold hover:text-amber-700 flex items-center gap-1 cursor-pointer"
+            className="text-xs text-amber-600 font-semibold hover:text-amber-700 flex items-center gap-1 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Line Item</span>
           </button>
         </div>
 
-        <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
+        <div className="border border-border-gray rounded-[12px] overflow-hidden bg-white">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-zinc-100 text-zinc-600 font-bold uppercase tracking-wider text-[10px]">
+            <thead className="bg-zinc-100 text-zinc-600 font-semibold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="px-3 py-2">Description / Component</th>
                 <th className="px-3 py-2 text-center w-20">Qty</th>
@@ -266,7 +266,7 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
                         value={item.partName}
                         onChange={(e) => updateItem(item.id, 'partName', e.target.value)}
                         placeholder="Item description / material grade..."
-                        className="w-full px-2 py-1 bg-zinc-50 border border-zinc-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full px-2 py-1 bg-canvas border border-border-gray rounded text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                       />
                     </td>
                     <td className="px-2 py-1.5 text-center">
@@ -275,7 +275,7 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
                         value={item.qty}
                         onChange={(e) => updateItem(item.id, 'qty', e.target.value === '' ? ('' as any) : Number(e.target.value))}
                         placeholder="1"
-                        className="w-full px-2 py-1 bg-zinc-50 border border-zinc-200 rounded text-center font-mono text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full px-2 py-1 bg-canvas border border-border-gray rounded text-center font-mono text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                       />
                     </td>
                     <td className="px-2 py-1.5 text-right">
@@ -284,7 +284,7 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
                         value={item.unitPrice}
                         onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value === '' ? ('' as any) : Number(e.target.value))}
                         placeholder="0.00"
-                        className="w-full px-2 py-1 bg-zinc-50 border border-zinc-200 rounded text-right font-mono text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full px-2 py-1 bg-canvas border border-border-gray rounded text-right font-mono text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                         step="0.01"
                       />
                     </td>
@@ -293,10 +293,10 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
                         type="number"
                         value={item.gstPercent}
                         onChange={(e) => updateItem(item.id, 'gstPercent', e.target.value === '' ? ('' as any) : Number(e.target.value))}
-                        className="w-full px-2 py-1 bg-zinc-50 border border-zinc-200 rounded text-center font-mono text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full px-2 py-1 bg-canvas border border-border-gray rounded text-center font-mono text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                       />
                     </td>
-                    <td className="px-3 py-1.5 text-right font-mono font-bold text-zinc-900">
+                    <td className="px-3 py-1.5 text-right font-mono font-semibold text-ink">
                       {total ? total.toFixed(2) : '-'}
                     </td>
                     <td className="px-2 py-1.5 text-center">
@@ -319,13 +319,13 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
       </div>
 
       {/* Summary totals */}
-      <div className="flex justify-end pt-2 border-t border-zinc-200">
+      <div className="flex justify-end pt-2 border-t border-border-gray">
         <div className="w-64 space-y-1.5 text-xs text-zinc-700">
           <div className="flex justify-between">
             <span>Subtotal:</span>
             <span className="font-mono font-semibold">₹{calculateSubtotal().toFixed(2)}</span>
           </div>
-          <div className="flex justify-between font-bold text-zinc-900 text-sm border-t border-zinc-200 pt-1.5">
+          <div className="flex justify-between font-semibold text-ink text-sm border-t border-border-gray pt-1.5">
             <span>Total PO Amount:</span>
             <span className="font-mono text-amber-700">₹{calculateTotal().toFixed(2)}</span>
           </div>
@@ -333,9 +333,9 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
       </div>
 
       {/* Action Footer */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200">
+      <div className="flex justify-end gap-3 pt-4 border-t border-border-gray">
         {onClose && (
-          <Button type="button" variant="secondary" size="md" onClick={onClose}>
+          <Button type="button" variant="white" size="md" onClick={onClose}>
             Cancel
           </Button>
         )}

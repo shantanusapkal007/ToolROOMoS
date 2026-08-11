@@ -19,9 +19,9 @@ export const PRODUCTION_SHOPS: ProductionShopOption[] = [
     shortLabel: 'Machine Shop',
     description: 'VMC, CNC, Milling, Turning, Grinding & Precision Machining',
     iconName: 'Cpu',
-    badgeBg: 'bg-indigo-50',
-    badgeText: 'text-indigo-700',
-    badgeBorder: 'border-indigo-200',
+    badgeBg: 'bg-primary-subtle',
+    badgeText: 'text-primary-dark',
+    badgeBorder: 'border-primary/20',
   },
   {
     id: 'FABRICATION',
@@ -135,9 +135,9 @@ export function useDynamicProductionShops() {
       shortLabel: opt.label,
       description: opt.description || 'Production Shopfloor Section',
       iconName: 'Factory',
-      badgeBg: 'bg-indigo-50',
-      badgeText: 'text-indigo-700',
-      badgeBorder: 'border-indigo-200',
+      badgeBg: 'bg-primary-subtle',
+      badgeText: 'text-primary-dark',
+      badgeBorder: 'border-primary/20',
     };
   });
 

@@ -1,53 +1,42 @@
-"use client";
+import React from 'react';
 
-import React, { useRef } from 'react';
-
-interface SectionCardProps {
+export interface SectionCardProps {
   title?: string;
-  description?: string;
-  icon?: React.ReactNode;
-  actions?: React.ReactNode;
+  subtitle?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  featured?: boolean;
 }
 
-export const SectionCard: React.FC<SectionCardProps> = ({ title, description, icon, actions, children, className = '' }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    cardRef.current.style.setProperty('--mouse-x', `${x}px`);
-    cardRef.current.style.setProperty('--mouse-y', `${y}px`);
-  };
-
+/**
+ * SectionCard component matching Design_System.md (Kraken theme):
+ * - bg white, text ink (#101114), border border-gray (#dedee5), padding 24px, radius 12px, shadow subtle
+ */
+export const SectionCard: React.FC<SectionCardProps> = ({
+  title,
+  subtitle,
+  action,
+  children,
+  className = '',
+  featured = false,
+}) => {
   return (
-    <div 
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      className={`glass-panel spotlight-card p-6 sm:p-8 flex flex-col ${className}`}
+    <div
+      className={`bg-white border ${
+        featured ? 'border-primary shadow-subtle' : 'border-border-gray shadow-subtle'
+      } rounded-[12px] p-6 ${className}`}
     >
-      {(title || description || actions) && (
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 relative z-10">
-          <div className="flex items-center">
-            {icon && (
-              <div className="w-10 h-10 mr-4 rounded-xl bg-blue-500/8 text-blue-600 border border-blue-500/15 flex items-center justify-center shadow-inner">
-                {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'w-5 h-5' })}
-              </div>
-            )}
-            <div>
-              {title && <h2 className="text-title font-semibold text-zinc-900 tracking-tight">{title}</h2>}
-              {description && <p className="text-sm text-zinc-500 mt-0.5 tracking-wide">{description}</p>}
-            </div>
+      {(title || action) && (
+        <div className="flex items-start justify-between gap-4 pb-4 mb-4 border-b border-border-gray">
+          <div>
+            {title && <h3 className="text-feature-title font-semibold text-ink tracking-tight">{title}</h3>}
+            {subtitle && <p className="text-caption text-silver-blue mt-0.5">{subtitle}</p>}
           </div>
-          {actions && <div className="mt-4 sm:mt-0">{actions}</div>}
+          {action && <div className="shrink-0">{action}</div>}
         </div>
       )}
-      <div className="flex-1 relative z-10">
-        {children}
-      </div>
+      <div>{children}</div>
     </div>
   );
 };

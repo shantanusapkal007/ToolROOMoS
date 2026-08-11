@@ -129,29 +129,29 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
   };
 
   if (isLoadingBatches) {
-    return <div className="p-8 text-center text-sm text-zinc-500">Loading live inventory stock...</div>;
+    return <div className="p-8 text-center text-sm text-mute">Loading live inventory stock...</div>;
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white">
       
-      <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50 shrink-0">
+      <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between bg-canvas/50 shrink-0">
         <div>
-          <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
             <PackageCheck className="w-5 h-5 text-amber-600" />
             Request Material Issue
           </h2>
-          <p className="text-xs text-zinc-500 mt-1">Dispatch raw materials from Stores to the Shop Floor.</p>
+          <p className="text-xs text-mute mt-1">Dispatch raw materials from Stores to the Shop Floor.</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
         {availableBatches.length === 0 ? (
-          <div className="text-center py-12 px-4 rounded-2xl bg-amber-50 border border-amber-100">
+          <div className="text-center py-12 px-4 rounded-[12px] bg-amber-50 border border-amber-100">
             <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <PackageCheck className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-amber-900">No Inventory Available</h3>
+            <h3 className="text-lg font-semibold text-amber-900">No Inventory Available</h3>
             <p className="text-sm text-amber-700 mt-2 max-w-sm mx-auto">
               There is currently no received inventory stock available for this project. Please complete a GRN (Goods Receipt Note) first.
             </p>
@@ -160,24 +160,24 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
           <form id="issue-form" onSubmit={handleSubmit} className="space-y-6">
             
             {/* Header section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl border border-zinc-200 bg-zinc-50/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-[12px] border border-border-gray bg-canvas/50">
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Issue Number</label>
+                <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">Issue Number</label>
                 <input
                   type="text"
                   required
                   value={issueNumber}
                   onChange={e => setIssueNumber(e.target.value)}
-                  className="w-full bg-white border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-mono"
+                  className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Target Section</label>
+                <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">Target Section</label>
                 <select
                   value={productionSection}
                   onChange={e => setProductionSection(e.target.value)}
-                  className="w-full bg-white border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium"
+                  className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium"
                 >
                   <option value="MACHINE_SHOP">Machine Shop</option>
                   <option value="TOOL_ROOM_FITTING">Toolroom Fitting & Assembly</option>
@@ -188,11 +188,11 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Assigned / Issued To</label>
+                <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">Assigned / Issued To</label>
                 <select
                   value={issuedTo}
                   onChange={e => setIssuedTo(e.target.value)}
-                  className="w-full bg-white border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium"
+                  className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium"
                 >
                   <option value="">Select Operator / Fitter from Master Data...</option>
                   {employees?.map((emp: any) => {
@@ -209,7 +209,7 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
               </div>
 
               <div>
-                <label className={`block text-[10px] font-bold uppercase tracking-wider mb-1.5 ${productionSection === 'PRESS_SHOP' ? 'text-amber-700 font-extrabold' : 'text-zinc-500'}`}>
+                <label className={`block text-[10px] font-semibold uppercase tracking-wider mb-1.5 ${productionSection === 'PRESS_SHOP' ? 'text-amber-700 font-semibold' : 'text-mute'}`}>
                   {productionSection === 'PRESS_SHOP' ? 'Expected Press Output Qty (pcs) *' : 'Expected Output Qty (pcs)'}
                 </label>
                 <input
@@ -218,10 +218,10 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                   value={expectedManufactureQty}
                   onChange={e => setExpectedManufactureQty(e.target.value ? Number(e.target.value) : "")}
                   placeholder={productionSection === 'PRESS_SHOP' ? 'e.g. 5000 pcs' : 'e.g. 100 pcs'}
-                  className={`w-full rounded-lg px-3 py-2 text-sm text-zinc-900 focus:ring-1 ${
+                  className={`w-full rounded-[12px] px-3 py-2 text-sm text-ink focus:ring-1 ${
                     productionSection === 'PRESS_SHOP'
-                      ? 'bg-amber-50 border border-amber-300 font-bold focus:border-amber-600 focus:ring-amber-600'
-                      : 'bg-white border border-zinc-300 focus:border-amber-500 focus:ring-amber-500 font-mono'
+                      ? 'bg-amber-50 border border-amber-300 font-semibold focus:border-amber-600 focus:ring-amber-600'
+                      : 'bg-white border border-border-gray focus:border-amber-500 focus:ring-amber-500 font-mono'
                   }`}
                 />
               </div>
@@ -230,34 +230,34 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
             {/* Line Items */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-1.5">
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-1.5">
                   <LayoutGrid className="w-4 h-4 text-amber-500" />
                   Select Material Batches
                 </h3>
                 <button
                   type="button"
                   onClick={handleAddItem}
-                  className="text-[10px] font-bold uppercase tracking-wider text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                  className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-[12px] transition-colors flex items-center gap-1"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Material
                 </button>
               </div>
 
               {items.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed border-zinc-200 rounded-xl bg-zinc-50">
-                  <p className="text-xs text-zinc-500 font-medium mb-3">No materials added to this issue slip yet.</p>
+                <div className="text-center py-8 border-2 border-dashed border-border-gray rounded-[12px] bg-canvas">
+                  <p className="text-xs text-mute font-medium mb-3">No materials added to this issue slip yet.</p>
                   <button
                     type="button"
                     onClick={handleAddItem}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-border-gray rounded-[12px] text-sm font-semibold text-zinc-700 shadow-sm hover:bg-canvas"
                   >
                     <Plus className="w-4 h-4" /> Add Material Line
                   </button>
                 </div>
               ) : (
-                <div className="border border-zinc-200 rounded-xl overflow-hidden">
+                <div className="border border-border-gray rounded-[12px] overflow-hidden">
                   <table className="w-full text-left text-sm border-collapse">
-                    <thead className="bg-zinc-100/50 text-zinc-500 font-bold text-[10px] uppercase tracking-wider border-b border-zinc-200">
+                    <thead className="bg-zinc-100/50 text-mute font-semibold text-[10px] uppercase tracking-wider border-b border-border-gray">
                       <tr>
                         <th className="px-4 py-3 w-7/12">Inventory Batch (Available)</th>
                         <th className="px-4 py-3 w-2/12">Issue Qty</th>
@@ -275,7 +275,7 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                               <select
                                 value={item.inventoryBatchId}
                                 onChange={e => updateItem(item.id, 'inventoryBatchId', e.target.value)}
-                                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-semibold text-zinc-900 focus:border-amber-500 focus:bg-white"
+                                className="w-full bg-canvas border border-border-gray rounded-[12px] px-3 py-2 text-xs font-semibold text-ink focus:border-amber-500 focus:bg-white"
                               >
                                 <option value="" disabled>-- Select Material Batch --</option>
                                 {availableBatches.map(b => (
@@ -285,7 +285,7 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                                 ))}
                               </select>
                               {selectedBatch && (
-                                <div className="mt-1 text-[10px] text-zinc-500 px-1 font-mono">
+                                <div className="mt-1 text-[10px] text-mute px-1 font-mono">
                                   Batch: {selectedBatch.batchNumber} | Cost: ₹{Number(selectedBatch.unitCost || 0).toLocaleString()}
                                 </div>
                               )}
@@ -299,7 +299,7 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                                 value={item.issuedQty}
                                 onChange={e => updateItem(item.id, 'issuedQty', e.target.value)}
                                 placeholder="Qty"
-                                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm font-mono font-bold text-zinc-900 focus:border-amber-500 focus:bg-white"
+                                className="w-full bg-canvas border border-border-gray rounded-[12px] px-3 py-2 text-sm font-mono font-semibold text-ink focus:border-amber-500 focus:bg-white"
                               />
                             </td>
                             <td className="px-4 py-2.5">
@@ -308,14 +308,14 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                                 value={item.remarks}
                                 onChange={e => updateItem(item.id, 'remarks', e.target.value)}
                                 placeholder="Notes..."
-                                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-2 text-xs text-zinc-700 focus:border-amber-500 focus:bg-white"
+                                className="w-full bg-canvas border border-border-gray rounded-[12px] px-2 py-2 text-xs text-zinc-700 focus:border-amber-500 focus:bg-white"
                               />
                             </td>
                             <td className="px-4 py-2.5 text-center">
                               <button
                                 type="button"
                                 onClick={() => removeItem(item.id)}
-                                className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-[12px] transition-colors"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -333,11 +333,11 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
         )}
       </div>
 
-      <div className="px-6 py-4 border-t border-zinc-100 bg-zinc-50 flex justify-end gap-3 shrink-0">
+      <div className="px-6 py-4 border-t border-zinc-100 bg-canvas flex justify-end gap-3 shrink-0">
         <button
           type="button"
           onClick={onClose}
-          className="px-5 py-2.5 bg-white border border-zinc-300 text-zinc-700 font-semibold text-sm rounded-xl hover:bg-zinc-50 transition-colors shadow-2xs"
+          className="px-5 py-2.5 bg-white border border-border-gray text-zinc-700 font-semibold text-sm rounded-[12px] hover:bg-canvas transition-colors shadow-subtle"
         >
           Cancel
         </button>
@@ -345,7 +345,7 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
           type="submit"
           form="issue-form"
           disabled={isSubmitting || items.length === 0}
-          className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm rounded-[12px] shadow-subtle transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
              <span className="flex items-center gap-2">Processing...</span>

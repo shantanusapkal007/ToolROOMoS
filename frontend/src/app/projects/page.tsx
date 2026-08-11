@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sidebar } from "../../components/layout/Sidebar";
+import { AppLayout } from "../../components/layout/AppLayout";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Plus, Download, Briefcase, Clock, AlertTriangle, CheckCircle2, FileSpreadsheet, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,6 @@ import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { SmartTable } from "../../components/ui/SmartTable";
 import { formatDate } from "../../lib/formatters";
-
 import { api } from "../../lib/api";
 
 export default function ProjectsPage() {
@@ -28,7 +27,7 @@ export default function ProjectsPage() {
 
   // New Project Form State
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
-  const [deletingProject, setDeletingProject] = useState<any | null>(null);
+  const [deletingProject, setDeletingProject] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newProjectNumber, setNewProjectNumber] = useState("");
   const [projectPrefix, setProjectPrefix] = useState("KTD-");
@@ -151,7 +150,7 @@ export default function ProjectsPage() {
       render: (val: string, row: any) => (
         <button 
           onClick={() => router.push(`/projects/${row.id}/overview`)} 
-          className="font-bold text-zinc-900 font-mono hover:text-blue-600 cursor-pointer"
+          className="font-semibold text-ink font-mono hover:text-blue-600 cursor-pointer"
         >
           {val}
         </button>
@@ -176,7 +175,7 @@ export default function ProjectsPage() {
       key: 'currentStage',
       label: 'Stage',
       render: (val: string) => (
-        <span className="text-micro font-bold px-2 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-zinc-700">
+        <span className="text-micro font-semibold px-2 py-0.5 rounded bg-zinc-100 border border-hairline text-zinc-700">
           {val?.replace('_', ' ')}
         </span>
       )
@@ -185,7 +184,7 @@ export default function ProjectsPage() {
       key: 'targetDeliveryDate',
       label: 'Target Delivery',
       render: (val: string) => (
-        <span className="font-mono text-zinc-500">
+        <span className="font-mono text-mute">
           {val ? formatDate(val) : <span className="text-zinc-300">Not Set</span>}
         </span>
       )
@@ -197,11 +196,11 @@ export default function ProjectsPage() {
         const hasDate = !!row.targetDeliveryDate;
         const isDelayed = hasDate && new Date(row.targetDeliveryDate).getTime() < new Date().getTime();
         return isDelayed ? (
-          <span className="text-micro font-bold px-2 py-0.5 rounded border text-red-700 bg-red-50 border-red-200">
+          <span className="text-micro font-semibold px-2 py-0.5 rounded border text-red-700 bg-red-50 border-red-200">
             OVERDUE
           </span>
         ) : (
-          <span className="text-micro font-bold px-2 py-0.5 rounded border text-emerald-700 bg-emerald-50 border-emerald-200">
+          <span className="text-micro font-semibold px-2 py-0.5 rounded border text-emerald-700 bg-emerald-50 border-emerald-200">
             ON TRACK
           </span>
         );
@@ -226,10 +225,8 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#F8F9FA]">
-      <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative pl-16">
-        <div className="w-full max-w-[1440px] mx-auto h-full flex flex-col px-6 py-6 min-h-0 overflow-y-auto space-y-6">
+    <AppLayout>
+      <div className="w-full flex flex-col space-y-6">
           
           {/* Header */}
           <PageHeader 
@@ -238,13 +235,13 @@ export default function ProjectsPage() {
             icon={<Briefcase />}
             breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Projects' }]}
             actions={
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Button 
-                  variant="secondary" 
+                  variant="white" 
                   size="md"
                   onClick={() => exportPremiumProjects(projects)}
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <FileSpreadsheet className="w-4 h-4 mr-1.5 text-green" />
                   <span>Export Excel</span>
                 </Button>
                 <Button 
@@ -252,7 +249,7 @@ export default function ProjectsPage() {
                   size="md"
                   onClick={() => setShowNewProjectModal(true)}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 mr-1.5" />
                   <span>Initialize Project</span>
                 </Button>
               </div>
@@ -261,42 +258,42 @@ export default function ProjectsPage() {
 
           {/* Analytical KPI Summary Strips */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="enterprise-card p-4 flex items-center justify-between">
+            <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between">
               <div>
-                <span className="text-micro font-semibold uppercase text-zinc-500">Active Missions</span>
-                <div className="text-2xl font-bold font-mono text-zinc-900 mt-1">{activeProjects.length}</div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Active Missions</span>
+                <div className="text-2xl font-bold font-mono text-primary mt-1">{activeProjects.length}</div>
               </div>
-              <div className="w-8 h-8 rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+              <div className="w-9 h-9 rounded-[8px] bg-primary-subtle text-primary flex items-center justify-center">
                 <Briefcase className="w-4 h-4" />
               </div>
             </div>
 
-            <div className="enterprise-card p-4 flex items-center justify-between">
+            <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between">
               <div>
-                <span className="text-micro font-semibold uppercase text-zinc-500">On Track</span>
-                <div className="text-2xl font-bold font-mono text-emerald-600 mt-1">{onTrackCount}</div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">On Track</span>
+                <div className="text-2xl font-bold font-mono text-green mt-1">{onTrackCount}</div>
               </div>
-              <div className="w-8 h-8 rounded bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+              <div className="w-9 h-9 rounded-[8px] bg-[rgba(20,158,97,0.16)] text-[#026b3f] flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
 
-            <div className="enterprise-card p-4 flex items-center justify-between">
+            <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between">
               <div>
-                <span className="text-micro font-semibold uppercase text-zinc-500">Overdue Alerts</span>
-                <div className="text-2xl font-bold font-mono text-red-600 mt-1">{delayedProjects.length}</div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Overdue Alerts</span>
+                <div className="text-2xl font-bold font-mono text-accent-red mt-1">{delayedProjects.length}</div>
               </div>
-              <div className="w-8 h-8 rounded bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+              <div className="w-9 h-9 rounded-[8px] bg-red-50 text-accent-red flex items-center justify-center">
                 <AlertTriangle className="w-4 h-4" />
               </div>
             </div>
 
-            <div className="enterprise-card p-4 flex items-center justify-between">
+            <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between">
               <div>
-                <span className="text-micro font-semibold uppercase text-zinc-500">Total Records</span>
-                <div className="text-2xl font-bold font-mono text-zinc-900 mt-1">{projects.length}</div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Total Records</span>
+                <div className="text-2xl font-bold font-mono text-ink mt-1">{projects.length}</div>
               </div>
-              <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-600">
+              <div className="w-9 h-9 rounded-[8px] bg-[rgba(148,151,169,0.08)] border border-border-gray text-silver-blue flex items-center justify-center">
                 <Clock className="w-4 h-4" />
               </div>
             </div>
@@ -312,10 +309,7 @@ export default function ProjectsPage() {
             exportFilename="Projects_Register"
           />
 
-        </div>
-      </main>
-
-      {/* Initialize Project Modal */}
+        {/* Initialize Project Modal */}
       <Modal
         isOpen={showNewProjectModal}
         onClose={() => setShowNewProjectModal(false)}
@@ -331,7 +325,7 @@ export default function ProjectsPage() {
               placeholder="KTD-"
               value={newProjectNumber}
               onChange={handleProjectNumberChange}
-              className="w-full px-3 py-2 border border-zinc-200 rounded-md font-mono text-caption text-zinc-900"
+              className="w-full px-3 py-2 border border-hairline rounded-md font-mono text-caption text-ink"
             />
           </div>
 
@@ -343,7 +337,7 @@ export default function ProjectsPage() {
               placeholder="e.g. Fender Panel Draw Die"
               value={newPartName}
               onChange={(e) => setNewPartName(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-200 rounded-md text-caption text-zinc-900"
+              className="w-full px-3 py-2 border border-hairline rounded-md text-caption text-ink"
             />
           </div>
 
@@ -354,7 +348,7 @@ export default function ProjectsPage() {
               placeholder="e.g. PO-88992"
               value={newCustomerPo}
               onChange={(e) => setNewCustomerPo(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-200 rounded-md font-mono text-caption text-zinc-900"
+              className="w-full px-3 py-2 border border-hairline rounded-md font-mono text-caption text-ink"
             />
           </div>
 
@@ -367,7 +361,7 @@ export default function ProjectsPage() {
               placeholder="e.g. 250000 (How much money you will receive for this project)"
               value={newRevenue}
               onChange={(e) => setNewRevenue(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-200 rounded-md text-caption text-zinc-900"
+              className="w-full px-3 py-2 border border-hairline rounded-md text-caption text-ink"
             />
           </div>
 
@@ -377,7 +371,7 @@ export default function ProjectsPage() {
               type="date"
               value={newTargetDeliveryDate}
               onChange={(e) => setNewTargetDeliveryDate(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-200 rounded-md text-caption text-zinc-900 bg-white"
+              className="w-full px-3 py-2 border border-hairline rounded-md text-caption text-ink bg-white"
             />
           </div>
 
@@ -387,7 +381,7 @@ export default function ProjectsPage() {
               <select
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="w-full px-3 py-2 border border-zinc-200 rounded-md text-caption text-zinc-900 bg-white"
+                className="w-full px-3 py-2 border border-hairline rounded-md text-caption text-ink bg-white"
               >
                 {customers.map((c: any) => (
                   <option key={c.id} value={c.id}>{c.companyName}</option>
@@ -396,7 +390,7 @@ export default function ProjectsPage() {
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+          <div className="flex justify-end gap-2 pt-3 border-t border-hairline">
             <Button variant="secondary" onClick={() => setShowNewProjectModal(false)}>Cancel</Button>
             <Button type="submit">Create Project Mission</Button>
           </div>
@@ -412,16 +406,16 @@ export default function ProjectsPage() {
       >
         <div className="space-y-4">
           <p className="text-caption text-zinc-700">
-            Are you sure you want to permanently delete project <strong className="font-mono text-zinc-900">{deletingProject?.projectNumber}</strong> ({deletingProject?.partName})?
+            Are you sure you want to permanently delete project <strong className="font-mono text-ink">{deletingProject?.projectNumber}</strong> ({deletingProject?.partName})?
           </p>
-          <p className="text-micro text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+          <p className="text-micro text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
             <strong>Warning:</strong> Deleting this project will remove all associated Bill of Materials (BOM), routings, job cards, and cost summaries from the system.
           </p>
-          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+          <div className="flex justify-end gap-2 pt-3 border-t border-hairline">
             <Button variant="secondary" onClick={() => setDeletingProject(null)}>Cancel</Button>
             <Button
               variant="danger"
-              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold"
               disabled={isDeleting}
               onClick={async () => {
                 if (!deletingProject) return;
@@ -443,6 +437,7 @@ export default function ProjectsPage() {
           </div>
         </div>
       </Modal>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

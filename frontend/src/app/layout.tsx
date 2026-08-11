@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Space_Grotesk } from "next/font/google";
+import { IBM_Plex_Sans, Inconsolata } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../components/auth/AuthProvider";
 import { PermissionProvider } from "../components/auth/PermissionProvider";
@@ -7,26 +7,27 @@ import { ToastProvider } from "../components/ui/Toast";
 import QueryProvider from "../providers/QueryProvider";
 import { CommandPalette } from "../components/ui/CommandPalette";
 import { SpotlightWrapper } from "../components/ui/SpotlightWrapper";
+import { NotificationProvider } from "../context/NotificationContext";
+import { NotificationCenter } from "../components/ui/NotificationCenter";
 
-const fontOutfit = Outfit({
-  variable: "--font-outfit",
+const fontPlexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: 'swap',
 });
 
-const fontSpaceGrotesk = Space_Grotesk({
-  variable: "--font-space",
+const fontInconsolata = Inconsolata({
+  variable: "--font-inconsolata",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "ToolRoomOS | Dashboard",
-  description: "Manufacturing Operating System",
+  title: "ToolRoomOS | Manufacturing Operating System",
+  description: "Enterprise Manufacturing and Toolroom Operating System",
 };
-
-import { NotificationProvider } from "../context/NotificationContext";
-import { NotificationCenter } from "../components/ui/NotificationCenter";
 
 export default function RootLayout({
   children,
@@ -36,9 +37,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fontOutfit.variable} ${fontSpaceGrotesk.variable} antialiased`}
+      className={`${fontPlexSans.variable} ${fontInconsolata.variable} antialiased`}
     >
-      <body className="bg-[#F8F9FA] min-h-screen text-zinc-900 font-sans antialiased selection:bg-blue-500/20">
+      <body className="bg-canvas min-h-screen text-ink font-sans antialiased selection:bg-primary/20">
         <AuthProvider>
           <PermissionProvider>
             <QueryProvider>

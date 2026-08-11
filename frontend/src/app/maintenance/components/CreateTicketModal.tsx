@@ -155,7 +155,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
             type="datetime-local"
             value={downtimeStartedAt}
             onChange={(e) => setDowntimeStartedAt(e.target.value)}
-            className="w-full h-[var(--size-input)] bg-white border border-zinc-200 px-3 text-caption text-zinc-900 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-caption text-ink rounded-[12px] focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
 
@@ -167,12 +167,12 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
                 key={p}
                 type="button"
                 onClick={() => setPriority(p)}
-                className={`h-8 px-3 rounded-md border text-caption font-bold transition-colors cursor-pointer ${
+                className={`h-8 px-3 rounded-[12px] border text-caption font-semibold transition-colors cursor-pointer ${
                   priority === p 
                     ? p === 'CRITICAL' ? 'bg-red-50 border-red-300 text-red-700' 
                       : p === 'HIGH' ? 'bg-amber-50 border-amber-300 text-amber-700'
-                      : 'bg-blue-50 border-blue-300 text-blue-700'
-                    : 'bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+                      : 'bg-primary-subtle border-blue-300 text-primary-dark'
+                    : 'bg-white border-border-gray text-zinc-600 hover:bg-canvas'
                 }`}
               >
                 {p}
@@ -188,12 +188,12 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
             onChange={(e) => setIssueDescription(e.target.value)}
             required
             placeholder="Describe the breakdown, symptoms, and potential hazards..."
-            className="w-full bg-white border border-zinc-200 rounded-md p-3 text-caption text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 h-24 resize-none"
+            className="w-full bg-white border border-border-gray rounded-[12px] p-3 text-caption text-ink placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 h-24 resize-none"
           />
         </div>
 
-        <div className="pt-3 border-t border-zinc-200 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+        <div className="pt-3 border-t border-border-gray flex justify-end gap-2">
+          <Button type="button" variant="white" onClick={onClose}>
             Cancel
           </Button>
           <Button 

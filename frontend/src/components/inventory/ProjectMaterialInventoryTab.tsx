@@ -38,45 +38,45 @@ export function ProjectMaterialInventoryTab() {
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-white border border-zinc-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-zinc-500 mb-2">
+        <div className="p-4 rounded-[12px] bg-white border border-border-gray/80 shadow-subtle">
+          <div className="flex items-center justify-between text-mute mb-2">
             <span className="text-caption font-semibold uppercase tracking-wider">Total Project Materials</span>
-            <Boxes className="w-4 h-4 text-blue-600" />
+            <Boxes className="w-4 h-4 text-primary" />
           </div>
-          <p className="text-xl font-bold text-zinc-900">{summary.totalItems} Items</p>
-          <p className="text-caption text-zinc-500 mt-0.5">Total Value: <span className="font-semibold text-zinc-800">{formatCurrency(summary.totalValue)}</span></p>
+          <p className="text-xl font-semibold text-ink">{summary.totalItems} Items</p>
+          <p className="text-caption text-mute mt-0.5">Total Value: <span className="font-semibold text-zinc-800">{formatCurrency(summary.totalValue)}</span></p>
         </div>
 
-        <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200/70 shadow-xs">
+        <div className="p-4 rounded-[12px] bg-amber-50/60 border border-amber-200/70 shadow-subtle">
           <div className="flex items-center justify-between text-amber-700 mb-2">
             <span className="text-caption font-semibold uppercase tracking-wider">Issued to Shopfloor</span>
             <ArrowUpRight className="w-4 h-4 text-amber-600" />
           </div>
-          <p className="text-xl font-bold text-amber-950">{summary.issuedCount} Items</p>
+          <p className="text-xl font-semibold text-amber-950">{summary.issuedCount} Items</p>
           <p className="text-caption text-amber-700 mt-0.5">Value on Shopfloor: <span className="font-semibold">{formatCurrency(summary.issuedValue)}</span></p>
         </div>
 
-        <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/70 shadow-xs">
+        <div className="p-4 rounded-[12px] bg-emerald-50/60 border border-emerald-200/70 shadow-subtle">
           <div className="flex items-center justify-between text-emerald-700 mb-2">
             <span className="text-caption font-semibold uppercase tracking-wider">In Project Stores</span>
             <Package className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-xl font-bold text-emerald-950">{summary.storeCount} Items</p>
+          <p className="text-xl font-semibold text-emerald-950">{summary.storeCount} Items</p>
           <p className="text-caption text-emerald-700 mt-0.5">Value in Store: <span className="font-semibold">{formatCurrency(summary.storeValue)}</span></p>
         </div>
 
-        <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-200/70 shadow-xs">
+        <div className="p-4 rounded-[12px] bg-purple-50/60 border border-purple-200/70 shadow-subtle">
           <div className="flex items-center justify-between text-purple-700 mb-2">
             <span className="text-caption font-semibold uppercase tracking-wider">Shopfloor Sections</span>
             <MapPin className="w-4 h-4 text-purple-600" />
           </div>
-          <p className="text-xl font-bold text-purple-950">5 Active Zones</p>
+          <p className="text-xl font-semibold text-purple-950">5 Active Zones</p>
           <p className="text-caption text-purple-700 mt-0.5">Press Shop, Machine Shop, etc.</p>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-zinc-200 rounded-xl shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-border-gray rounded-[12px] shadow-subtle">
         <div className="flex flex-wrap items-center gap-3 flex-1">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[240px]">
@@ -86,17 +86,17 @@ export function ProjectMaterialInventoryTab() {
               placeholder="Search material grade, batch #, heat #, location, project..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-caption rounded-lg border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all text-zinc-900"
+              className="w-full pl-9 pr-3 py-1.5 text-caption rounded-[12px] border border-border-gray bg-canvas/50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all text-ink"
             />
           </div>
 
           {/* Project Filter */}
           <div className="flex items-center gap-1.5">
-            <span className="text-caption text-zinc-500 font-medium whitespace-nowrap">Project:</span>
+            <span className="text-caption text-mute font-medium whitespace-nowrap">Project:</span>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="px-2.5 py-1.5 text-caption font-medium rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-400 cursor-pointer"
+              className="px-2.5 py-1.5 text-caption font-medium rounded-[12px] border border-border-gray bg-white text-ink focus:outline-none focus:ring-1 focus:ring-zinc-400 cursor-pointer"
             >
               <option value="ALL">All Projects</option>
               {projects.map((p: any) => (
@@ -109,11 +109,11 @@ export function ProjectMaterialInventoryTab() {
 
           {/* Location/Section Filter */}
           <div className="flex items-center gap-1.5">
-            <span className="text-caption text-zinc-500 font-medium whitespace-nowrap">Location:</span>
+            <span className="text-caption text-mute font-medium whitespace-nowrap">Location:</span>
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
-              className="px-2.5 py-1.5 text-caption font-medium rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-400 cursor-pointer"
+              className="px-2.5 py-1.5 text-caption font-medium rounded-[12px] border border-border-gray bg-white text-ink focus:outline-none focus:ring-1 focus:ring-zinc-400 cursor-pointer"
             >
               <option value="ALL">All Locations</option>
               <option value="PROJECT_STORE">Project Store (Unissued)</option>
@@ -128,7 +128,7 @@ export function ProjectMaterialInventoryTab() {
 
         <button
           onClick={() => refetch()}
-          className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+          className="p-1.5 text-mute hover:text-ink hover:bg-zinc-100 rounded-[12px] transition-colors cursor-pointer"
           title="Refresh Material Inventory"
         >
           <RefreshCw className="w-4 h-4" />
@@ -136,13 +136,13 @@ export function ProjectMaterialInventoryTab() {
       </div>
 
       {/* Material Inventory W.R.T. Projects Table */}
-      <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden shadow-xs">
-        <div className="px-4 py-3 bg-zinc-50/80 border-b border-zinc-200 flex items-center justify-between">
+      <div className="rounded-[12px] bg-white border border-border-gray overflow-hidden shadow-subtle">
+        <div className="px-4 py-3 bg-canvas/80 border-b border-border-gray flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-blue-600" />
-            <h3 className="text-caption font-bold text-zinc-900">Project Material & Location Tracking Ledger</h3>
+            <Layers className="w-4 h-4 text-primary" />
+            <h3 className="text-caption font-semibold text-ink">Project Material & Location Tracking Ledger</h3>
           </div>
-          <span className="text-[11px] text-zinc-500 font-medium">
+          <span className="text-[11px] text-mute font-medium">
             Showing {items.length} material records
           </span>
         </div>
@@ -150,7 +150,7 @@ export function ProjectMaterialInventoryTab() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-caption">
             <thead>
-              <tr className="bg-zinc-100/60 border-b border-zinc-200 text-zinc-500 font-semibold text-[11px] uppercase tracking-wider">
+              <tr className="bg-zinc-100/60 border-b border-border-gray text-mute font-semibold text-[11px] uppercase tracking-wider">
                 <th className="p-3">Project</th>
                 <th className="p-3">Material Grade & Description</th>
                 <th className="p-3">Batch & Heat #</th>
@@ -185,11 +185,11 @@ export function ProjectMaterialInventoryTab() {
                   const isIssuedToShop = item.isIssued;
 
                   return (
-                    <tr key={item.id} className="hover:bg-zinc-50/80 transition-colors">
+                    <tr key={item.id} className="hover:bg-canvas/80 transition-colors">
                       {/* Project Name & Code */}
                       <td className="p-3">
-                        <div className="font-bold text-zinc-900">{item.projectCode}</div>
-                        <div className="text-[11px] text-zinc-500 truncate max-w-[160px]" title={item.projectName}>
+                        <div className="font-semibold text-ink">{item.projectCode}</div>
+                        <div className="text-[11px] text-mute truncate max-w-[160px]" title={item.projectName}>
                           {item.projectName}
                         </div>
                       </td>
@@ -208,11 +208,11 @@ export function ProjectMaterialInventoryTab() {
 
                       {/* Quantity & Weight-Based Rate */}
                       <td className="p-3 text-right">
-                        <div className="font-bold text-zinc-900">
-                          {item.quantity} <span className="text-[10px] font-medium text-zinc-500">NOS</span>
+                        <div className="font-semibold text-ink">
+                          {item.quantity} <span className="text-[10px] font-medium text-mute">NOS</span>
                         </div>
                         {item.unitCost > 0 && (
-                          <div className="text-[10px] font-semibold text-zinc-500">
+                          <div className="text-[10px] font-semibold text-mute">
                             @ {formatCurrency(item.unitCost)} <span className="text-zinc-400 font-normal">/ KG</span>
                           </div>
                         )}
@@ -221,12 +221,12 @@ export function ProjectMaterialInventoryTab() {
                       {/* CRITICAL FEATURE REQUIREMENT: Location Column */}
                       <td className="p-3">
                         {isIssuedToShop ? (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200/80 text-amber-900 font-bold text-caption shadow-xs">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[12px] bg-amber-50 border border-amber-200/80 text-amber-900 font-semibold text-caption shadow-subtle">
                             <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                             <span>{item.currentLocation}</span>
                           </div>
                         ) : (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200/80 text-emerald-900 font-semibold text-caption shadow-xs">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[12px] bg-emerald-50 border border-emerald-200/80 text-emerald-900 font-semibold text-caption shadow-subtle">
                             <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <span>{item.currentLocation}</span>
                           </div>
@@ -237,13 +237,13 @@ export function ProjectMaterialInventoryTab() {
                       </td>
 
                       {/* Value */}
-                      <td className="p-3 text-right font-bold text-zinc-900">
+                      <td className="p-3 text-right font-semibold text-ink">
                         {formatCurrency(item.materialValue)}
                       </td>
 
                       {/* Status */}
                       <td className="p-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                           isIssuedToShop
                             ? 'bg-amber-100 text-amber-800'
                             : item.status?.includes('RESERVED')
@@ -255,7 +255,7 @@ export function ProjectMaterialInventoryTab() {
                       </td>
 
                       {/* Date */}
-                      <td className="p-3 text-[11px] text-zinc-500 whitespace-nowrap">
+                      <td className="p-3 text-[11px] text-mute whitespace-nowrap">
                         {formatDate(item.date)}
                       </td>
                     </tr>

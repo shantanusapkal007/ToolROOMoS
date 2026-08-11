@@ -30,7 +30,7 @@ export default function GlobalBomPage() {
       render: (val: any, row: any) => (
         <button
           onClick={() => setSelectedProject(row)}
-          className="text-xs font-bold text-amber-500 hover:text-amber-400 border border-amber-500/20 px-3 py-1 rounded-lg transition-colors flex items-center"
+          className="text-xs font-semibold text-amber-500 hover:text-amber-400 border border-amber-500/20 px-3 py-1 rounded-md transition-colors flex items-center"
         >
           Manage BOM <ChevronRight className="w-3 h-3 ml-1" />
         </button>
@@ -39,24 +39,24 @@ export default function GlobalBomPage() {
   ];
 
   if (isLoading) {
-    return <div className="p-6 text-zinc-900 text-center">Loading BOM registry...</div>;
+    return <div className="p-6 text-ink text-center">Loading BOM registry...</div>;
   }
 
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight flex items-center">
+          <h1 className="text-2xl font-semibold text-ink tracking-tight flex items-center">
             <Layers className="w-6 h-6 mr-3 text-amber-500" />
             Bill of Materials
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">
+          <p className="text-sm text-mute mt-1">
             Manage material requirements across all active projects
           </p>
         </div>
       </div>
 
-      <div className="bg-black/5 border border-black/5 rounded-2xl overflow-hidden backdrop-blur-xl">
+      <div className="bg-black/5 border border-hairline/60 rounded-md overflow-hidden backdrop-blur-xl">
         <SmartTable 
           data={activeProjects}
           columns={columns}

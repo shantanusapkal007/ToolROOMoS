@@ -301,15 +301,15 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 pl-16 sm:pl-24 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
       {/* Full Sheet Translucent Container */}
-      <div className="relative w-full max-w-7xl max-h-[92vh] flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl border border-white/30 dark:border-slate-700/60 shadow-[0_25px_60px_rgba(0,0,0,0.35)] overflow-hidden">
+      <div className="relative w-full max-w-7xl max-h-[92vh] flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[12px] border border-white/30 dark:border-slate-700/60 shadow-[0_25px_60px_rgba(0,0,0,0.35)] overflow-hidden">
         {/* Top Header */}
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-between shrink-0 shadow-md">
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-between shrink-0 shadow-subtle">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md border border-white/30">
+            <div className="p-2 rounded-[12px] bg-white/20 backdrop-blur-md border border-white/30">
               <FileSpreadsheet className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
+              <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
                 Designer Activity Sheet Register
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/20 text-white font-mono uppercase tracking-wider border border-white/30">
                   Excel Format Grid
@@ -324,11 +324,11 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
           <div className="flex items-center gap-3">
             <button
               onClick={exportTemplateCSV}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-md transition-all flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-[12px] text-xs font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-md transition-all flex items-center gap-1.5"
             >
               <Download className="w-3.5 h-3.5" /> CSV Template
             </button>
-            <label className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer">
+            <label className="px-3 py-1.5 rounded-[12px] text-xs font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer">
               <Upload className="w-3.5 h-3.5" /> Import CSV
               <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
             </label>
@@ -350,7 +350,7 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
                 type="date"
                 value={batchDate}
                 onChange={(e) => handleBatchDateChange(e.target.value)}
-                className="h-8 px-2.5 font-bold rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100"
+                className="h-8 px-2.5 font-semibold rounded-[12px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100"
               />
             </div>
 
@@ -359,7 +359,7 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
               <select
                 value={batchDesignerId}
                 onChange={(e) => handleBatchDesignerSelect(e.target.value)}
-                className="h-8 px-2.5 font-medium rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100"
+                className="h-8 px-2.5 font-medium rounded-[12px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100"
               >
                 <option value="">-- Select Designer to fill all rows --</option>
                 {employees.map((emp: any) => (
@@ -374,20 +374,20 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
           <div className="flex items-center gap-2">
             <button
               onClick={() => addRows(1)}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 transition-all flex items-center gap-1"
+              className="px-3 py-1.5 rounded-[12px] text-xs font-semibold bg-primary-subtle0/10 text-primary dark:text-blue-400 hover:bg-primary-subtle0/20 border border-blue-500/20 transition-all flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" /> + 1 Row
             </button>
             <button
               onClick={() => addRows(5)}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 transition-all flex items-center gap-1"
+              className="px-3 py-1.5 rounded-[12px] text-xs font-semibold bg-primary-subtle0/10 text-primary dark:text-blue-400 hover:bg-primary-subtle0/20 border border-blue-500/20 transition-all flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" /> + 5 Rows
             </button>
             <button
               onClick={handleSaveAll}
               disabled={isSaving}
-              className="px-5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center gap-1.5"
+              className="px-5 py-1.5 rounded-[12px] text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-subtle shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center gap-1.5"
             >
               <Save className="w-4 h-4" /> {isSaving ? 'Saving Register...' : 'Save All Sheet Rows'}
             </button>
@@ -415,7 +415,7 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
               </tr>
 
               {/* Functional Headers */}
-              <tr className="bg-slate-100 dark:bg-slate-800/90 border-b border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold">
+              <tr className="bg-slate-100 dark:bg-slate-800/90 border-b border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold">
                 <th className="py-2 px-2 text-center w-10 border-r border-slate-300 dark:border-slate-700 bg-slate-200/60 dark:bg-slate-800">
                   #
                 </th>
@@ -455,7 +455,7 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
 
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {rows.map((row, idx) => (
-                <tr key={row.id} className="hover:bg-blue-50/60 dark:hover:bg-blue-950/30 transition-colors">
+                <tr key={row.id} className="hover:bg-primary-subtle/60 dark:hover:bg-blue-950/30 transition-colors">
                   {/* Row Number Sidebar */}
                   <td className="py-1 px-2 text-center text-slate-500 font-mono text-[11px] bg-slate-100/70 dark:bg-slate-800/50 border-r border-slate-300 dark:border-slate-700">
                     {idx + 1}
@@ -568,7 +568,7 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
                       step="0.5"
                       value={row.hoursSpent}
                       onChange={(e) => handleRowChange(row.id, 'hoursSpent', (e.target.value === '' ? ('' as any) : Number(e.target.value)))}
-                      className="w-full h-8 px-1 text-right font-mono font-bold text-blue-600 dark:text-blue-400 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-blue-500 focus:outline-none transition-all"
+                      className="w-full h-8 px-1 text-right font-mono font-semibold text-primary dark:text-blue-400 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-blue-500 focus:outline-none transition-all"
                     />
                   </td>
 
@@ -588,14 +588,14 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
                     <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => duplicateRow(idx)}
-                        className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        className="p-1 text-slate-400 hover:text-primary hover:bg-primary-subtle rounded-[12px] transition-colors"
                         title="Duplicate Row"
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => deleteRow(idx)}
-                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[12px] transition-colors"
                         title="Delete Row"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -612,11 +612,11 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
         <div className="p-3 sm:p-4 bg-slate-100/90 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-700/80 flex items-center justify-between text-xs shrink-0">
           <div className="flex items-center gap-5 text-slate-600 dark:text-slate-400 font-medium">
             <span>
-              Total Rows: <strong className="text-slate-900 dark:text-slate-100 font-bold">{rows.length}</strong>
+              Total Rows: <strong className="text-slate-900 dark:text-slate-100 font-semibold">{rows.length}</strong>
             </span>
             <span>
               Total Designer Hours:{' '}
-              <strong className="text-blue-600 dark:text-blue-400 font-bold text-sm">
+              <strong className="text-primary dark:text-blue-400 font-semibold text-sm">
                 {rows.reduce((sum, r) => sum + (Number(r.hoursSpent) || 0), 0).toFixed(1)} hrs
               </strong>
             </span>
@@ -625,20 +625,20 @@ export function DesignerSheetModal({ isOpen, onClose, onSuccess }: DesignerSheet
           <div className="flex items-center gap-3">
             <button
               onClick={clearSheet}
-              className="px-3 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              className="px-3 py-1.5 rounded-[12px] text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               Clear Sheet
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-1.5 rounded-xl text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              className="px-4 py-1.5 rounded-[12px] text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               Close
             </button>
             <button
               onClick={handleSaveAll}
               disabled={isSaving}
-              className="px-6 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center gap-2"
+              className="px-6 py-2 rounded-[12px] text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-subtle shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center gap-2"
             >
               <Save className="w-4 h-4" /> {isSaving ? 'Saving Register...' : 'Save All Sheet Rows'}
             </button>

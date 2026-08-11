@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Hash, Save, Check, RefreshCw, Eye, Sparkles } from 'lucide-react';
+import { Hash, Save, Sparkles } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
 import { motion } from 'framer-motion';
@@ -52,70 +52,70 @@ export const DocumentSequences: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col relative">
+    <div className="h-full flex flex-col relative min-h-0">
       
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-black/10 shrink-0 bg-black/5">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center mr-4 border border-blue-200 shadow-sm">
+      <div className="flex items-center justify-between p-5 border-b border-border-gray shrink-0 bg-white">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-[10px] bg-primary-subtle text-primary flex items-center justify-center border border-primary/20 shadow-subtle">
             <Hash className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Document Numbering & Sequences</h2>
-            <p className="text-sm text-zinc-500">Configure auto-generated prefixes, financial year patterns, and zero-padding.</p>
+            <h2 className="text-section-heading font-bold text-ink tracking-tight">Document Numbering & Sequences</h2>
+            <p className="text-caption text-silver-blue">Configure auto-generated prefixes, financial year patterns, and zero-padding.</p>
           </div>
         </div>
 
         <Button 
           variant="primary" 
-          leftIcon={<Save className="w-4 h-4" />} 
+          size="md"
           onClick={handleSave}
           isLoading={saving}
-          className="bg-blue-600 hover:bg-blue-700 active:scale-[0.98] border border-blue-500/40 shadow-[0_1px_3px_rgba(0,0,0,0.1),_inset_0_1px_0_rgba(255,255,255,0.2)]"
         >
-          Save Sequences
+          <Save className="w-4 h-4 mr-1.5" />
+          <span>Save Sequences</span>
         </Button>
       </div>
 
       {/* List / Table */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 hide-scrollbar">
+      <div className="flex-1 overflow-y-auto p-5 space-y-4 hide-scrollbar bg-[#fbfbfd]">
         <div className="grid grid-cols-1 gap-4">
           {sequences.map((seq) => (
             <motion.div 
               key={seq.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-panel p-5 border border-white/80 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="p-4 border border-border-gray rounded-[12px] bg-white shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               {/* Info */}
               <div className="md:w-1/3">
-                <span className="text-xs font-bold font-mono px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200">
+                <span className="text-[11px] font-semibold font-mono px-2 py-0.5 bg-primary-subtle text-primary rounded-[8px] border border-primary/20">
                   {seq.documentType}
                 </span>
-                <h3 className="font-semibold text-zinc-900 text-base mt-1">{seq.name}</h3>
-                <p className="text-xs text-zinc-500 mt-0.5">Current Counter: <strong className="text-zinc-800 font-mono">#{seq.currentNumber}</strong></p>
+                <h3 className="font-bold text-ink text-body mt-1.5">{seq.name}</h3>
+                <p className="text-caption text-silver-blue mt-0.5">Current Counter: <strong className="text-ink font-mono">#{seq.currentNumber}</strong></p>
               </div>
 
               {/* Form Controls */}
               <div className="flex flex-wrap items-center gap-3 md:w-2/3 justify-end">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-zinc-400 mb-1">Prefix</label>
+                  <label className="block text-micro font-semibold uppercase text-silver-blue mb-1">Prefix</label>
                   <input 
                     type="text" 
                     value={seq.prefix} 
                     onChange={(e) => handleChange(seq.id, 'prefix', e.target.value.toUpperCase())}
-                    className="w-24 px-3 py-1.5 bg-white/70 border border-black/10 rounded-xl text-sm font-bold font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-24 px-3 py-1.5 bg-white border border-border-gray rounded-[10px] text-caption font-semibold font-mono uppercase focus:outline-none focus:border-primary shadow-subtle text-ink"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-zinc-400 mb-1">Financial Year</label>
+                  <label className="block text-micro font-semibold uppercase text-silver-blue mb-1">Financial Year</label>
                   <input 
-                    type="text"
+                    type="text" 
                     value={seq.financialYear} 
                     onChange={(e) => handleChange(seq.id, 'financialYear', e.target.value.toUpperCase())}
                     placeholder="e.g. 2026-27 or NONE"
-                    className="w-28 px-3 py-1.5 bg-white/70 border border-black/10 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-28 px-3 py-1.5 bg-white border border-border-gray rounded-[10px] text-caption font-semibold focus:outline-none focus:border-primary shadow-subtle text-ink"
                     list={`fy-list-${seq.id}`}
                   />
                   <datalist id={`fy-list-${seq.id}`}>
@@ -128,13 +128,12 @@ export const DocumentSequences: React.FC = () => {
                   </datalist>
                 </div>
 
-
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-zinc-400 mb-1">Zero Padding</label>
+                  <label className="block text-micro font-semibold uppercase text-silver-blue mb-1">Zero Padding</label>
                   <select 
                     value={seq.padding} 
                     onChange={(e) => handleChange(seq.id, 'padding', (e.target.value === '' ? ('' as any) : Number(e.target.value)))}
-                    className="px-3 py-1.5 bg-white/70 border border-black/10 rounded-xl text-sm font-medium focus:outline-none"
+                    className="px-3 py-1.5 bg-white border border-border-gray rounded-[10px] text-caption font-medium focus:outline-none focus:border-primary shadow-subtle text-ink"
                   >
                     <option value={3}>3 (e.g. 001)</option>
                     <option value={4}>4 (e.g. 0001)</option>
@@ -143,12 +142,12 @@ export const DocumentSequences: React.FC = () => {
                 </div>
 
                 {/* Live Preview Box */}
-                <div className="p-2.5 bg-zinc-900/5 rounded-xl border border-black/5 min-w-[160px] text-center">
-                  <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-zinc-400 uppercase">
-                    <Sparkles className="w-3 h-3 text-amber-500" />
+                <div className="p-2.5 bg-[#fbfbfd] rounded-[10px] border border-border-gray min-w-[160px] text-center shadow-subtle">
+                  <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-silver-blue uppercase tracking-wider">
+                    <Sparkles className="w-3 h-3 text-primary" />
                     Next Generated ID
                   </div>
-                  <div className="text-sm font-bold font-mono text-blue-600 mt-0.5">
+                  <div className="text-caption font-bold font-mono text-primary mt-0.5">
                     {getPreview(seq)}
                   </div>
                 </div>

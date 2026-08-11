@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { useProject } from "@/hooks/useProjects";
 import { 
   Briefcase, 
@@ -15,7 +15,6 @@ import {
   DollarSign, 
   CheckSquare, 
   Calendar, 
-  User, 
   Building2,
   ArrowLeft,
   Activity,
@@ -34,7 +33,7 @@ export default function ProjectDetailLayout({
   const router = useRouter();
   const id = params?.id as string;
 
-  const { data: project, isLoading } = useProject(id);
+  const { data: project } = useProject(id);
 
   const tabs = [
     { label: "Overview", path: `/projects/${id}/overview`, icon: Briefcase },
@@ -52,11 +51,10 @@ export default function ProjectDetailLayout({
   ];
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#F8F9FA]">
-      <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative pl-16 overflow-hidden">
-        {/* Top Floating Glass Header */}
-        <div className="w-full bg-white/80 backdrop-blur-md border-b border-zinc-200/80 px-6 py-4 shrink-0 shadow-2xs">
+    <AppLayout noPadding>
+      <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
+        {/* Sub Header */}
+        <div className="w-full bg-white border-b border-border-gray px-6 py-4 shrink-0 shadow-subtle">
           <div className="max-w-[1440px] mx-auto flex flex-col gap-3">
             
             {/* Upper Action Bar & Breadcrumb */}
@@ -64,19 +62,19 @@ export default function ProjectDetailLayout({
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => router.push('/projects')}
-                  className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-600 transition-colors flex items-center gap-1 text-xs font-semibold"
+                  className="px-2.5 py-1.5 rounded-[10px] border border-border-gray hover:bg-[rgba(148,151,169,0.08)] text-cool-gray hover:text-ink transition-colors flex items-center gap-1.5 text-caption font-medium shadow-subtle"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Back to Projects</span>
                 </button>
 
-                <span className="text-zinc-300">/</span>
+                <span className="text-silver-blue/60">/</span>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-micro font-bold font-mono bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="px-2 py-0.5 rounded-[6px] text-micro font-semibold font-mono bg-primary-subtle text-primary border border-primary/20">
                     {project?.projectNumber || id}
                   </span>
-                  <h1 className="text-lg font-bold text-zinc-900 tracking-tight">
+                  <h1 className="text-sub-heading font-bold text-ink tracking-tight">
                     {project?.partName || "Project Workspace"}
                   </h1>
                 </div>
@@ -84,8 +82,8 @@ export default function ProjectDetailLayout({
 
               {project?.currentStage && (
                 <div className="flex items-center gap-2">
-                  <span className="text-micro font-semibold text-zinc-500 uppercase tracking-wider">Stage:</span>
-                  <span className="px-2.5 py-1 rounded-md text-micro font-bold bg-zinc-900 text-white tracking-wide uppercase">
+                  <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider">Stage:</span>
+                  <span className="px-2.5 py-0.5 rounded-[6px] text-xs font-semibold bg-primary text-white tracking-wide uppercase shadow-subtle">
                     {project.currentStage.replace('_', ' ')}
                   </span>
                 </div>
@@ -94,22 +92,22 @@ export default function ProjectDetailLayout({
 
             {/* Quick Metadata Bar */}
             {project && (
-              <div className="flex items-center gap-6 text-xs text-zinc-600 pt-1 border-t border-zinc-100">
+              <div className="flex items-center gap-6 text-caption text-cool-gray pt-1 border-t border-border-gray">
                 {project.customer?.companyName && (
                   <div className="flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-zinc-400" />
-                    <span className="font-semibold text-zinc-800">{project.customer.companyName}</span>
+                    <Building2 className="w-3.5 h-3.5 text-silver-blue" />
+                    <span className="font-semibold text-ink">{project.customer.companyName}</span>
                   </div>
                 )}
                 {project.customerPoNumber && (
                   <div className="flex items-center gap-1.5 font-mono">
-                    <span className="text-zinc-400 font-sans">PO #:</span>
-                    <span className="font-semibold text-zinc-800">{project.customerPoNumber}</span>
+                    <span className="text-silver-blue font-sans">PO #:</span>
+                    <span className="font-semibold text-ink">{project.customerPoNumber}</span>
                   </div>
                 )}
                 {project.targetDeliveryDate && (
                   <div className="flex items-center gap-1.5 font-mono">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                    <Calendar className="w-3.5 h-3.5 text-silver-blue" />
                     <span>Target: {formatDate(project.targetDeliveryDate)}</span>
                   </div>
                 )}
@@ -125,10 +123,10 @@ export default function ProjectDetailLayout({
                   <Link
                     key={tab.path}
                     href={tab.path}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-[10px] text-caption font-medium transition-all whitespace-nowrap ${
                       isActive
-                        ? "bg-zinc-900 text-white shadow-xs"
-                        : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
+                        ? "bg-primary text-white font-semibold shadow-subtle"
+                        : "text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)]"
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -145,7 +143,7 @@ export default function ProjectDetailLayout({
         <div className="flex-1 w-full max-w-[1440px] mx-auto overflow-y-auto p-6">
           {children}
         </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

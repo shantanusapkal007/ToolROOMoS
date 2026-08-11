@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Sidebar } from '../../components/layout/Sidebar';
+import { AppLayout } from '../../components/layout/AppLayout';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Wrench, AlertTriangle, CheckCircle2, Clock, Plus, ShieldCheck } from 'lucide-react';
 import { useMaintenanceTickets } from '../../hooks/useMaintenance';
@@ -20,10 +20,8 @@ export default function MaintenancePage() {
   const activeLoto = tickets?.filter((t: any) => t.lotoApplied && t.status !== 'RESOLVED' && t.status !== 'CLOSED')?.length || 0;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#F8F9FA]">
-      <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative pl-16 overflow-hidden">
-        <div className="w-full max-w-[1440px] mx-auto h-full flex flex-col px-6 py-6 min-h-0 overflow-y-auto space-y-6">
+    <AppLayout>
+      <div className="w-full h-full flex flex-col min-h-0 space-y-6">
           
           <PageHeader 
             title="Machine Maintenance OS" 
@@ -49,8 +47,8 @@ export default function MaintenancePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="enterprise-card p-4 flex items-center justify-between">
               <div>
-                <span className="text-micro font-semibold uppercase text-zinc-500">Active Breakdowns</span>
-                <div className="text-2xl font-bold font-mono text-red-600 mt-1">{openTickets.length}</div>
+                <span className="text-micro font-semibold uppercase text-mute">Active Breakdowns</span>
+                <div className="text-2xl font-semibold font-mono text-red-600 mt-1">{openTickets.length}</div>
               </div>
               <div className="w-8 h-8 rounded bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
                 <AlertTriangle className="w-4 h-4" />
@@ -59,8 +57,8 @@ export default function MaintenancePage() {
 
             <div className="enterprise-card p-4 flex items-center justify-between">
               <div>
-                <span className="text-micro font-semibold uppercase text-zinc-500">Active LOTO Locks</span>
-                <div className="text-2xl font-bold font-mono text-amber-600 mt-1">{activeLoto}</div>
+                <span className="text-micro font-semibold uppercase text-mute">Active LOTO Locks</span>
+                <div className="text-2xl font-semibold font-mono text-amber-600 mt-1">{activeLoto}</div>
               </div>
               <div className="w-8 h-8 rounded bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
                 <ShieldCheck className="w-4 h-4" />
@@ -69,8 +67,8 @@ export default function MaintenancePage() {
 
             <div className="enterprise-card p-4 flex items-center justify-between">
               <div>
-                <span className="text-micro font-semibold uppercase text-zinc-500">Resolved Breakdowns</span>
-                <div className="text-2xl font-bold font-mono text-emerald-600 mt-1">{resolvedTickets.length}</div>
+                <span className="text-micro font-semibold uppercase text-mute">Resolved Breakdowns</span>
+                <div className="text-2xl font-semibold font-mono text-emerald-600 mt-1">{resolvedTickets.length}</div>
               </div>
               <div className="w-8 h-8 rounded bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
                 <CheckCircle2 className="w-4 h-4" />
@@ -83,8 +81,8 @@ export default function MaintenancePage() {
             
             {/* Open Tickets Column */}
             <div className="enterprise-panel p-4 flex flex-col min-h-[400px]">
-              <div className="flex justify-between items-center border-b border-zinc-200 pb-3 mb-3">
-                <h3 className="text-card-title font-bold text-zinc-900 flex items-center gap-2">
+              <div className="flex justify-between items-center border-b border-border-gray pb-3 mb-3">
+                <h3 className="text-card-title font-semibold text-ink flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-red-600" />
                   <span>Open & In-Progress Tickets ({openTickets.length})</span>
                 </h3>
@@ -95,22 +93,22 @@ export default function MaintenancePage() {
                   <div
                     key={ticket.id}
                     onClick={() => setSelectedTicket(ticket)}
-                    className="p-3.5 rounded-md border border-zinc-200 bg-white hover:border-zinc-300 transition-colors cursor-pointer space-y-2 shadow-xs"
+                    className="p-3.5 rounded-[12px] border border-border-gray bg-white hover:border-border-gray transition-colors cursor-pointer space-y-2 shadow-subtle"
                   >
                     <div className="flex justify-between items-center">
-                      <span className="text-micro font-mono text-zinc-500 font-bold">{ticket.ticketNumber}</span>
-                      <span className={`text-micro font-bold px-2 py-0.5 rounded border ${
+                      <span className="text-micro font-mono text-mute font-semibold">{ticket.ticketNumber}</span>
+                      <span className={`text-micro font-semibold px-2 py-0.5 rounded border ${
                         ticket.priority === 'CRITICAL' ? 'text-red-700 bg-red-50 border-red-200' : 'text-amber-700 bg-amber-50 border-amber-200'
                       }`}>
                         {ticket.priority || ticket.status}
                       </span>
                     </div>
 
-                    <h4 className="text-caption font-bold text-zinc-900">{ticket.machine?.machineName || 'Unknown Asset'}</h4>
+                    <h4 className="text-caption font-semibold text-ink">{ticket.machine?.machineName || 'Unknown Asset'}</h4>
                     <p className="text-caption text-zinc-600 line-clamp-2">{ticket.issueDescription}</p>
 
                     {ticket.lotoApplied && (
-                      <span className="inline-flex items-center text-micro font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      <span className="inline-flex items-center text-micro font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                         LOTO ACTIVE
                       </span>
                     )}
@@ -129,8 +127,8 @@ export default function MaintenancePage() {
 
             {/* Resolved Tickets Column */}
             <div className="enterprise-panel p-4 flex flex-col min-h-[400px]">
-              <div className="flex justify-between items-center border-b border-zinc-200 pb-3 mb-3">
-                <h3 className="text-card-title font-bold text-zinc-900 flex items-center gap-2">
+              <div className="flex justify-between items-center border-b border-border-gray pb-3 mb-3">
+                <h3 className="text-card-title font-semibold text-ink flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>Resolved Machine Tickets ({resolvedTickets.length})</span>
                 </h3>
@@ -141,16 +139,16 @@ export default function MaintenancePage() {
                   <div
                     key={ticket.id}
                     onClick={() => setSelectedTicket(ticket)}
-                    className="p-3.5 rounded-md border border-zinc-200 bg-white hover:border-zinc-300 transition-colors cursor-pointer space-y-2 shadow-xs"
+                    className="p-3.5 rounded-[12px] border border-border-gray bg-white hover:border-border-gray transition-colors cursor-pointer space-y-2 shadow-subtle"
                   >
                     <div className="flex justify-between items-center">
-                      <span className="text-micro font-mono text-zinc-500 font-bold">{ticket.ticketNumber}</span>
-                      <span className="text-micro font-bold px-2 py-0.5 rounded border text-emerald-700 bg-emerald-50 border-emerald-200">
+                      <span className="text-micro font-mono text-mute font-semibold">{ticket.ticketNumber}</span>
+                      <span className="text-micro font-semibold px-2 py-0.5 rounded border text-emerald-700 bg-emerald-50 border-emerald-200">
                         RESOLVED
                       </span>
                     </div>
 
-                    <h4 className="text-caption font-bold text-zinc-900">{ticket.machine?.machineName || 'Unknown Asset'}</h4>
+                    <h4 className="text-caption font-semibold text-ink">{ticket.machine?.machineName || 'Unknown Asset'}</h4>
                     <p className="text-caption text-zinc-600 line-clamp-2">{ticket.issueDescription}</p>
                   </div>
                 ))}
@@ -166,8 +164,6 @@ export default function MaintenancePage() {
           </div>
 
         </div>
-      </main>
-
       <TicketDrawer 
         ticket={selectedTicket} 
         onClose={() => setSelectedTicket(null)} 
@@ -177,6 +173,6 @@ export default function MaintenancePage() {
         isOpen={isCreateModalOpen} 
         onClose={() => setIsCreateModalOpen(false)} 
       />
-    </div>
+    </AppLayout>
   );
 }

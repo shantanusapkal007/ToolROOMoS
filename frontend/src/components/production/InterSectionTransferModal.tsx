@@ -99,23 +99,23 @@ export function InterSectionTransferModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-zinc-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white dark:bg-slate-900 border border-border-gray dark:border-slate-800 rounded-[12px] w-full max-w-lg shadow-level-4 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         
         {/* Modal Header */}
-        <div className="p-4 border-b border-zinc-200 dark:border-slate-800 flex items-center justify-between bg-zinc-50/50 dark:bg-slate-800/50">
+        <div className="p-4 border-b border-border-gray dark:border-slate-800 flex items-center justify-between bg-canvas/50 dark:bg-slate-800/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold shadow-xs">
+            <div className="w-8 h-8 rounded-[12px] bg-zinc-900 text-white flex items-center justify-center font-semibold shadow-subtle">
               <RefreshCw className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-extrabold text-sm text-zinc-950 dark:text-white">Inter-Section Material Transfer</h3>
-              <p className="text-xs text-zinc-500">Transfer machined parts / assemblies between Toolroom, Press Shop & Fabrication</p>
+              <h3 className="font-semibold text-sm text-zinc-950 dark:text-white">Inter-Section Material Transfer</h3>
+              <p className="text-xs text-mute">Transfer machined parts / assemblies between Toolroom, Press Shop & Fabrication</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-slate-800 text-zinc-500 transition-colors cursor-pointer"
+            className="p-1.5 rounded-[12px] hover:bg-zinc-200 dark:hover:bg-slate-800 text-mute transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -127,7 +127,7 @@ export function InterSectionTransferModal({
           {/* Project & Part Name */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
+              <label className="block text-[11px] font-semibold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
                 Tool Project Code
               </label>
               <input
@@ -135,13 +135,13 @@ export function InterSectionTransferModal({
                 value={projectCode}
                 onChange={(e) => setProjectCode(e.target.value)}
                 placeholder="e.g. KTD-322"
-                className="w-full px-3 py-2 bg-zinc-50 dark:bg-slate-800 border border-zinc-200 dark:border-slate-700 rounded-xl font-mono font-bold text-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/10"
+                className="w-full px-3 py-2 bg-canvas dark:bg-slate-800 border border-border-gray dark:border-slate-700 rounded-[12px] font-mono font-semibold text-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/10"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
+              <label className="block text-[11px] font-semibold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
                 Part / Sub-Assembly Name
               </label>
               <input
@@ -149,28 +149,28 @@ export function InterSectionTransferModal({
                 value={partName}
                 onChange={(e) => setPartName(e.target.value)}
                 placeholder="e.g. Die Plate #4 / Base Frame"
-                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-zinc-200 dark:border-slate-700 rounded-xl font-semibold text-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/10"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-border-gray dark:border-slate-700 rounded-[12px] font-semibold text-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/10"
                 required
               />
             </div>
           </div>
 
           {/* Source Section -> Target Section */}
-          <div className="bg-zinc-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-zinc-200/80 dark:border-slate-700 space-y-3">
-            <div className="flex items-center justify-between text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+          <div className="bg-canvas dark:bg-slate-800/60 p-3.5 rounded-[12px] border border-border-gray/80 dark:border-slate-700 space-y-3">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-mute uppercase tracking-wider">
               <span>Transfer Workflow Route</span>
               <RefreshCw className="w-3.5 h-3.5 text-zinc-400" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-zinc-600 dark:text-slate-400 mb-1">
+                <label className="block text-[10px] font-semibold text-zinc-600 dark:text-slate-400 mb-1">
                   Source Section (Sending)
                 </label>
                 <select
                   value={sourceSection}
                   onChange={(e) => setSourceSection(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-zinc-200 dark:border-slate-700 rounded-lg text-xs font-bold text-zinc-950 dark:text-white outline-none"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-border-gray dark:border-slate-700 rounded-[12px] text-xs font-semibold text-zinc-950 dark:text-white outline-none"
                 >
                   {SECTIONS.map((s) => (
                     <option key={s.id} value={s.id}>{s.label}</option>
@@ -179,13 +179,13 @@ export function InterSectionTransferModal({
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-zinc-600 dark:text-slate-400 mb-1">
+                <label className="block text-[10px] font-semibold text-zinc-600 dark:text-slate-400 mb-1">
                   Target Section (Receiving)
                 </label>
                 <select
                   value={targetSection}
                   onChange={(e) => setTargetSection(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-zinc-200 dark:border-slate-700 rounded-lg text-xs font-bold text-zinc-950 dark:text-white outline-none"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-border-gray dark:border-slate-700 rounded-[12px] text-xs font-semibold text-zinc-950 dark:text-white outline-none"
                 >
                   {SECTIONS.map((s) => (
                     <option key={s.id} value={s.id}>{s.label}</option>
@@ -198,7 +198,7 @@ export function InterSectionTransferModal({
           {/* Quantity & Transferred By */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
+              <label className="block text-[11px] font-semibold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
                 Quantity (Units)
               </label>
               <input
@@ -206,13 +206,13 @@ export function InterSectionTransferModal({
                 min="1"
                 value={quantity}
                 onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-zinc-200 dark:border-slate-700 rounded-xl font-mono font-bold text-zinc-950 dark:text-white outline-none"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-border-gray dark:border-slate-700 rounded-[12px] font-mono font-semibold text-zinc-950 dark:text-white outline-none"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
+              <label className="block text-[11px] font-semibold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
                 Transferred By (Engineer / Supervisor)
               </label>
               <input
@@ -220,14 +220,14 @@ export function InterSectionTransferModal({
                 value={transferredBy}
                 onChange={(e) => setTransferredBy(e.target.value)}
                 placeholder="e.g. Shift Supervisor"
-                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-zinc-200 dark:border-slate-700 rounded-xl font-semibold text-zinc-950 dark:text-white outline-none"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-border-gray dark:border-slate-700 rounded-[12px] font-semibold text-zinc-950 dark:text-white outline-none"
               />
             </div>
           </div>
 
           {/* Reason / Notes */}
           <div>
-            <label className="block text-[11px] font-bold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
+            <label className="block text-[11px] font-semibold text-zinc-700 dark:text-slate-300 mb-1 uppercase tracking-wider">
               Transfer Reason & Specifications
             </label>
             <textarea
@@ -235,22 +235,22 @@ export function InterSectionTransferModal({
               value={transferReason}
               onChange={(e) => setTransferReason(e.target.value)}
               placeholder="Provide reason or specs for inter-section transfer..."
-              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-zinc-200 dark:border-slate-700 rounded-xl text-xs text-zinc-900 dark:text-white outline-none"
+              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-border-gray dark:border-slate-700 rounded-[12px] text-xs text-ink dark:text-white outline-none"
             />
           </div>
 
           {/* Submit Actions */}
-          <div className="pt-2 flex items-center justify-end gap-2 border-t border-zinc-200 dark:border-slate-800">
+          <div className="pt-2 flex items-center justify-end gap-2 border-t border-border-gray dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-600 hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-[12px] text-xs font-semibold text-zinc-600 hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-900 hover:bg-zinc-800 text-white shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-[12px] text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white shadow-subtle flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Confirm Material Transfer</span>

@@ -36,7 +36,13 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
     items: [{ operationId: "", sentQty: 1, rate: 0, remarks: "" }],
   });
 
-  const [receiptData, setReceiptData] = useState({
+  const [receiptData, setReceiptData] = useState<{
+    subcontractOrderId?: string;
+    documentNumber: string;
+    remarks: string;
+    items: { orderItemId: string; operationName?: string; receivedQty: number; acceptedQty: number; rejectedQty: number; actualRate: number; remarks: string; }[];
+  }>({
+    subcontractOrderId: "",
     documentNumber: "",
     remarks: "",
     items: [{ orderItemId: "", receivedQty: 1, acceptedQty: 1, rejectedQty: 0, actualRate: 0, remarks: "" }],
@@ -163,7 +169,7 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
       label: 'Challan #',
       render: (val: string, row: any) => (
         <div>
-          <span className="font-mono font-bold text-zinc-900">{val || 'CHL-001'}</span>
+          <span className="font-mono font-semibold text-ink">{val || 'CHL-001'}</span>
           <div className="text-micro font-mono text-zinc-400">{formatDate(row.createdAt)}</div>
         </div>
       )
@@ -177,19 +183,19 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
       key: 'items',
       label: 'Outsource Operations',
       render: (val: any[]) => (
-        <span className="font-mono text-zinc-900">{val?.length || 1} Outsource Line(s)</span>
+        <span className="font-mono text-ink">{val?.length || 1} Outsource Line(s)</span>
       )
     },
     {
       key: 'totalEstimatedCost',
       label: 'Est Cost',
-      render: (val: number) => <span className="font-mono font-bold text-orange-600">{formatCurrency(val || 0)}</span>
+      render: (val: number) => <span className="font-mono font-semibold text-orange-600">{formatCurrency(val || 0)}</span>
     },
     {
       key: 'status',
       label: 'Status',
       render: (val: string) => (
-        <span className={`text-micro font-bold px-2 py-0.5 rounded border ${
+        <span className={`text-micro font-semibold px-2 py-0.5 rounded border ${
           val === 'CLOSED' 
             ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
             : 'bg-orange-50 text-orange-700 border-orange-200'
@@ -203,7 +209,7 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
       label: 'Actions',
       render: (_: any, row: any) => (
         row.status !== 'CLOSED' && (
-          <Button variant="secondary" size="sm" onClick={() => openReceiptModal(row)}>
+          <Button variant="white" size="sm" onClick={() => openReceiptModal(row)}>
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             <span>Process Return Receipt</span>
           </Button>
@@ -218,13 +224,13 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
     <div className="flex-1 flex flex-col space-y-4 pb-12">
       
       {/* Header Banner */}
-      <div className="flex justify-between items-center bg-white border border-zinc-200 rounded-lg p-4 shadow-xs">
+      <div className="flex justify-between items-center bg-white border border-border-gray rounded-[12px] p-4 shadow-subtle">
         <div>
-          <h3 className="text-card-title font-bold text-zinc-900 flex items-center gap-2">
+          <h3 className="text-card-title font-semibold text-ink flex items-center gap-2">
             <Truck className="w-4 h-4 text-orange-600" />
             <span>Subcontracting & Outside Job Work</span>
           </h3>
-          <p className="text-caption text-zinc-500 mt-0.5">
+          <p className="text-caption text-mute mt-0.5">
             Manage job work challans, outsource vendor heat treatment / plating, and material return receipts.
           </p>
         </div>
@@ -240,23 +246,23 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
       {/* KPI Stat Strips */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="enterprise-card p-3.5 flex flex-col justify-between">
-          <span className="text-micro font-semibold uppercase text-zinc-500">Total Subcontract Cost</span>
-          <div className="text-2xl font-bold font-mono text-orange-600 my-0.5">{formatCurrency(totalCost)}</div>
-          <span className="text-micro text-zinc-500">Outsourced Work Value</span>
+          <span className="text-micro font-semibold uppercase text-mute">Total Subcontract Cost</span>
+          <div className="text-2xl font-semibold font-mono text-orange-600 my-0.5">{formatCurrency(totalCost)}</div>
+          <span className="text-micro text-mute">Outsourced Work Value</span>
         </div>
 
         <div className="enterprise-card p-3.5 flex flex-col justify-between">
-          <span className="text-micro font-semibold uppercase text-zinc-500">Active Subcontract Orders</span>
-          <div className="text-2xl font-bold font-mono text-zinc-900 my-0.5">{orders.length}</div>
-          <span className="text-micro text-zinc-500">Issued Challans</span>
+          <span className="text-micro font-semibold uppercase text-mute">Active Subcontract Orders</span>
+          <div className="text-2xl font-semibold font-mono text-ink my-0.5">{orders.length}</div>
+          <span className="text-micro text-mute">Issued Challans</span>
         </div>
 
         <div className="enterprise-card p-3.5 flex flex-col justify-between">
-          <span className="text-micro font-semibold uppercase text-zinc-500">Completed Receipts</span>
-          <div className="text-2xl font-bold font-mono text-emerald-600 my-0.5">
+          <span className="text-micro font-semibold uppercase text-mute">Completed Receipts</span>
+          <div className="text-2xl font-semibold font-mono text-emerald-600 my-0.5">
             {orders.filter(o => o.status === 'CLOSED').length}
           </div>
-          <span className="text-micro text-zinc-500">Returned Store Lineage</span>
+          <span className="text-micro text-mute">Returned Store Lineage</span>
         </div>
       </div>
 
@@ -307,16 +313,16 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
           </div>
 
           {/* Items */}
-          <div className="border border-zinc-200 rounded-lg overflow-hidden bg-white">
-            <div className="p-3 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center">
-              <span className="text-micro font-bold uppercase tracking-wider text-zinc-700">Outsource Operation Items</span>
-              <Button variant="secondary" size="sm" type="button" onClick={addItemRow}>
+          <div className="border border-border-gray rounded-[12px] overflow-hidden bg-white">
+            <div className="p-3 bg-canvas border-b border-border-gray flex justify-between items-center">
+              <span className="text-micro font-semibold uppercase tracking-wider text-zinc-700">Outsource Operation Items</span>
+              <Button variant="white" size="sm" type="button" onClick={addItemRow}>
                 <Plus className="w-3.5 h-3.5" /> Add Operation Line
               </Button>
             </div>
             <div className="p-3 space-y-3">
               {formData.items.map((item, idx) => (
-                <div key={idx} className="p-3 border border-zinc-200 rounded-md bg-zinc-50/50 grid grid-cols-4 gap-3 items-end">
+                <div key={idx} className="p-3 border border-border-gray rounded-[12px] bg-canvas/50 grid grid-cols-4 gap-3 items-end">
                   <Select
                     label="Operation *"
                     required
@@ -367,12 +373,12 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
               value={formData.remarks}
               onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
               placeholder="Record special instructions, hardness specs, or return notes..."
-              className="w-full bg-white border border-zinc-200 rounded-md p-3 text-caption text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 h-20 resize-none"
+              className="w-full bg-white border border-border-gray rounded-[12px] p-3 text-caption text-ink placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 h-20 resize-none"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
-            <Button variant="secondary" type="button" onClick={() => setIsOrderModalOpen(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border-gray">
+            <Button variant="white" type="button" onClick={() => setIsOrderModalOpen(false)}>Cancel</Button>
             <Button type="submit">Create Subcontract Challan</Button>
           </div>
         </form>
@@ -394,14 +400,14 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
             onChange={(e) => setReceiptData({ ...receiptData, documentNumber: e.target.value })}
           />
 
-          <div className="border border-zinc-200 rounded-lg overflow-hidden bg-white">
-            <div className="p-3 bg-zinc-50 border-b border-zinc-200 font-bold text-micro uppercase tracking-wider text-zinc-700">
+          <div className="border border-border-gray rounded-[12px] overflow-hidden bg-white">
+            <div className="p-3 bg-canvas border-b border-border-gray font-semibold text-micro uppercase tracking-wider text-zinc-700">
               Return Line Items Inspection
             </div>
             <div className="p-3 space-y-3">
               {receiptData.items?.map((item: any, idx: number) => (
-                <div key={idx} className="p-3 border border-zinc-200 rounded-md bg-zinc-50/50 space-y-3">
-                  <div className="font-bold text-zinc-900">{item.operationName}</div>
+                <div key={idx} className="p-3 border border-border-gray rounded-[12px] bg-canvas/50 space-y-3">
+                  <div className="font-semibold text-ink">{item.operationName}</div>
                   <div className="grid grid-cols-3 gap-3">
                     <Input 
                       label="Received Qty"
@@ -440,8 +446,8 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
-            <Button variant="secondary" type="button" onClick={() => setIsReceiptModalOpen(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border-gray">
+            <Button variant="white" type="button" onClick={() => setIsReceiptModalOpen(false)}>Cancel</Button>
             <Button type="submit">Post Return Receipt</Button>
           </div>
         </form>

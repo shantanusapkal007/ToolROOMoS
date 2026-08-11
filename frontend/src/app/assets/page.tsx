@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Sidebar } from '../../components/layout/Sidebar';
+import { AppLayout } from '../../components/layout/AppLayout';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { Button } from '../../components/ui/Button';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Package, Wrench, RefreshCw, Plus, Search, Filter, Calendar, User, 
@@ -357,19 +359,16 @@ export default function GlobalAssetsPage() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#F8F9FA]">
-      <Sidebar />
-
-      <main className="flex-1 h-full flex flex-col relative pl-16 overflow-hidden">
-        <div className="w-full max-w-[1440px] mx-auto h-full flex flex-col px-6 py-6 min-h-0 overflow-y-auto space-y-4">
-          {/* Toast Banner */}
+    <AppLayout>
+      <div className="w-full h-full flex flex-col min-h-0 space-y-4">
+        {/* Toast Banner */}
           <AnimatePresence>
             {toastMessage && (
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className={`fixed top-6 right-6 z-50 px-4 py-2.5 rounded-md shadow-md border flex items-center space-x-2 text-caption font-semibold ${
+                className={`fixed top-6 right-6 z-50 px-4 py-2.5 rounded-md shadow-level-1 border flex items-center space-x-2 text-caption font-semibold ${
                   toastMessage.type === 'success'
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                     : 'bg-rose-50 text-rose-800 border-rose-200'
@@ -388,36 +387,39 @@ export default function GlobalAssetsPage() {
             icon={<Package />}
             breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Global Inventory' }]}
             actions={
-              <div className="flex items-center gap-2">
-                <button
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="white"
+                  size="sm"
                   onClick={() => setIsIssueModalOpen(true)}
-                  className="h-[var(--size-button-secondary)] px-3 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-semibold text-caption flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <ArrowUpRight className="w-3.5 h-3.5 text-amber-600" />
+                  <ArrowUpRight className="w-3.5 h-3.5 mr-1.5 text-primary" />
                   <span>Issue Asset</span>
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant="white"
+                  size="sm"
                   onClick={() => setIsReturnModalOpen(true)}
-                  className="h-[var(--size-button-secondary)] px-3 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-caption flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" />
+                  <ArrowDownLeft className="w-3.5 h-3.5 mr-1.5 text-green" />
                   <span>Return Asset</span>
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={handleOpenAddAsset}
-                  className="h-[var(--size-button-primary)] px-3.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-caption flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 text-blue-400" />
+                  <Plus className="w-4 h-4 mr-1.5" />
                   <span>Register New Asset</span>
-                </button>
+                </Button>
               </div>
             }
           />
 
           {/* Clean Sub Navigation Tabs */}
-          <div className="flex items-center space-x-1 border-b border-zinc-200 shrink-0 overflow-x-auto hide-scrollbar bg-zinc-50/50 px-2 pt-1 rounded-t-md">
+          <div className="flex items-center space-x-1 border-b border-border-gray shrink-0 overflow-x-auto hide-scrollbar bg-white px-2 pt-1 rounded-t-[12px]">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
               { id: 'material-inventory', label: 'Material Inventory', icon: Boxes },
@@ -435,10 +437,10 @@ export default function GlobalAssetsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`h-8 px-3 text-caption font-semibold flex items-center gap-1.5 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
+                  className={`h-9 px-4 text-caption font-medium flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'bg-white text-zinc-900 border-zinc-900 font-bold'
-                      : 'text-zinc-500 hover:text-zinc-900 border-transparent hover:border-zinc-300'
+                      ? 'text-primary border-primary font-semibold bg-white'
+                      : 'text-cool-gray hover:text-ink border-transparent hover:border-border-gray'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -455,36 +457,36 @@ export default function GlobalAssetsPage() {
 
         {/* TAB 1: DASHBOARD */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
               {[
-                { label: 'Total Assets', value: stats?.cards?.totalAssets || 0, sub: `${stats?.cards?.totalQuantity || 0} units total`, color: 'bg-blue-50/80', text: 'text-blue-700', border: 'border-blue-200' },
-                { label: 'Available', value: stats?.cards?.availableAssets || 0, sub: 'Ready for issue', color: 'bg-emerald-50/80', text: 'text-emerald-700', border: 'border-emerald-200' },
-                { label: 'Issued Assets', value: stats?.cards?.issuedAssets || 0, sub: 'Currently on loan', color: 'bg-amber-50/80', text: 'text-amber-700', border: 'border-amber-200' },
-                { label: 'Overdue', value: stats?.cards?.overdueAssets || 0, sub: 'Requires return', color: 'bg-rose-50/80', text: 'text-rose-700', border: 'border-rose-200' },
-                { label: 'Maintenance', value: stats?.cards?.maintenanceAssets || 0, sub: 'Calibration / Repair', color: 'bg-purple-50/80', text: 'text-purple-700', border: 'border-purple-200' },
-                { label: 'Lost Assets', value: stats?.cards?.lostAssets || 0, sub: 'Reported missing', color: 'bg-slate-100/80', text: 'text-slate-700', border: 'border-slate-200' },
-                { label: 'Scrapped', value: stats?.cards?.scrappedAssets || 0, sub: 'Decommissioned', color: 'bg-zinc-100/80', text: 'text-zinc-700', border: 'border-zinc-200' },
+                { label: 'Total Assets', value: stats?.cards?.totalAssets || 0, sub: `${stats?.cards?.totalQuantity || 0} units total`, text: 'text-primary' },
+                { label: 'Available', value: stats?.cards?.availableAssets || 0, sub: 'Ready for issue', text: 'text-green' },
+                { label: 'Issued Assets', value: stats?.cards?.issuedAssets || 0, sub: 'Currently on loan', text: 'text-ink' },
+                { label: 'Overdue', value: stats?.cards?.overdueAssets || 0, sub: 'Requires return', text: 'text-accent-red' },
+                { label: 'Maintenance', value: stats?.cards?.maintenanceAssets || 0, sub: 'Calibration / Repair', text: 'text-primary-dark' },
+                { label: 'Lost Assets', value: stats?.cards?.lostAssets || 0, sub: 'Reported missing', text: 'text-cool-gray' },
+                { label: 'Scrapped', value: stats?.cards?.scrappedAssets || 0, sub: 'Decommissioned', text: 'text-silver-blue' },
               ].map((card, idx) => (
                 <motion.div
                   key={idx}
-                  whileHover={{ scale: 1.02 }}
-                  className={`p-4 rounded-2xl ${card.color} backdrop-blur-xl border ${card.border} shadow-sm flex flex-col justify-between`}
+                  whileHover={{ y: -2 }}
+                  className="p-4 rounded-[12px] bg-white border border-border-gray shadow-subtle flex flex-col justify-between transition-all"
                 >
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">{card.label}</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">{card.label}</span>
                   <div className="my-2">
-                    <span className={`text-3xl font-black ${card.text}`}>{card.value}</span>
+                    <span className={`text-3xl font-bold font-mono ${card.text}`}>{card.value}</span>
                   </div>
-                  <span className="text-[10px] text-zinc-500 font-semibold">{card.sub}</span>
+                  <span className="text-[11px] text-silver-blue font-medium">{card.sub}</span>
                 </motion.div>
               ))}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="p-6 rounded-3xl bg-white/80 backdrop-blur-2xl border border-black/5 shadow-xl shadow-slate-200/50">
-                <h3 className="text-base font-bold text-zinc-900 mb-4 flex items-center justify-between">
+              <div className="p-6 rounded-[12px] bg-white border border-border-gray shadow-subtle">
+                <h3 className="text-feature-title font-semibold text-ink mb-4 flex items-center justify-between">
                   <span>Assets by Category</span>
-                  <PieChart className="w-5 h-5 text-indigo-600" />
+                  <PieChart className="w-5 h-5 text-primary" />
                 </h3>
                 <div className="space-y-4">
                   {(stats?.charts?.byCategory || []).map((cat: any, i: number) => {
@@ -492,12 +494,12 @@ export default function GlobalAssetsPage() {
                     const pct = Math.round((cat.count / maxCount) * 100);
                     return (
                       <div key={i} className="space-y-1.5">
-                        <div className="flex justify-between text-xs font-semibold">
-                          <span className="text-zinc-700">{cat.name}</span>
-                          <span className="text-indigo-600 font-mono font-bold">{cat.count} items</span>
+                        <div className="flex justify-between text-caption font-medium">
+                          <span className="text-ink">{cat.name}</span>
+                          <span className="text-primary font-mono">{cat.count} items</span>
                         </div>
-                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                        <div className="w-full h-2 bg-primary-subtle/40 rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
                     );
@@ -505,39 +507,39 @@ export default function GlobalAssetsPage() {
                 </div>
               </div>
 
-              <div className="p-6 rounded-3xl bg-white/80 backdrop-blur-2xl border border-black/5 shadow-xl shadow-slate-200/50">
-                <h3 className="text-base font-bold text-zinc-900 mb-4 flex items-center justify-between">
+              <div className="p-6 rounded-[12px] bg-white border border-border-gray shadow-subtle">
+                <h3 className="text-feature-title font-semibold text-ink mb-4 flex items-center justify-between">
                   <span>Department Loans</span>
-                  <Building className="w-5 h-5 text-emerald-600" />
+                  <Building className="w-5 h-5 text-green" />
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {(stats?.charts?.departmentWise || []).map((dept: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                      <span className="text-xs font-bold text-zinc-800">{dept.name}</span>
-                      <span className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold text-xs">
+                    <div key={i} className="flex justify-between items-center p-3 rounded-[8px] bg-[rgba(148,151,169,0.04)] border border-border-gray">
+                      <span className="text-body-sm font-medium text-ink">{dept.name}</span>
+                      <span className="px-2.5 py-1 rounded-[6px] bg-[rgba(20,158,97,0.16)] text-[#026b3f] font-mono font-medium text-xs">
                         {dept.count} Units
                       </span>
                     </div>
                   ))}
                   {(!stats?.charts?.departmentWise || stats.charts.departmentWise.length === 0) && (
-                    <p className="text-xs text-zinc-400 italic py-4 text-center">No active department loans recorded.</p>
+                    <p className="text-caption text-silver-blue italic py-4 text-center">No active department loans recorded.</p>
                   )}
                 </div>
               </div>
 
-              <div className="p-6 rounded-3xl bg-white/80 backdrop-blur-2xl border border-black/5 shadow-xl shadow-slate-200/50">
-                <h3 className="text-base font-bold text-zinc-900 mb-4 flex items-center justify-between">
+              <div className="p-6 rounded-[12px] bg-white border border-border-gray shadow-subtle">
+                <h3 className="text-feature-title font-semibold text-ink mb-4 flex items-center justify-between">
                   <span>Most Frequently Issued</span>
-                  <TrendingUp className="w-5 h-5 text-amber-600" />
+                  <TrendingUp className="w-5 h-5 text-primary-dark" />
                 </h3>
                 <div className="space-y-3">
                   {(stats?.charts?.mostIssued || []).map((ast: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div key={i} className="flex justify-between items-center p-3 rounded-[8px] bg-[rgba(148,151,169,0.04)] border border-border-gray">
                       <div>
-                        <p className="text-xs font-bold text-zinc-900">{ast.assetName}</p>
-                        <p className="text-[10px] text-zinc-400 font-mono">{ast.assetCode}</p>
+                        <p className="text-body-sm font-medium text-ink">{ast.assetName}</p>
+                        <p className="text-small text-silver-blue font-mono">{ast.assetCode}</p>
                       </div>
-                      <span className="px-3 py-1 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-mono font-bold text-xs">
+                      <span className="px-2.5 py-1 rounded-[8px] bg-[rgba(104,107,130,0.12)] text-[#484b5e] font-mono font-medium text-xs">
                         {ast.issueCount} Issues
                       </span>
                     </div>
@@ -551,7 +553,7 @@ export default function GlobalAssetsPage() {
         {/* TAB 2: ASSET REGISTER (INVENTORY) */}
         {activeTab === 'inventory' && (
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white/80 border border-black/5 shadow-sm">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-[12px] bg-white border border-border-gray shadow-subtle">
               <div className="relative flex-1 w-full">
                 <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400" />
                 <input
@@ -559,7 +561,7 @@ export default function GlobalAssetsPage() {
                   placeholder="Search Asset ID, Code, Name, Serial Number, Brand..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-md bg-white border border-slate-200 text-xs text-ink placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
 
@@ -567,7 +569,7 @@ export default function GlobalAssetsPage() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
+                  className="px-3 py-2.5 rounded-md bg-white border border-slate-200 text-xs text-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
                 >
                   <option value="">All Categories</option>
                   {categories.map((c: any) => (
@@ -578,7 +580,7 @@ export default function GlobalAssetsPage() {
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
+                  className="px-3 py-2.5 rounded-md bg-white border border-slate-200 text-xs text-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
                 >
                   <option value="">All Statuses</option>
                   <option value="AVAILABLE">AVAILABLE</option>
@@ -591,7 +593,7 @@ export default function GlobalAssetsPage() {
 
                 <button
                   onClick={() => { setSearchQuery(''); setSelectedCategory(''); setSelectedStatus(''); }}
-                  className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-zinc-600 transition-colors"
+                  className="p-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-600 transition-colors"
                   title="Reset Filters"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -604,15 +606,15 @@ export default function GlobalAssetsPage() {
                 <motion.div
                   key={asset.id}
                   whileHover={{ y: -4 }}
-                  className="p-6 rounded-3xl bg-white/80 backdrop-blur-2xl border border-black/5 shadow-xl shadow-slate-200/50 flex flex-col justify-between group"
+                  className="p-6 rounded-[12px] bg-white border border-border-gray shadow-subtle flex flex-col justify-between group"
                 >
                   <div>
                     <div className="flex justify-between items-start mb-3">
-                      <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono font-bold text-[10px]">
+                      <span className="px-2.5 py-1 rounded-md bg-primary-subtle text-primary-dark border border-primary/20 font-mono font-semibold text-[10px]">
                         {asset.assetId}
                       </span>
 
-                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${
                         asset.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                         asset.status === 'ISSUED' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                         asset.status === 'MAINTENANCE' ? 'bg-purple-50 text-purple-700 border-purple-200' :
@@ -622,32 +624,32 @@ export default function GlobalAssetsPage() {
                       </span>
                     </div>
 
-                    <h4 className="text-base font-extrabold text-zinc-900 group-hover:text-indigo-600 transition-colors mb-1">{asset.name}</h4>
-                    <p className="text-xs text-zinc-500 font-mono mb-4">{asset.assetCode} {asset.brand && `â€¢ ${asset.brand}`} {asset.model && `(${asset.model})`}</p>
+                    <h4 className="text-base font-semibold text-ink group-hover:text-primary transition-colors mb-1">{asset.name}</h4>
+                    <p className="text-xs text-mute font-mono mb-4">{asset.assetCode} {asset.brand && `â€¢ ${asset.brand}`} {asset.model && `(${asset.model})`}</p>
 
-                    <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center mb-4">
+                    <div className="grid grid-cols-3 gap-2 p-3 rounded-md bg-slate-50 border border-slate-100 text-center mb-4">
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-zinc-400 block">Total</span>
-                        <span className="text-sm font-black font-mono text-zinc-900">{Number(asset.quantity)} {asset.unit}</span>
+                        <span className="text-[9px] uppercase font-semibold text-zinc-400 block">Total</span>
+                        <span className="text-sm font-semibold font-mono text-ink">{Number(asset.quantity)} {asset.unit}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-emerald-600 block">Available</span>
-                        <span className="text-sm font-black font-mono text-emerald-700">{Number(asset.availableQty)}</span>
+                        <span className="text-[9px] uppercase font-semibold text-emerald-600 block">Available</span>
+                        <span className="text-sm font-semibold font-mono text-emerald-700">{Number(asset.availableQty)}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-amber-600 block">Issued</span>
-                        <span className="text-sm font-black font-mono text-amber-700">{Number(asset.issuedQty)}</span>
+                        <span className="text-[9px] uppercase font-semibold text-amber-600 block">Issued</span>
+                        <span className="text-sm font-semibold font-mono text-amber-700">{Number(asset.issuedQty)}</span>
                       </div>
                     </div>
 
                     <div className="space-y-1.5 text-xs text-zinc-600 mb-4">
                       <div className="flex justify-between">
                         <span className="text-zinc-400">Category:</span>
-                        <span className="font-bold text-zinc-800">{asset.category?.name || 'General'}</span>
+                        <span className="font-semibold text-zinc-800">{asset.category?.name || 'General'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-zinc-400">Location:</span>
-                        <span className="font-bold text-zinc-800">{asset.location?.locationName || asset.storageRack || 'Main Toolroom'}</span>
+                        <span className="font-semibold text-zinc-800">{asset.location?.locationName || asset.storageRack || 'Main Toolroom'}</span>
                       </div>
                       {asset.serialNumber && (
                         <div className="flex justify-between">
@@ -658,7 +660,7 @@ export default function GlobalAssetsPage() {
                       {Number(asset.purchaseCost) > 0 && (
                         <div className="flex justify-between">
                           <span className="text-zinc-400">Cost:</span>
-                          <span className="font-mono font-bold text-emerald-700">${Number(asset.purchaseCost)}</span>
+                          <span className="font-mono font-semibold text-emerald-700">${Number(asset.purchaseCost)}</span>
                         </div>
                       )}
                     </div>
@@ -668,15 +670,15 @@ export default function GlobalAssetsPage() {
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={() => setQrCodeModalData({ name: asset.name, qr: asset.qrCode || `QR-${asset.assetId}`, barcode: asset.barcode || `BC-${asset.assetCode}`, code: asset.assetCode })}
-                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-zinc-700 transition-colors"
+                        className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 transition-colors"
                         title="Generate QR/Barcode"
                       >
-                        <QrCode className="w-4 h-4 text-indigo-600" />
+                        <QrCode className="w-4 h-4 text-primary" />
                       </button>
 
                       <button
                         onClick={() => handleOpenEditAsset(asset)}
-                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-zinc-700 transition-colors"
+                        className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 transition-colors"
                         title="Edit Asset Details"
                       >
                         <Edit className="w-4 h-4 text-zinc-700" />
@@ -690,14 +692,14 @@ export default function GlobalAssetsPage() {
                           setIsIssueModalOpen(true);
                         }}
                         disabled={Number(asset.availableQty) <= 0}
-                        className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 disabled:opacity-30 disabled:pointer-events-none text-amber-800 border border-amber-200 text-xs font-bold transition-all"
+                        className="px-3 py-1.5 rounded-md bg-amber-50 hover:bg-amber-100 disabled:opacity-30 disabled:pointer-events-none text-amber-800 border border-amber-200 text-xs font-semibold transition-all"
                       >
                         Issue
                       </button>
 
                       <button
                         onClick={() => setViewingAssetId(asset.id)}
-                        className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition-all"
+                        className="px-3 py-1.5 rounded-md bg-primary-subtle hover:bg-indigo-100 text-primary-dark border border-primary/20 text-xs font-semibold transition-all"
                       >
                         Inspect
                       </button>
@@ -717,23 +719,23 @@ export default function GlobalAssetsPage() {
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="w-full max-w-5xl bg-white border border-slate-200 rounded-3xl p-8 shadow-2xl text-zinc-900 max-h-[94vh] flex flex-col"
+                className="w-full max-w-5xl bg-white border border-slate-200 rounded-md p-8 shadow-level-4 text-ink max-h-[94vh] flex flex-col"
               >
                 {/* Header & Preset Bar */}
                 <div className="flex justify-between items-start pb-4 border-b border-slate-100">
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono text-xs font-bold">
+                      <span className="px-2.5 py-0.5 rounded-md bg-primary-subtle text-primary-dark border border-primary/20 font-mono text-xs font-semibold">
                         {assetForm.assetCode || 'NEW-ASSET'}
                       </span>
-                      <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Step {formStep} of 5</span>
+                      <span className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Step {formStep} of 5</span>
                     </div>
-                    <h3 className="text-2xl font-black text-zinc-900">
+                    <h3 className="text-2xl font-semibold text-ink">
                       {editingAssetId ? 'Edit Global Inventory Asset' : 'Register New Global Inventory Asset'}
                     </h3>
                   </div>
 
-                  <button onClick={() => setIsAssetModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 p-2 rounded-xl hover:bg-slate-100">
+                  <button onClick={() => setIsAssetModalOpen(false)} className="text-zinc-400 hover:text-ink p-2 rounded-md hover:bg-slate-100">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -741,16 +743,16 @@ export default function GlobalAssetsPage() {
                 {/* Industry Presets Quick-Bar */}
                 {!editingAssetId && (
                   <div className="py-3 px-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-2 overflow-x-auto text-xs">
-                    <span className="font-bold text-zinc-500 flex items-center gap-1.5 shrink-0">
+                    <span className="font-semibold text-mute flex items-center gap-1.5 shrink-0">
                       <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                       Quick Templates:
                     </span>
                     <div className="flex items-center space-x-2 shrink-0">
-                      <button type="button" onClick={() => handleQuickPreset('caliper')} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-zinc-700 hover:border-indigo-500 hover:text-indigo-600 font-bold transition-all">ðŸ“ Caliper 300mm</button>
-                      <button type="button" onClick={() => handleQuickPreset('drill')} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-zinc-700 hover:border-indigo-500 hover:text-indigo-600 font-bold transition-all">ðŸ› ï¸ Impact Driver</button>
-                      <button type="button" onClick={() => handleQuickPreset('height')} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-zinc-700 hover:border-indigo-500 hover:text-indigo-600 font-bold transition-all">ðŸ“ Height Gauge</button>
-                      <button type="button" onClick={() => handleQuickPreset('laptop')} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-zinc-700 hover:border-indigo-500 hover:text-indigo-600 font-bold transition-all">ðŸ’» CAD Workstation</button>
-                      <button type="button" onClick={() => handleQuickPreset('vise')} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-zinc-700 hover:border-indigo-500 hover:text-indigo-600 font-bold transition-all">ðŸ§© CNC Vise 6"</button>
+                      <button type="button" onClick={() => handleQuickPreset('caliper')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ“ Caliper 300mm</button>
+                      <button type="button" onClick={() => handleQuickPreset('drill')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ› ï¸ Impact Driver</button>
+                      <button type="button" onClick={() => handleQuickPreset('height')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ“ Height Gauge</button>
+                      <button type="button" onClick={() => handleQuickPreset('laptop')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ’» CAD Workstation</button>
+                      <button type="button" onClick={() => handleQuickPreset('vise')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ§© CNC Vise 6"</button>
                     </div>
                   </div>
                 )}
@@ -771,10 +773,10 @@ export default function GlobalAssetsPage() {
                         key={s.step}
                         type="button"
                         onClick={() => setFormStep(s.step as any)}
-                        className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                        className={`flex items-center space-x-2 px-3.5 py-2 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                           isActive
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                            : 'bg-slate-100 text-zinc-600 hover:text-zinc-900 hover:bg-slate-200'
+                            ? 'bg-indigo-600 text-white shadow-level-1 shadow-indigo-500/20'
+                            : 'bg-slate-100 text-zinc-600 hover:text-ink hover:bg-slate-200'
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -792,11 +794,11 @@ export default function GlobalAssetsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <div className="flex justify-between items-center mb-1">
-                            <label className="block text-zinc-700 font-bold">Asset Code *</label>
+                            <label className="block text-zinc-700 font-semibold">Asset Code *</label>
                             <button
                               type="button"
                               onClick={handleAutoGenerateCode}
-                              className="text-[10px] text-indigo-600 font-bold hover:underline flex items-center gap-1"
+                              className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-1"
                             >
                               <Zap className="w-3 h-3" /> Auto-Gen
                             </button>
@@ -807,28 +809,28 @@ export default function GlobalAssetsPage() {
                             placeholder="e.g. AST-CAL-001"
                             value={assetForm.assetCode}
                             onChange={(e) => setAssetForm({ ...assetForm, assetCode: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono font-bold focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono font-semibold focus:outline-none focus:border-primary"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Asset Name *</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Asset Name *</label>
                           <input
                             type="text"
                             required
                             placeholder="e.g. Digital Vernier Caliper 300mm"
                             value={assetForm.name}
                             onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-semibold focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Asset Status</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Asset Status</label>
                           <select
                             value={assetForm.status}
                             onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as any })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-bold focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
                           >
                             <option value="AVAILABLE">AVAILABLE (In Stock)</option>
                             <option value="ISSUED">ISSUED (On Loan)</option>
@@ -843,11 +845,11 @@ export default function GlobalAssetsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <div className="flex justify-between items-center mb-1">
-                            <label className="block text-zinc-700 font-bold">Category *</label>
+                            <label className="block text-zinc-700 font-semibold">Category *</label>
                             <button
                               type="button"
                               onClick={() => setIsCategoryModalOpen(true)}
-                              className="text-[10px] text-indigo-600 font-bold hover:underline flex items-center gap-1"
+                              className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-1"
                             >
                               + Quick Add Category
                             </button>
@@ -856,7 +858,7 @@ export default function GlobalAssetsPage() {
                             required
                             value={assetForm.categoryId}
                             onChange={(e) => setAssetForm({ ...assetForm, categoryId: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-semibold focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
                           >
                             <option value="">Select Primary Category</option>
                             {effectiveCategories.map((c: any) => (
@@ -865,68 +867,68 @@ export default function GlobalAssetsPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Subcategory / Family</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Subcategory / Family</label>
                           <input
                             type="text"
                             placeholder="e.g. Precision Gauges / Cordless Drills"
                             value={assetForm.subCategory}
                             onChange={(e) => setAssetForm({ ...assetForm, subCategory: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Brand / Make</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Brand / Make</label>
                           <input
                             type="text"
                             placeholder="e.g. Mitutoyo / Bosch"
                             value={assetForm.brand}
                             onChange={(e) => setAssetForm({ ...assetForm, brand: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Model Number</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Model Number</label>
                           <input
                             type="text"
                             placeholder="e.g. 500-196-30"
                             value={assetForm.model}
                             onChange={(e) => setAssetForm({ ...assetForm, model: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Serial Number</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Serial Number</label>
                           <input
                             type="text"
                             placeholder="e.g. SN-998823"
                             value={assetForm.serialNumber}
                             onChange={(e) => setAssetForm({ ...assetForm, serialNumber: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
                           />
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Part Number</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Part Number</label>
                           <input
                             type="text"
                             placeholder="e.g. PN-MIT-001"
                             value={assetForm.partNumber}
                             onChange={(e) => setAssetForm({ ...assetForm, partNumber: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-zinc-700 font-bold mb-1">Technical Specs & Notes</label>
+                        <label className="block text-zinc-700 font-semibold mb-1">Technical Specs & Notes</label>
                         <textarea
                           rows={3}
                           placeholder="Detailed specifications, resolution, torque rating, accuracy tolerance..."
                           value={assetForm.description}
                           onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
-                          className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                          className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                         />
                       </div>
                     </div>
@@ -937,22 +939,22 @@ export default function GlobalAssetsPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Owned Stock Quantity *</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Owned Stock Quantity *</label>
                           <input
                             type="number"
                             min={1}
                             required
                             value={assetForm.quantity}
                             onChange={(e) => setAssetForm({ ...assetForm, quantity: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono font-bold text-sm focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono font-semibold text-sm focus:outline-none focus:border-primary"
                           />
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Unit of Measure (UOM)</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Unit of Measure (UOM)</label>
                           <select
                             value={assetForm.unit}
                             onChange={(e) => setAssetForm({ ...assetForm, unit: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-bold focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
                           >
                             {uomOptions.map(u => (
                               <option key={u.id} value={u.code}>{u.label}</option>
@@ -960,24 +962,24 @@ export default function GlobalAssetsPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Min Stock Alert Level</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Min Stock Alert Level</label>
                           <input
                             type="number"
                             min={0}
                             value={assetForm.minStockAlert}
                             onChange={(e) => setAssetForm({ ...assetForm, minStockAlert: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
                           />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Storage Building / Warehouse</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Storage Building / Warehouse</label>
                           <select
                             value={assetForm.locationId}
                             onChange={(e) => setAssetForm({ ...assetForm, locationId: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           >
                             <option value="">Select Storage Location</option>
                             {locations.map((l: any) => (
@@ -986,21 +988,21 @@ export default function GlobalAssetsPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Rack / Cabinet / Bin Ref</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Rack / Cabinet / Bin Ref</label>
                           <input
                             type="text"
                             placeholder="e.g. Cabinet B-3 / Bin 12"
                             value={assetForm.storageRack}
                             onChange={(e) => setAssetForm({ ...assetForm, storageRack: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Physical Condition</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Physical Condition</label>
                           <select
                             value={assetForm.condition}
                             onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-bold focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
                           >
                             {conditionOptions.map(c => (
                               <option key={c.id} value={c.code}>{c.label}</option>
@@ -1017,41 +1019,41 @@ export default function GlobalAssetsPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Purchase Cost ($ / â‚¹)</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Purchase Cost ($ / â‚¹)</label>
                           <input
                             type="number"
                             step="0.01"
                             value={assetForm.purchaseCost}
                             onChange={(e) => setAssetForm({ ...assetForm, purchaseCost: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono font-bold text-sm focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono font-semibold text-sm focus:outline-none focus:border-primary"
                           />
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Purchase Date</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Purchase Date</label>
                           <input
                             type="date"
                             value={assetForm.purchaseDate}
                             onChange={(e) => setAssetForm({ ...assetForm, purchaseDate: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Supplier / Vendor</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Supplier / Vendor</label>
                           <input
                             type="text"
                             placeholder="Supplier / Vendor Company"
                             value={assetForm.supplier}
                             onChange={(e) => setAssetForm({ ...assetForm, supplier: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Warranty Expiry Date</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Warranty Expiry Date</label>
                           <input
                             type="date"
                             value={assetForm.warrantyExpiry}
                             onChange={(e) => setAssetForm({ ...assetForm, warrantyExpiry: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
                       </div>
@@ -1060,11 +1062,11 @@ export default function GlobalAssetsPage() {
 
                   {/* STEP 4: QUALITY & CALIBRATION */}
                   {formStep === 4 && (
-                    <div className="space-y-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
+                    <div className="space-y-4 p-4 rounded-md bg-primary-subtle/50 border border-indigo-100">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="text-sm font-bold text-indigo-900">Quality Calibration Settings</h4>
-                          <p className="text-xs text-indigo-600">Enable automated calibration reminders & quality compliance for precision instruments.</p>
+                          <h4 className="text-sm font-semibold text-indigo-900">Quality Calibration Settings</h4>
+                          <p className="text-xs text-primary">Enable automated calibration reminders & quality compliance for precision instruments.</p>
                         </div>
                         <label className="flex items-center cursor-pointer">
                           <input
@@ -1080,22 +1082,22 @@ export default function GlobalAssetsPage() {
                       {assetForm.requiresCalibration && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-indigo-100">
                           <div>
-                            <label className="block text-zinc-700 font-bold mb-1">Calibration Frequency (Days)</label>
+                            <label className="block text-zinc-700 font-semibold mb-1">Calibration Frequency (Days)</label>
                             <input
                               type="number"
                               min={30}
                               value={assetForm.calibrationFrequencyDays}
                               onChange={(e) => setAssetForm({ ...assetForm, calibrationFrequencyDays: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                              className="w-full p-3 rounded-xl bg-white border border-slate-200 text-zinc-900 font-mono font-bold focus:outline-none focus:border-indigo-500"
+                              className="w-full p-3 rounded-md bg-white border border-slate-200 text-ink font-mono font-semibold focus:outline-none focus:border-primary"
                             />
                           </div>
                           <div>
-                            <label className="block text-zinc-700 font-bold mb-1">Last Calibration Date</label>
+                            <label className="block text-zinc-700 font-semibold mb-1">Last Calibration Date</label>
                             <input
                               type="date"
                               value={assetForm.lastCalibrationDate}
                               onChange={(e) => setAssetForm({ ...assetForm, lastCalibrationDate: e.target.value })}
-                              className="w-full p-3 rounded-xl bg-white border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                              className="w-full p-3 rounded-md bg-white border border-slate-200 text-ink focus:outline-none focus:border-primary"
                             />
                           </div>
                         </div>
@@ -1108,36 +1110,36 @@ export default function GlobalAssetsPage() {
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Asset Image URL</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Asset Image URL</label>
                           <input
                             type="url"
                             placeholder="https://..."
                             value={assetForm.imageUrl}
                             onChange={(e) => setAssetForm({ ...assetForm, imageUrl: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-zinc-700 font-bold mb-1">Document Attachment URL / Link</label>
+                          <label className="block text-zinc-700 font-semibold mb-1">Document Attachment URL / Link</label>
                           <input
                             type="text"
                             placeholder="Calibration MTC Certificate link..."
                             value={assetForm.documentUrls}
                             onChange={(e) => setAssetForm({ ...assetForm, documentUrls: e.target.value })}
-                            className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 focus:outline-none focus:border-indigo-500"
+                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
                           />
                         </div>
                       </div>
 
                       {/* Live Barcode & QR Code Card */}
-                      <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center flex flex-col items-center justify-center">
-                        <span className="text-xs uppercase font-bold text-zinc-500 tracking-wider mb-2">Live Real-time Barcode Preview</span>
-                        <div className="p-4 bg-white rounded-xl shadow-md border border-slate-200 inline-block mb-2">
-                          <QrCode className="w-24 h-24 text-zinc-900 mx-auto" />
-                          <p className="text-[10px] font-mono text-zinc-700 font-bold mt-1">QR-{assetForm.assetCode}</p>
+                      <div className="p-6 rounded-md bg-slate-50 border border-slate-200 text-center flex flex-col items-center justify-center">
+                        <span className="text-xs uppercase font-semibold text-mute tracking-wider mb-2">Live Real-time Barcode Preview</span>
+                        <div className="p-4 bg-white rounded-md shadow-level-1 border border-slate-200 inline-block mb-2">
+                          <QrCode className="w-24 h-24 text-ink mx-auto" />
+                          <p className="text-[10px] font-mono text-zinc-700 font-semibold mt-1">QR-{assetForm.assetCode}</p>
                         </div>
-                        <p className="text-xs font-mono text-indigo-700 font-bold">BC-{assetForm.assetCode}</p>
+                        <p className="text-xs font-mono text-primary-dark font-semibold">BC-{assetForm.assetCode}</p>
                       </div>
                     </div>
                   )}
@@ -1149,7 +1151,7 @@ export default function GlobalAssetsPage() {
                         <button
                           type="button"
                           onClick={() => setFormStep(prev => Math.max(1, prev - 1) as any)}
-                          className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-zinc-700 font-bold"
+                          className="px-4 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold"
                         >
                           â† Previous Step
                         </button>
@@ -1158,7 +1160,7 @@ export default function GlobalAssetsPage() {
                         <button
                           type="button"
                           onClick={() => setFormStep(prev => Math.min(5, prev + 1) as any)}
-                          className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold"
+                          className="px-4 py-2 rounded-md bg-primary-subtle hover:bg-indigo-100 text-primary-dark font-semibold"
                         >
                           Next Step â†’
                         </button>
@@ -1166,8 +1168,8 @@ export default function GlobalAssetsPage() {
                     </div>
 
                     <div className="flex space-x-3">
-                      <button type="button" onClick={() => setIsAssetModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-zinc-700 font-bold">Cancel</button>
-                      <button type="submit" className="px-6 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] text-white font-bold text-xs border border-zinc-700/80 shadow-[0_1px_3px_rgba(0,0,0,0.12),_inset_0_1px_0_rgba(255,255,255,0.15)] cursor-pointer">
+                      <button type="button" onClick={() => setIsAssetModalOpen(false)} className="px-5 py-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold">Cancel</button>
+                      <button type="submit" className="px-6 py-2.5 rounded-md bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] text-white font-semibold text-xs border border-zinc-700/80 shadow-[0_1px_3px_rgba(0,0,0,0.12),_inset_0_1px_0_rgba(255,255,255,0.15)] cursor-pointer">
                         {editingAssetId ? 'Update Inventory Asset' : 'Save Inventory Asset'}
                       </button>
                     </div>
@@ -1177,8 +1179,7 @@ export default function GlobalAssetsPage() {
             </div>
           )}
         </AnimatePresence>
-        </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

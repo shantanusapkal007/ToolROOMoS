@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { AppLayout } from '@/components/layout/AppLayout';
 import {
   DollarSign, TrendingUp, TrendingDown, Briefcase, Users,
   Clock, PieChart as PieChartIcon, BarChart3, ArrowUpRight,
@@ -75,24 +75,23 @@ export default function FinancePage() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-canvas)]">
-      <Sidebar />
-      <main className="flex-1 ml-16 overflow-y-auto">
+    <AppLayout noPadding>
+      <main className="flex-1 w-full overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 z-30 backdrop-blur-xl bg-white/80 border-b border-zinc-200/60">
+        <div className="sticky top-0 z-20 backdrop-blur-xl bg-white/90 border-b border-border-gray">
           <div className="px-8 py-5">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2.5 mb-1">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
+                  <div className="h-8 w-8 rounded-[12px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
                     <DollarSign className="h-4 w-4 text-white" />
                   </div>
-                  <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Finance & Payroll</h1>
+                  <h1 className="text-xl font-semibold text-ink tracking-tight">Finance & Payroll</h1>
                 </div>
-                <p className="text-xs text-zinc-500 ml-[42px]">Integrated cost tracking, payroll analytics & project profitability</p>
+                <p className="text-xs text-mute ml-[42px]">Integrated cost tracking, payroll analytics & project profitability</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-50 border border-zinc-200">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-canvas border border-border-gray">
                   <Calendar className="h-3.5 w-3.5 text-zinc-400" />
                   <input
                     type="month"
@@ -111,11 +110,11 @@ export default function FinancePage() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={`
-                    flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium
+                    flex items-center gap-1.5 px-3.5 py-1.5 rounded-[12px] text-xs font-medium
                     transition-all duration-150
                     ${activeTab === tab.key
                       ? 'bg-zinc-900 text-white shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+                      : 'text-mute hover:text-ink hover:bg-zinc-100'
                     }
                   `}
                 >
@@ -159,7 +158,7 @@ export default function FinancePage() {
           </AnimatePresence>
         </div>
       </main>
-    </div>
+    </AppLayout>
   );
 }
 
@@ -174,17 +173,17 @@ function MetricCard({ label, value, subtitle, icon, trend, trendLabel, color = '
     purple: 'from-purple-500/8 to-violet-500/5 border-purple-200/40',
     amber: 'from-amber-500/8 to-orange-500/5 border-amber-200/40',
     rose: 'from-rose-500/8 to-pink-500/5 border-rose-200/40',
-    zinc: 'from-zinc-500/5 to-zinc-400/3 border-zinc-200/40',
+    zinc: 'from-zinc-500/5 to-zinc-400/3 border-border-gray/40',
   };
 
   return (
     <motion.div
       whileHover={{ y: -1, boxShadow: '0 4px 20px -4px rgba(0,0,0,0.08)' }}
       transition={{ duration: 0.12 }}
-      className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${colorMap[color] || colorMap.zinc} border backdrop-blur-sm p-5`}
+      className={`relative overflow-hidden rounded-[12px] bg-gradient-to-br ${colorMap[color] || colorMap.zinc} border backdrop-blur-sm p-5`}
     >
       <div className="flex items-start justify-between mb-3">
-        <div className="h-9 w-9 rounded-lg bg-white/80 border border-white/60 flex items-center justify-center shadow-xs">
+        <div className="h-9 w-9 rounded-[12px] bg-white/80 border border-white/60 flex items-center justify-center shadow-subtle">
           {icon}
         </div>
         {trend && (
@@ -198,8 +197,8 @@ function MetricCard({ label, value, subtitle, icon, trend, trendLabel, color = '
           </div>
         )}
       </div>
-      <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide mb-1">{label}</p>
-      <p className="text-xl font-bold text-zinc-900 tracking-tight">{value}</p>
+      <p className="text-[11px] font-medium text-mute uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xl font-semibold text-ink tracking-tight">{value}</p>
       {subtitle && <p className="text-[10px] text-zinc-400 mt-0.5">{subtitle}</p>}
     </motion.div>
   );
@@ -211,7 +210,7 @@ function OverviewTab({ dashboard, trend, breakdown, loading }: { dashboard: any;
     return (
       <div className="grid grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-32 rounded-xl bg-zinc-100 animate-pulse" />
+          <div key={i} className="h-32 rounded-[12px] bg-zinc-100 animate-pulse" />
         ))}
       </div>
     );
@@ -236,7 +235,7 @@ function OverviewTab({ dashboard, trend, breakdown, loading }: { dashboard: any;
         <MetricCard
           label="Total Cost"
           value={formatCurrency(dashboard.totalCost || 0)}
-          icon={<CreditCard className="h-4 w-4 text-blue-600" />}
+          icon={<CreditCard className="h-4 w-4 text-primary" />}
           color="blue"
           subtitle={`Labour: ${formatCurrency(dashboard.totalLabourCost || 0)}`}
         />
@@ -269,7 +268,7 @@ function OverviewTab({ dashboard, trend, breakdown, loading }: { dashboard: any;
         <MetricCard
           label="Machine Cost"
           value={formatCurrency(dashboard.totalMachineCost || 0)}
-          icon={<Building2 className="h-4 w-4 text-indigo-600" />}
+          icon={<Building2 className="h-4 w-4 text-primary" />}
           color="blue"
         />
         <MetricCard
@@ -282,8 +281,8 @@ function OverviewTab({ dashboard, trend, breakdown, loading }: { dashboard: any;
 
       <div className="grid grid-cols-2 gap-6">
         {/* Cost Breakdown Donut */}
-        <div className="rounded-xl bg-white border border-zinc-200/60 p-5 shadow-xs">
-          <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+        <div className="rounded-[12px] bg-white border border-border-gray/60 p-5 shadow-subtle">
+          <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
             <PieChartIcon className="h-4 w-4 text-zinc-400" />
             Cost Breakdown
           </h3>
@@ -299,7 +298,7 @@ function OverviewTab({ dashboard, trend, breakdown, loading }: { dashboard: any;
                     <span className="text-zinc-600">{c.name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-zinc-900">{formatCurrency(c.value)}</span>
+                    <span className="font-semibold text-ink">{formatCurrency(c.value)}</span>
                     <span className="text-zinc-400 w-10 text-right">
                       {totalCost > 0 ? `${((c.value / totalCost) * 100).toFixed(0)}%` : '—'}
                     </span>
@@ -314,8 +313,8 @@ function OverviewTab({ dashboard, trend, breakdown, loading }: { dashboard: any;
         </div>
 
         {/* Payroll vs Revenue Trend */}
-        <div className="rounded-xl bg-white border border-zinc-200/60 p-5 shadow-xs">
-          <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+        <div className="rounded-[12px] bg-white border border-border-gray/60 p-5 shadow-subtle">
+          <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-zinc-400" />
             Payroll vs Revenue (6 months)
           </h3>
@@ -371,7 +370,7 @@ function DonutChart({ data, total }: { data: any[]; total: number }) {
           />
         );
       })}
-      <text x={size / 2} y={size / 2 - 6} textAnchor="middle" className="fill-zinc-900 text-sm font-bold">
+      <text x={size / 2} y={size / 2 - 6} textAnchor="middle" className="fill-zinc-900 text-sm font-semibold">
         {total > 100000 ? `₹${(total / 100000).toFixed(1)}L` : formatCurrency(total)}
       </text>
       <text x={size / 2} y={size / 2 + 10} textAnchor="middle" className="fill-zinc-400 text-[9px]">
@@ -438,17 +437,17 @@ function ProfitabilityTab({ data, loading, search, setSearch, sort, setSort }: {
             placeholder="Search projects..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300"
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-[12px] border border-border-gray bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300"
           />
         </div>
-        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-50 border border-zinc-200">
+        <div className="flex items-center gap-1 px-2 py-1 rounded-[12px] bg-canvas border border-border-gray">
           <Filter className="h-3 w-3 text-zinc-400" />
           {(['margin', 'revenue', 'cost'] as const).map(s => (
             <button
               key={s}
               onClick={() => setSort(s)}
               className={`px-2 py-1 text-[10px] font-medium rounded ${
-                sort === s ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'
+                sort === s ? 'bg-zinc-900 text-white' : 'text-mute hover:text-ink'
               }`}
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -458,20 +457,20 @@ function ProfitabilityTab({ data, loading, search, setSearch, sort, setSort }: {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl bg-white border border-zinc-200/60 overflow-hidden shadow-xs">
+      <div className="rounded-[12px] bg-white border border-border-gray/60 overflow-hidden shadow-subtle">
         <table className="w-full text-xs">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-100">
-              <th className="text-left px-4 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Project</th>
-              <th className="text-left px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Customer</th>
-              <th className="text-left px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Stage</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Revenue</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Material</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Labour</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Machine</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Total Cost</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Profit</th>
-              <th className="text-right px-4 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Margin</th>
+            <tr className="bg-canvas/80 border-b border-zinc-100">
+              <th className="text-left px-4 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Project</th>
+              <th className="text-left px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Customer</th>
+              <th className="text-left px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Stage</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Revenue</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Material</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Labour</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Machine</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Total Cost</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Profit</th>
+              <th className="text-right px-4 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Margin</th>
             </tr>
           </thead>
           <tbody>
@@ -494,10 +493,10 @@ function ProfitabilityTab({ data, loading, search, setSearch, sort, setSort }: {
               </tr>
             ) : (
               data.map((p: any) => (
-                <tr key={p.id} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors group">
+                <tr key={p.id} className="border-b border-zinc-50 hover:bg-canvas/50 transition-colors group">
                   <td className="px-4 py-2.5">
-                    <Link href={`/projects/${p.id}`} className="group-hover:text-blue-600 transition-colors">
-                      <span className="font-semibold text-zinc-900">{p.projectNumber}</span>
+                    <Link href={`/projects/${p.id}`} className="group-hover:text-primary transition-colors">
+                      <span className="font-semibold text-ink">{p.projectNumber}</span>
                       <span className="block text-[10px] text-zinc-400 truncate max-w-[140px]">{p.partName}</span>
                     </Link>
                   </td>
@@ -507,19 +506,19 @@ function ProfitabilityTab({ data, loading, search, setSearch, sort, setSort }: {
                       {p.currentStage?.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 text-right font-medium text-zinc-900">{formatCurrency(p.revenue)}</td>
-                  <td className="px-3 py-2.5 text-right text-zinc-500">{formatCurrency(p.materialCost)}</td>
-                  <td className="px-3 py-2.5 text-right text-zinc-500">{formatCurrency(p.labourCost)}</td>
-                  <td className="px-3 py-2.5 text-right text-zinc-500">{formatCurrency(p.machineCost)}</td>
+                  <td className="px-3 py-2.5 text-right font-medium text-ink">{formatCurrency(p.revenue)}</td>
+                  <td className="px-3 py-2.5 text-right text-mute">{formatCurrency(p.materialCost)}</td>
+                  <td className="px-3 py-2.5 text-right text-mute">{formatCurrency(p.labourCost)}</td>
+                  <td className="px-3 py-2.5 text-right text-mute">{formatCurrency(p.machineCost)}</td>
                   <td className="px-3 py-2.5 text-right font-medium text-zinc-700">{formatCurrency(p.totalCost)}</td>
                   <td className={`px-3 py-2.5 text-right font-semibold ${p.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {formatCurrency(p.profit)}
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <span className={`inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                    <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full ${
                       p.margin > 20 ? 'bg-emerald-50 text-emerald-700' :
                       p.margin > 0 ? 'bg-amber-50 text-amber-700' :
-                      p.margin === 0 ? 'bg-zinc-50 text-zinc-500' :
+                      p.margin === 0 ? 'bg-canvas text-mute' :
                       'bg-rose-50 text-rose-700'
                     }`}>
                       {p.margin > 0 ? '+' : ''}{p.margin}%
@@ -558,13 +557,13 @@ function PayrollTab({ payroll, monthYear }: { payroll: any; monthYear: string })
         <MetricCard
           label="Total Employees"
           value={String(summary.totalEmployees || 0)}
-          icon={<Users className="h-4 w-4 text-blue-600" />}
+          icon={<Users className="h-4 w-4 text-primary" />}
           color="blue"
         />
         <MetricCard
           label="Total Hours Worked"
           value={`${(summary.totalHoursWorked || 0).toFixed(0)} hrs`}
-          icon={<Clock className="h-4 w-4 text-indigo-600" />}
+          icon={<Clock className="h-4 w-4 text-primary" />}
           color="purple"
         />
         <MetricCard
@@ -591,23 +590,23 @@ function PayrollTab({ payroll, monthYear }: { payroll: any; monthYear: string })
           placeholder="Search employees..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300"
+          className="w-full pl-9 pr-3 py-2 text-xs rounded-[12px] border border-border-gray bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300"
         />
       </div>
 
       {/* Payroll Table */}
-      <div className="rounded-xl bg-white border border-zinc-200/60 overflow-hidden shadow-xs">
+      <div className="rounded-[12px] bg-white border border-border-gray/60 overflow-hidden shadow-subtle">
         <table className="w-full text-xs">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-100">
-              <th className="text-left px-4 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Employee</th>
-              <th className="text-left px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Dept</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Rate/hr</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Hours</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Projects</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Base Salary</th>
-              <th className="text-right px-3 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Actual Salary</th>
-              <th className="text-right px-4 py-2.5 font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Variance</th>
+            <tr className="bg-canvas/80 border-b border-zinc-100">
+              <th className="text-left px-4 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Employee</th>
+              <th className="text-left px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Dept</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Rate/hr</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Hours</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Projects</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Base Salary</th>
+              <th className="text-right px-3 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Actual Salary</th>
+              <th className="text-right px-4 py-2.5 font-semibold text-mute uppercase tracking-wider text-[10px]">Variance</th>
             </tr>
           </thead>
           <tbody>
@@ -620,26 +619,26 @@ function PayrollTab({ payroll, monthYear }: { payroll: any; monthYear: string })
               </tr>
             ) : (
               filtered.map((emp: any) => (
-                <tr key={emp.id} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors">
+                <tr key={emp.id} className="border-b border-zinc-50 hover:bg-canvas/50 transition-colors">
                   <td className="px-4 py-2.5">
-                    <span className="font-semibold text-zinc-900">{emp.name}</span>
+                    <span className="font-semibold text-ink">{emp.name}</span>
                     <span className="block text-[10px] text-zinc-400">{emp.employeeCode} · {emp.designation}</span>
                   </td>
                   <td className="px-3 py-2.5 text-zinc-600">{emp.department?.name || '—'}</td>
                   <td className="px-3 py-2.5 text-right font-mono text-zinc-600">₹{emp.hourlyRate}</td>
                   <td className="px-3 py-2.5 text-right">
-                    <span className={`font-medium ${emp.totalHours > 0 ? 'text-zinc-900' : 'text-zinc-400'}`}>
+                    <span className={`font-medium ${emp.totalHours > 0 ? 'text-ink' : 'text-zinc-400'}`}>
                       {emp.totalHours}
                     </span>
                     <span className="text-zinc-400">/{emp.standardHours}</span>
                   </td>
                   <td className="px-3 py-2.5 text-right">
-                    <span className="inline-flex px-1.5 py-0.5 text-[9px] font-semibold rounded bg-blue-50 text-blue-700">
+                    <span className="inline-flex px-1.5 py-0.5 text-[9px] font-semibold rounded bg-primary-subtle text-primary-dark">
                       {emp.projectCount}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-right text-zinc-600">{formatCurrency(emp.baseSalaryCalculated)}</td>
-                  <td className="px-3 py-2.5 text-right font-semibold text-zinc-900">{formatCurrency(emp.actualSalary)}</td>
+                  <td className="px-3 py-2.5 text-right font-semibold text-ink">{formatCurrency(emp.actualSalary)}</td>
                   <td className={`px-4 py-2.5 text-right font-semibold ${
                     emp.variance > 0 ? 'text-rose-600' : emp.variance < 0 ? 'text-emerald-600' : 'text-zinc-400'
                   }`}>
@@ -670,7 +669,7 @@ function ReconciliationTab({ data, monthYear }: { data: any; monthYear: string }
         <MetricCard
           label="Salary Paid"
           value={formatCurrency(summary.totalSalaryPaid || 0)}
-          icon={<CreditCard className="h-4 w-4 text-blue-600" />}
+          icon={<CreditCard className="h-4 w-4 text-primary" />}
           color="blue"
           subtitle={`${summary.totalEmployees || 0} employees`}
         />
@@ -705,10 +704,10 @@ function ReconciliationTab({ data, monthYear }: { data: any; monthYear: string }
       </div>
 
       {/* Reconciliation visual bar */}
-      <div className="rounded-xl bg-white border border-zinc-200/60 p-5 shadow-xs">
-        <h3 className="text-sm font-semibold text-zinc-900 mb-3">Salary vs Project Allocation</h3>
+      <div className="rounded-[12px] bg-white border border-border-gray/60 p-5 shadow-subtle">
+        <h3 className="text-sm font-semibold text-ink mb-3">Salary vs Project Allocation</h3>
         <div className="space-y-3">
-          <ReconciliationBar label="Salary Paid" value={summary.totalSalaryPaid || 0} max={Math.max(summary.totalSalaryPaid || 0, summary.totalLabourBooked || 0, 1)} color="bg-blue-500" />
+          <ReconciliationBar label="Salary Paid" value={summary.totalSalaryPaid || 0} max={Math.max(summary.totalSalaryPaid || 0, summary.totalLabourBooked || 0, 1)} color="bg-primary-subtle0" />
           <ReconciliationBar label="Labour Booked" value={summary.totalLabourBooked || 0} max={Math.max(summary.totalSalaryPaid || 0, summary.totalLabourBooked || 0, 1)} color="bg-emerald-500" />
           <ReconciliationBar label="Machine Cost" value={summary.totalMachineBooked || 0} max={Math.max(summary.totalSalaryPaid || 0, summary.totalLabourBooked || 0, 1)} color="bg-purple-500" />
         </div>
@@ -716,8 +715,8 @@ function ReconciliationTab({ data, monthYear }: { data: any; monthYear: string }
 
       <div className="grid grid-cols-2 gap-6">
         {/* Project-level costs */}
-        <div className="rounded-xl bg-white border border-zinc-200/60 overflow-hidden shadow-xs">
-          <div className="px-4 py-3 bg-zinc-50/80 border-b border-zinc-100">
+        <div className="rounded-[12px] bg-white border border-border-gray/60 overflow-hidden shadow-subtle">
+          <div className="px-4 py-3 bg-canvas/80 border-b border-zinc-100">
             <h3 className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
               <Briefcase className="h-3.5 w-3.5 text-zinc-400" />
               Cost Booked by Project
@@ -727,10 +726,10 @@ function ReconciliationTab({ data, monthYear }: { data: any; monthYear: string }
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-white">
                 <tr className="border-b border-zinc-100">
-                  <th className="text-left px-4 py-2 font-medium text-zinc-500 text-[10px]">Project</th>
-                  <th className="text-right px-3 py-2 font-medium text-zinc-500 text-[10px]">Labour</th>
-                  <th className="text-right px-3 py-2 font-medium text-zinc-500 text-[10px]">Machine</th>
-                  <th className="text-right px-4 py-2 font-medium text-zinc-500 text-[10px]">Total</th>
+                  <th className="text-left px-4 py-2 font-medium text-mute text-[10px]">Project</th>
+                  <th className="text-right px-3 py-2 font-medium text-mute text-[10px]">Labour</th>
+                  <th className="text-right px-3 py-2 font-medium text-mute text-[10px]">Machine</th>
+                  <th className="text-right px-4 py-2 font-medium text-mute text-[10px]">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -738,14 +737,14 @@ function ReconciliationTab({ data, monthYear }: { data: any; monthYear: string }
                   <tr><td colSpan={4} className="text-center py-8 text-zinc-400">No project costs this period</td></tr>
                 ) : (
                   projectCosts.map((p: any) => (
-                    <tr key={p.projectId} className="border-b border-zinc-50 hover:bg-zinc-50/50">
+                    <tr key={p.projectId} className="border-b border-zinc-50 hover:bg-canvas/50">
                       <td className="px-4 py-2">
-                        <span className="font-medium text-zinc-900">{p.projectNumber}</span>
+                        <span className="font-medium text-ink">{p.projectNumber}</span>
                         <span className="block text-[10px] text-zinc-400 truncate max-w-[120px]">{p.partName}</span>
                       </td>
                       <td className="px-3 py-2 text-right text-zinc-600">{formatCurrency(p.labourCost)}</td>
                       <td className="px-3 py-2 text-right text-zinc-600">{formatCurrency(p.machineCost)}</td>
-                      <td className="px-4 py-2 text-right font-semibold text-zinc-900">{formatCurrency(p.totalCost)}</td>
+                      <td className="px-4 py-2 text-right font-semibold text-ink">{formatCurrency(p.totalCost)}</td>
                     </tr>
                   ))
                 )}
@@ -755,8 +754,8 @@ function ReconciliationTab({ data, monthYear }: { data: any; monthYear: string }
         </div>
 
         {/* Employee allocation */}
-        <div className="rounded-xl bg-white border border-zinc-200/60 overflow-hidden shadow-xs">
-          <div className="px-4 py-3 bg-zinc-50/80 border-b border-zinc-100">
+        <div className="rounded-[12px] bg-white border border-border-gray/60 overflow-hidden shadow-subtle">
+          <div className="px-4 py-3 bg-canvas/80 border-b border-zinc-100">
             <h3 className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5 text-zinc-400" />
               Employee Utilization & Allocation
@@ -766,11 +765,11 @@ function ReconciliationTab({ data, monthYear }: { data: any; monthYear: string }
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-white">
                 <tr className="border-b border-zinc-100">
-                  <th className="text-left px-4 py-2 font-medium text-zinc-500 text-[10px]">Employee</th>
-                  <th className="text-right px-3 py-2 font-medium text-zinc-500 text-[10px]">Util %</th>
-                  <th className="text-right px-3 py-2 font-medium text-zinc-500 text-[10px]">Paid</th>
-                  <th className="text-right px-3 py-2 font-medium text-zinc-500 text-[10px]">Allocated</th>
-                  <th className="text-right px-4 py-2 font-medium text-zinc-500 text-[10px]">Gap</th>
+                  <th className="text-left px-4 py-2 font-medium text-mute text-[10px]">Employee</th>
+                  <th className="text-right px-3 py-2 font-medium text-mute text-[10px]">Util %</th>
+                  <th className="text-right px-3 py-2 font-medium text-mute text-[10px]">Paid</th>
+                  <th className="text-right px-3 py-2 font-medium text-mute text-[10px]">Allocated</th>
+                  <th className="text-right px-4 py-2 font-medium text-mute text-[10px]">Gap</th>
                 </tr>
               </thead>
               <tbody>
@@ -778,9 +777,9 @@ function ReconciliationTab({ data, monthYear }: { data: any; monthYear: string }
                   <tr><td colSpan={5} className="text-center py-8 text-zinc-400">No employee data</td></tr>
                 ) : (
                   employeeRecon.map((emp: any) => (
-                    <tr key={emp.id} className="border-b border-zinc-50 hover:bg-zinc-50/50">
+                    <tr key={emp.id} className="border-b border-zinc-50 hover:bg-canvas/50">
                       <td className="px-4 py-2">
-                        <span className="font-medium text-zinc-900">{emp.name}</span>
+                        <span className="font-medium text-ink">{emp.name}</span>
                         <span className="block text-[10px] text-zinc-400">{emp.employeeCode}</span>
                       </td>
                       <td className="px-3 py-2 text-right">
@@ -823,12 +822,12 @@ function ReconciliationBar({ label, value, max, color }: { label: string; value:
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs text-zinc-600 w-28 flex-shrink-0">{label}</span>
-      <div className="flex-1 h-6 bg-zinc-50 rounded-lg overflow-hidden border border-zinc-100">
+      <div className="flex-1 h-6 bg-canvas rounded-[12px] overflow-hidden border border-zinc-100">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className={`h-full ${color} rounded-lg flex items-center justify-end pr-2`}
+          className={`h-full ${color} rounded-[12px] flex items-center justify-end pr-2`}
         >
           {pct > 15 && (
             <span className="text-[10px] font-semibold text-white">{formatCurrency(value)}</span>

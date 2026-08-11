@@ -364,19 +364,19 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-300">
-      <div className="bg-zinc-900 border border-white/10 w-full max-w-[1450px] max-h-[92vh] rounded-3xl flex flex-col shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden text-white">
+      <div className="bg-zinc-900 border border-white/10 w-full max-w-[1450px] max-h-[92vh] rounded-[12px] flex flex-col shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden text-white">
         
         {/* Top Header Bar */}
         <div className="p-5 sm:p-6 border-b border-white/10 bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/40 flex justify-between items-center relative overflow-hidden shrink-0">
-          <div className="absolute -top-12 -left-12 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -top-12 -left-12 w-48 h-48 bg-primary-subtle0/20 rounded-full blur-3xl pointer-events-none"></div>
           <div className="relative flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 border border-white/20">
+            <div className="w-12 h-12 rounded-[12px] bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-subtle shadow-blue-500/20 border border-white/20">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-3">
+              <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-3">
                 Designer Daily Work Report (DSDR)
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 uppercase tracking-widest">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary-subtle0/20 text-blue-300 border border-blue-400/30 uppercase tracking-widest">
                   {project?.projectNumber || 'Project Work Log'}
                 </span>
               </h2>
@@ -388,7 +388,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
           
           <button 
             onClick={onClose} 
-            className="p-2.5 rounded-2xl hover:bg-white/10 transition-colors text-zinc-400 hover:text-white border border-transparent hover:border-white/10"
+            className="p-2.5 rounded-[12px] hover:bg-white/10 transition-colors text-zinc-400 hover:text-white border border-transparent hover:border-white/10"
             title="Close Sheet"
           >
             <X className="w-5 h-5" />
@@ -398,7 +398,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
         {/* Global Details Bar (Designer Name, Date, Project Details) */}
         <div className="p-4 sm:p-5 bg-white/[0.03] border-b border-white/10 flex flex-wrap gap-4 sm:gap-6 items-end shrink-0">
           <div className="flex-1 min-w-[240px]">
-            <label className="text-xs font-extrabold text-blue-300 uppercase tracking-wider mb-1.5 flex items-center gap-2">
+            <label className="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-1.5 flex items-center gap-2">
               <User className="w-3.5 h-3.5 text-blue-400" /> Designer / Engineer Name *
             </label>
             <div className="relative">
@@ -408,7 +408,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                 value={header.designerName}
                 onChange={(e) => setHeader({ ...header, designerName: e.target.value })}
                 placeholder="Type or select designer name..."
-                className="w-full bg-zinc-800/80 border border-white/15 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-inner font-medium"
+                className="w-full bg-zinc-800/80 border border-white/15 rounded-[12px] px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-inner font-medium"
               />
               <datalist id="designer-employees-list">
                 {employees?.map((emp: any) => {
@@ -424,21 +424,21 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
           </div>
 
           <div className="w-full sm:w-56">
-            <label className="text-xs font-extrabold text-blue-300 uppercase tracking-wider mb-1.5 flex items-center gap-2">
+            <label className="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-1.5 flex items-center gap-2">
               <Calendar className="w-3.5 h-3.5 text-blue-400" /> Work Date *
             </label>
             <input
               type="date"
               value={header.workDate}
               onChange={(e) => setHeader({ ...header, workDate: e.target.value })}
-              className="w-full bg-zinc-800/80 border border-white/15 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+              className="w-full bg-zinc-800/80 border border-white/15 rounded-[12px] px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
             />
           </div>
 
-          <div className="flex-1 min-w-[200px] hidden md:flex items-center justify-end gap-3 bg-zinc-800/40 p-3 rounded-2xl border border-white/5">
+          <div className="flex-1 min-w-[200px] hidden md:flex items-center justify-end gap-3 bg-zinc-800/40 p-3 rounded-[12px] border border-white/5">
             <div className="text-right">
-              <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block">Total Shift Hours</span>
-              <span className="text-lg font-black text-emerald-400 flex items-center justify-end gap-1">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 block">Total Shift Hours</span>
+              <span className="text-lg font-semibold text-emerald-400 flex items-center justify-end gap-1">
                 <Timer className="w-4 h-4 text-emerald-400" />
                 {totalShiftHours} hrs logged
               </span>
@@ -450,7 +450,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
         <div className="flex-1 overflow-auto p-4 sm:p-6 bg-zinc-950/40">
           <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
             <thead>
-              <tr className="text-zinc-400 border-b border-white/10 text-xs uppercase tracking-wider font-bold bg-white/[0.02]">
+              <tr className="text-zinc-400 border-b border-white/10 text-xs uppercase tracking-wider font-semibold bg-white/[0.02]">
                 <th className="py-3 px-2 w-10 text-center">Sr.</th>
                 <th className="py-3 px-2 min-w-[150px]">Part / Component</th>
                 <th className="py-3 px-2 w-36">Drawing No.</th>
@@ -469,7 +469,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
               {items.map((item, index) => (
                 <tr key={item.id} className="group hover:bg-white/[0.04] transition-colors">
                   {/* Sr. No */}
-                  <td className="py-2 px-2 text-center text-zinc-500 font-mono text-xs">
+                  <td className="py-2 px-2 text-center text-mute font-mono text-xs">
                     {index + 1}
                   </td>
 
@@ -480,7 +480,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       value={item.partName}
                       onChange={(e) => handleItemChange(index, 'partName', e.target.value)}
                       placeholder="e.g. Die Cavity..."
-                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all"
+                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-[12px] px-2.5 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all"
                     />
                   </td>
 
@@ -491,7 +491,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       value={item.drawingNumber}
                       onChange={(e) => handleItemChange(index, 'drawingNumber', e.target.value)}
                       placeholder="e.g. DWG-01..."
-                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all font-mono"
+                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-[12px] px-2.5 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all font-mono"
                     />
                   </td>
 
@@ -502,7 +502,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       value={item.revision}
                       onChange={(e) => handleItemChange(index, 'revision', e.target.value)}
                       placeholder="Rev 0.1"
-                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all text-center"
+                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-[12px] px-2 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all text-center"
                     />
                   </td>
 
@@ -512,7 +512,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       <select
                         value={item.workStage}
                         onChange={(e) => handleItemChange(index, 'workStage', e.target.value)}
-                        className="w-full bg-zinc-800/80 border border-white/10 hover:border-white/20 focus:border-blue-500 rounded-lg px-2 py-1.5 text-xs text-white outline-none transition-all font-medium"
+                        className="w-full bg-zinc-800/80 border border-white/10 hover:border-white/20 focus:border-blue-500 rounded-[12px] px-2 py-1.5 text-xs text-white outline-none transition-all font-medium"
                       >
                         {WORK_STAGES.map((stg) => (
                           <option key={stg} value={stg} className="bg-zinc-900 text-white">
@@ -539,7 +539,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       value={item.description}
                       onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                       placeholder="Detail task completed, CAD changes, or drafting notes..."
-                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-zinc-500 outline-none transition-all"
+                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-[12px] px-2.5 py-1.5 text-xs text-white placeholder-zinc-500 outline-none transition-all"
                     />
                   </td>
 
@@ -550,7 +550,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       value={item.startTime}
                       onChange={(e) => handleItemChange(index, 'startTime', e.target.value)}
                       placeholder="09:00 AM"
-                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all text-center"
+                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-[12px] px-2 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all text-center"
                     />
                   </td>
 
@@ -561,7 +561,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       value={item.endTime}
                       onChange={(e) => handleItemChange(index, 'endTime', e.target.value)}
                       placeholder="01:00 PM"
-                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all text-center"
+                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 focus:bg-zinc-800 rounded-[12px] px-2 py-1.5 text-xs text-white placeholder-zinc-600 outline-none transition-all text-center"
                     />
                   </td>
 
@@ -573,7 +573,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       min="0.5"
                       value={item.hoursSpent}
                       onChange={(e) => handleItemChange(index, 'hoursSpent', e.target.value === '' ? ('' as any) : parseFloat(e.target.value))}
-                      className="w-full bg-zinc-800/80 border border-white/15 hover:border-blue-400 focus:border-blue-500 rounded-lg px-1.5 py-1.5 text-xs text-emerald-400 font-extrabold outline-none transition-all text-center"
+                      className="w-full bg-zinc-800/80 border border-white/15 hover:border-blue-400 focus:border-blue-500 rounded-[12px] px-1.5 py-1.5 text-xs text-emerald-400 font-semibold outline-none transition-all text-center"
                     />
                   </td>
 
@@ -582,7 +582,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                     <select
                       value={item.status}
                       onChange={(e) => handleItemChange(index, 'status', e.target.value)}
-                      className="w-full bg-zinc-800/80 border border-white/10 hover:border-white/20 focus:border-blue-500 rounded-lg px-2 py-1.5 text-xs text-white outline-none transition-all"
+                      className="w-full bg-zinc-800/80 border border-white/10 hover:border-white/20 focus:border-blue-500 rounded-[12px] px-2 py-1.5 text-xs text-white outline-none transition-all"
                     >
                       <option value="COMPLETED" className="bg-zinc-900 text-emerald-400">Completed</option>
                       <option value="IN_PROGRESS" className="bg-zinc-900 text-amber-400">In Progress</option>
@@ -597,7 +597,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                       value={item.cadFileUrl}
                       onChange={(e) => handleItemChange(index, 'cadFileUrl', e.target.value)}
                       placeholder="https://..."
-                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 rounded-lg px-2 py-1.5 text-xs text-blue-300 placeholder-zinc-600 outline-none transition-all"
+                      className="w-full bg-zinc-800/60 border border-white/10 hover:border-white/20 focus:border-blue-500 rounded-[12px] px-2 py-1.5 text-xs text-blue-300 placeholder-zinc-600 outline-none transition-all"
                     />
                   </td>
 
@@ -605,7 +605,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
                   <td className="py-2 px-1 text-center">
                     <button
                       onClick={() => removeRow(index)}
-                      className="p-1.5 rounded-lg hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors opacity-60 group-hover:opacity-100"
+                      className="p-1.5 rounded-[12px] hover:bg-red-500/20 text-mute hover:text-red-400 transition-colors opacity-60 group-hover:opacity-100"
                       title="Remove Row"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -621,14 +621,14 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={addRow}
-                className="flex items-center text-xs font-extrabold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-4 py-2.5 rounded-xl transition-all border border-blue-500/20 shadow-sm cursor-pointer active:scale-95"
+                className="flex items-center text-xs font-semibold text-blue-400 hover:text-blue-300 bg-primary-subtle0/10 hover:bg-primary-subtle0/20 px-4 py-2.5 rounded-[12px] transition-all border border-blue-500/20 shadow-sm cursor-pointer active:scale-95"
               >
                 <Plus className="w-4 h-4 mr-1.5" /> Add Activity Row
               </button>
 
               <button
                 onClick={handleDownloadTemplate}
-                className="flex items-center text-xs font-extrabold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2.5 rounded-xl transition-all border border-emerald-500/20 shadow-sm cursor-pointer active:scale-95"
+                className="flex items-center text-xs font-semibold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2.5 rounded-[12px] transition-all border border-emerald-500/20 shadow-sm cursor-pointer active:scale-95"
               >
                 <Download className="w-4 h-4 mr-1.5" /> Download Template
               </button>
@@ -643,14 +643,14 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
 
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center text-xs font-extrabold text-purple-300 hover:text-purple-200 bg-purple-500/10 hover:bg-purple-500/20 px-4 py-2.5 rounded-xl transition-all border border-purple-500/20 shadow-sm cursor-pointer active:scale-95"
+                className="flex items-center text-xs font-semibold text-purple-300 hover:text-purple-200 bg-purple-500/10 hover:bg-purple-500/20 px-4 py-2.5 rounded-[12px] transition-all border border-purple-500/20 shadow-sm cursor-pointer active:scale-95"
               >
                 <Upload className="w-4 h-4 mr-1.5" /> Import CSV Sheet
               </button>
             </div>
 
             <div className="text-xs text-zinc-400 flex items-center gap-2">
-              <HelpCircle className="w-3.5 h-3.5 text-zinc-500" />
+              <HelpCircle className="w-3.5 h-3.5 text-mute" />
               <span>Rows with valid task descriptions will be saved to the database.</span>
             </div>
           </div>
@@ -659,13 +659,13 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
         {/* Modal Bottom Footer Actions */}
         <div className="p-5 border-t border-white/10 bg-zinc-900/90 flex items-center justify-between gap-4 shrink-0">
           <div className="text-xs text-zinc-400 font-medium">
-            Shift logging {items.length} item(s) â€¢ <span className="text-emerald-400 font-extrabold">{totalShiftHours} total hrs</span>
+            Shift logging {items.length} item(s) â€¢ <span className="text-emerald-400 font-semibold">{totalShiftHours} total hrs</span>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-zinc-400 hover:text-white font-bold text-xs border border-white/10"
+              className="px-5 py-2.5 rounded-[12px] hover:bg-white/5 transition-colors text-zinc-400 hover:text-white font-semibold text-xs border border-white/10"
             >
               Cancel
             </button>
@@ -673,7 +673,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
             <button
               onClick={handleSave}
               disabled={isSaving || createLogMutation.isPending || updateLogMutation.isPending}
-              className="flex items-center px-7 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl shadow-lg shadow-indigo-600/30 text-xs font-extrabold tracking-wider transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+              className="flex items-center px-7 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-[12px] shadow-subtle shadow-indigo-600/30 text-xs font-semibold tracking-wider transition-all cursor-pointer active:scale-95 disabled:opacity-50"
             >
               {isSaving ? (
                 'Saving Reports...'

@@ -40,15 +40,15 @@ export default function LoginPage() {
       <div className="w-full max-w-[420px] p-10 glass-panel relative z-10">
         
         <div className="text-center mb-10">
-          <div className="mx-auto w-16 h-16 rounded-[1.25rem] bg-white border border-black/5 shadow-[0_8px_16px_rgba(15,15,20,0.04)] flex items-center justify-center mb-6">
-            <Shield className="w-8 h-8 text-zinc-900" strokeWidth={1.5} />
+          <div className="mx-auto w-16 h-16 rounded-[1.25rem] bg-white border border-hairline/60 shadow-[0_8px_16px_rgba(15,15,20,0.04)] flex items-center justify-center mb-6">
+            <Shield className="w-8 h-8 text-ink" strokeWidth={1.5} />
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900 mb-2 tracking-tight">ToolRoomOS</h1>
+          <h1 className="text-2xl font-semibold text-ink mb-2 tracking-tight">ToolRoomOS</h1>
           <p className="text-zinc-600 font-medium text-sm">Sign in to your account</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start space-x-3 text-red-600 text-sm font-medium">
+          <div className="mb-6 p-4 rounded-md bg-red-50 border border-red-100 flex items-start space-x-3 text-red-600 text-sm font-medium">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p>{error}</p>
           </div>
@@ -83,7 +83,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-[#0A0A0C] hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-[0_4px_14px_rgba(10,10,12,0.15)] hover:shadow-[0_6px_20px_rgba(10,10,12,0.2)] flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+              className="w-full h-12 bg-primary hover:bg-black text-white rounded-md font-semibold text-sm transition-all shadow-[0_4px_14px_rgba(10,10,12,0.15)] hover:shadow-[0_6px_20px_rgba(10,10,12,0.2)] flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <span>{isLoading ? 'Authenticating...' : 'Sign In'}</span>
               {!isLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
@@ -91,7 +91,7 @@ export default function LoginPage() {
           </div>
         </form>
         
-        <div className="mt-8 text-center text-[11px] font-medium text-zinc-500 uppercase tracking-widest">
+        <div className="mt-8 text-center text-[11px] font-medium text-mute uppercase tracking-widest">
           Authorized Personnel Only
         </div>
       </div>

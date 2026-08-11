@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { 
   Users, 
   Briefcase, 
@@ -235,10 +235,8 @@ export default function MonthlyPayrollPage() {
   }, [monthYear, dateRangeType, startDate, endDate]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans bg-[#F8F9FA]">
-      <Sidebar />
-      <main className="flex-1 h-full flex flex-col relative pl-16 overflow-hidden">
-        <div className="w-full max-w-[1440px] mx-auto h-full flex flex-col px-6 py-6 min-h-0 overflow-y-auto space-y-6">
+    <AppLayout>
+      <div className="w-full h-full flex flex-col min-h-0 space-y-6">
         
         {/* Header */}
         <PageHeader
@@ -248,7 +246,7 @@ export default function MonthlyPayrollPage() {
             <div className="flex items-center gap-3">
               <button 
                 onClick={handleExportCSV}
-                className="flex items-center px-4 py-2.5 bg-black/5 hover:bg-black/10 text-zinc-900 border border-black/10 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer backdrop-blur-md"
+                className="flex items-center px-4 py-2.5 bg-black/5 hover:bg-black/10 text-ink border border-border-gray rounded-[12px] text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer backdrop-blur-md"
               >
                 <Download className="h-4 w-4 mr-2 text-emerald-600" />
                 Export Payroll CSV
@@ -258,19 +256,19 @@ export default function MonthlyPayrollPage() {
         />
 
         {/* Editable Month Span Bar */}
-        <div className="bg-white/60 dark:bg-zinc-900/60 border border-black/10 rounded-2xl p-5 mb-8 backdrop-blur-xl shadow-elevation relative overflow-hidden">
+        <div className="bg-white/60 dark:bg-zinc-900/60 border border-border-gray rounded-[12px] p-5 mb-8 backdrop-blur-xl shadow-elevation relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-emerald-500/10 via-blue-500/5 to-transparent pointer-events-none" />
           
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 relative z-10">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600">
+              <div className="w-12 h-12 rounded-[12px] bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600">
                 <Calendar className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-600 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
                   Active Month Span
                 </span>
-                <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight mt-0.5">
+                <h2 className="text-xl font-semibold text-ink tracking-tight mt-0.5">
                   {monthDisplayTitle}
                 </h2>
               </div>
@@ -278,45 +276,45 @@ export default function MonthlyPayrollPage() {
 
             {/* Editable Controls */}
             <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-              <div className="flex bg-black/5 p-1 rounded-xl border border-black/10">
+              <div className="flex bg-black/5 p-1 rounded-[12px] border border-border-gray">
                 <button
                   onClick={() => setDateRangeType('month')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${dateRangeType === 'month' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600 hover:text-zinc-900'}`}
+                  className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all ${dateRangeType === 'month' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600 hover:text-ink'}`}
                 >
                   Month Picker
                 </button>
                 <button
                   onClick={() => setDateRangeType('custom')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${dateRangeType === 'custom' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600 hover:text-zinc-900'}`}
+                  className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all ${dateRangeType === 'custom' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600 hover:text-ink'}`}
                 >
                   Custom Range
                 </button>
               </div>
 
               {dateRangeType === 'month' ? (
-                <div className="flex items-center space-x-2 bg-black/5 px-3 py-2 rounded-xl border border-black/10">
-                  <span className="text-xs font-semibold text-zinc-500">Select Month:</span>
+                <div className="flex items-center space-x-2 bg-black/5 px-3 py-2 rounded-[12px] border border-border-gray">
+                  <span className="text-xs font-semibold text-mute">Select Month:</span>
                   <input 
                     type="month"
                     value={monthYear}
                     onChange={(e) => setMonthYear(e.target.value)}
-                    className="bg-transparent font-bold text-xs text-zinc-900 focus:outline-none cursor-pointer"
+                    className="bg-transparent font-semibold text-xs text-ink focus:outline-none cursor-pointer"
                   />
                 </div>
               ) : (
-                <div className="flex items-center space-x-2 bg-black/5 px-3 py-2 rounded-xl border border-black/10">
+                <div className="flex items-center space-x-2 bg-black/5 px-3 py-2 rounded-[12px] border border-border-gray">
                   <input 
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="bg-transparent text-xs text-zinc-900 font-medium focus:outline-none cursor-pointer"
+                    className="bg-transparent text-xs text-ink font-medium focus:outline-none cursor-pointer"
                   />
                   <span className="text-xs text-zinc-400">to</span>
                   <input 
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="bg-transparent text-xs text-zinc-900 font-medium focus:outline-none cursor-pointer"
+                    className="bg-transparent text-xs text-ink font-medium focus:outline-none cursor-pointer"
                   />
                 </div>
               )}
@@ -334,7 +332,7 @@ export default function MonthlyPayrollPage() {
                     <button
                       key={key}
                       onClick={() => { setDateRangeType('month'); setMonthYear(key); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${monthYear === key && dateRangeType === 'month' ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-black/5 border-black/5 text-zinc-600 hover:bg-black/10'}`}
+                      className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold border transition-all ${monthYear === key && dateRangeType === 'month' ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-black/5 border-border-gray/60 text-zinc-600 hover:bg-black/10'}`}
                     >
                       {label} {y}
                     </button>
@@ -395,18 +393,18 @@ export default function MonthlyPayrollPage() {
               placeholder="Search employee name, code, designation, or project..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/60 border border-black/10 rounded-xl pl-10 pr-4 py-2.5 text-zinc-900 text-xs focus:outline-none focus:border-emerald-500 transition-colors shadow-sm backdrop-blur-md"
+              className="w-full bg-white/60 border border-border-gray rounded-[12px] pl-10 pr-4 py-2.5 text-ink text-xs focus:outline-none focus:border-emerald-500 transition-colors shadow-sm backdrop-blur-md"
             />
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="flex items-center space-x-2 bg-white/60 border border-black/10 rounded-xl px-3 py-2 text-xs shadow-sm backdrop-blur-md">
-              <Filter className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="text-zinc-500 font-medium">Dept:</span>
+            <div className="flex items-center space-x-2 bg-white/60 border border-border-gray rounded-[12px] px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+              <Filter className="w-3.5 h-3.5 text-mute" />
+              <span className="text-mute font-medium">Dept:</span>
               <select 
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="bg-transparent font-bold text-zinc-900 focus:outline-none cursor-pointer"
+                className="bg-transparent font-semibold text-ink focus:outline-none cursor-pointer"
               >
                 <option value="ALL">All Departments</option>
                 {departmentsList.map(d => (
@@ -415,12 +413,12 @@ export default function MonthlyPayrollPage() {
               </select>
             </div>
 
-            <div className="flex items-center space-x-2 bg-white/60 border border-black/10 rounded-xl px-3 py-2 text-xs shadow-sm backdrop-blur-md">
-              <span className="text-zinc-500 font-medium">Type:</span>
+            <div className="flex items-center space-x-2 bg-white/60 border border-border-gray rounded-[12px] px-3 py-2 text-xs shadow-sm backdrop-blur-md">
+              <span className="text-mute font-medium">Type:</span>
               <select 
                 value={selectedEmpType}
                 onChange={(e) => setSelectedEmpType(e.target.value)}
-                className="bg-transparent font-bold text-zinc-900 focus:outline-none cursor-pointer"
+                className="bg-transparent font-semibold text-ink focus:outline-none cursor-pointer"
               >
                 <option value="ALL">All Types</option>
                 <option value="INTERNAL">Internal</option>
@@ -431,16 +429,16 @@ export default function MonthlyPayrollPage() {
         </div>
 
         {/* Main Payroll & Work Table */}
-        <div className="bg-white/70 border border-black/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-2xl">
+        <div className="bg-white/70 border border-border-gray rounded-[12px] overflow-hidden shadow-level-4 backdrop-blur-2xl">
           {loading ? (
             <div className="p-12 text-center space-y-4">
               <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-600 rounded-full animate-spin mx-auto" />
-              <p className="text-xs font-semibold text-zinc-500">Aggregating actual work done across all projects for {monthDisplayTitle}...</p>
+              <p className="text-xs font-semibold text-mute">Aggregating actual work done across all projects for {monthDisplayTitle}...</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs whitespace-nowrap">
-                <thead className="bg-black/[0.03] text-zinc-500 border-b border-black/5 font-bold uppercase tracking-wider text-[10px]">
+                <thead className="bg-black/[0.03] text-mute border-b border-border-gray/60 font-semibold uppercase tracking-wider text-[10px]">
                   <tr>
                     <th className="px-6 py-4">Employee</th>
                     <th className="px-6 py-4">Department & Role</th>
@@ -471,22 +469,22 @@ export default function MonthlyPayrollPage() {
                         {/* Employee Code & Name */}
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-3">
-                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs border ${emp.employeeType === 'EXTERNAL' ? 'bg-purple-500/10 text-purple-600 border-purple-500/20' : 'bg-blue-500/10 text-blue-600 border-blue-500/20'}`}>
+                            <div className={`w-9 h-9 rounded-[12px] flex items-center justify-center font-semibold text-xs border ${emp.employeeType === 'EXTERNAL' ? 'bg-purple-500/10 text-purple-600 border-purple-500/20' : 'bg-primary-subtle0/10 text-primary border-blue-500/20'}`}>
                               {emp.name.substring(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-bold text-zinc-900 text-sm flex items-center space-x-2">
+                              <div className="font-semibold text-ink text-sm flex items-center space-x-2">
                                 <span>{emp.name}</span>
                                 {emp.isCustomSalary && (
-                                  <span className="bg-amber-500/10 text-amber-700 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border border-amber-500/20">
+                                  <span className="bg-amber-500/10 text-amber-700 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border border-amber-500/20">
                                     Override
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center space-x-2 text-[11px] text-zinc-500 font-mono">
+                              <div className="flex items-center space-x-2 text-[11px] text-mute font-mono">
                                 <span>{emp.employeeCode}</span>
                                 <span>•</span>
-                                <span className={emp.employeeType === 'EXTERNAL' ? 'text-purple-600 font-medium' : 'text-blue-600 font-medium'}>
+                                <span className={emp.employeeType === 'EXTERNAL' ? 'text-purple-600 font-medium' : 'text-primary font-medium'}>
                                   {emp.employeeType}
                                 </span>
                               </div>
@@ -497,12 +495,12 @@ export default function MonthlyPayrollPage() {
                         {/* Department & Role */}
                         <td className="px-6 py-4">
                           <div className="font-semibold text-zinc-800">{emp.designation}</div>
-                          <div className="text-zinc-500 text-[11px]">{emp.department?.name || 'Unassigned'}</div>
+                          <div className="text-mute text-[11px]">{emp.department?.name || 'Unassigned'}</div>
                         </td>
 
                         {/* Hourly Rate */}
                         <td className="px-6 py-4 text-center">
-                          <span className="font-mono font-bold text-zinc-800">₹{emp.hourlyRate}</span>
+                          <span className="font-mono font-semibold text-zinc-800">₹{emp.hourlyRate}</span>
                           <span className="text-zinc-400 text-[10px]"> / hr</span>
                         </td>
 
@@ -510,7 +508,7 @@ export default function MonthlyPayrollPage() {
                         <td className="px-6 py-4">
                           <div className="flex flex-col space-y-1">
                             <div className="flex items-center justify-between space-x-2">
-                              <span className={`font-mono font-extrabold text-sm ${emp.totalHours > 0 ? 'text-zinc-900' : 'text-zinc-400'}`}>
+                              <span className={`font-mono font-semibold text-sm ${emp.totalHours > 0 ? 'text-ink' : 'text-zinc-400'}`}>
                                 {emp.totalHours} hrs
                               </span>
                               <span className="text-[10px] text-zinc-400">/ {emp.standardHours}h std</span>
@@ -536,17 +534,17 @@ export default function MonthlyPayrollPage() {
                                 <button
                                   key={idx}
                                   onClick={() => setSelectedEmployeeDetail(emp)}
-                                  className="inline-flex items-center space-x-1 bg-black/5 hover:bg-emerald-500/10 text-zinc-800 hover:text-emerald-700 px-2 py-1 rounded-md text-[11px] font-medium border border-black/5 hover:border-emerald-500/30 transition-colors cursor-pointer"
+                                  className="inline-flex items-center space-x-1 bg-black/5 hover:bg-emerald-500/10 text-zinc-800 hover:text-emerald-700 px-2 py-1 rounded-[12px] text-[11px] font-medium border border-border-gray/60 hover:border-emerald-500/30 transition-colors cursor-pointer"
                                   title={`${p.partName} (${p.customerName}): ${p.hours} hrs`}
                                 >
-                                  <span className="font-bold font-mono">{p.projectNumber}</span>
-                                  <span className="text-[10px] text-zinc-500">({p.hours}h)</span>
+                                  <span className="font-semibold font-mono">{p.projectNumber}</span>
+                                  <span className="text-[10px] text-mute">({p.hours}h)</span>
                                 </button>
                               ))}
                               {emp.projects.length > 3 && (
                                 <button
                                   onClick={() => setSelectedEmployeeDetail(emp)}
-                                  className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 hover:bg-emerald-500/20"
+                                  className="text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 hover:bg-emerald-500/20"
                                 >
                                   +{emp.projects.length - 3} more
                                 </button>
@@ -557,7 +555,7 @@ export default function MonthlyPayrollPage() {
 
                         {/* Calculated Base Salary */}
                         <td className="px-6 py-4 text-right">
-                          <div className="font-mono font-bold text-zinc-900 text-sm">
+                          <div className="font-mono font-semibold text-ink text-sm">
                             ₹{emp.baseSalaryCalculated.toLocaleString()}
                           </div>
                           <div className="text-[10px] text-zinc-400">
@@ -570,12 +568,12 @@ export default function MonthlyPayrollPage() {
                           {isEditing ? (
                             <div className="flex flex-col items-end space-y-2">
                               <div className="flex items-center space-x-1.5">
-                                <span className="font-bold text-zinc-900 text-xs">₹</span>
+                                <span className="font-semibold text-ink text-xs">₹</span>
                                 <input 
                                   type="number"
                                   value={editingActualSalary}
                                   onChange={(e) => setEditingActualSalary(e.target.value)}
-                                  className="w-28 bg-white border border-emerald-500 rounded-lg px-2.5 py-1 text-zinc-900 text-xs font-bold font-mono focus:outline-none shadow-sm"
+                                  className="w-28 bg-white border border-emerald-500 rounded-[12px] px-2.5 py-1 text-ink text-xs font-semibold font-mono focus:outline-none shadow-sm"
                                   placeholder="Enter Salary"
                                   autoFocus
                                 />
@@ -585,20 +583,20 @@ export default function MonthlyPayrollPage() {
                                 value={editingRemarks}
                                 onChange={(e) => setEditingRemarks(e.target.value)}
                                 placeholder="Remarks / Bonus Note"
-                                className="w-36 bg-white border border-black/10 rounded-md px-2 py-0.5 text-[10px] text-zinc-700 focus:outline-none"
+                                className="w-36 bg-white border border-border-gray rounded-[12px] px-2 py-0.5 text-[10px] text-zinc-700 focus:outline-none"
                               />
                             </div>
                           ) : (
                             <div className="flex flex-col items-end">
                               <div className="flex items-center space-x-1.5">
-                                <span className="font-mono font-extrabold text-emerald-600 text-base">
+                                <span className="font-mono font-semibold text-emerald-600 text-base">
                                   ₹{emp.actualSalary.toLocaleString()}
                                 </span>
                               </div>
 
                               {/* Variance Badge */}
                               {emp.variance !== 0 && (
-                                <span className={`text-[10px] font-mono font-bold ${emp.variance > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                <span className={`text-[10px] font-mono font-semibold ${emp.variance > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                   {emp.variance > 0 ? `+₹${emp.variance.toLocaleString()} Bonus` : `-₹${Math.abs(emp.variance).toLocaleString()} Deduction`}
                                 </span>
                               )}
@@ -613,14 +611,14 @@ export default function MonthlyPayrollPage() {
                               <button
                                 onClick={() => handleSaveActualSalary(emp.id)}
                                 disabled={savingSalary}
-                                className="p-1.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                                className="p-1.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-[12px] shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                                 title="Save Actual Salary"
                               >
                                 <Save className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => setEditingEmpId(null)}
-                                className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-black/5 rounded-lg transition-colors cursor-pointer"
+                                className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-black/5 rounded-[12px] transition-colors cursor-pointer"
                                 title="Cancel"
                               >
                                 <X className="w-4 h-4" />
@@ -634,7 +632,7 @@ export default function MonthlyPayrollPage() {
                                   setEditingActualSalary(emp.actualSalary);
                                   setEditingRemarks(emp.remarks || '');
                                 }}
-                                className="px-2.5 py-1.5 bg-black/5 hover:bg-black/10 text-zinc-700 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                className="px-2.5 py-1.5 bg-black/5 hover:bg-black/10 text-zinc-700 rounded-[12px] text-xs font-semibold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                 title="Edit Monthly Actual Salary"
                               >
                                 <Edit3 className="w-3.5 h-3.5 text-emerald-600" />
@@ -643,7 +641,7 @@ export default function MonthlyPayrollPage() {
 
                               <button
                                 onClick={() => setSelectedEmployeeDetail(emp)}
-                                className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-black/5 rounded-lg transition-colors cursor-pointer"
+                                className="p-1.5 text-zinc-400 hover:text-ink hover:bg-black/5 rounded-[12px] transition-colors cursor-pointer"
                                 title="View Work Details"
                               >
                                 <ChevronRight className="w-4 h-4" />
@@ -671,42 +669,42 @@ export default function MonthlyPayrollPage() {
             <div className="space-y-6">
               
               {/* Employee Summary Card */}
-              <div className="bg-black/5 border border-black/10 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="bg-black/5 border border-border-gray rounded-[12px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-zinc-900 text-lg">{selectedEmployeeDetail.name}</span>
-                    <span className="text-xs font-mono bg-zinc-200 px-2 py-0.5 rounded font-bold text-zinc-700">{selectedEmployeeDetail.employeeCode}</span>
+                    <span className="font-semibold text-ink text-lg">{selectedEmployeeDetail.name}</span>
+                    <span className="text-xs font-mono bg-zinc-200 px-2 py-0.5 rounded font-semibold text-zinc-700">{selectedEmployeeDetail.employeeCode}</span>
                   </div>
-                  <p className="text-xs text-zinc-500">{selectedEmployeeDetail.designation} • {selectedEmployeeDetail.department?.name || 'General'}</p>
+                  <p className="text-xs text-mute">{selectedEmployeeDetail.designation} • {selectedEmployeeDetail.department?.name || 'General'}</p>
                 </div>
 
                 <div className="flex items-center space-x-6 text-right">
                   <div>
                     <div className="text-xs text-zinc-400">Total Worked</div>
-                    <div className="font-mono font-extrabold text-zinc-900 text-base">{selectedEmployeeDetail.totalHours} hrs</div>
+                    <div className="font-mono font-semibold text-ink text-base">{selectedEmployeeDetail.totalHours} hrs</div>
                   </div>
                   <div>
                     <div className="text-xs text-zinc-400">Projects</div>
-                    <div className="font-mono font-extrabold text-emerald-600 text-base">{selectedEmployeeDetail.projectCount}</div>
+                    <div className="font-mono font-semibold text-emerald-600 text-base">{selectedEmployeeDetail.projectCount}</div>
                   </div>
                 </div>
               </div>
 
               {/* Projects Breakdown List */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-3">Project Contributions Breakdown</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-mute mb-3">Project Contributions Breakdown</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {selectedEmployeeDetail.projects.map((proj, idx) => (
-                    <div key={idx} className="bg-white border border-black/10 rounded-xl p-3.5 shadow-sm space-y-2">
+                    <div key={idx} className="bg-white border border-border-gray rounded-[12px] p-3.5 shadow-sm space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        <span className="font-mono font-semibold text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                           {proj.projectNumber}
                         </span>
-                        <span className="font-mono font-extrabold text-xs text-zinc-900">{proj.hours} hrs</span>
+                        <span className="font-mono font-semibold text-xs text-ink">{proj.hours} hrs</span>
                       </div>
-                      <div className="text-xs font-bold text-zinc-900">{proj.partName}</div>
-                      <div className="text-[11px] text-zinc-500">Customer: {proj.customerName}</div>
-                      <div className="text-[10px] text-zinc-400 flex items-center justify-between border-t border-black/5 pt-1.5">
+                      <div className="text-xs font-semibold text-ink">{proj.partName}</div>
+                      <div className="text-[11px] text-mute">Customer: {proj.customerName}</div>
+                      <div className="text-[10px] text-zinc-400 flex items-center justify-between border-t border-border-gray/60 pt-1.5">
                         <span>{proj.taskCount} work activity entries</span>
                       </div>
                     </div>
@@ -716,21 +714,21 @@ export default function MonthlyPayrollPage() {
 
               {/* Detailed Activity Logs */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-3">Detailed Work Logs ({selectedEmployeeDetail.workLogs.length})</h4>
-                <div className="bg-white border border-black/10 rounded-xl max-h-60 overflow-y-auto divide-y divide-black/5 text-xs">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-mute mb-3">Detailed Work Logs ({selectedEmployeeDetail.workLogs.length})</h4>
+                <div className="bg-white border border-border-gray rounded-[12px] max-h-60 overflow-y-auto divide-y divide-black/5 text-xs">
                   {selectedEmployeeDetail.workLogs.length === 0 ? (
                     <div className="p-4 text-center text-zinc-400 italic">No individual log entries found for this month.</div>
                   ) : selectedEmployeeDetail.workLogs.map((log, idx) => (
                     <div key={idx} className="p-3 flex items-start justify-between gap-3 hover:bg-black/[0.01]">
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center space-x-2">
-                          <span className="font-bold text-zinc-900">{log.activityType}</span>
-                          <span className="text-[10px] font-mono text-zinc-500 bg-black/5 px-1.5 py-0.5 rounded">{log.projectNumber}</span>
+                          <span className="font-semibold text-ink">{log.activityType}</span>
+                          <span className="text-[10px] font-mono text-mute bg-black/5 px-1.5 py-0.5 rounded">{log.projectNumber}</span>
                           <span className="text-[10px] text-zinc-400">{new Date(log.date).toLocaleDateString()}</span>
                         </div>
                         <p className="text-zinc-600 text-[11px]">{log.description}</p>
                       </div>
-                      <div className="font-mono font-bold text-zinc-900 text-xs shrink-0">
+                      <div className="font-mono font-semibold text-ink text-xs shrink-0">
                         {log.hours} hrs
                       </div>
                     </div>
@@ -739,10 +737,10 @@ export default function MonthlyPayrollPage() {
               </div>
 
               {/* Modal Footer */}
-              <div className="pt-4 border-t border-black/10 flex justify-end">
+              <div className="pt-4 border-t border-border-gray flex justify-end">
                 <button
                   onClick={() => setSelectedEmployeeDetail(null)}
-                  className="px-5 py-2 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+                  className="px-5 py-2 bg-zinc-900 text-white rounded-[12px] text-xs font-semibold hover:bg-zinc-800 transition-colors cursor-pointer"
                 >
                   Close Work Logs
                 </button>
@@ -752,9 +750,8 @@ export default function MonthlyPayrollPage() {
           </Modal>
         )}
 
-        </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
 
@@ -767,14 +764,14 @@ function SummaryCard({ title, value, subtext, icon, accentColor }: {
   accentColor: string;
 }) {
   return (
-    <div className="bg-white/60 border border-black/10 rounded-2xl p-5 backdrop-blur-xl shadow-elevation relative overflow-hidden group hover:scale-[1.02] transition-all">
+    <div className="bg-white/60 border border-border-gray rounded-[12px] p-5 backdrop-blur-xl shadow-elevation relative overflow-hidden group hover:scale-[1.02] transition-all">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold text-zinc-500">{title}</span>
-        <div className="p-2 rounded-xl bg-black/5 border border-black/5">
+        <span className="text-xs font-semibold text-mute">{title}</span>
+        <div className="p-2 rounded-[12px] bg-black/5 border border-border-gray/60">
           {icon}
         </div>
       </div>
-      <div className="text-xl font-extrabold text-zinc-900 tracking-tight font-mono mb-1">
+      <div className="text-xl font-semibold text-ink tracking-tight font-mono mb-1">
         {value}
       </div>
       <div className="text-[11px] text-zinc-400">

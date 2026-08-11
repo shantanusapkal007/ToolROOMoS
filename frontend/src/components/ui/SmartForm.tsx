@@ -16,6 +16,10 @@ interface SmartFormProps {
   isLoading?: boolean;
 }
 
+/**
+ * SmartForm Component matching Design System specs:
+ * - Uses SectionCard (card-feature), Input (text-input), Select (text-input derived), and Button primitives
+ */
 export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState<any>({});
   const [dynamicOptions, setDynamicOptions] = useState<Record<string, {label: string, value: string}[]>>({});
@@ -38,7 +42,6 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
     if (initialData) {
       setFormData(initialData);
     } else {
-      // Initialize with empty strings
       const init: any = {};
       fields.forEach(f => init[f.name] = '');
       setFormData(init);
@@ -87,7 +90,6 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
   }, [quickAddField]);
 
   const handleChange = (name: string, value: any) => {
-    // Intercept CREATE_NEW
     if (value === 'CREATE_NEW') {
       const field = fields.find(f => f.name === name);
       if (field) {
@@ -156,15 +158,15 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
     if (field.type === 'textarea') {
       return (
         <div key={field.name} className={gridClass}>
-          <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wider">
-            {field.label} {field.required && <span className="text-red-500">*</span>}
+          <label className="block text-body-sm-strong text-ink mb-1.5">
+            {field.label} {field.required && <span className="text-accent-red">*</span>}
           </label>
           <textarea
             required={field.required}
             placeholder={field.placeholder}
             value={formData[field.name] || ''}
             onChange={(e) => handleChange(field.name, e.target.value)}
-            className="w-full bg-white/70 backdrop-blur-xl border border-black/10 hover:border-black/20 rounded-xl px-4 py-2.5 text-zinc-900 placeholder-zinc-500 focus:outline-none focus:ring-0 focus:bg-white focus:border-blue-500/40 focus:shadow-elevation shadow-[0_2px_4px_rgba(15,15,20,0.02)] transition-all duration-300 min-h-[100px]"
+            className="w-full bg-canvas border border-border-gray rounded-[10px] px-4 py-3 text-body-md text-ink placeholder:text-mute focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 hover:border-mute-soft transition-colors min-h-[100px]"
           />
         </div>
       );
@@ -174,7 +176,7 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
       return (
         <div key={field.name} className={`${gridClass} flex items-center h-full pt-6`}>
           <label className="flex items-center space-x-3 cursor-pointer group">
-            <div className="relative flex items-center justify-center w-6 h-6 rounded-md border border-black/10 bg-white/70 shadow-[0_2px_4px_rgba(15,15,20,0.02)] backdrop-blur-md group-hover:border-black/30 group-hover:bg-white transition-all duration-300">
+            <div className="relative flex items-center justify-center w-5 h-5 rounded-xs border border-border-gray bg-canvas group-hover:border-mute transition-colors">
               <input
                 type="checkbox"
                 required={field.required}
@@ -183,10 +185,10 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
                 className="absolute opacity-0 w-full h-full cursor-pointer"
               />
               {formData[field.name] && (
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
               )}
             </div>
-            <span className="text-sm font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">{field.label} {field.required && <span className="text-red-500">*</span>}</span>
+            <span className="text-body-sm text-ink">{field.label} {field.required && <span className="text-accent-red">*</span>}</span>
           </label>
         </div>
       );
@@ -195,13 +197,13 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
     if (field.type === 'radio' && field.options) {
       return (
         <div key={field.name} className={gridClass}>
-          <label className="block text-xs font-semibold text-zinc-500 mb-3 uppercase tracking-wider">
-            {field.label} {field.required && <span className="text-red-500">*</span>}
+          <label className="block text-body-sm-strong text-ink mb-2">
+            {field.label} {field.required && <span className="text-accent-red">*</span>}
           </label>
           <div className="flex flex-wrap gap-4">
             {field.options.map(opt => (
               <label key={opt.value} className="flex items-center space-x-2 cursor-pointer group">
-                <div className="relative flex items-center justify-center w-5 h-5 rounded-full border border-black/10 bg-white/70 shadow-[0_2px_4px_rgba(15,15,20,0.02)] backdrop-blur-md group-hover:border-black/30 group-hover:bg-white transition-all duration-300">
+                <div className="relative flex items-center justify-center w-4.5 h-4.5 rounded-full border border-border-gray bg-canvas group-hover:border-mute transition-colors">
                   <input
                     type="radio"
                     name={field.name}
@@ -211,10 +213,10 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
                     className="absolute opacity-0 w-full h-full cursor-pointer"
                   />
                   {formData[field.name] === opt.value && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
+                    <div className="w-2 h-2 rounded-full bg-primary"></div>
                   )}
                 </div>
-                <span className="text-sm text-zinc-600 group-hover:text-zinc-900 transition-colors">{opt.label}</span>
+                <span className="text-body-sm text-ink">{opt.label}</span>
               </label>
             ))}
           </div>
@@ -222,7 +224,6 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
       );
     }
 
-    // Default fallback for text, email, number, date
     return (
       <div key={field.name} className={gridClass}>
         <Input
@@ -237,7 +238,6 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
     );
   };
 
-  // Group fields by section
   const sections = fields.reduce((acc, field) => {
     const sectionName = field.section || 'General Details';
     if (!acc[sectionName]) acc[sectionName] = [];
@@ -248,14 +248,14 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl mx-auto">
       {Object.entries(sections).map(([sectionName, sectionFields]) => (
-        <SectionCard key={sectionName} title={sectionName} className="!p-6">
+        <SectionCard key={sectionName} title={sectionName}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
             {sectionFields.map(renderField)}
           </div>
         </SectionCard>
       ))}
 
-      <div className="sticky bottom-0 z-50 flex justify-end space-x-3 p-4 bg-white border border-black/10 rounded-2xl shadow-[0_24px_48px_-12px_rgba(15,15,20,0.12)]">
+      <div className="sticky bottom-0 z-50 flex justify-end space-x-3 p-4 bg-canvas border border-border-gray rounded-[12px] shadow-subtle">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel
@@ -308,12 +308,11 @@ export const SmartForm: React.FC<SmartFormProps> = ({ fields, initialData, onSub
               <Input required label="Shape Name" value={quickAddData.shapeName || ''} onChange={(e) => setQuickAddData({...quickAddData, shapeName: e.target.value})} />
             )}
 
-            {/* Fallback simple name input if endpoint is unknown */}
             {!['departments', 'plants', 'companies', 'shifts', 'material-shapes'].some(ep => quickAddField.optionsEndpoint?.includes(ep)) && (
               <Input required label="Name" value={quickAddData.name || ''} onChange={(e) => setQuickAddData({...quickAddData, name: e.target.value})} />
             )}
 
-            <div className="flex justify-end space-x-3 pt-4">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-border-gray">
               <Button type="button" variant="ghost" onClick={() => setQuickAddField(null)}>Cancel</Button>
               <Button type="submit" variant="primary" isLoading={isQuickAdding}>Save</Button>
             </div>

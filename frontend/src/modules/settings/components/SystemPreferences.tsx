@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { Settings, Save } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
@@ -69,105 +71,106 @@ export const SystemPreferences = () => {
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black/10"></div>
-        <span className="ml-3 text-sm text-zinc-500 font-bold uppercase tracking-widest">Loading Preferences...</span>
+      <div className="h-full flex items-center justify-center p-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-caption text-silver-blue font-semibold uppercase tracking-wider">Loading Preferences...</span>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-6 border-b border-black/10 shrink-0 bg-black/5">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center mr-4 border border-orange-500/20">
+    <div className="h-full flex flex-col relative min-h-0">
+      <div className="flex items-center justify-between p-5 border-b border-border-gray shrink-0 bg-white">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-[10px] bg-primary-subtle text-primary flex items-center justify-center border border-primary/20 shadow-subtle">
             <Settings className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">System Preferences</h2>
-            <p className="text-sm text-zinc-500">Configure global OS behavior and project numbering setup.</p>
+            <h2 className="text-section-heading font-bold text-ink tracking-tight">System Preferences</h2>
+            <p className="text-caption text-silver-blue">Configure global OS behavior, notification alerts, and project numbering sequence.</p>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8 hide-scrollbar">
-        <div className="max-w-3xl space-y-8">
+      <div className="flex-1 overflow-y-auto p-6 hide-scrollbar bg-[#fbfbfd]">
+        <div className="max-w-3xl space-y-6">
 
           {/* Project Numbering Configuration Card */}
-          <div className="space-y-4 border border-black/10 p-6 rounded-2xl bg-[#F4F4F6]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
-            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-4 mb-4">Project Numbering Setup</h3>
+          <div className="border border-border-gray p-5 rounded-[12px] bg-white shadow-subtle space-y-4">
+            <h3 className="text-body font-bold text-ink border-b border-border-gray pb-3">Project Numbering Setup</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-caption font-semibold text-zinc-800 mb-1">Project Number Prefix</label>
+                <label className="block text-micro font-semibold uppercase text-silver-blue mb-1">Project Number Prefix</label>
                 <input 
                   type="text"
                   value={preferences.projectNumberPrefix}
                   onChange={(e) => setPreferences(prev => ({ ...prev, projectNumberPrefix: e.target.value }))}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-caption bg-white font-mono text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border-gray rounded-[10px] text-caption bg-white font-mono text-ink focus:outline-none focus:border-primary shadow-subtle"
                   placeholder="e.g. KTD-"
                 />
-                <p className="text-micro text-zinc-500 mt-1">Default prefix attached to newly initialized projects.</p>
+                <p className="text-small text-silver-blue mt-1">Default prefix attached to newly initialized projects.</p>
               </div>
 
               <div>
-                <label className="block text-caption font-semibold text-zinc-800 mb-1">Starting / Next Project Number</label>
+                <label className="block text-micro font-semibold uppercase text-silver-blue mb-1">Starting / Next Project Number</label>
                 <input 
                   type="number"
                   min="1"
                   value={preferences.projectStartingNumber}
                   onChange={(e) => setPreferences(prev => ({ ...prev, projectStartingNumber: parseInt(e.target.value, 10) || 1 }))}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-caption bg-white font-mono text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border-gray rounded-[10px] text-caption bg-white font-mono text-ink focus:outline-none focus:border-primary shadow-subtle"
                   placeholder="e.g. 33"
                 />
-                <p className="text-micro text-zinc-500 mt-1">Set to 33 to start project sequence from KTD-33.</p>
+                <p className="text-small text-silver-blue mt-1">Set to 33 to start project sequence from KTD-33.</p>
               </div>
             </div>
           </div>
           
-          <div className="space-y-4 border border-black/10 p-6 rounded-2xl bg-[#F4F4F6]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
-            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-4 mb-4">Notifications</h3>
+          <div className="border border-border-gray p-5 rounded-[12px] bg-white shadow-subtle space-y-3">
+            <h3 className="text-body font-bold text-ink border-b border-border-gray pb-3">Notifications & Alerts</h3>
             
-            <div className="flex items-center justify-between py-3">
+            <div className="flex items-center justify-between py-2">
               <div>
-                <p className="font-medium text-zinc-900">Email Notifications</p>
-                <p className="text-sm text-zinc-500">Send system alerts via email.</p>
+                <p className="font-bold text-caption text-ink">Email Notifications</p>
+                <p className="text-small text-silver-blue">Send critical system alerts and milestone notifications via email.</p>
               </div>
               <Toggle checked={preferences.emailNotifications} onChange={() => togglePref('emailNotifications')} />
             </div>
             
-            <div className="flex items-center justify-between py-3 border-t border-black/5">
+            <div className="flex items-center justify-between py-2 border-t border-border-gray">
               <div>
-                <p className="font-medium text-zinc-900">Slack Integration</p>
-                <p className="text-sm text-zinc-500">Push workflow events to Slack channels.</p>
+                <p className="font-bold text-caption text-ink">Slack Integration</p>
+                <p className="text-small text-silver-blue">Push shopfloor job card and breakdown events to Slack channels.</p>
               </div>
               <Toggle checked={preferences.slackIntegration} onChange={() => togglePref('slackIntegration')} />
             </div>
           </div>
 
-          <div className="space-y-4 border border-black/10 p-6 rounded-2xl bg-[#F4F4F6]/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
-            <h3 className="text-lg font-semibold text-zinc-900 border-b border-black/10 pb-4 mb-4">System Maintenance</h3>
+          <div className="border border-border-gray p-5 rounded-[12px] bg-white shadow-subtle space-y-3">
+            <h3 className="text-body font-bold text-ink border-b border-border-gray pb-3">System Maintenance</h3>
             
-            <div className="flex items-center justify-between py-3">
+            <div className="flex items-center justify-between py-2">
               <div>
-                <p className="font-medium text-zinc-900">Automated Backups</p>
-                <p className="text-sm text-zinc-500">Run daily database snapshots.</p>
+                <p className="font-bold text-caption text-ink">Automated Backups</p>
+                <p className="text-small text-silver-blue">Run daily database snapshots and store to cloud archive.</p>
               </div>
               <Toggle checked={preferences.autoBackup} onChange={() => togglePref('autoBackup')} />
             </div>
             
-            <div className="flex items-center justify-between py-3 border-t border-black/5">
+            <div className="flex items-center justify-between py-2 border-t border-border-gray">
               <div>
-                <p className="font-medium text-red-400">Maintenance Mode</p>
-                <p className="text-sm text-zinc-500">Lock out all non-admin users for system updates.</p>
+                <p className="font-bold text-caption text-[#b91c1c]">Maintenance Mode</p>
+                <p className="text-small text-silver-blue">Lock out all non-admin users for scheduled system maintenance.</p>
               </div>
               <Toggle checked={preferences.maintenanceMode} onChange={() => togglePref('maintenanceMode')} danger />
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end">
-            <Button variant="primary" leftIcon={<Save className="w-4 h-4" />} onClick={handleSave} isLoading={isSaving}>
-              Apply Changes
+          <div className="pt-2 flex justify-end">
+            <Button variant="primary" size="md" onClick={handleSave} isLoading={isSaving}>
+              <Save className="w-4 h-4 mr-1.5" />
+              <span>Apply Preferences</span>
             </Button>
           </div>
         </div>
@@ -180,13 +183,15 @@ const Toggle = ({ checked, onChange, danger = false }: { checked: boolean, onCha
   return (
     <button 
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0B1018] ${
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out ${
         checked 
-          ? danger ? 'bg-red-500 focus:ring-red-500' : 'bg-blue-500 focus:ring-blue-500' 
-          : 'bg-slate-700 focus:ring-slate-400'
+          ? danger ? 'bg-accent-red' : 'bg-primary' 
+          : 'bg-[#dedee5]'
       }`}
     >
-      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
+      <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-subtle transition duration-200 ease-in-out ${
+        checked ? 'translate-x-2' : '-translate-x-2'
+      }`} />
     </button>
   );
 };

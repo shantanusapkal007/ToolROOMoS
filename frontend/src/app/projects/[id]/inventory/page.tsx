@@ -88,7 +88,7 @@ export default function ProjectInventoryPage() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setPrintIssueData(row)}
-            className="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+            className="p-1.5 rounded-[12px] bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
             title="Print Issue Slip"
           >
             <Printer className="w-3.5 h-3.5" />
@@ -96,7 +96,7 @@ export default function ProjectInventoryPage() {
           </button>
           <button
             onClick={() => handleExportIssueRow(row)}
-            className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+            className="p-1.5 rounded-[12px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
             title="Export Issue Excel"
           >
             <Download className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ export default function ProjectInventoryPage() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setViewingGrnDetails(rawGrn)}
-              className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-blue-100 text-primary-dark border border-blue-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="View GRN Details"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -140,7 +140,7 @@ export default function ProjectInventoryPage() {
             </button>
             <button
               onClick={() => handleExportGrnRow(row)}
-              className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="Export GRN Excel"
             >
               <Download className="w-3.5 h-3.5" />
@@ -176,11 +176,11 @@ export default function ProjectInventoryPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
               <PackageCheck className="w-5 h-5 text-emerald-600" />
               <span>Goods Receipt Notes (GRN)</span>
             </h2>
-            <p className="text-xs text-zinc-500">Inward materials received against Purchase Orders for this project.</p>
+            <p className="text-xs text-mute">Inward materials received against Purchase Orders for this project.</p>
           </div>
         </div>
         <SmartTable 
@@ -196,11 +196,11 @@ export default function ProjectInventoryPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-primary" />
               <span>Live Inventory Ledger (Stock Movements)</span>
             </h2>
-            <p className="text-xs text-zinc-500">Real-time ledger of all stock additions (GRNs) and deductions (Issues).</p>
+            <p className="text-xs text-mute">Real-time ledger of all stock additions (GRNs) and deductions (Issues).</p>
           </div>
         </div>
         <SmartTable 
@@ -216,11 +216,11 @@ export default function ProjectInventoryPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
               <PackageCheck className="w-5 h-5 text-amber-600" />
               <span>Material Issues & Requisitions</span>
             </h2>
-            <p className="text-xs text-zinc-500">Track raw material blocks, standard hardware, and consumables issued to shop floor.</p>
+            <p className="text-xs text-mute">Track raw material blocks, standard hardware, and consumables issued to shop floor.</p>
           </div>
           <Button variant="primary" size="md" onClick={() => setIsFormOpen(true)}>
             <Plus className="w-4 h-4" />
@@ -272,31 +272,31 @@ export default function ProjectInventoryPage() {
         >
           <div className="space-y-5 font-sans">
             {/* Header info */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-zinc-50 rounded-xl border border-zinc-200 text-xs">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-canvas rounded-[12px] border border-border-gray text-xs">
               <div>
-                <span className="text-zinc-500 font-bold block uppercase tracking-wider text-[10px]">GRN Number</span>
-                <span className="font-mono font-bold text-zinc-900">{viewingGrnDetails.grnNumber}</span>
+                <span className="text-mute font-semibold block uppercase tracking-wider text-[10px]">GRN Number</span>
+                <span className="font-mono font-semibold text-ink">{viewingGrnDetails.grnNumber}</span>
               </div>
               <div>
-                <span className="text-zinc-500 font-bold block uppercase tracking-wider text-[10px]">PO Reference</span>
-                <span className="font-mono font-bold text-zinc-900">{viewingGrnDetails.poHeader?.poNumber || viewingGrnDetails.documentNumber || 'PO-001'}</span>
+                <span className="text-mute font-semibold block uppercase tracking-wider text-[10px]">PO Reference</span>
+                <span className="font-mono font-semibold text-ink">{viewingGrnDetails.poHeader?.poNumber || viewingGrnDetails.documentNumber || 'PO-001'}</span>
               </div>
               <div>
-                <span className="text-zinc-500 font-bold block uppercase tracking-wider text-[10px]">Supplier Challan</span>
-                <span className="font-mono text-zinc-900">{viewingGrnDetails.supplierChallan || '-'}</span>
+                <span className="text-mute font-semibold block uppercase tracking-wider text-[10px]">Supplier Challan</span>
+                <span className="font-mono text-ink">{viewingGrnDetails.supplierChallan || '-'}</span>
               </div>
               <div>
-                <span className="text-zinc-500 font-bold block uppercase tracking-wider text-[10px]">Date Received</span>
-                <span className="font-mono text-zinc-900">{new Date(viewingGrnDetails.createdAt || Date.now()).toLocaleDateString('en-GB')}</span>
+                <span className="text-mute font-semibold block uppercase tracking-wider text-[10px]">Date Received</span>
+                <span className="font-mono text-ink">{new Date(viewingGrnDetails.createdAt || Date.now()).toLocaleDateString('en-GB')}</span>
               </div>
             </div>
 
             {/* Received Items Table */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-700 mb-2">Received Goods Line Items</h4>
-              <div className="border border-zinc-200 rounded-xl overflow-hidden">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-2">Received Goods Line Items</h4>
+              <div className="border border-border-gray rounded-[12px] overflow-hidden">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-zinc-100/70 text-zinc-600 font-bold text-[10px] uppercase tracking-wider border-b border-zinc-200">
+                  <thead className="bg-zinc-100/70 text-zinc-600 font-semibold text-[10px] uppercase tracking-wider border-b border-border-gray">
                     <tr>
                       <th className="p-2.5">Det #</th>
                       <th className="p-2.5">Tool #</th>
@@ -312,17 +312,17 @@ export default function ProjectInventoryPage() {
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
                     {(viewingGrnDetails.items || []).map((item: any, idx: number) => (
-                      <tr key={item.id || idx} className="hover:bg-zinc-50 font-mono">
-                        <td className="p-2.5 font-bold text-zinc-900">{item.detNo || idx + 1}</td>
+                      <tr key={item.id || idx} className="hover:bg-canvas font-mono">
+                        <td className="p-2.5 font-semibold text-ink">{item.detNo || idx + 1}</td>
                         <td className="p-2.5">{item.toolNo || project?.projectNumber || 'TOOL'}</td>
                         <td className="p-2.5 font-sans font-medium text-zinc-800">{item.poItem?.material?.materialGrade || item.poItem?.material?.materialName || 'Raw Material'}</td>
                         <td className="p-2.5">{item.heatNumber || '-'}</td>
                         <td className="p-2.5 text-right">{item.poItem?.orderedQty || item.receivedQty || 0}</td>
-                        <td className="p-2.5 text-right font-bold text-blue-700">{item.receivedQty || 0}</td>
-                        <td className="p-2.5 text-right font-bold text-emerald-700">{item.acceptedQty || 0}</td>
-                        <td className="p-2.5 text-right font-bold text-rose-600">{item.rejectedQty || 0}</td>
+                        <td className="p-2.5 text-right font-semibold text-primary-dark">{item.receivedQty || 0}</td>
+                        <td className="p-2.5 text-right font-semibold text-emerald-700">{item.acceptedQty || 0}</td>
+                        <td className="p-2.5 text-right font-semibold text-rose-600">{item.rejectedQty || 0}</td>
                         <td className="p-2.5 text-right">₹{Number(item.actualRate || 0).toLocaleString()}</td>
-                        <td className="p-2.5 text-right font-bold text-zinc-900">₹{Number(item.total || item.basicCost || 0).toLocaleString()}</td>
+                        <td className="p-2.5 text-right font-semibold text-ink">₹{Number(item.total || item.basicCost || 0).toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -333,14 +333,14 @@ export default function ProjectInventoryPage() {
             {/* Actions */}
             <div className="flex justify-between items-center pt-2">
               <Button
-                variant="secondary"
+                variant="white"
                 size="sm"
                 onClick={() => handleExportGrnRow(viewingGrnDetails)}
                 className="text-xs"
               >
                 <Download className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Export Excel
               </Button>
-              <Button variant="secondary" size="sm" onClick={() => setViewingGrnDetails(null)}>
+              <Button variant="white" size="sm" onClick={() => setViewingGrnDetails(null)}>
                 Close
               </Button>
             </div>

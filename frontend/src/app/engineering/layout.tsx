@@ -4,8 +4,7 @@ import React from 'react';
 import { Layers, GitMerge, FileText, Cpu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 const navigation = [
@@ -18,21 +17,21 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
   const pathname = usePathname();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-zinc-900 font-sans mission-control-bg">
-      <Sidebar />
-      <div className="flex-1 h-full flex flex-col relative z-0 pl-24 pr-6 animate-fade-in py-6 max-h-screen">
+    <AppLayout>
+      <div className="w-full h-full flex flex-col min-h-0 space-y-4">
         <PageHeader 
           title="Engineering" 
           description="Manage BOMs, Routings, and Technical Data."
           icon={<Cpu />}
-          colorHint="amber-500"
           breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Engineering' }]}
         />
 
-        <div className="flex flex-1 min-h-0 overflow-hidden mt-2 gap-6">
+        <div className="flex flex-1 min-h-0 overflow-hidden gap-4">
           {/* Sub Navigation Sidebar */}
-          <div className="w-64 shrink-0 flex flex-col space-y-2 overflow-y-auto pr-2 hide-scrollbar pb-10 relative z-10">
-            <div className="absolute -left-10 top-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="w-60 shrink-0 flex flex-col space-y-1 overflow-y-auto pr-1 hide-scrollbar bg-white border border-border-gray rounded-[12px] p-2 shadow-subtle">
+            <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider px-2.5 py-1 mb-1 block">
+              Engineering Modules
+            </span>
             
             {navigation.map((item) => {
               const href = `/engineering/${item.id}`;
@@ -42,44 +41,23 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
                 <Link
                   key={item.id}
                   href={href}
-                  className={`relative group flex items-center w-full p-3 rounded-xl transition-all duration-300 text-left overflow-hidden border ${
+                  className={`flex items-center w-full px-3 py-2.5 rounded-[10px] transition-colors ${
                     isActive 
-                      ? 'bg-amber-500/10 border-amber-500/30 shadow-[0_4px_20px_rgba(245,158,11,0.2)]' 
-                      : 'bg-black/5 border-black/5 hover:border-amber-500/20 hover:bg-white spotlight-card'
+                      ? 'bg-primary text-white font-medium shadow-subtle' 
+                      : 'text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)]'
                   }`}
                 >
-                  <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-[0.98]" />
-
-                  {isActive && (
-                    <>
-                      <motion.div 
-                        layoutId="engActiveTab"
-                        className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent pointer-events-none" 
-                        initial={false}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      />
-                      <motion.div 
-                        layoutId="engActiveBar"
-                        className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 shadow-elevation" 
-                        initial={false}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      />
-                    </>
-                  )}
-                  
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 relative z-10 ${
-                    isActive 
-                      ? 'bg-amber-500/20 text-amber-400 shadow-[inset_0_0_10px_rgba(245,158,11,0.4)]' 
-                      : 'bg-[#F4F4F6] text-zinc-500 group-hover:bg-amber-500/10 group-hover:text-amber-300 border border-black/5 group-hover:border-amber-500/20'
-                  }`}>
-                    {React.cloneElement(item.icon as React.ReactElement<{className?: string}>, { className: 'w-4 h-4' })}
+                  <div className="flex-shrink-0 w-4 h-4 mr-3 flex items-center justify-center">
+                    {React.cloneElement(item.icon as React.ReactElement<{className?: string}>, { 
+                      className: isActive ? 'w-4 h-4 text-white' : 'w-4 h-4 text-silver-blue' 
+                    })}
                   </div>
                   
-                  <div className="ml-3 flex-1 relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-                    <h3 className={`text-xs font-bold tracking-wide transition-colors ${isActive ? 'text-zinc-900' : 'text-zinc-600 group-hover:text-zinc-900'}`}>
-                      {item.label}
-                    </h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium group-hover:text-amber-500/70 transition-colors uppercase tracking-wider">{item.desc}</p>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-caption font-medium leading-tight truncate">{item.label}</span>
+                    <span className={`text-small truncate ${isActive ? 'text-white/80' : 'text-silver-blue'}`}>
+                      {item.desc}
+                    </span>
                   </div>
                 </Link>
               );
@@ -87,11 +65,11 @@ export default function EngineeringLayout({ children }: { children: React.ReactN
           </div>
 
           {/* Page Content */}
-          <div className="flex-1 bg-black/5 backdrop-blur-2xl border border-black/5 rounded-3xl overflow-y-auto shadow-2xl relative z-10 flex flex-col min-h-0">
-             {children}
+          <div className="flex-1 bg-white border border-border-gray rounded-[12px] flex flex-col min-h-0 shadow-subtle overflow-hidden">
+            {children}
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

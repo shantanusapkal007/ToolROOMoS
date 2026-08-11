@@ -98,7 +98,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
       {/* Apple-level Translucent Glass Panel */}
-      <div className="relative w-full max-w-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl border border-white/20 dark:border-slate-700/50 shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden transition-all">
+      <div className="relative w-full max-w-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[12px] border border-white/20 dark:border-slate-700/50 shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden transition-all">
         {/* Glow accent header line */}
         <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
 
@@ -106,11 +106,11 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
           {/* Header */}
           <div className="flex items-center justify-between pb-5 border-b border-slate-200/60 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <div className="p-2.5 rounded-[12px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <Wrench className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h3 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   Submit Shopfloor MSDR Log
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
                     Machine & Fitting Log
@@ -140,7 +140,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   required
                   value={formData.projectId}
                   onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                  className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
                 >
                   <option value="">-- Select Active Project --</option>
                   {runningProjects.map((p) => (
@@ -158,7 +158,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                 <select
                   value={formData.productionSection}
                   onChange={(e) => setFormData({ ...formData, productionSection: e.target.value })}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                  className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
                 >
                   <option value="MACHINE_SHOP">Machine Shop</option>
                   <option value="PRESS_SHOP">Press Shop & Tryout</option>
@@ -180,7 +180,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   required
                   value={formData.machineId}
                   onChange={(e) => setFormData({ ...formData, machineId: e.target.value })}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                  className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
                 >
                   <option value="">-- Select Tool / Machine --</option>
                   {machines.map((m: any) => (
@@ -199,7 +199,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   required
                   value={formData.employeeId}
                   onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                  className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
                 >
                   <option value="">-- Select Operator --</option>
                   {employees.map((emp: any) => (
@@ -222,7 +222,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   placeholder="e.g. TL-2024-08"
                   value={formData.toolNo}
                   onChange={(e) => setFormData({ ...formData, toolNo: e.target.value })}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                  className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
                 />
               </div>
 
@@ -235,7 +235,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   placeholder="e.g. DET-01, Punch Block"
                   value={formData.detNo}
                   onChange={(e) => setFormData({ ...formData, detNo: e.target.value })}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                  className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
                 />
               </div>
 
@@ -247,13 +247,13 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   type="number"
                   value={formData.producedQty}
                   onChange={(e) => setFormData({ ...formData, producedQty: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                  className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
                 />
               </div>
             </div>
 
             {/* Time Tracking: Start, End, Setup & Cutting Hours */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 rounded-[12px] bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20">
               <div>
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-emerald-500" /> Start
@@ -262,7 +262,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   type="time"
                   value={formData.startTime}
                   onChange={(e) => handleStartTimeChange(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-emerald-500"
+                  className="w-full h-9 px-3 rounded-[12px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
 
@@ -274,7 +274,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   type="time"
                   value={formData.endTime}
                   onChange={(e) => handleEndTimeChange(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-emerald-500"
+                  className="w-full h-9 px-3 rounded-[12px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
 
@@ -287,7 +287,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   step="0.1"
                   value={formData.cuttingTime}
                   onChange={(e) => setFormData({ ...formData, cuttingTime: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                  className="w-full h-9 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-emerald-600 dark:text-emerald-400 focus:ring-1 focus:ring-emerald-500"
+                  className="w-full h-9 px-3 rounded-[12px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-emerald-600 dark:text-emerald-400 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
             </div>
@@ -302,7 +302,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                 placeholder="Details of operation: CNC roughing, VMC finishing, Wire EDM cutting, Surface grinding, Bench fitting..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all resize-none"
+                className="w-full px-3.5 py-2.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all resize-none"
               />
             </div>
 
@@ -311,14 +311,14 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="px-5 py-2.5 rounded-[12px] text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={createMsdrLogMutation.isPending}
-                className="px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 shadow-md hover:shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center gap-2"
+                className="px-6 py-2.5 rounded-[12px] text-xs font-semibold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 shadow-subtle hover:shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center gap-2"
               >
                 {createMsdrLogMutation.isPending ? (
                   <span>Saving MSDR...</span>

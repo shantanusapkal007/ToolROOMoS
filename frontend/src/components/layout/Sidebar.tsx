@@ -1,189 +1,178 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Command, Briefcase, Database, Layers, PieChart, Settings, LogOut, User as UserIcon, Package, Wrench, FileText, CreditCard, Sliders, ClipboardList, ShoppingCart, DollarSign } from "lucide-react";
-import { useAuth } from '../auth/AuthProvider';
-import { usePermissions } from '../auth/PermissionProvider';
-import { useDensityStore } from '../../store/useDensityStore';
-
+import { 
+  Boxes, 
+  Briefcase, 
+  Database, 
+  Package, 
+  Wrench, 
+  DollarSign, 
+  ShoppingCart, 
+  Calendar,
+  PieChart,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
+import { useSidebarStore } from '../../store/useSidebarStore';
 
 export function Sidebar() {
-  const { user, logout } = useAuth();
-  const { canViewModule, isAdmin } = usePermissions();
-  const { density, cycleDensity } = useDensityStore();
   const pathname = usePathname();
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Fast 100ms motion without spring bounce
-  const motionConfig = { duration: 0.1, ease: "easeInOut" } as const;
+  const { isExpanded, toggleSidebar } = useSidebarStore();
 
   return (
-    <motion.aside 
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      animate={{ width: isHovered ? "14rem" : "4rem" }}
-      transition={motionConfig}
-      className="fixed left-0 top-0 bottom-0 z-50 bg-white border-r border-zinc-200 flex flex-col hide-on-print shadow-[1px_0_3px_rgba(0,0,0,0.02)]"
+    <aside 
+      className="fixed left-0 top-0 bottom-0 z-40 bg-white border-r border-border-gray transition-all duration-200 ease-out shadow-subtle flex flex-col justify-between p-3 select-none"
+      style={{ width: isExpanded ? '240px' : '68px' }}
     >
-      <div className="flex-1 flex flex-col h-full w-full py-4 px-2 overflow-y-auto hide-scrollbar relative">
-        
-        {/* Logo Area */}
-        <Link href="/" className="flex items-center w-full mb-6 cursor-pointer shrink-0 px-1 group">
-          <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-lg bg-zinc-900 text-white shadow-xs">
-            <Layers className="h-4 w-4" />
+      {/* Top Section: Logo & Navigation */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Brand Wordmark */}
+        <Link 
+          href="/" 
+          className={`flex items-center h-10 mb-4 shrink-0 overflow-hidden cursor-pointer rounded-[10px] hover:bg-[rgba(148,151,169,0.06)] transition-colors ${
+            isExpanded ? 'px-2 justify-start' : 'px-0 justify-center'
+          }`}
+          title="ToolRoomOS"
+        >
+          <div className="w-8 h-8 rounded-[10px] bg-primary flex items-center justify-center text-white shrink-0 font-bold text-base shadow-subtle">
+            T
           </div>
-
           <AnimatePresence>
-            {isHovered && (
-              <motion.div 
+            {isExpanded && (
+              <motion.div
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -6 }}
-                transition={{ duration: 0.1 }}
-                className="ml-3 whitespace-nowrap overflow-hidden"
+                transition={{ duration: 0.15 }}
+                className="ml-3 font-bold text-base tracking-tight text-ink whitespace-nowrap overflow-hidden"
               >
-                <span className="text-card-title tracking-tight text-zinc-900 font-bold">
-                  ToolRoom<span className="text-blue-600">OS</span>
-                </span>
+                ToolRoom<span className="text-primary">OS</span>
               </motion.div>
             )}
           </AnimatePresence>
         </Link>
 
-        {/* Nav Links */}
-        <div className="flex flex-col gap-1 w-full flex-1">
+        {/* Navigation Items */}
+        <nav className="flex-1 overflow-y-auto hide-scrollbar space-y-1">
           <NavItem 
-            href="/"
-            icon={<Command className="h-4 w-4 text-blue-600" />} 
-            label="Dashboard" 
+            href="/" 
+            icon={<Boxes className="h-4 w-4" />} 
+            label="Command Center" 
             active={pathname === "/"} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
           <NavItem 
-            href="/projects"
-            icon={<Briefcase className="h-4 w-4 text-zinc-600" />} 
+            href="/projects" 
+            icon={<Briefcase className="h-4 w-4" />} 
             label="Projects" 
             active={pathname.startsWith("/projects")} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
           <NavItem 
             href="/employee-daily-report"
-            icon={<ClipboardList className="h-4 w-4 text-indigo-600" />} 
+            icon={<Calendar className="h-4 w-4" />} 
             label="Daily Reports" 
             active={pathname.startsWith("/employee-daily-report")} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
           <NavItem 
             href="/master-data"
-            icon={<Database className="h-4 w-4 text-zinc-600" />} 
+            icon={<Database className="h-4 w-4" />} 
             label="Master Data" 
             active={pathname.startsWith("/master-data")} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
           <NavItem 
             href="/assets"
-            icon={<Package className="h-4 w-4 text-emerald-600" />} 
-            label="Inventory" 
+            icon={<Package className="h-4 w-4" />} 
+            label="Inventory & Assets" 
             active={pathname.startsWith("/assets") || pathname.startsWith("/inventory")} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
           <NavItem 
             href="/purchase-orders"
-            icon={<ShoppingCart className="h-4 w-4 text-amber-500" />} 
+            icon={<ShoppingCart className="h-4 w-4" />} 
             label="Purchase Orders" 
             active={pathname.startsWith("/purchase-orders")} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
           <NavItem 
             href="/maintenance"
-            icon={<Wrench className="h-4 w-4 text-amber-600" />} 
+            icon={<Wrench className="h-4 w-4" />} 
             label="Maintenance" 
             active={pathname.startsWith("/maintenance")} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
           <NavItem 
             href="/reports"
-            icon={<PieChart className="h-4 w-4 text-purple-600" />} 
-            label="Reports" 
+            icon={<PieChart className="h-4 w-4" />} 
+            label="Reports & BI" 
             active={pathname.startsWith("/reports")} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
           <NavItem 
             href="/finance"
-            icon={<DollarSign className="h-4 w-4 text-emerald-600" />} 
+            icon={<DollarSign className="h-4 w-4" />} 
             label="Finance & Payroll" 
             active={pathname.startsWith("/finance") || pathname.startsWith("/payroll")} 
-            isExpanded={isHovered}
+            isExpanded={isExpanded}
           />
-          
-          <div className="mt-auto mb-1 pt-3 border-t border-zinc-100 space-y-1">
-            {/* Density Toggle Button */}
-            <button
-              onClick={cycleDensity}
-              className="w-full flex items-center h-8 px-2 rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors text-xs"
-              title={`Density Mode: ${density.toUpperCase()}`}
-            >
-              <Sliders className="h-4 w-4 shrink-0 text-zinc-500" />
-              {isHovered && (
-                <span className="ml-3 text-caption font-medium capitalize truncate">
-                  Density: {density}
-                </span>
-              )}
-            </button>
-
-            <NavItem 
-              href="/activity-log"
-              icon={<FileText className="h-4 w-4 text-zinc-600" />} 
-              label="Activity Log" 
-              active={pathname.startsWith("/activity-log")} 
-              isExpanded={isHovered}
-            />
-            <NavItem 
-              href="/settings"
-              icon={<Settings className="h-4 w-4 text-zinc-600" />} 
-              label="Settings" 
-              active={pathname.startsWith("/settings")} 
-              isExpanded={isHovered}
-            />
-          </div>
-        </div>
-
-        {/* User Profile */}
-        {user && (
-          <div className="mt-2 pt-3 border-t border-zinc-200 w-full flex items-center shrink-0">
-            <div className="flex-shrink-0 h-8 w-8 rounded-md bg-zinc-100 border border-zinc-200 flex items-center justify-center overflow-hidden">
-              <UserIcon className="h-4 w-4 text-zinc-600" />
-            </div>
-            
-            <AnimatePresence>
-              {isHovered && (
-                <motion.div 
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -6 }}
-                  className="ml-2 flex-1 flex items-center justify-between overflow-hidden"
-                >
-                  <div className="flex flex-col whitespace-nowrap overflow-hidden">
-                    <span className="text-caption font-semibold text-zinc-900 truncate">{user.name}</span>
-                    <span className="text-micro text-zinc-500 truncate">{user.role}</span>
-                  </div>
-                  <button
-                    onClick={logout}
-                    className="p-1 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                    title="Sign Out"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+        </nav>
       </div>
-    </motion.aside>
+
+      {/* Footer: Toggle + Version */}
+      <div className="pt-2 border-t border-border-gray shrink-0 overflow-hidden space-y-1">
+        {/* Collapse / Expand Toggle Button */}
+        <button
+          onClick={toggleSidebar}
+          className={`flex items-center w-full h-9 rounded-[10px] text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)] transition-colors cursor-pointer ${
+            isExpanded ? 'px-2.5 justify-start' : 'px-0 justify-center'
+          }`}
+          title={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
+            {isExpanded 
+              ? <ChevronLeft className="w-4 h-4 text-silver-blue" /> 
+              : <ChevronRight className="w-4 h-4 text-silver-blue" />
+            }
+          </div>
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div 
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -6 }}
+                transition={{ duration: 0.1 }}
+                className="ml-3 whitespace-nowrap text-caption font-medium tracking-tight"
+              >
+                Collapse
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </button>
+
+        {/* Version */}
+        <div className={`flex items-center h-8 ${isExpanded ? 'px-2 justify-start' : 'px-0 justify-center'}`}>
+          <div className="w-2 h-2 rounded-full bg-accent-green shrink-0" />
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div 
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -6 }}
+                className="ml-3 text-[11px] font-mono text-silver-blue truncate"
+              >
+                v2.4.0 • Enterprise
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -194,22 +183,24 @@ function NavItem({
   active, 
   isExpanded 
 }: { 
-  href: string, 
-  icon: React.ReactNode, 
-  label: string, 
-  active: boolean, 
-  isExpanded: boolean 
+  href: string; 
+  icon: React.ReactNode; 
+  label: string; 
+  active: boolean; 
+  isExpanded: boolean; 
 }) {
   return (
-    <Link href={href} className="w-full block">
-      <div className={`flex items-center h-8 px-2 rounded-md transition-colors ${
+    <Link href={href} className="w-full block" title={!isExpanded ? label : undefined}>
+      <div className={`flex items-center h-9 rounded-[10px] transition-colors ${
+        isExpanded ? 'px-2.5 justify-start' : 'px-0 justify-center'
+      } ${
         active 
-          ? 'bg-zinc-900 text-white font-medium shadow-xs' 
-          : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+          ? 'bg-primary text-white font-medium shadow-subtle' 
+          : 'text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)]'
       }`}>
-        <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+        <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
           {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { 
-            className: active ? 'w-4 h-4 text-white' : 'w-4 h-4' 
+            className: active ? 'w-4 h-4 text-white' : 'w-4 h-4 text-silver-blue' 
           })}
         </div>
         
@@ -220,7 +211,7 @@ function NavItem({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -6 }}
               transition={{ duration: 0.1 }}
-              className="ml-2.5 whitespace-nowrap flex-1 text-caption tracking-tight"
+              className="ml-3 whitespace-nowrap flex-1 text-caption font-medium tracking-tight"
             >
               {label}
             </motion.div>

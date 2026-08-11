@@ -17,25 +17,29 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
 }
 
+/**
+ * PageHeader Component matching Design_System.md (Kraken theme):
+ * - bg white, border border-gray (#dedee5), rounded 12px, shadow subtle, IBM Plex Sans heading
+ */
 export function PageHeader({ title, description, breadcrumbs, icon, actions }: PageHeaderProps) {
   const { unreadCount, toggleCenter } = useNotifications();
 
   return (
-    <div className="h-[var(--size-header)] flex items-center justify-between w-full border-b border-zinc-200 bg-white px-6 shrink-0 mb-6 rounded-lg shadow-xs">
-      <div className="flex flex-col justify-center gap-0.5">
+    <div className="flex items-center justify-between w-full border border-border-gray bg-white px-6 py-4 shrink-0 rounded-[12px] shadow-subtle">
+      <div className="flex flex-col justify-center gap-1">
         
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav className="flex items-center text-micro text-zinc-400 font-medium">
+          <nav className="flex items-center text-caption text-silver-blue font-medium">
             {breadcrumbs.map((crumb, idx) => (
               <React.Fragment key={idx}>
-                {idx > 0 && <ChevronRight className="w-3 h-3 mx-1 text-zinc-400 shrink-0" />}
+                {idx > 0 && <ChevronRight className="w-3.5 h-3.5 mx-1 text-silver-blue/60 shrink-0" />}
                 {crumb.href ? (
-                  <Link href={crumb.href} className="hover:text-zinc-900 transition-colors">
+                  <Link href={crumb.href} className="hover:text-ink transition-colors">
                     {crumb.label}
                   </Link>
                 ) : (
-                  <span className="text-zinc-600 font-semibold">{crumb.label}</span>
+                  <span className="text-ink font-medium">{crumb.label}</span>
                 )}
               </React.Fragment>
             ))}
@@ -43,17 +47,17 @@ export function PageHeader({ title, description, breadcrumbs, icon, actions }: P
         )}
 
         {/* Title & Subtitle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {icon && (
-            <div className="w-5 h-5 flex items-center justify-center text-zinc-700">
-              {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'w-4 h-4' })}
+            <div className="w-5 h-5 flex items-center justify-center text-primary">
+              {React.cloneElement(icon as React.ReactElement<{className?: string}>, { className: 'w-5 h-5' })}
             </div>
           )}
-          <h1 className="text-section-title font-bold text-zinc-900 tracking-tight leading-none">
+          <h1 className="text-sub-heading font-bold text-ink tracking-tight leading-none">
             {title}
           </h1>
           {description && (
-            <span className="text-caption text-zinc-500 font-normal border-l border-zinc-200 pl-2.5 ml-1 hidden sm:inline">
+            <span className="text-body-sm text-silver-blue font-normal border-l border-border-gray pl-3 ml-1 hidden sm:inline">
               {description}
             </span>
           )}
@@ -61,26 +65,26 @@ export function PageHeader({ title, description, breadcrumbs, icon, actions }: P
       </div>
 
       {/* Global Actions & Utilities */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {actions}
         
-        <div className="flex items-center gap-1 pl-2 border-l border-zinc-200 ml-1">
+        <div className="flex items-center gap-2 pl-3 border-l border-border-gray ml-1">
           <button 
-            className="h-[var(--size-button-secondary)] px-2.5 rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 flex items-center gap-1.5 transition-colors cursor-pointer text-caption font-medium border border-zinc-200" 
+            className="h-9 px-3 rounded-[10px] text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)] flex items-center gap-2 transition-colors cursor-pointer text-caption font-medium border border-border-gray shadow-subtle" 
             title="Command Palette (Cmd+K)"
           >
-            <Search className="w-3.5 h-3.5" />
-            <span className="text-micro bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-500 font-mono">⌘K</span>
+            <Search className="w-4 h-4 text-silver-blue" />
+            <span className="text-[11px] font-mono bg-[rgba(148,151,169,0.08)] px-1.5 py-0.5 rounded-[4px] text-silver-blue">⌘K</span>
           </button>
           
           <button 
             onClick={toggleCenter}
-            className="relative h-[var(--size-button-secondary)] w-8 rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 flex items-center justify-center transition-colors cursor-pointer border border-zinc-200"
+            className="relative h-9 w-9 rounded-[10px] text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)] flex items-center justify-center transition-colors cursor-pointer border border-border-gray shadow-subtle"
             title="Notification Center"
           >
-            <Bell className="w-3.5 h-3.5" />
+            <Bell className="w-4 h-4 text-silver-blue" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 bg-red-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-accent-red text-white rounded-full text-[10px] font-bold flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}

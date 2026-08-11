@@ -4,10 +4,11 @@ import React, { useMemo, useState } from 'react';
 import { Bar } from '@visx/shape';
 import { Group } from '@visx/group';
 import { scaleBand, scaleLinear } from '@visx/scale';
-import { AxisBottom, AxisLeft } from '@visx/axis';
+import { AxisBottom } from '@visx/axis';
 import { useTooltip, useTooltipInPortal, defaultStyles } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { motion } from 'framer-motion';
+import { colors, shadows, radius } from '@/lib/tokens';
 
 export interface FinanceData {
   category: string;
@@ -17,13 +18,12 @@ export interface FinanceData {
 
 const tooltipStyles = {
   ...defaultStyles,
-  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-  color: '#0A0A0C',
+  backgroundColor: colors.canvas,
+  color: colors.ink,
   padding: '12px',
-  borderRadius: '12px',
-  border: '1px solid rgba(15,15,20,0.1)',
-  backdropFilter: 'blur(12px)',
-  boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
+  borderRadius: radius.sm,
+  border: `1px solid ${colors.hairline}`,
+  boxShadow: shadows['level-2'],
 };
 
 interface Props {
@@ -31,7 +31,6 @@ interface Props {
   width?: number;
   height?: number;
 }
-
 
 export function FinanceWaterfall({ data = [], width = 600, height = 300 }: Props) {
   const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<FinanceData>();
@@ -61,25 +60,16 @@ export function FinanceWaterfall({ data = [], width = 600, height = 300 }: Props
   if (width < 10) return null;
   if (!data || data.length === 0) {
     return (
-      <div className="p-8 text-center bg-slate-50/50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-        <p className="text-xs font-semibold text-slate-500">No cost events recorded for this project yet.</p>
-        <p className="text-[11px] text-slate-400 mt-1">Financial variance will populate dynamically as daily report costs & invoices are logged.</p>
+      <div className="p-8 text-center bg-canvas border border-border-gray rounded-[12px]">
+        <p className="text-body-sm-strong text-mute">No cost events recorded for this project yet.</p>
+        <p className="text-caption text-mute-soft mt-1">Financial variance will populate dynamically as daily report costs & invoices are logged.</p>
       </div>
     );
   }
 
-
   return (
     <div className="relative">
       <svg ref={containerRef} width={width} height={height} className="overflow-visible">
-        {/* Glow Filters */}
-        <defs>
-          <filter id="emerald-glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="15" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-        </defs>
-
         <Group top={margin.top} left={margin.left}>
           {data.map((d, index) => {
             const barWidth = xScale.bandwidth();
@@ -90,19 +80,17 @@ export function FinanceWaterfall({ data = [], width = 600, height = 300 }: Props
 
             return (
               <Group key={`bar-${index}`}>
-                {/* Motion wrapper for height animation */}
                 <motion.rect
                   initial={{ height: 0, y: innerHeight }}
                   animate={{ height: barHeight, y: barY }}
-                  transition={{ delay: index * 0.1, type: 'spring', stiffness: 100, damping: 20 }}
+                  transition={{ delay: index * 0.1, duration: 0.2 }}
                   x={barX}
                   width={barWidth}
-                  fill={d.type === 'revenue' ? '#10b981' : '#f43f5e'}
-                  rx={8}
-                  ry={8}
-                  fillOpacity={isHovered ? 1 : 0.7}
-                  filter={isHovered ? 'url(#emerald-glow)' : ''}
-                  className="cursor-pointer transition-all duration-300"
+                  fill={d.type === 'revenue' ? colors['accent-green'] : colors['accent-red']}
+                  rx={4}
+                  ry={4}
+                  fillOpacity={isHovered ? 1 : 0.85}
+                  className="cursor-pointer transition-opacity duration-200"
                   onMouseEnter={(e) => {
                     setActiveHover(d.category);
                     const eventSvgCoords = localPoint(e);
@@ -123,13 +111,13 @@ export function FinanceWaterfall({ data = [], width = 600, height = 300 }: Props
           <AxisBottom
             top={innerHeight}
             scale={xScale}
-            stroke="rgba(15,15,20,0.1)"
-            tickStroke="rgba(15,15,20,0.1)"
+            stroke={colors.hairline}
+            tickStroke={colors.hairline}
             tickLabelProps={() => ({
-              fill: 'rgba(15,15,20,0.5)',
-              fontSize: 11,
+              fill: colors.body,
+              fontSize: 12,
               textAnchor: 'middle',
-              fontWeight: 600,
+              fontWeight: 500,
               fontFamily: 'inherit'
             })}
           />
@@ -139,10 +127,10 @@ export function FinanceWaterfall({ data = [], width = 600, height = 300 }: Props
       {tooltipOpen && tooltipData && (
         <TooltipInPortal top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{tooltipData.category}</span>
+            <span className="text-eyebrow-uppercase-sm font-medium text-mute uppercase">{tooltipData.category}</span>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${tooltipData.type === 'revenue' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-              <span className="text-xl font-black">${tooltipData.value.toLocaleString()}</span>
+              <div className={`w-2 h-2 rounded-full ${tooltipData.type === 'revenue' ? 'bg-accent-green' : 'bg-accent-red'}`} />
+              <span className="text-display-xs font-semibold text-ink">${tooltipData.value.toLocaleString()}</span>
             </div>
           </div>
         </TooltipInPortal>

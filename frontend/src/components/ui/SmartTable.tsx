@@ -1,203 +1,209 @@
-"use client";
+import React, { useState } from 'react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye, Edit2, Trash2, AlertCircle, History, Download } from 'lucide-react';
+import { Button } from './Button';
 
-import React, { useState, useMemo } from 'react';
-import { EntityColumn } from '../../modules/settings/types';
-import { Edit2, Trash2, History, Eye, Download, Search, FileSpreadsheet } from 'lucide-react';
-import * as XLSX from 'xlsx';
-import { SkeletonLoader, TableSkeleton } from './SkeletonLoader';
-import { useDensityStore } from '../../store/useDensityStore';
-
-interface SmartTableProps {
-  columns: EntityColumn[];
-  data: any[];
-  isLoading: boolean;
-  onView?: (record: any) => void;
-  onEdit?: (record: any) => void;
-  onDelete?: (record: any) => void;
-  onHistory?: (record: any) => void;
-  exportable?: boolean;
-  exportFilename?: string;
-  title?: string;
-  actions?: React.ReactNode;
-  maxHeight?: string;
+export interface Column<T> {
+  key: string;
+  header?: string;
+  label?: string;
+  render?: (val: any, row: T) => React.ReactNode;
+  sortable?: boolean;
 }
 
-export const SmartTable: React.FC<SmartTableProps> = ({ 
-  columns, 
-  data, 
-  isLoading, 
-  onView, 
-  onEdit, 
-  onDelete, 
-  onHistory, 
-  exportable = true, 
-  exportFilename = 'ToolRoomOS_Export',
+export interface SmartTableProps<T> {
+  title?: string;
+  columns: Column<T>[];
+  data: T[];
+  onView?: (row: T) => void;
+  onEdit?: (row: T) => void;
+  onDelete?: (row: T) => void;
+  onHistory?: (row: T) => void;
+  isLoading?: boolean;
+  emptyMessage?: string;
+  exportable?: boolean;
+  exportFilename?: string;
+}
+
+/**
+ * SmartTable Component matching Design_System.md (Kraken theme):
+ * - bg white, border border-gray (#dedee5), rounded 12px, shadow subtle
+ */
+export function SmartTable<T extends { id?: string | number }>({
   title,
-  actions,
-  maxHeight
-}) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const { density } = useDensityStore();
+  columns,
+  data,
+  onView,
+  onEdit,
+  onDelete,
+  onHistory,
+  isLoading,
+  emptyMessage = 'No records found.',
+  exportable,
+  exportFilename = 'export',
+}: SmartTableProps<T>) {
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
 
-  const handleExport = () => {
-    if (!data || data.length === 0) return;
-    
-    const exportData = data.map(row => {
-      const rowData: Record<string, any> = {};
-      columns.forEach(col => {
-        let val = row[col.key];
-        if (typeof val === 'object' && val !== null) {
-          val = val.name || val.id || JSON.stringify(val);
-        }
-        rowData[col.label] = val;
-      });
-      return rowData;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Data");
-    
-    const fileName = `${exportFilename}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder('asc');
+    }
   };
 
-  const filteredData = useMemo(() => {
-    if (!searchQuery) return data || [];
-    const lowerQuery = searchQuery.toLowerCase();
-    return (data || []).filter(row => {
-      return columns.some(col => {
-        const val = row[col.key];
-        if (val == null) return false;
-        if (typeof val === 'object') {
-          return JSON.stringify(val).toLowerCase().includes(lowerQuery);
-        }
-        return String(val).toLowerCase().includes(lowerQuery);
-      });
+  const sortedData = React.useMemo(() => {
+    if (!sortKey) return data;
+    return [...data].sort((a: any, b: any) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+      return sortOrder === 'asc' ? 1 : -1;
     });
-  }, [data, searchQuery, columns]);
+  }, [data, sortKey, sortOrder]);
 
-  // Dynamic row height class based on density mode
-  const rowHeightClass = {
-    comfortable: 'h-[var(--size-table-row-comfortable)]',
-    compact: 'h-[var(--size-table-row-compact)]',
-    dense: 'h-[var(--size-table-row-dense)]',
-  }[density] || 'h-[var(--size-table-row-comfortable)]';
+  const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
+  const paginatedData = sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  if (isLoading) {
-    return <TableSkeleton rows={8} />;
-  }
+  const hasActions = onView || onEdit || onDelete || onHistory;
+
+  const handleExportCSV = () => {
+    if (!data.length) return;
+    const headerRow = columns.map(c => c.header || c.label || c.key).join(',');
+    const rows = data.map(item =>
+      columns.map(c => {
+        const val = (item as any)[c.key];
+        return typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val ?? '';
+      }).join(',')
+    );
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headerRow, ...rows].join('\n');
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `${exportFilename}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="w-full bg-white border border-zinc-200 rounded-lg shadow-xs overflow-hidden flex flex-col">
-      {/* Table Header Bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-200 bg-zinc-50 shrink-0 gap-3">
-        <div className="flex items-center gap-3 flex-1">
-          {title && (
-            <span className="text-card-title font-bold text-zinc-900 tracking-tight shrink-0 border-r border-zinc-200 pr-3">
-              {title}
-            </span>
-          )}
-          
-          {/* Search Box */}
-          <div className="relative w-full max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Search table rows..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 bg-white border border-zinc-200 rounded-md text-caption text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 transition-colors"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          {actions}
-          
-          {exportable && (data || []).length > 0 && (
-            <button 
-              onClick={handleExport}
-              className="h-8 px-2.5 bg-white hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 text-caption font-medium border border-zinc-200 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Export to Excel Spreadsheet"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Export</span>
-            </button>
+    <div className="bg-white border border-border-gray rounded-[12px] shadow-subtle overflow-hidden flex flex-col">
+      {(title || exportable) && (
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-gray bg-[rgba(148,151,169,0.02)]">
+          {title && <h3 className="text-feature-title font-semibold text-ink">{title}</h3>}
+          {exportable && (
+            <Button variant="white" size="sm" onClick={handleExportCSV}>
+              <Download className="w-4 h-4 mr-1.5 text-silver-blue" /> Export CSV
+            </Button>
           )}
         </div>
-      </div>
+      )}
 
-      {/* Main Table Grid */}
-      <div 
-        className="w-full overflow-x-auto" 
-        style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
-      >
-        <table className="w-full text-left border-collapse min-w-max">
-          <thead className="sticky top-0 z-20">
-            <tr className="bg-zinc-100 border-b border-zinc-200 text-micro font-bold text-zinc-500 uppercase tracking-wider">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse text-body-sm">
+          <thead>
+            <tr className="bg-[rgba(148,151,169,0.05)] border-b border-border-gray text-caption font-semibold text-cool-gray">
               {columns.map((col) => (
-                <th key={col.key} className="px-3 py-2 border-r border-zinc-200/50 last:border-r-0">
-                  {col.label}
+                <th
+                  key={col.key}
+                  onClick={() => col.sortable && handleSort(col.key)}
+                  className={`py-3.5 px-4 select-none ${
+                    col.sortable ? 'cursor-pointer hover:text-ink' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>{col.header || col.label}</span>
+                    {col.sortable && (
+                      <span className="text-silver-blue">
+                        {sortKey === col.key ? (
+                          sortOrder === 'asc' ? (
+                            <ChevronUp className="w-3.5 h-3.5 text-primary" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5 text-primary" />
+                          )
+                        ) : (
+                          <span className="opacity-0 group-hover:opacity-50">↕</span>
+                        )}
+                      </span>
+                    )}
+                  </div>
                 </th>
               ))}
-              {(onView || onEdit || onDelete || onHistory) && (
-                <th className="px-3 py-2 text-right sticky right-0 bg-zinc-100 z-30 border-l border-zinc-200 shadow-[ -2px_0_4px_rgba(0,0,0,0.02) ]">
-                  Actions
-                </th>
-              )}
+              {hasActions && <th className="py-3.5 px-4 text-right">Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 text-caption text-zinc-800">
-            {filteredData.length > 0 ? (
-              filteredData.map((row, idx) => (
-                <tr 
+          <tbody className="divide-y divide-border-gray">
+            {isLoading ? (
+              <tr>
+                <td colSpan={columns.length + (hasActions ? 1 : 0)} className="py-12 text-center text-silver-blue">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span>Loading data...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : paginatedData.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + (hasActions ? 1 : 0)} className="py-12 text-center text-silver-blue">
+                  <div className="flex flex-col items-center justify-center gap-1.5">
+                    <AlertCircle className="w-6 h-6 text-silver-blue/60" />
+                    <span className="font-medium text-ink">{emptyMessage}</span>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              paginatedData.map((row, idx) => (
+                <tr
                   key={row.id || idx}
-                  className={`${rowHeightClass} group hover:bg-zinc-50/90 transition-colors`}
+                  className="hover:bg-[rgba(148,151,169,0.06)] transition-colors text-ink"
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-3 py-1.5 border-r border-zinc-100/50 last:border-r-0 font-normal">
-                      {col.render ? col.render(row[col.key], row) : (row[col.key] ?? <span className="text-zinc-300">-</span>)}
+                    <td key={col.key} className="py-3.5 px-4">
+                      {col.render ? col.render((row as any)[col.key], row) : (row as any)[col.key] ?? '—'}
                     </td>
                   ))}
-                  
-                  {(onView || onEdit || onDelete || onHistory) && (
-                    <td className="px-3 py-1.5 text-right sticky right-0 bg-white group-hover:bg-zinc-50 border-l border-zinc-200 shadow-[ -2px_0_4px_rgba(0,0,0,0.02) ]">
+                  {hasActions && (
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1">
-                        {onView && (
-                          <button 
-                            onClick={() => onView(row)}
-                            className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="View Record"
+                        {onHistory && (
+                          <button
+                            onClick={() => onHistory(row)}
+                            className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
+                            title="Audit History"
                           >
-                            <Eye className="h-3.5 w-3.5" />
+                            <History className="w-4 h-4" />
                           </button>
                         )}
-                        {onHistory && (
-                          <button 
-                            onClick={() => onHistory(row)}
-                            className="p-1 text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 rounded transition-colors"
-                            title="View Audit Trail"
+                        {onView && (
+                          <button
+                            onClick={() => onView(row)}
+                            className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
+                            title="View Details"
                           >
-                            <History className="h-3.5 w-3.5" />
+                            <Eye className="w-4 h-4" />
                           </button>
                         )}
                         {onEdit && (
-                          <button 
+                          <button
                             onClick={() => onEdit(row)}
-                            className="p-1 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                            className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
                             title="Edit Record"
                           >
-                            <Edit2 className="h-3.5 w-3.5" />
+                            <Edit2 className="w-4 h-4" />
                           </button>
                         )}
                         {onDelete && (
-                          <button 
+                          <button
                             onClick={() => onDelete(row)}
-                            className="p-1 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Archive Record"
+                            className="p-1.5 text-cool-gray hover:text-accent-red hover:bg-red-50 rounded-[8px] transition-colors"
+                            title="Delete Record"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
@@ -205,25 +211,41 @@ export const SmartTable: React.FC<SmartTableProps> = ({
                   )}
                 </tr>
               ))
-            ) : (
-              <tr>
-                <td colSpan={columns.length + 1} className="py-12 text-center text-zinc-500">
-                  <div className="flex flex-col items-center justify-center space-y-1">
-                    <p className="text-body font-semibold text-zinc-700">No records found</p>
-                    <p className="text-caption text-zinc-400">Try adjusting your search criteria or create a new entry.</p>
-                  </div>
-                </td>
-              </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Table Footer Telemetry Bar */}
-      <div className="px-4 py-2 bg-zinc-50 border-t border-zinc-200 text-micro text-zinc-500 flex justify-between items-center shrink-0">
-        <span>Showing {filteredData.length} of {(data || []).length} records</span>
-        <span className="font-mono">Density: {density.toUpperCase()}</span>
-      </div>
+      {/* Pagination Footer */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border-gray bg-[rgba(148,151,169,0.04)] text-caption text-cool-gray">
+          <span>
+            Showing {(currentPage - 1) * pageSize + 1} to{' '}
+            {Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length} records
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="white"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" /> Prev
+            </Button>
+            <span className="px-3 font-medium text-ink">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="white"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}

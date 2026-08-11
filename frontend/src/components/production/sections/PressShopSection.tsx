@@ -49,8 +49,8 @@ export function PressShopSection({ data, materialIssues = [], isLoading, onMarkC
       label: "Operation Hours",
       value: `${totalOperationHrs.toFixed(1)} hrs`,
       icon: Clock,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-primary",
+      bg: "bg-primary-subtle",
       border: "border-blue-200/60",
     },
     {
@@ -83,14 +83,14 @@ export function PressShopSection({ data, materialIssues = [], isLoading, onMarkC
       key: "machineOrTool",
       label: "Press / Tonnage",
       render: (val: string) => (
-        <span className="font-semibold text-zinc-900">{val || "Press Machine"}</span>
+        <span className="font-semibold text-ink">{val || "Press Machine"}</span>
       ),
     },
     {
       key: "partOrDrawing",
       label: "Die Ref / Tool #",
       render: (val: string) => (
-        <span className="font-mono text-amber-700 font-bold text-[11px]">{val || "N/A"}</span>
+        <span className="font-mono text-amber-700 font-semibold text-[11px]">{val || "N/A"}</span>
       ),
     },
     {
@@ -113,7 +113,7 @@ export function PressShopSection({ data, materialIssues = [], isLoading, onMarkC
       key: "producedQty",
       label: "Output Qty",
       render: (val: number) => (
-        <span className="font-mono font-bold text-emerald-600">{val || 0} pcs</span>
+        <span className="font-mono font-semibold text-emerald-600">{val || 0} pcs</span>
       ),
     },
     {
@@ -127,14 +127,14 @@ export function PressShopSection({ data, materialIssues = [], isLoading, onMarkC
       key: "cuttingTime",
       label: "Run Hrs",
       render: (val: number) => (
-        <span className="font-mono font-bold text-blue-600">{val || 0}h</span>
+        <span className="font-mono font-semibold text-primary">{val || 0}h</span>
       ),
     },
     {
       key: "status",
       label: "Status",
       render: (val: string) => (
-        <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${
+        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border ${
           val === "COMPLETED"
             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
             : "bg-amber-50 text-amber-700 border-amber-200"
@@ -152,7 +152,7 @@ export function PressShopSection({ data, materialIssues = [], isLoading, onMarkC
             e.stopPropagation();
             onMarkComplete(row);
           }}
-          className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zinc-900 text-white hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap"
+          className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-zinc-900 text-white hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap"
         >
           Complete → Move
         </button>
@@ -164,11 +164,11 @@ export function PressShopSection({ data, materialIssues = [], isLoading, onMarkC
     <div className="space-y-5">
       {/* Section Header */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-200/60 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-[12px] bg-amber-100 border border-amber-200/60 flex items-center justify-center">
           <Factory className="w-4.5 h-4.5 text-amber-700" />
         </div>
         <div>
-          <h3 className="text-sm font-extrabold text-zinc-900">Press Shop</h3>
+          <h3 className="text-sm font-semibold text-ink">Press Shop</h3>
         </div>
       </div>
 
@@ -179,17 +179,17 @@ export function PressShopSection({ data, materialIssues = [], isLoading, onMarkC
           return (
             <div
               key={kpi.label}
-              className={`p-3.5 rounded-2xl bg-white border ${kpi.border} shadow-xs flex items-center justify-between`}
+              className={`p-3.5 rounded-[12px] bg-white border ${kpi.border} shadow-subtle flex items-center justify-between`}
             >
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
                   {kpi.label}
                 </span>
-                <span className={`text-lg font-bold font-mono mt-0.5 block ${kpi.color}`}>
+                <span className={`text-lg font-semibold font-mono mt-0.5 block ${kpi.color}`}>
                   {kpi.value}
                 </span>
               </div>
-              <div className={`w-8 h-8 rounded-xl ${kpi.bg} flex items-center justify-center`}>
+              <div className={`w-8 h-8 rounded-[12px] ${kpi.bg} flex items-center justify-center`}>
                 <Icon className={`w-4 h-4 ${kpi.color}`} />
               </div>
             </div>

@@ -59,7 +59,7 @@ export default function ProjectPurchasePage() {
   const purchaseOrders = Array.from(poMap.values());
 
   const columns = [
-    { key: 'poNumber', label: 'PO #', render: (val: string) => <span className="font-mono font-bold text-zinc-950">{val}</span> },
+    { key: 'poNumber', label: 'PO #', render: (val: string) => <span className="font-mono font-semibold text-zinc-950">{val}</span> },
     { 
       key: 'supplierName', 
       label: 'Vendor / Supplier', 
@@ -72,7 +72,7 @@ export default function ProjectPurchasePage() {
       key: 'status', 
       label: 'Status', 
       render: (val: string) => (
-        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
           {val || 'ISSUED'}
         </span>
       ) 
@@ -81,7 +81,7 @@ export default function ProjectPurchasePage() {
       key: 'totalAmount', 
       label: 'Amount (₹)', 
       render: (val: number) => (
-        <span className="font-mono font-bold text-zinc-900">
+        <span className="font-mono font-semibold text-ink">
           ₹{Number(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </span>
       ) 
@@ -89,7 +89,7 @@ export default function ProjectPurchasePage() {
     { 
       key: 'createdAt', 
       label: 'Date', 
-      render: (val: string) => <span className="font-mono text-zinc-500 text-xs">{val ? new Date(val).toLocaleDateString('en-GB') : '-'}</span> 
+      render: (val: string) => <span className="font-mono text-mute text-xs">{val ? new Date(val).toLocaleDateString('en-GB') : '-'}</span> 
     },
     {
       key: 'actions',
@@ -130,7 +130,7 @@ export default function ProjectPurchasePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPreviewPo(poData)}
-              className="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="View Authentic PO Sheet"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -141,7 +141,7 @@ export default function ProjectPurchasePage() {
                 setEditingPo(row);
                 setIsFormOpen(true);
               }}
-              className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-blue-100 text-primary-dark border border-blue-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="Edit Purchase Order"
             >
               <Edit3 className="w-3.5 h-3.5" />
@@ -149,7 +149,7 @@ export default function ProjectPurchasePage() {
             </button>
             <button
               onClick={() => setGrnTargetPo(row)}
-              className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="Receive Material (GRN)"
             >
               <PackageCheck className="w-3.5 h-3.5" />
@@ -176,11 +176,11 @@ export default function ProjectPurchasePage() {
         <>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5 text-amber-600" />
                 <span>Purchase Orders & Procurement</span>
               </h2>
-              <p className="text-xs text-zinc-500">Manage supplier purchase orders, steel raw material requisitions, and GRNs.</p>
+              <p className="text-xs text-mute">Manage supplier purchase orders, steel raw material requisitions, and GRNs.</p>
             </div>
 
             <Button

@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Sidebar } from '../../components/layout/Sidebar';
+import { AppLayout } from '../../components/layout/AppLayout';
+import { Button } from '../../components/ui/Button';
 import { useInventoryLedger } from '../../hooks/useInventory';
 import { useMasterData } from '../../hooks/useMasterData';
 import { useProjects } from '../../hooks/useProjects';
@@ -149,9 +150,7 @@ export default function InventoryPage() {
   });
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-zinc-50 to-indigo-50/20 text-zinc-900 relative w-full overflow-hidden font-sans">
-      <Sidebar />
-
+    <AppLayout>
       {/* Toast Alert */}
       <AnimatePresence>
         {toastMessage && (
@@ -159,7 +158,7 @@ export default function InventoryPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border flex items-center space-x-3 text-sm font-semibold ${
+            className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-md shadow-level-4 backdrop-blur-xl border flex items-center space-x-3 text-sm font-semibold ${
               toastMessage.type === 'success'
                 ? 'bg-emerald-50/90 text-emerald-800 border-emerald-200'
                 : 'bg-rose-50/90 text-rose-800 border-rose-200'
@@ -171,42 +170,41 @@ export default function InventoryPage() {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 h-full flex flex-col relative pl-[5.5rem] pr-8 py-8 overflow-y-auto hide-scrollbar">
+      <div className="w-full flex flex-col space-y-6">
         {/* Header & Global Module Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white border border-border-gray p-6 rounded-[12px] shadow-subtle">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-zinc-900 flex items-center gap-3">
+            <h1 className="text-section-heading font-bold text-ink tracking-tight">
               Inventory Ledger & Stock Control
             </h1>
-            <p className="text-sm text-zinc-500 mt-1 font-medium">
+            <p className="text-body text-silver-blue mt-1">
               Real-time raw material stock balances, partial material issuing, batch tracking, and tool management.
             </p>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <button
+          <div className="flex items-center gap-3">
+            <Button
+              variant="primary"
               onClick={() => handleOpenIssueDrawer()}
-              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white font-bold text-xs flex items-center space-x-2 shadow-[0_1px_2px_rgba(0,0,0,0.1),_inset_0_1px_0_rgba(255,255,255,0.2)] border border-purple-500/30 transition-all cursor-pointer"
             >
-              <PackageMinus className="w-4 h-4 text-purple-200" />
-              <span>Issue Material (Partial / Full)</span>
-            </button>
+              <PackageMinus className="w-4 h-4 mr-1.5" />
+              <span>Issue Material</span>
+            </Button>
 
-            <button
+            <Button
+              variant="white"
               onClick={() => setIsAddStockOpen(true)}
-              className="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] text-white font-bold text-xs flex items-center space-x-2 shadow-[0_1px_3px_rgba(0,0,0,0.12),_inset_0_1px_0_rgba(255,255,255,0.15)] border border-zinc-700/80 transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4 text-amber-400" />
+              <Plus className="w-4 h-4 mr-1.5 text-primary" />
               <span>Add Stock Batch</span>
-            </button>
+            </Button>
 
-            <Link
-              href="/assets"
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold text-xs flex items-center space-x-2 shadow-[0_1px_2px_rgba(0,0,0,0.1),_inset_0_1px_0_rgba(255,255,255,0.2)] border border-indigo-500/30 transition-all cursor-pointer"
-            >
-              <Wrench className="w-4 h-4" />
-              <span>Global Assets & Tools</span>
-              <ArrowRight className="w-4 h-4 ml-1" />
+            <Link href="/assets">
+              <Button variant="white">
+                <Wrench className="w-4 h-4 mr-1.5 text-silver-blue" />
+                <span>Global Assets & Tools</span>
+                <ArrowRight className="w-4 h-4 ml-1.5" />
+              </Button>
             </Link>
           </div>
         </div>
@@ -214,11 +212,11 @@ export default function InventoryPage() {
         {/* Filter Bar */}
         <div className="flex justify-between items-center mb-6 gap-4">
           <div className="relative w-96">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-zinc-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-silver-blue" />
             <input 
               type="text" 
               placeholder="Search by material code, grade, heat # or batch..."
-              className="w-full bg-white/90 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full bg-white border border-border-gray rounded-[10px] pl-10 pr-4 py-2.5 text-caption text-ink placeholder:text-silver-blue shadow-subtle focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -230,10 +228,10 @@ export default function InventoryPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
           </div>
         ) : (
-          <div className="bg-white/80 backdrop-blur-2xl border border-black/5 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 relative">
+          <div className="bg-white/80 backdrop-blur-2xl border border-hairline/60 rounded-md overflow-hidden shadow-level-3 shadow-slate-200/50 relative">
              <table className="w-full text-left border-collapse relative z-10">
                <thead>
-                 <tr className="border-b border-black/5 bg-slate-100/50 text-[11px] uppercase font-bold text-zinc-500 tracking-wider">
+                 <tr className="border-b border-hairline/60 bg-slate-100/50 text-[11px] uppercase font-semibold text-mute tracking-wider">
                    <th className="p-4">Material / Batch</th>
                    <th className="p-4">Warehouse & Location</th>
                    <th className="p-4 text-right">Available Qty</th>
@@ -251,40 +249,40 @@ export default function InventoryPage() {
                      <tr key={batch.id} className="hover:bg-slate-50/80 transition-colors group">
                        <td className="p-4">
                          <div className="flex items-center">
-                           <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center mr-3">
+                           <div className="w-8 h-8 rounded-md bg-amber-50 border border-amber-200 flex items-center justify-center mr-3">
                              <Package className="w-4 h-4 text-amber-600" />
                            </div>
                            <div>
-                             <div className="font-bold text-zinc-900 text-sm">{batch.material?.materialCode} <span className="text-zinc-500 font-normal">Â· {batch.material?.materialGrade}</span></div>
+                             <div className="font-semibold text-ink text-sm">{batch.material?.materialCode} <span className="text-mute font-normal">Â· {batch.material?.materialGrade}</span></div>
                              <div className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase flex items-center mt-0.5">
                                {batch.batchNumber} 
-                               <span className="mx-2 border-r border-black/10 h-3" /> 
+                               <span className="mx-2 border-r border-hairline h-3" /> 
                                {formatDate(batch.createdAt)}
                              </div>
                            </div>
                          </div>
                        </td>
                        <td className="p-4">
-                         <div className="text-xs font-bold text-zinc-800">{batch.location?.warehouse?.warehouseName || 'Main Raw Material Stores'}</div>
+                         <div className="text-xs font-semibold text-zinc-800">{batch.location?.warehouse?.warehouseName || 'Main Raw Material Stores'}</div>
                          <div className="text-[10px] text-zinc-400 uppercase font-semibold">{batch.location?.locationName || 'Bin A-1'}</div>
                        </td>
                        <td className="p-4 text-right">
                          <div className="flex items-center justify-end space-x-2">
                            {isLowStock && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
-                           <span className="font-mono text-zinc-900 font-black text-sm">{availQty}</span>
-                           <span className="text-[10px] text-zinc-500 uppercase font-bold">{batch.material?.defaultUom || 'NOS'}</span>
+                           <span className="font-mono text-ink font-semibold text-sm">{availQty}</span>
+                           <span className="text-[10px] text-mute uppercase font-semibold">{batch.material?.defaultUom || 'NOS'}</span>
                          </div>
                        </td>
                        <td className="p-4 text-right font-mono text-zinc-600">
                          â‚¹{Number(batch.unitCost).toFixed(2)}
                        </td>
-                       <td className="p-4 text-right font-mono font-bold text-indigo-700 text-sm">
+                       <td className="p-4 text-right font-mono font-semibold text-primary-dark text-sm">
                          â‚¹{(availQty * Number(batch.unitCost)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                        </td>
                        <td className="p-4">
-                         <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                         <span className={`px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${
                            batch.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-                           batch.status === 'RESERVED' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 
+                           batch.status === 'RESERVED' ? 'bg-primary-subtle text-primary-dark border-primary/20' : 
                            'bg-slate-100 text-slate-700 border-slate-200'
                          }`}>
                            {batch.status}
@@ -294,7 +292,7 @@ export default function InventoryPage() {
                          {batch.status === 'AVAILABLE' && availQty > 0 && (
                            <button
                              onClick={() => handleOpenIssueDrawer(batch)}
-                             className="text-xs font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-xl transition-all inline-flex items-center space-x-1"
+                             className="text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-md transition-all inline-flex items-center space-x-1"
                            >
                              <PackageMinus className="w-3.5 h-3.5 mr-1 text-purple-600" />
                              <span>Issue Stock</span>
@@ -306,7 +304,7 @@ export default function InventoryPage() {
                  })}
                  {(!filteredLedger || filteredLedger.length === 0) && (
                    <tr>
-                     <td colSpan={7} className="p-8 text-center text-zinc-500 text-sm italic">
+                     <td colSpan={7} className="p-8 text-center text-mute text-sm italic">
                        No inventory records found.
                      </td>
                    </tr>
@@ -326,17 +324,17 @@ export default function InventoryPage() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="w-full max-w-2xl bg-white/95 border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-2xl text-zinc-900 max-h-[90vh] overflow-y-auto custom-scrollbar backdrop-blur-2xl"
+              className="w-full max-w-2xl bg-white/95 border border-slate-200/90 rounded-md p-6 sm:p-8 shadow-level-4 text-ink max-h-[90vh] overflow-y-auto custom-scrollbar backdrop-blur-2xl"
             >
               <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
                 <div>
-                  <h3 className="text-xl font-extrabold text-zinc-900 flex items-center gap-2.5 tracking-tight">
-                    <div className="w-9 h-9 rounded-2xl bg-purple-600/10 text-purple-600 border border-purple-200 flex items-center justify-center">
+                  <h3 className="text-xl font-semibold text-ink flex items-center gap-2.5 tracking-tight">
+                    <div className="w-9 h-9 rounded-md bg-purple-600/10 text-purple-600 border border-purple-200 flex items-center justify-center">
                       <PackageMinus className="w-5 h-5" />
                     </div>
                     <span>Issue Material (Partial & Full)</span>
                   </h3>
-                  <p className="text-xs text-zinc-500 mt-1">Issue raw material stock in partial quantity to project shop floor.</p>
+                  <p className="text-xs text-mute mt-1">Issue raw material stock in partial quantity to project shop floor.</p>
                 </div>
                 <button 
                   onClick={() => setIsIssueMaterialOpen(false)} 
@@ -347,14 +345,14 @@ export default function InventoryPage() {
               </div>
 
               <form onSubmit={handleIssueMaterial} className="space-y-6 text-xs">
-                <div className="p-4 bg-gradient-to-r from-purple-500/10 via-indigo-500/5 to-slate-500/5 border border-purple-500/20 rounded-2xl backdrop-blur-xl space-y-4 shadow-xs">
+                <div className="p-4 bg-gradient-to-r from-purple-500/10 via-indigo-500/5 to-slate-500/5 border border-purple-500/20 rounded-md backdrop-blur-xl space-y-4 shadow-level-1">
                   <div>
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Target Project *</label>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1.5">Target Project *</label>
                     <select
                       required
                       value={issueForm.projectId}
                       onChange={(e) => setIssueForm({ ...issueForm, projectId: e.target.value })}
-                      className="w-full p-3 rounded-xl bg-white/90 border border-slate-200 text-zinc-900 font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-xs font-sans"
+                      className="w-full p-3 rounded-md bg-white/90 border border-slate-200 text-ink font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-level-1 font-sans"
                     >
                       <option value="">Select Target Project...</option>
                       {projects.map((p: any) => (
@@ -367,18 +365,18 @@ export default function InventoryPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Issue Slip Number</label>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1.5">Issue Slip Number</label>
                       <input
                         type="text"
                         required
                         value={issueForm.issueNumber}
                         onChange={(e) => setIssueForm({ ...issueForm, issueNumber: e.target.value })}
-                        className="w-full p-3 rounded-xl bg-white/90 border border-slate-200 text-zinc-900 font-mono font-bold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-xs"
+                        className="w-full p-3 rounded-md bg-white/90 border border-slate-200 text-ink font-mono font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-level-1"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Issued To (Employee / Operator) *</label>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1.5">Issued To (Employee / Operator) *</label>
                       <select
                         required
                         value={issueForm.issuedToEmployeeId || ''}
@@ -388,7 +386,7 @@ export default function InventoryPage() {
                           const empName = empObj ? (empObj.name || empObj.employeeName || empObj.code) : '';
                           setIssueForm({ ...issueForm, issuedToEmployeeId: empId, issuedTo: empName });
                         }}
-                        className="w-full p-3 rounded-xl bg-white/90 border border-slate-200 text-zinc-900 font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-xs"
+                        className="w-full p-3 rounded-md bg-white/90 border border-slate-200 text-ink font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-level-1"
                       >
                         <option value="">Select Employee / Recipient...</option>
                         {employees?.map((emp: any) => {
@@ -405,7 +403,7 @@ export default function InventoryPage() {
 
                   {/* Target Production Shop Selection */}
                   <div>
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-800 mb-2 flex items-center justify-between">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-800 mb-2 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <Factory className="w-3.5 h-3.5 text-purple-600" />
                         <span>Target Production Shop *</span>
@@ -422,18 +420,18 @@ export default function InventoryPage() {
                             key={shop.id}
                             type="button"
                             onClick={() => setIssueForm({ ...issueForm, productionSection: shop.id, ...(shop.id !== 'PRESS_SHOP' ? { expectedManufactureQty: '' } : {}) })}
-                            className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                            className={`p-3 rounded-md border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                               isSelected
-                                ? 'bg-gradient-to-br from-purple-600 via-indigo-600 to-indigo-700 text-white border-purple-500 shadow-md shadow-purple-500/20 scale-[1.02]'
-                                : 'bg-white/80 hover:bg-slate-50 border-slate-200 text-slate-700 hover:border-purple-300 shadow-2xs'
+                                ? 'bg-gradient-to-br from-purple-600 via-indigo-600 to-indigo-700 text-white border-purple-500 shadow-level-1 shadow-purple-500/20 scale-[1.02]'
+                                : 'bg-white/80 hover:bg-slate-50 border-slate-200 text-slate-700 hover:border-purple-300 shadow-level-1'
                             }`}
                           >
                             <div className="flex items-center justify-between w-full mb-1">
-                              <span className={`font-bold text-xs ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                              <span className={`font-semibold text-xs ${isSelected ? 'text-white' : 'text-slate-900'}`}>
                                 {shop.label}
                               </span>
                               {isSelected ? (
-                                <span className="w-4 h-4 rounded-full bg-white text-purple-700 flex items-center justify-center font-bold text-[10px]">
+                                <span className="w-4 h-4 rounded-full bg-white text-purple-700 flex items-center justify-center font-semibold text-[10px]">
                                   âœ“
                                 </span>
                               ) : (
@@ -459,8 +457,8 @@ export default function InventoryPage() {
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                         className="overflow-hidden"
                       >
-                        <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/50 to-white/80 border border-amber-200/80 rounded-2xl backdrop-blur-xl shadow-xs space-y-2">
-                          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-amber-900 mb-1.5 flex items-center gap-1.5">
+                        <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/50 to-white/80 border border-amber-200/80 rounded-md backdrop-blur-xl shadow-level-1 space-y-2">
+                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-900 mb-1.5 flex items-center gap-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
                             Expected Quantity to Manufacture *
                           </label>
@@ -485,7 +483,7 @@ export default function InventoryPage() {
                                 e.preventDefault();
                               }
                             }}
-                            className="w-full p-3 rounded-xl bg-white/95 border-2 border-amber-300 text-zinc-900 font-mono font-bold text-sm focus:outline-none focus:ring-4 focus:ring-amber-400/20 focus:border-amber-500 shadow-xs placeholder:text-amber-300 placeholder:font-normal transition-all"
+                            className="w-full p-3 rounded-md bg-white/95 border-2 border-amber-300 text-ink font-mono font-semibold text-sm focus:outline-none focus:ring-4 focus:ring-amber-400/20 focus:border-amber-500 shadow-level-1 placeholder:text-amber-300 placeholder:font-normal transition-all"
                           />
                           <p className="text-[10px] text-amber-600/70 font-medium italic">Must be a whole number (integer). No decimals allowed.</p>
                         </div>
@@ -494,20 +492,20 @@ export default function InventoryPage() {
                   </AnimatePresence>
 
                   <div>
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">General Note</label>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1.5">General Note</label>
                     <input
                       type="text"
                       placeholder="e.g. Issued to operator for CNC setup"
                       value={issueForm.remarks}
                       onChange={(e) => setIssueForm({ ...issueForm, remarks: e.target.value })}
-                      className="w-full p-3 rounded-xl bg-white/90 border border-slate-200 text-zinc-900 focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-xs"
+                      className="w-full p-3 rounded-md bg-white/90 border border-slate-200 text-ink focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-level-1"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-4 pt-1">
                   <div className="flex items-center justify-between px-1">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-700 flex items-center gap-2">
                       <Package className="w-4 h-4 text-purple-600" />
                       <span>Line Items to Issue</span>
                     </h4>
@@ -526,10 +524,10 @@ export default function InventoryPage() {
                     const pct = avail > 0 ? Math.min(100, (issuedVal / avail) * 100) : 0;
 
                     return (
-                      <div key={idx} className="relative group p-5 bg-gradient-to-b from-white/95 to-slate-50/90 border border-slate-200/90 hover:border-purple-300 rounded-2xl space-y-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(147,51,234,0.08)] transition-all duration-300 backdrop-blur-xl">
+                      <div key={idx} className="relative group p-5 bg-gradient-to-b from-white/95 to-slate-50/90 border border-slate-200/90 hover:border-purple-300 rounded-md space-y-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(147,51,234,0.08)] transition-all duration-300 backdrop-blur-xl">
                         <div className="flex justify-between items-center pb-2 border-b border-slate-100">
                           <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-purple-100/80 text-purple-700 border border-purple-200/60 shadow-xs tracking-wide">
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-purple-100/80 text-purple-700 border border-purple-200/60 shadow-level-1 tracking-wide">
                               LINE ITEM #{idx + 1}
                             </span>
                           </div>
@@ -540,7 +538,7 @@ export default function InventoryPage() {
                                 const updated = issueForm.items.filter((_, i) => i !== idx);
                                 setIssueForm({...issueForm, items: updated});
                               }}
-                              className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-xl transition-all cursor-pointer"
+                              className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-md transition-all cursor-pointer"
                               title="Remove line item"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -549,7 +547,7 @@ export default function InventoryPage() {
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Select Stock Batch *</label>
+                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1.5">Select Stock Batch *</label>
                           <select
                             required
                             value={item.batchId}
@@ -558,7 +556,7 @@ export default function InventoryPage() {
                               newItems[idx].batchId = e.target.value;
                               setIssueForm({ ...issueForm, items: newItems });
                             }}
-                            className="w-full p-3 rounded-xl bg-white border border-slate-200 text-zinc-900 font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-xs"
+                            className="w-full p-3 rounded-md bg-white border border-slate-200 text-ink font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-level-1"
                           >
                             <option value="">Select Stock Batch from Available Ledger...</option>
                             {ledger?.filter((b: any) => b.status === 'AVAILABLE' && Number(b.availableQty ?? b.currentQty ?? 0) > 0).map((b: any) => (
@@ -570,25 +568,25 @@ export default function InventoryPage() {
                         </div>
 
                         {selectedBatch && (
-                          <div className="p-4 bg-gradient-to-br from-purple-900/5 via-indigo-900/5 to-slate-900/5 border border-purple-500/20 rounded-xl space-y-3 shadow-inner">
+                          <div className="p-4 bg-gradient-to-br from-purple-900/5 via-indigo-900/5 to-slate-900/5 border border-purple-500/20 rounded-md space-y-3 shadow-inner">
                             <div className="flex justify-between items-center text-xs pb-1 border-b border-purple-500/10">
-                              <span className="text-slate-600 font-medium">Material: <strong className="text-slate-900 font-bold">{selectedBatch.material?.materialCode} ({selectedBatch.material?.materialGrade})</strong></span>
-                              <span className="text-slate-500 font-mono text-[11px]">Batch: <strong className="text-purple-700 font-bold">{selectedBatch.batchNumber}</strong></span>
+                              <span className="text-slate-600 font-medium">Material: <strong className="text-slate-900 font-semibold">{selectedBatch.material?.materialCode} ({selectedBatch.material?.materialGrade})</strong></span>
+                              <span className="text-slate-500 font-mono text-[11px]">Batch: <strong className="text-purple-700 font-semibold">{selectedBatch.batchNumber}</strong></span>
                             </div>
 
                             {/* 3-Pillar Stat Box */}
-                            <div className="grid grid-cols-3 gap-2.5 p-2.5 bg-white/90 backdrop-blur-md rounded-xl border border-purple-100 shadow-xs text-center">
-                              <div className="p-2 rounded-lg bg-slate-50/80">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Stock Available</p>
-                                <p className="text-base font-extrabold text-slate-800 font-mono mt-0.5">{avail}</p>
+                            <div className="grid grid-cols-3 gap-2.5 p-2.5 bg-white/90 backdrop-blur-md rounded-md border border-purple-100 shadow-level-1 text-center">
+                              <div className="p-2 rounded-md bg-slate-50/80">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Stock Available</p>
+                                <p className="text-base font-semibold text-slate-800 font-mono mt-0.5">{avail}</p>
                               </div>
-                              <div className="p-2 rounded-lg bg-purple-50/80 border border-purple-100">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600">Issue Qty</p>
-                                <p className="text-base font-extrabold text-purple-700 font-mono mt-0.5">{issuedVal}</p>
+                              <div className="p-2 rounded-md bg-purple-50/80 border border-purple-100">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-purple-600">Issue Qty</p>
+                                <p className="text-base font-semibold text-purple-700 font-mono mt-0.5">{issuedVal}</p>
                               </div>
-                              <div className="p-2 rounded-lg bg-slate-50/80">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Remaining Stock</p>
-                                <p className={`text-base font-extrabold font-mono mt-0.5 ${remaining === 0 ? 'text-slate-400' : 'text-emerald-600'}`}>{remaining}</p>
+                              <div className="p-2 rounded-md bg-slate-50/80">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Remaining Stock</p>
+                                <p className={`text-base font-semibold font-mono mt-0.5 ${remaining === 0 ? 'text-slate-400' : 'text-emerald-600'}`}>{remaining}</p>
                               </div>
                             </div>
 
@@ -596,7 +594,7 @@ export default function InventoryPage() {
                             <div className="space-y-1.5">
                               <div className="flex justify-between text-[11px] font-semibold text-slate-600">
                                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" /> Batch Consumption</span>
-                                <span className="font-mono font-bold text-purple-700">{pct.toFixed(0)}% Issued</span>
+                                <span className="font-mono font-semibold text-purple-700">{pct.toFixed(0)}% Issued</span>
                               </div>
                               <div className="w-full bg-slate-200/80 h-2.5 rounded-full p-0.5 overflow-hidden shadow-inner">
                                 <div 
@@ -616,15 +614,15 @@ export default function InventoryPage() {
                             <div className="flex justify-between items-center pt-1 text-xs">
                               <span className="text-slate-500 text-[11px] font-medium">Issue Mode:</span>
                               {isExceeded ? (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-xs flex items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 shadow-level-1 flex items-center gap-1">
                                   <AlertCircle className="w-3.5 h-3.5 text-rose-500" /> EXCEEDS AVAILABLE STOCK
                                 </span>
                               ) : isPartial ? (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-xs flex items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-level-1 flex items-center gap-1">
                                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> PARTIAL ISSUE ({remaining} remaining in stock)
                                 </span>
                               ) : (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs flex items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-level-1 flex items-center gap-1">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> FULL ISSUE (Batch Consumed)
                                 </span>
                               )}
@@ -634,7 +632,7 @@ export default function InventoryPage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Quantity to Issue *</label>
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1.5">Quantity to Issue *</label>
                             <input
                               type="number"
                               step="0.001"
@@ -646,11 +644,11 @@ export default function InventoryPage() {
                                 newItems[idx].qty = (e.target.value === '' ? ('' as any) : Number(e.target.value));
                                 setIssueForm({ ...issueForm, items: newItems });
                               }}
-                              className="w-full p-3 rounded-xl bg-white border border-slate-200 text-zinc-900 font-mono font-bold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-xs"
+                              className="w-full p-3 rounded-md bg-white border border-slate-200 text-ink font-mono font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-level-1"
                             />
                           </div>
                           <div>
-                            <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Item Remark (Optional)</label>
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1.5">Item Remark (Optional)</label>
                             <input
                               type="text"
                               placeholder="Line remark"
@@ -660,7 +658,7 @@ export default function InventoryPage() {
                                 newItems[idx].remarks = e.target.value;
                                 setIssueForm({ ...issueForm, items: newItems });
                               }}
-                              className="w-full p-3 rounded-xl bg-white border border-slate-200 text-zinc-900 focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-xs"
+                              className="w-full p-3 rounded-md bg-white border border-slate-200 text-ink focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 shadow-level-1"
                             />
                           </div>
                         </div>
@@ -671,7 +669,7 @@ export default function InventoryPage() {
                   <button
                     type="button"
                     onClick={() => setIssueForm({ ...issueForm, items: [...issueForm.items, { batchId: '', qty: 1, remarks: '' }] })}
-                    className="w-full py-3.5 border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50/40 hover:bg-purple-50/80 text-purple-700 font-bold text-xs rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 group cursor-pointer shadow-xs hover:shadow-md active:scale-[0.99]"
+                    className="w-full py-3.5 border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50/40 hover:bg-purple-50/80 text-purple-700 font-semibold text-xs rounded-md transition-all duration-300 flex items-center justify-center gap-2 group cursor-pointer shadow-level-1 hover:shadow-level-1 active:scale-[0.99]"
                   >
                     <div className="w-6 h-6 rounded-full bg-purple-100 group-hover:bg-purple-200 text-purple-700 flex items-center justify-center transition-colors">
                       <Plus className="w-3.5 h-3.5" />
@@ -684,13 +682,13 @@ export default function InventoryPage() {
                   <button 
                     type="button" 
                     onClick={() => setIsIssueMaterialOpen(false)} 
-                    className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-zinc-700 font-bold text-xs transition-colors cursor-pointer"
+                    className="px-5 py-3 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold text-xs transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit" 
-                    className="px-7 py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 active:scale-[0.98] text-white font-extrabold text-xs shadow-[0_10px_25px_-5px_rgba(147,51,234,0.4),_inset_0_1px_0_rgba(255,255,255,0.3)] border border-purple-400/30 transition-all duration-300 flex items-center gap-2 cursor-pointer"
+                    className="px-7 py-3 rounded-md bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 active:scale-[0.98] text-white font-semibold text-xs shadow-[0_10px_25px_-5px_rgba(147,51,234,0.4),_inset_0_1px_0_rgba(255,255,255,0.3)] border border-purple-400/30 transition-all duration-300 flex items-center gap-2 cursor-pointer"
                   >
                     <PackageMinus className="w-4 h-4" />
                     <span>Confirm & Issue Material</span>
@@ -710,24 +708,24 @@ export default function InventoryPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-lg bg-white/95 border border-slate-200 rounded-3xl p-8 shadow-2xl text-zinc-900"
+              className="w-full max-w-lg bg-white/95 border border-slate-200 rounded-md p-8 shadow-level-4 text-ink"
             >
               <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-zinc-900">Add Raw Material Stock Batch</h3>
-                  <p className="text-xs text-zinc-500">Record manual intake of raw material batch to Inventory Ledger.</p>
+                  <h3 className="text-xl font-semibold text-ink">Add Raw Material Stock Batch</h3>
+                  <p className="text-xs text-mute">Record manual intake of raw material batch to Inventory Ledger.</p>
                 </div>
-                <button onClick={() => setIsAddStockOpen(false)} className="text-zinc-400 hover:text-zinc-900 p-2"><X className="w-5 h-5" /></button>
+                <button onClick={() => setIsAddStockOpen(false)} className="text-zinc-400 hover:text-ink p-2"><X className="w-5 h-5" /></button>
               </div>
 
               <form onSubmit={handleAddStock} className="space-y-4 text-xs">
                 <div>
-                  <label className="block text-zinc-700 font-bold mb-1">Select Material *</label>
+                  <label className="block text-zinc-700 font-semibold mb-1">Select Material *</label>
                   <select
                     required
                     value={stockForm.materialId}
                     onChange={(e) => setStockForm({ ...stockForm, materialId: e.target.value })}
-                    className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   >
                     <option value="">Select Material</option>
                     {materials.map((m: any) => (
@@ -738,30 +736,30 @@ export default function InventoryPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-zinc-700 font-bold mb-1">Batch Number</label>
+                    <label className="block text-zinc-700 font-semibold mb-1">Batch Number</label>
                     <input
                       type="text"
                       placeholder="Auto-generated if empty"
                       value={stockForm.batchNumber}
                       onChange={(e) => setStockForm({ ...stockForm, batchNumber: e.target.value })}
-                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono focus:outline-none focus:border-indigo-500"
+                      className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-zinc-700 font-bold mb-1">Heat Number</label>
+                    <label className="block text-zinc-700 font-semibold mb-1">Heat Number</label>
                     <input
                       type="text"
                       placeholder="e.g. HT-99841"
                       value={stockForm.heatNumber}
                       onChange={(e) => setStockForm({ ...stockForm, heatNumber: e.target.value })}
-                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono focus:outline-none focus:border-indigo-500"
+                      className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-zinc-700 font-bold mb-1">Received Quantity *</label>
+                    <label className="block text-zinc-700 font-semibold mb-1">Received Quantity *</label>
                     <input
                       type="number"
                       step="0.001"
@@ -769,25 +767,25 @@ export default function InventoryPage() {
                       required
                       value={stockForm.currentQty}
                       onChange={(e) => setStockForm({ ...stockForm, currentQty: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono font-bold text-sm focus:outline-none focus:border-indigo-500"
+                      className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono font-semibold text-sm focus:outline-none focus:border-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-zinc-700 font-bold mb-1">Unit Cost (â‚¹)</label>
+                    <label className="block text-zinc-700 font-semibold mb-1">Unit Cost (â‚¹)</label>
                     <input
                       type="number"
                       step="0.01"
                       min={0}
                       value={stockForm.unitCost}
                       onChange={(e) => setStockForm({ ...stockForm, unitCost: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-zinc-900 font-mono focus:outline-none focus:border-indigo-500"
+                      className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
                     />
                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-end space-x-3 border-t border-slate-100">
-                  <button type="button" onClick={() => setIsAddStockOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-zinc-700 font-bold">Cancel</button>
-                  <button type="submit" className="px-6 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] text-white font-bold text-xs border border-zinc-700/80 shadow-[0_1px_3px_rgba(0,0,0,0.12),_inset_0_1px_0_rgba(255,255,255,0.15)] cursor-pointer">
+                  <button type="button" onClick={() => setIsAddStockOpen(false)} className="px-5 py-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold">Cancel</button>
+                  <button type="submit" className="px-6 py-2.5 rounded-md bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] text-white font-semibold text-xs border border-zinc-700/80 shadow-[0_1px_3px_rgba(0,0,0,0.12),_inset_0_1px_0_rgba(255,255,255,0.15)] cursor-pointer">
                     Save Stock Batch
                   </button>
                 </div>
@@ -796,6 +794,6 @@ export default function InventoryPage() {
           </div>
         )}
       </AnimatePresence>
-    </div>
+    </AppLayout>
   );
 }

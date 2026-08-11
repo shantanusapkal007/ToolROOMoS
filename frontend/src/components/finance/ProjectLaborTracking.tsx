@@ -145,29 +145,29 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
   const grandTotalOperationalCost = totalWorkerCost + totalMachineCost;
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-xs space-y-6">
+    <div className="bg-white border border-border-gray rounded-[12px] p-6 shadow-subtle space-y-6">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-50 border border-emerald-200/80 text-emerald-700 rounded-xl flex items-center justify-center font-bold">
+          <div className="w-10 h-10 bg-emerald-50 border border-emerald-200/80 text-emerald-700 rounded-[12px] flex items-center justify-center font-semibold">
             <DollarSign className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-base font-extrabold text-zinc-950">
+            <h4 className="text-base font-semibold text-zinc-950">
               Daily Report Operational Financial Cost Tracking
             </h4>
-            <p className="text-xs text-zinc-500 font-medium">
+            <p className="text-xs text-mute font-medium">
               Real-time worker labor and machine usage cost rollup derived directly from Employee Daily Reports.
             </p>
           </div>
         </div>
 
-        <div className="text-left sm:text-right bg-zinc-50 p-3 rounded-xl border border-zinc-200/80">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+        <div className="text-left sm:text-right bg-canvas p-3 rounded-[12px] border border-border-gray/80">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
             Total Logged Operational Expense
           </span>
-          <span className="text-xl font-bold font-mono text-emerald-600">
+          <span className="text-xl font-semibold font-mono text-emerald-600">
             {formatCurrency(grandTotalOperationalCost)}
           </span>
         </div>
@@ -176,88 +176,88 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
       {/* 3 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Card 1: Worker Labor Cost */}
-        <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-200/60 flex items-center justify-between">
+        <div className="p-4 rounded-[12px] bg-primary-subtle/50 border border-blue-200/60 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600/80">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/80">
               Worker / Labor Expense
             </span>
-            <div className="text-lg font-bold font-mono text-blue-900 mt-0.5">
+            <div className="text-lg font-semibold font-mono text-blue-900 mt-0.5">
               {formatCurrency(totalWorkerCost)}
             </div>
-            <span className="text-[11px] text-blue-700 font-medium">
+            <span className="text-[11px] text-primary-dark font-medium">
               {totalWorkerHours.toFixed(1)} hrs logged across {workerRows.length} workers
             </span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-[12px] bg-blue-100 text-primary-dark flex items-center justify-center">
             <Users className="w-4.5 h-4.5" />
           </div>
         </div>
 
         {/* Card 2: Machine Usage Cost */}
-        <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-200/60 flex items-center justify-between">
+        <div className="p-4 rounded-[12px] bg-purple-50/50 border border-purple-200/60 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600/80">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-purple-600/80">
               Machine Usage Expense
             </span>
-            <div className="text-lg font-bold font-mono text-purple-900 mt-0.5">
+            <div className="text-lg font-semibold font-mono text-purple-900 mt-0.5">
               {formatCurrency(totalMachineCost)}
             </div>
             <span className="text-[11px] text-purple-700 font-medium">
               {totalMachineHours.toFixed(1)} hrs across {machineRows.length} machines
             </span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-[12px] bg-purple-100 text-purple-700 flex items-center justify-center">
             <Cpu className="w-4.5 h-4.5" />
           </div>
         </div>
 
         {/* Card 3: Combined Operational Summary */}
-        <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200/60 flex items-center justify-between">
+        <div className="p-4 rounded-[12px] bg-emerald-50/50 border border-emerald-200/60 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600/80">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600/80">
               Total Logged Daily Reports
             </span>
-            <div className="text-lg font-bold font-mono text-emerald-900 mt-0.5">
+            <div className="text-lg font-semibold font-mono text-emerald-900 mt-0.5">
               {reports.length} Logs Recorded
             </div>
             <span className="text-[11px] text-emerald-700 font-medium">
               {(totalWorkerHours + totalMachineHours).toFixed(1)} Combined Op Hours
             </span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-[12px] bg-emerald-100 text-emerald-700 flex items-center justify-center">
             <FileSpreadsheet className="w-4.5 h-4.5" />
           </div>
         </div>
       </div>
 
       {/* Tab Controls */}
-      <div className="flex items-center gap-2 border-b border-zinc-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-border-gray pb-2">
         <button
           onClick={() => setActiveTab('ALL')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'ALL'
-              ? 'bg-zinc-900 text-white shadow-xs'
-              : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+              ? 'bg-zinc-900 text-white shadow-subtle'
+              : 'text-mute hover:text-ink hover:bg-zinc-100'
           }`}
         >
           All Daily Cost Trackers
         </button>
         <button
           onClick={() => setActiveTab('WORKERS')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'WORKERS'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-zinc-500 hover:text-blue-700 hover:bg-blue-50'
+              ? 'bg-blue-600 text-white shadow-subtle'
+              : 'text-mute hover:text-primary-dark hover:bg-primary-subtle'
           }`}
         >
           Worker Labor Costs ({workerRows.length})
         </button>
         <button
           onClick={() => setActiveTab('MACHINES')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'MACHINES'
-              ? 'bg-purple-600 text-white shadow-xs'
-              : 'text-zinc-500 hover:text-purple-700 hover:bg-purple-50'
+              ? 'bg-purple-600 text-white shadow-subtle'
+              : 'text-mute hover:text-purple-700 hover:bg-purple-50'
           }`}
         >
           Machine Usage Costs ({machineRows.length})
@@ -268,18 +268,18 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
       {(activeTab === 'ALL' || activeTab === 'WORKERS') && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h5 className="text-xs font-extrabold uppercase tracking-wider text-zinc-800 flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-blue-600" />
+            <h5 className="text-xs font-semibold uppercase tracking-wider text-zinc-800 flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-primary" />
               <span>Worker Labor Cost Breakdown (Daily Reports)</span>
             </h5>
-            <span className="text-[11px] font-mono text-blue-700 font-bold">
+            <span className="text-[11px] font-mono text-primary-dark font-semibold">
               Subtotal: {formatCurrency(totalWorkerCost)}
             </span>
           </div>
 
-          <div className="overflow-x-auto border border-zinc-200 rounded-xl">
+          <div className="overflow-x-auto border border-border-gray rounded-[12px]">
             <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-zinc-100 text-zinc-600 font-bold uppercase tracking-wider text-[10px]">
+              <thead className="bg-zinc-100 text-zinc-600 font-semibold uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="p-3">Worker / Specialist</th>
                   <th className="p-3">Department / Section</th>
@@ -292,17 +292,17 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
               <tbody className="divide-y divide-zinc-100 font-sans">
                 {workerRows.length > 0 ? (
                   workerRows.map((row) => (
-                    <tr key={row.id} className="hover:bg-zinc-50 transition-colors">
-                      <td className="p-3 font-bold text-zinc-950">{row.name}</td>
+                    <tr key={row.id} className="hover:bg-canvas transition-colors">
+                      <td className="p-3 font-semibold text-zinc-950">{row.name}</td>
                       <td className="p-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 text-zinc-700 border border-border-gray">
                           {row.roleOrDept}
                         </span>
                       </td>
-                      <td className="p-3 text-center font-mono font-bold text-zinc-700">{row.logsCount}</td>
-                      <td className="p-3 text-center font-mono font-bold text-blue-700">{row.hours.toFixed(1)} hrs</td>
+                      <td className="p-3 text-center font-mono font-semibold text-zinc-700">{row.logsCount}</td>
+                      <td className="p-3 text-center font-mono font-semibold text-primary-dark">{row.hours.toFixed(1)} hrs</td>
                       <td className="p-3 text-right font-mono text-zinc-800">₹{row.rate.toFixed(2)}/hr</td>
-                      <td className="p-3 text-right font-mono font-bold text-emerald-600">
+                      <td className="p-3 text-right font-mono font-semibold text-emerald-600">
                         {formatCurrency(row.totalCost)}
                       </td>
                     </tr>
@@ -324,18 +324,18 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
       {(activeTab === 'ALL' || activeTab === 'MACHINES') && (
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
-            <h5 className="text-xs font-extrabold uppercase tracking-wider text-zinc-800 flex items-center gap-1.5">
+            <h5 className="text-xs font-semibold uppercase tracking-wider text-zinc-800 flex items-center gap-1.5">
               <Cpu className="w-4 h-4 text-purple-600" />
               <span>Machine Usage Financial Cost Breakdown (Daily Reports)</span>
             </h5>
-            <span className="text-[11px] font-mono text-purple-700 font-bold">
+            <span className="text-[11px] font-mono text-purple-700 font-semibold">
               Subtotal: {formatCurrency(totalMachineCost)}
             </span>
           </div>
 
-          <div className="overflow-x-auto border border-zinc-200 rounded-xl">
+          <div className="overflow-x-auto border border-border-gray rounded-[12px]">
             <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-zinc-100 text-zinc-600 font-bold uppercase tracking-wider text-[10px]">
+              <thead className="bg-zinc-100 text-zinc-600 font-semibold uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="p-3">Machine Code / Equipment</th>
                   <th className="p-3">Production Section</th>
@@ -347,17 +347,17 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
               <tbody className="divide-y divide-zinc-100 font-sans">
                 {machineRows.length > 0 ? (
                   machineRows.map((row) => (
-                    <tr key={row.id} className="hover:bg-zinc-50 transition-colors">
-                      <td className="p-3 font-bold text-zinc-950">{row.codeOrName}</td>
+                    <tr key={row.id} className="hover:bg-canvas transition-colors">
+                      <td className="p-3 font-semibold text-zinc-950">{row.codeOrName}</td>
                       <td className="p-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
                           {row.section}
                         </span>
                       </td>
-                      <td className="p-3 text-center font-mono font-bold text-zinc-700">{row.logsCount}</td>
-                      <td className="p-3 text-center font-mono font-bold text-purple-700">{row.totalHours.toFixed(1)} hrs</td>
+                      <td className="p-3 text-center font-mono font-semibold text-zinc-700">{row.logsCount}</td>
+                      <td className="p-3 text-center font-mono font-semibold text-purple-700">{row.totalHours.toFixed(1)} hrs</td>
                       <td className="p-3 text-right font-mono text-zinc-800">₹{row.rate.toFixed(2)}/hr</td>
-                      <td className="p-3 text-right font-mono font-bold text-emerald-600">
+                      <td className="p-3 text-right font-mono font-semibold text-emerald-600">
                         {formatCurrency(row.totalCost)}
                       </td>
                     </tr>

@@ -9,7 +9,7 @@ import { projectKeys } from "@/hooks/useProjects";
 import {
   CheckSquare,
   Plus,
-  Pencil,
+  Edit2,
   Trash2,
   AlertTriangle,
   Clock,
@@ -34,13 +34,13 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bg: stri
     label: "Pending",
     color: "text-zinc-600",
     bg: "bg-zinc-100",
-    border: "border-zinc-200",
+    border: "border-border-gray",
     icon: <Circle className="w-3.5 h-3.5" />,
   },
   IN_PROGRESS: {
     label: "In Progress",
-    color: "text-blue-700",
-    bg: "bg-blue-50",
+    color: "text-primary-dark",
+    bg: "bg-primary-subtle",
     border: "border-blue-200",
     icon: <CircleDot className="w-3.5 h-3.5" />,
   },
@@ -62,8 +62,8 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bg: stri
 
 const PRIORITY_OPTIONS = ["LOW", "NORMAL", "HIGH", "CRITICAL"];
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  LOW: { label: "Low", color: "text-zinc-500", bg: "bg-zinc-50", border: "border-zinc-200" },
-  NORMAL: { label: "Normal", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+  LOW: { label: "Low", color: "text-mute", bg: "bg-canvas", border: "border-border-gray" },
+  NORMAL: { label: "Normal", color: "text-primary", bg: "bg-primary-subtle", border: "border-blue-200" },
   HIGH: { label: "High", color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200" },
   CRITICAL: { label: "Critical", color: "text-red-700", bg: "bg-red-50", border: "border-red-300" },
 };
@@ -213,15 +213,15 @@ export default function ProjectTasksPage() {
   };
 
   return (
-    <div className="space-y-6 font-sans text-zinc-900">
+    <div className="space-y-6 font-sans text-ink">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray/80 shadow-subtle">
         <div>
-          <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-            <CheckSquare className="w-5 h-5 text-blue-600" />
+          <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
+            <CheckSquare className="w-5 h-5 text-primary" />
             <span>Project Action Plan & Task List</span>
           </h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-mute mt-0.5">
             Milestone checklists, ECN / ECO engineering change action items, and departmental tasks.
           </p>
         </div>
@@ -234,34 +234,34 @@ export default function ProjectTasksPage() {
 
       {/* Stats Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-xs">
-          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Total Tasks</div>
-          <div className="text-xl font-black text-zinc-900 mt-0.5">{taskStats.total}</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Total Tasks</div>
+          <div className="text-xl font-semibold text-ink mt-0.5">{taskStats.total}</div>
         </div>
-        <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-xs">
-          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Pending</div>
-          <div className="text-xl font-black text-zinc-500 mt-0.5">{taskStats.pending}</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Pending</div>
+          <div className="text-xl font-semibold text-mute mt-0.5">{taskStats.pending}</div>
         </div>
-        <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-xs">
-          <div className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">In Progress</div>
-          <div className="text-xl font-black text-blue-700 mt-0.5">{taskStats.inProgress}</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+          <div className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider">In Progress</div>
+          <div className="text-xl font-semibold text-primary-dark mt-0.5">{taskStats.inProgress}</div>
         </div>
-        <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-xs">
-          <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Completed</div>
-          <div className="text-xl font-black text-emerald-700 mt-0.5">{taskStats.completed}</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+          <div className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Completed</div>
+          <div className="text-xl font-semibold text-emerald-700 mt-0.5">{taskStats.completed}</div>
         </div>
-        <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-xs">
-          <div className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Blocked</div>
-          <div className="text-xl font-black text-red-700 mt-0.5">{taskStats.blocked}</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+          <div className="text-[10px] font-semibold text-red-400 uppercase tracking-wider">Blocked</div>
+          <div className="text-xl font-semibold text-red-700 mt-0.5">{taskStats.blocked}</div>
         </div>
       </div>
 
       {/* Progress Bar */}
       {taskStats.total > 0 && (
-        <div className="bg-white p-4 rounded-xl border border-zinc-200/80 shadow-xs">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-zinc-600">Overall Completion</span>
-            <span className="text-xs font-black text-zinc-900">{completionPercent}%</span>
+            <span className="text-xs font-semibold text-zinc-600">Overall Completion</span>
+            <span className="text-xs font-semibold text-ink">{completionPercent}%</span>
           </div>
           <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
             <div
@@ -273,7 +273,7 @@ export default function ProjectTasksPage() {
       )}
 
       {/* Filter Strip */}
-      <div className="flex items-center gap-1.5 p-1 bg-zinc-100 rounded-xl border border-zinc-200/80 overflow-x-auto">
+      <div className="flex items-center gap-1.5 p-1 bg-zinc-100 rounded-[12px] border border-border-gray/80 overflow-x-auto">
         {[
           { key: "ALL", label: "All" },
           { key: "PENDING", label: "Pending" },
@@ -284,10 +284,10 @@ export default function ProjectTasksPage() {
           <button
             key={f.key}
             onClick={() => setFilterStatus(f.key)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               filterStatus === f.key
-                ? "bg-white text-zinc-900 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-900 hover:bg-white/50"
+                ? "bg-white text-ink shadow-sm"
+                : "text-mute hover:text-ink hover:bg-white/50"
             }`}
           >
             {f.label}
@@ -304,10 +304,10 @@ export default function ProjectTasksPage() {
       </div>
 
       {/* Task Table */}
-      <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden">
         <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-zinc-900">Project Task Register</h3>
+            <h3 className="text-sm font-semibold text-ink">Project Task Register</h3>
             <p className="text-[10px] text-zinc-400 mt-0.5">
               {filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""} shown
             </p>
@@ -317,13 +317,13 @@ export default function ProjectTasksPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50/80">
-                <th className="p-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider w-[35%]">Task / Action Item</th>
-                <th className="p-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider">Assigned To</th>
-                <th className="p-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider">Start Date</th>
-                <th className="p-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider">Due Date</th>
-                <th className="p-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider text-center">Status</th>
-                <th className="p-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider text-right">Actions</th>
+              <tr className="border-b border-zinc-100 bg-canvas/80">
+                <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider w-[35%]">Task / Action Item</th>
+                <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider">Assigned To</th>
+                <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider">Start Date</th>
+                <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider">Due Date</th>
+                <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider text-center">Status</th>
+                <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
@@ -333,16 +333,16 @@ export default function ProjectTasksPage() {
                   const overdue = isOverdue(task);
 
                   return (
-                    <tr key={task.id} className="hover:bg-zinc-50/60 transition-colors group">
+                    <tr key={task.id} className="hover:bg-canvas/60 transition-colors group">
                       <td className="p-3">
-                        <div className="font-bold text-zinc-900">{task.taskName}</div>
+                        <div className="font-semibold text-ink">{task.taskName}</div>
                         {task.description && (
                           <div className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{task.description}</div>
                         )}
                       </td>
                       <td className="p-3">
                         {task.assignedTo ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 rounded-md text-zinc-700 font-semibold text-[11px]">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 rounded-[12px] text-zinc-700 font-semibold text-[11px]">
                             <User className="w-3 h-3" />
                             {task.assignedTo}
                           </span>
@@ -350,11 +350,11 @@ export default function ProjectTasksPage() {
                           <span className="text-zinc-300">—</span>
                         )}
                       </td>
-                      <td className="p-3 font-mono text-zinc-500">
+                      <td className="p-3 font-mono text-mute">
                         {formatDate(task.startDate)}
                       </td>
                       <td className="p-3 font-mono">
-                        <span className={overdue ? "text-red-600 font-bold" : "text-zinc-500"}>
+                        <span className={overdue ? "text-red-600 font-semibold" : "text-mute"}>
                           {formatDate(task.endDate)}
                           {overdue && <AlertTriangle className="inline w-3 h-3 ml-1 text-red-500" />}
                         </span>
@@ -364,7 +364,7 @@ export default function ProjectTasksPage() {
                           <select
                             value={task.status}
                             onChange={(e) => handleStatusChange(task, e.target.value)}
-                            className={`appearance-none cursor-pointer pl-2 pr-6 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${statusCfg.bg} ${statusCfg.color} ${statusCfg.border} focus:outline-none`}
+                            className={`appearance-none cursor-pointer pl-2 pr-6 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${statusCfg.bg} ${statusCfg.color} ${statusCfg.border} focus:outline-none`}
                           >
                             <option value="PENDING">Pending</option>
                             <option value="IN_PROGRESS">In Progress</option>
@@ -378,14 +378,14 @@ export default function ProjectTasksPage() {
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => openEditModal(task)}
-                            className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-[12px] hover:bg-primary-subtle text-zinc-400 hover:text-primary transition-colors cursor-pointer"
                             title="Edit Task"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => { setDeletingTask(task); setShowDeleteModal(true); }}
-                            className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-[12px] hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer"
                             title="Delete Task"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -400,7 +400,7 @@ export default function ProjectTasksPage() {
                   <td colSpan={6} className="p-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <CheckSquare className="w-8 h-8 text-zinc-200" />
-                      <p className="text-sm font-bold text-zinc-400">No tasks found</p>
+                      <p className="text-sm font-semibold text-zinc-400">No tasks found</p>
                       <p className="text-xs text-zinc-300">
                         {filterStatus === "ALL"
                           ? "Click 'Create Task Item' to add an action item."
@@ -441,7 +441,7 @@ export default function ProjectTasksPage() {
               placeholder="Describe the scope, deliverables, or acceptance criteria..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full bg-white border border-zinc-200 px-3.5 py-2.5 text-sm font-medium text-zinc-900 placeholder-zinc-400 rounded-lg shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-zinc-300 transition-all resize-none"
+              className="w-full bg-white border border-border-gray px-3.5 py-2.5 text-sm font-medium text-ink placeholder-zinc-400 rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all resize-none"
             />
           </div>
 
@@ -453,7 +453,7 @@ export default function ProjectTasksPage() {
               <select
                 value={formData.assignedTo}
                 onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                className="w-full h-[var(--size-input)] bg-white border border-zinc-200 px-3 text-sm font-medium text-zinc-900 rounded-lg shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-zinc-300 transition-all cursor-pointer"
+                className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all cursor-pointer"
               >
                 <option value="">Select Employee</option>
                 {employees.map((emp: any) => (
@@ -470,7 +470,7 @@ export default function ProjectTasksPage() {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full h-[var(--size-input)] bg-white border border-zinc-200 px-3 text-sm font-medium text-zinc-900 rounded-lg shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-zinc-300 transition-all cursor-pointer"
+                className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all cursor-pointer"
               >
                 <option value="PENDING">Pending</option>
                 <option value="IN_PROGRESS">In Progress</option>
@@ -510,8 +510,8 @@ export default function ProjectTasksPage() {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
-            <Button variant="secondary" type="button" onClick={() => setShowCreateModal(false)}>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border-gray">
+            <Button variant="white" type="button" onClick={() => setShowCreateModal(false)}>
               Cancel
             </Button>
             <Button type="submit" isLoading={isSubmitting}>
@@ -545,7 +545,7 @@ export default function ProjectTasksPage() {
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full bg-white border border-zinc-200 px-3.5 py-2.5 text-sm font-medium text-zinc-900 placeholder-zinc-400 rounded-lg shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-zinc-300 transition-all resize-none"
+              className="w-full bg-white border border-border-gray px-3.5 py-2.5 text-sm font-medium text-ink placeholder-zinc-400 rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all resize-none"
             />
           </div>
 
@@ -557,7 +557,7 @@ export default function ProjectTasksPage() {
               <select
                 value={formData.assignedTo}
                 onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                className="w-full h-[var(--size-input)] bg-white border border-zinc-200 px-3 text-sm font-medium text-zinc-900 rounded-lg shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-zinc-300 transition-all cursor-pointer"
+                className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all cursor-pointer"
               >
                 <option value="">Select Employee</option>
                 {employees.map((emp: any) => (
@@ -574,7 +574,7 @@ export default function ProjectTasksPage() {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full h-[var(--size-input)] bg-white border border-zinc-200 px-3 text-sm font-medium text-zinc-900 rounded-lg shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-zinc-300 transition-all cursor-pointer"
+                className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all cursor-pointer"
               >
                 <option value="PENDING">Pending</option>
                 <option value="IN_PROGRESS">In Progress</option>
@@ -614,8 +614,8 @@ export default function ProjectTasksPage() {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
-            <Button variant="secondary" type="button" onClick={() => { setShowEditModal(false); setEditingTask(null); }}>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border-gray">
+            <Button variant="white" type="button" onClick={() => { setShowEditModal(false); setEditingTask(null); }}>
               Cancel
             </Button>
             <Button type="submit" isLoading={isSubmitting}>
@@ -634,13 +634,13 @@ export default function ProjectTasksPage() {
         maxWidth="sm"
       >
         <div className="space-y-4">
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-[12px]">
             <p className="text-sm text-red-800">
               Are you sure you want to delete <strong>"{deletingTask?.taskName}"</strong>?
             </p>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => { setShowDeleteModal(false); setDeletingTask(null); }}>
+            <Button variant="white" onClick={() => { setShowDeleteModal(false); setDeletingTask(null); }}>
               Cancel
             </Button>
             <Button variant="danger" onClick={handleDelete} isLoading={isSubmitting}>

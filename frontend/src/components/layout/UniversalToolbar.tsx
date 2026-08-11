@@ -89,13 +89,13 @@ export function UniversalToolbar(props: UniversalToolbarProps) {
   };
 
   return (
-    <div className="h-[var(--size-toolbar)] flex items-center justify-between px-4 bg-zinc-50 border border-zinc-200 rounded-md mb-4 hide-on-print shadow-xs">
-      <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar">
+    <div className="h-[var(--size-toolbar)] flex items-center justify-between px-4 bg-canvas border border-hairline rounded-sm mb-6 hide-on-print">
+      <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
         {renderButton('new', <Plus size={14} />, 'New', props.onNew, true)}
         {renderButton('save', <Save size={14} />, 'Save', props.onSave)}
         
         {activeFeature && isDirty && (
-          <span className="flex items-center text-micro font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 ml-1">
+          <span className="flex items-center text-caption font-medium text-accent-orange bg-canvas px-2 py-0.5 rounded-sm border border-hairline ml-1">
             Modified
           </span>
         )}
@@ -131,7 +131,7 @@ export function UniversalToolbar(props: UniversalToolbarProps) {
 }
 
 function Divider() {
-  return <div className="w-px h-4 bg-zinc-200 mx-1 shrink-0" />;
+  return <div className="w-px h-4 bg-hairline mx-1 shrink-0" />;
 }
 
 function ToolbarButton({ 
@@ -139,11 +139,11 @@ function ToolbarButton({
 }: { 
   icon: React.ReactNode; label: string; primary?: boolean; disabled?: boolean; danger?: boolean; onClick?: () => void;
 }) {
-  const base = "relative flex items-center gap-1.5 h-7 px-2.5 rounded-md text-caption font-medium transition-colors shrink-0 cursor-pointer";
+  const base = "relative flex items-center gap-1.5 h-8 px-3 rounded-sm text-body-sm transition-colors shrink-0 cursor-pointer";
   
   if (disabled) {
     return (
-      <button disabled className={`${base} text-zinc-400 bg-transparent cursor-not-allowed`} title={label}>
+      <button disabled className={`${base} text-mute/50 bg-transparent cursor-not-allowed`} title={label}>
         {icon}
         <span>{label}</span>
       </button>
@@ -152,7 +152,7 @@ function ToolbarButton({
 
   if (primary) {
     return (
-      <button onClick={onClick} className={`${base} bg-zinc-900 text-white hover:bg-zinc-800 shadow-xs font-semibold`} title={label}>
+      <button onClick={onClick} className={`${base} bg-primary text-on-primary hover:bg-ink-strong font-medium`} title={label}>
         {icon}
         <span>{label}</span>
       </button>
@@ -161,7 +161,7 @@ function ToolbarButton({
 
   if (danger) {
     return (
-      <button onClick={onClick} className={`${base} text-red-600 hover:bg-red-50 hover:border-red-200 border border-transparent`} title={label}>
+      <button onClick={onClick} className={`${base} text-accent-red hover:bg-accent-red hover:text-on-primary border border-hairline`} title={label}>
         {icon}
         <span>{label}</span>
       </button>
@@ -169,7 +169,7 @@ function ToolbarButton({
   }
 
   return (
-    <button onClick={onClick} className={`${base} text-zinc-700 hover:bg-zinc-200/60 hover:text-zinc-900 border border-zinc-200 bg-white`} title={label}>
+    <button onClick={onClick} className={`${base} text-ink hover:bg-hairline/20 border border-hairline bg-canvas font-normal`} title={label}>
       {icon}
       <span>{label}</span>
     </button>

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Layout, Plus, Save, Settings, Type, Hash, List, CheckSquare, AlignLeft, GripVertical, Trash2, Calendar, ToggleLeft, CircleDot, Mail, UploadCloud, X, HelpCircle, ChevronDown } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
@@ -66,14 +68,13 @@ export const FormBuilder = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['form', activeForm] });
-      success('Schema Saved', 'Advanced form schema saved successfully to database!');
+      success('Schema Saved', 'Form schema saved successfully to database!');
     },
     onError: () => {
       error('Save Failed', 'Could not save the form schema to the database.');
     }
   });
 
-  
   // Settings Panel State
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
 
@@ -104,56 +105,61 @@ export const FormBuilder = () => {
 
   const getIconForType = (type: FieldType) => {
     switch(type) {
-      case 'text': return <Type className="w-4 h-4 text-blue-600" />;
-      case 'number': return <Hash className="w-4 h-4 text-emerald-600" />;
-      case 'select': return <List className="w-4 h-4 text-purple-600" />;
-      case 'checkbox': return <CheckSquare className="w-4 h-4 text-orange-600" />;
-      case 'textarea': return <AlignLeft className="w-4 h-4 text-zinc-500" />;
-      case 'date': return <Calendar className="w-4 h-4 text-rose-600" />;
-      case 'toggle': return <ToggleLeft className="w-4 h-4 text-green-600" />;
-      case 'radio': return <CircleDot className="w-4 h-4 text-indigo-600" />;
-      case 'contact': return <Mail className="w-4 h-4 text-yellow-600" />;
-      case 'file': return <UploadCloud className="w-4 h-4 text-cyan-600" />;
-      default: return <Type className="w-4 h-4 text-blue-600" />;
+      case 'text': return <Type className="w-4 h-4 text-primary" />;
+      case 'number': return <Hash className="w-4 h-4 text-accent-green" />;
+      case 'select': return <List className="w-4 h-4 text-primary" />;
+      case 'checkbox': return <CheckSquare className="w-4 h-4 text-amber-600" />;
+      case 'textarea': return <AlignLeft className="w-4 h-4 text-silver-blue" />;
+      case 'date': return <Calendar className="w-4 h-4 text-accent-red" />;
+      case 'toggle': return <ToggleLeft className="w-4 h-4 text-accent-green" />;
+      case 'radio': return <CircleDot className="w-4 h-4 text-primary" />;
+      case 'contact': return <Mail className="w-4 h-4 text-amber-500" />;
+      case 'file': return <UploadCloud className="w-4 h-4 text-primary" />;
+      default: return <Type className="w-4 h-4 text-primary" />;
     }
   };
 
   const editingField = fields.find(f => f.id === editingFieldId);
 
   return (
-    <div className="h-full flex flex-col relative">
+    <div className="h-full flex flex-col relative min-h-0">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-black/10 shrink-0 bg-black/5 backdrop-blur-md relative z-20">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-700 flex items-center justify-center mr-4 border border-pink-200 shadow-sm">
+      <div className="flex items-center justify-between p-5 border-b border-border-gray shrink-0 bg-white z-20">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-[10px] bg-primary-subtle text-primary flex items-center justify-center border border-primary/20 shadow-subtle">
             <Layout className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Advanced Form Builder</h2>
-            <p className="text-sm text-zinc-500">Design dynamic, responsive data entry schemas.</p>
+            <h2 className="text-section-heading font-bold text-ink tracking-tight">Advanced Form Builder</h2>
+            <p className="text-caption text-silver-blue">Design dynamic, responsive data entry schemas for master entities.</p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Select 
-            value={activeForm}
-            onChange={(e) => setActiveForm(e.target.value)}
-            options={[
-              { label: 'Customers Form', value: 'Customers' },
-              { label: 'Vendors Form', value: 'Vendors' },
-              { label: 'Materials Form', value: 'Materials' },
-            ]}
-          />
-          <Button variant="primary" leftIcon={<Save className="w-4 h-4" />} onClick={handleSave} isLoading={saveMutation.isPending}>
-            Save Schema
+        <div className="flex items-center space-x-3">
+          <div className="w-48">
+            <Select 
+              value={activeForm}
+              onChange={(e) => setActiveForm(e.target.value)}
+              options={[
+                { label: 'Customers Form', value: 'Customers' },
+                { label: 'Vendors Form', value: 'Vendors' },
+                { label: 'Materials Form', value: 'Materials' },
+              ]}
+            />
+          </div>
+          <Button variant="primary" size="md" onClick={handleSave} isLoading={saveMutation.isPending}>
+            <Save className="w-4 h-4 mr-1.5" />
+            <span>Save Schema</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden flex relative z-10">
+      <div className="flex-1 overflow-hidden flex relative z-10 min-h-0">
         {/* Left Sidebar - Toolbox */}
-        <div className="w-64 border-r border-black/10 bg-[#FBFBFC]/90 backdrop-blur-xl p-6 flex flex-col overflow-y-auto hide-scrollbar z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Input Elements</h3>
-          <div className="space-y-2 mb-8">
+        <div className="w-60 border-r border-border-gray bg-[#fbfbfd] p-4 flex flex-col overflow-y-auto hide-scrollbar z-20 shrink-0">
+          <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider mb-2 block">
+            Input Elements
+          </span>
+          <div className="space-y-1.5 mb-6">
             {[
               { type: 'text', label: 'Short Text' },
               { type: 'textarea', label: 'Long Text' },
@@ -164,8 +170,10 @@ export const FormBuilder = () => {
             ))}
           </div>
 
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Selection</h3>
-          <div className="space-y-2 mb-8">
+          <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider mb-2 block">
+            Selection Controls
+          </span>
+          <div className="space-y-1.5 mb-6">
             {[
               { type: 'select', label: 'Dropdown' },
               { type: 'radio', label: 'Radio Choice' },
@@ -176,8 +184,10 @@ export const FormBuilder = () => {
             ))}
           </div>
 
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Advanced</h3>
-          <div className="space-y-2">
+          <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider mb-2 block">
+            Advanced Elements
+          </span>
+          <div className="space-y-1.5">
             {[
               { type: 'date', label: 'Date Picker' },
               { type: 'file', label: 'File Upload' },
@@ -187,31 +197,29 @@ export const FormBuilder = () => {
           </div>
         </div>
 
-        <div className="flex-1 p-8 overflow-y-auto hide-scrollbar bg-zinc-50/50 bg-[radial-gradient(ellipse_at_center,_rgba(15,15,20,0.02)_0%,_transparent_100%)] relative">
+        {/* Canvas Area */}
+        <div className="flex-1 p-6 overflow-y-auto hide-scrollbar bg-[#fbfbfd] relative">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-2xl border border-black/10 rounded-3xl p-8 shadow-floating min-h-[600px] relative overflow-hidden transition-all duration-500">
+            <div className="bg-white border border-border-gray rounded-[12px] p-6 shadow-subtle min-h-[500px] relative overflow-hidden">
               
-              {/* Canvas Ambient Glow */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-blue-100/50 blur-[80px] rounded-full pointer-events-none"></div>
-
-              <div className="mb-8 border-b border-black/10 pb-4 relative z-10">
-                <h3 className="text-2xl font-black text-zinc-900 tracking-tight">{activeForm}</h3>
-                <p className="text-sm text-zinc-500 font-medium">Drag, drop, and configure fields for this entity.</p>
+              <div className="mb-6 border-b border-border-gray pb-3">
+                <h3 className="text-section-heading font-bold text-ink tracking-tight">{activeForm} Entity Schema</h3>
+                <p className="text-caption text-silver-blue">Click or drag elements from the left toolbox to configure this form.</p>
               </div>
 
-              <div className="flex flex-wrap -mx-3 relative z-10">
+              <div className="flex flex-wrap -mx-2.5">
                 {isLoading ? (
                   <div className="w-full flex flex-col items-center justify-center py-24">
-                    <div className="w-8 h-8 rounded-full border-2 border-emerald-200 border-t-emerald-600 animate-spin mb-4"></div>
-                    <p className="text-slate-500 font-medium animate-pulse">Loading Schema from Database...</p>
+                    <div className="w-8 h-8 rounded-full border-2 border-primary-subtle border-t-primary animate-spin mb-3"></div>
+                    <p className="text-silver-blue font-medium animate-pulse text-caption">Loading Schema...</p>
                   </div>
                 ) : fields.length === 0 ? (
-                  <div className="w-full text-center py-24 border-2 border-dashed border-black/5 rounded-3xl flex flex-col items-center justify-center bg-white/[0.01]">
-                    <div className="w-20 h-20 rounded-3xl bg-black/5 flex items-center justify-center mb-6 shadow-inner border border-black/10">
-                      <Layout className="w-10 h-10 text-slate-500" />
+                  <div className="w-full text-center py-20 border-2 border-dashed border-border-gray rounded-[12px] flex flex-col items-center justify-center bg-[#fbfbfd]">
+                    <div className="w-14 h-14 rounded-full bg-primary-subtle text-primary flex items-center justify-center mb-3">
+                      <Layout className="w-6 h-6" />
                     </div>
-                    <h3 className="text-xl font-bold text-zinc-900 mb-2 tracking-tight">Blank Canvas</h3>
-                    <p className="text-zinc-500 max-w-sm font-medium leading-relaxed">Drag and drop premium field types from the left sidebar to start building this entity schema.</p>
+                    <h3 className="text-body font-bold text-ink mb-1">Blank Form Schema</h3>
+                    <p className="text-caption text-silver-blue max-w-sm">Click input elements from the left toolbox to start building fields.</p>
                   </div>
                 ) : (
                   fields.map((field) => {
@@ -219,53 +227,58 @@ export const FormBuilder = () => {
                     const isHalf = field.width === 'half';
                     
                     return (
-                      <div key={field.id} className={`p-3 transition-all duration-300 ${isHalf ? 'w-1/2' : 'w-full'}`}>
-                        <div className={`group relative flex flex-col p-5 rounded-2xl border transition-all duration-300 ${isEditing ? 'bg-blue-50 border-blue-400 shadow-md scale-[1.01]' : 'bg-[#FBFBFC]/60 border-black/5 hover:border-black/20 hover:bg-black/5'}`}>
+                      <div key={field.id} className={`p-2.5 ${isHalf ? 'w-1/2' : 'w-full'}`}>
+                        <div className={`group relative flex flex-col p-4 rounded-[10px] border transition-all ${
+                          isEditing 
+                            ? 'bg-primary-subtle/30 border-primary shadow-subtle' 
+                            : 'bg-white border-border-gray hover:border-primary/40 shadow-subtle'
+                        }`}>
                           
                           {/* Drag Handle */}
-                          <div className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-move p-1.5 text-slate-500 hover:text-zinc-900 transition-opacity bg-[#F4F4F6] rounded-lg border border-black/10 shadow-lg z-20">
-                            <GripVertical className="w-4 h-4" />
+                          <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-move p-1 text-silver-blue hover:text-ink bg-white rounded-[6px] border border-border-gray shadow-subtle z-20">
+                            <GripVertical className="w-3.5 h-3.5" />
                           </div>
                           
                           {/* Field Header */}
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-2">
                               {getIconForType(field.type)}
-                              <Input 
+                              <input 
                                 value={field.label} 
                                 onChange={(e) => updateField(field.id, { label: e.target.value })} 
-                                className="!bg-transparent !border-transparent hover:!border-black/10 focus:!bg-[#FBFBFC]/95 !px-2 !py-0.5 -ml-2 font-bold text-sm text-zinc-900 w-auto inline-block transition-colors"
+                                className="bg-transparent border-b border-transparent hover:border-border-gray focus:border-primary focus:bg-white px-1.5 py-0.5 font-bold text-caption text-ink focus:outline-none rounded transition-colors"
                               />
-                              {field.required && <span className="text-red-500 font-bold">*</span>}
+                              {field.required && <span className="text-accent-red font-bold text-xs">*</span>}
                             </div>
                           </div>
                           
                           {/* Field Mock UI */}
-                          <div className="pointer-events-none opacity-90 transition-opacity">
+                          <div className="pointer-events-none opacity-90">
                             <FieldPreview field={field} />
                           </div>
 
                           {field.helpText && (
-                            <div className="mt-2 flex items-start text-[10px] text-slate-500">
+                            <div className="mt-1.5 flex items-start text-small text-silver-blue">
                               <HelpCircle className="w-3 h-3 mr-1 mt-0.5 shrink-0" />
                               {field.helpText}
                             </div>
                           )}
 
                           {/* Hover Controls */}
-                          <div className={`absolute right-4 top-4 flex items-center space-x-1 transition-opacity bg-[#F4F4F6]/90 backdrop-blur-md p-1.5 rounded-xl border border-black/10 shadow-xl z-20 ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                          <div className={`absolute right-3 top-3 flex items-center space-x-1 bg-white p-1 rounded-[8px] border border-border-gray shadow-subtle z-20 ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                             <button 
                               onClick={() => setEditingFieldId(isEditing ? null : field.id)}
-                              className={`p-1.5 rounded-lg transition-colors flex items-center ${isEditing ? 'bg-blue-100 text-blue-700' : 'text-zinc-500 hover:text-white hover:bg-black/10'}`}
+                              className={`p-1 rounded-[6px] transition-colors cursor-pointer ${isEditing ? 'bg-primary text-white' : 'text-silver-blue hover:text-ink hover:bg-[rgba(148,151,169,0.08)]'}`}
+                              title="Field Settings"
                             >
-                              <Settings className="w-4 h-4" />
+                              <Settings className="w-3.5 h-3.5" />
                             </button>
-                            <div className="w-px h-4 bg-black/10 mx-1"></div>
                             <button 
                               onClick={() => removeField(field.id)}
-                              className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              className="p-1 rounded-[6px] text-silver-blue hover:text-accent-red hover:bg-[rgba(239,68,68,0.08)] transition-colors cursor-pointer"
+                              title="Remove Field"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -275,9 +288,12 @@ export const FormBuilder = () => {
                 )}
               </div>
               {fields.length > 0 && (
-                <div className="mt-12 pt-6 border-t border-black/10 flex justify-end space-x-4 relative z-10">
-                  <Button variant="ghost" onClick={() => setFields([])}>Clear Canvas</Button>
-                  <Button variant="primary" leftIcon={<Save className="w-4 h-4" />} onClick={handleSave} isLoading={saveMutation.isPending}>Deploy Schema</Button>
+                <div className="mt-8 pt-4 border-t border-border-gray flex justify-end space-x-3">
+                  <Button variant="white" size="sm" onClick={() => setFields([])}>Clear Canvas</Button>
+                  <Button variant="primary" size="sm" onClick={handleSave} isLoading={saveMutation.isPending}>
+                    <Save className="w-4 h-4 mr-1.5" />
+                    <span>Save Schema</span>
+                  </Button>
                 </div>
               )}
             </div>
@@ -286,87 +302,87 @@ export const FormBuilder = () => {
         </div>
 
         {/* Right Sidebar - Field Settings Panel (Slide Over) */}
-        <div className={`absolute top-0 right-0 h-full w-80 bg-[#FBFBFC]/95 backdrop-blur-3xl border-l border-black/10 shadow-[-10px_0_50px_rgba(0,0,0,0.5)] z-40 transition-transform duration-500 flex flex-col ${editingFieldId ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`absolute top-0 right-0 h-full w-80 bg-white border-l border-border-gray shadow-elevation z-40 transition-transform duration-300 flex flex-col ${editingFieldId ? 'translate-x-0' : 'translate-x-full'}`}>
           {editingField && (
             <>
-              <div className="p-6 border-b border-black/10 flex items-center justify-between shrink-0 bg-black/[0.02]">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-200">
+              <div className="p-4 border-b border-border-gray flex items-center justify-between shrink-0 bg-[#fbfbfd]">
+                <div className="flex items-center space-x-2">
+                  <div className="w-7 h-7 rounded-[8px] bg-primary-subtle text-primary flex items-center justify-center border border-primary/20">
                     <Settings className="w-4 h-4" />
                   </div>
-                  <h3 className="text-base font-bold text-zinc-900">Field Settings</h3>
+                  <h3 className="text-caption font-bold text-ink">Field Properties</h3>
                 </div>
-                <button onClick={() => setEditingFieldId(null)} className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/10 transition-colors">
-                  <X className="w-5 h-5" />
+                <button onClick={() => setEditingFieldId(null)} className="p-1.5 rounded-[8px] text-silver-blue hover:text-ink hover:bg-[rgba(148,151,169,0.08)] transition-colors cursor-pointer">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-8 hide-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 space-y-5 hide-scrollbar">
                 
                 {/* Basic Settings */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Basic</h4>
+                <div className="space-y-3">
+                  <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider block">Basic Config</span>
                   
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-zinc-600">Field Label</label>
+                  <div className="space-y-1">
+                    <label className="text-micro font-semibold uppercase text-silver-blue">Field Label</label>
                     <Input 
                       value={editingField.label} 
                       onChange={(e) => updateField(editingField.id, { label: e.target.value })} 
-                      className="w-full text-sm"
+                      className="w-full text-caption"
                     />
                   </div>
 
                   {['text', 'number', 'textarea', 'contact', 'date'].includes(editingField.type) && (
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-zinc-600">Placeholder</label>
+                    <div className="space-y-1">
+                      <label className="text-micro font-semibold uppercase text-silver-blue">Placeholder</label>
                       <Input 
                         value={editingField.placeholder || ''} 
                         onChange={(e) => updateField(editingField.id, { placeholder: e.target.value })} 
                         placeholder="e.g. Enter value..."
-                        className="w-full text-sm"
+                        className="w-full text-caption"
                       />
                     </div>
                   )}
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-zinc-600">Help Text</label>
+                  <div className="space-y-1">
+                    <label className="text-micro font-semibold uppercase text-silver-blue">Help Text</label>
                     <Input 
                       value={editingField.helpText || ''} 
                       onChange={(e) => updateField(editingField.id, { helpText: e.target.value })} 
                       placeholder="Appears below the input..."
-                      className="w-full text-sm"
+                      className="w-full text-caption"
                     />
                   </div>
                 </div>
 
                 {/* Validation Settings */}
-                <div className="space-y-4 pt-6 border-t border-black/5">
-                  <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Validation & Layout</h4>
+                <div className="space-y-3 pt-4 border-t border-border-gray">
+                  <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider block">Layout & Rules</span>
                   
-                  <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl bg-black/5 hover:bg-black/10 border border-black/5 transition-colors">
-                    <span className="text-sm font-medium text-zinc-600">Required Field</span>
+                  <label className="flex items-center justify-between cursor-pointer p-2.5 rounded-[10px] bg-[#fbfbfd] border border-border-gray hover:bg-[rgba(148,151,169,0.04)] transition-colors">
+                    <span className="text-caption font-bold text-ink">Required Field</span>
                     <input 
                       type="checkbox" 
                       checked={editingField.required}
                       onChange={(e) => updateField(editingField.id, { required: e.target.checked })}
-                      className="rounded border-black/20 bg-black/5 text-blue-500 focus:ring-blue-500/50 w-4 h-4"
+                      className="rounded border-border-gray text-primary focus:ring-primary w-4 h-4"
                     />
                   </label>
 
-                  <div className="space-y-1.5 mt-4">
-                    <label className="text-xs font-medium text-zinc-600">Field Width</label>
-                    <div className="flex p-1 bg-black/5 rounded-lg border border-black/5">
+                  <div className="space-y-1 mt-2">
+                    <label className="text-micro font-semibold uppercase text-silver-blue">Field Width</label>
+                    <div className="flex p-1 bg-[#fbfbfd] rounded-[10px] border border-border-gray">
                       <button 
                         onClick={() => updateField(editingField.id, { width: 'full' })}
-                        className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${editingField.width !== 'half' ? 'bg-black/10 text-zinc-900 shadow-sm' : 'text-slate-500 hover:text-zinc-600'}`}
+                        className={`flex-1 text-caption font-medium py-1 rounded-[8px] transition-colors cursor-pointer ${editingField.width !== 'half' ? 'bg-primary text-white shadow-subtle' : 'text-cool-gray hover:text-ink'}`}
                       >
-                        Full
+                        Full (100%)
                       </button>
                       <button 
                         onClick={() => updateField(editingField.id, { width: 'half' })}
-                        className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${editingField.width === 'half' ? 'bg-black/10 text-zinc-900 shadow-sm' : 'text-slate-500 hover:text-zinc-600'}`}
+                        className={`flex-1 text-caption font-medium py-1 rounded-[8px] transition-colors cursor-pointer ${editingField.width === 'half' ? 'bg-primary text-white shadow-subtle' : 'text-cool-gray hover:text-ink'}`}
                       >
-                        Half
+                        Half (50%)
                       </button>
                     </div>
                   </div>
@@ -374,21 +390,21 @@ export const FormBuilder = () => {
 
                 {/* Options (For Select & Radio) */}
                 {['select', 'radio'].includes(editingField.type) && (
-                  <div className="space-y-4 pt-6 border-t border-black/5">
-                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center justify-between">
-                      Options
+                  <div className="space-y-3 pt-4 border-t border-border-gray">
+                    <div className="flex items-center justify-between">
+                      <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider">Dropdown Options</span>
                       <button 
                         onClick={() => {
                           const currentOptions = editingField.options || [];
                           updateField(editingField.id, { options: [...currentOptions, `Option ${currentOptions.length + 1}`] });
                         }}
-                        className="text-blue-600 hover:text-blue-700 flex items-center bg-blue-50 px-2 py-0.5 rounded"
+                        className="text-primary hover:text-primary-hover flex items-center bg-primary-subtle px-2 py-0.5 rounded-[6px] text-small font-semibold cursor-pointer border border-primary/20"
                       >
                         <Plus className="w-3 h-3 mr-1" /> Add
                       </button>
-                    </h4>
+                    </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {(editingField.options || []).map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
                           <Input 
@@ -398,7 +414,7 @@ export const FormBuilder = () => {
                               newOpts[i] = e.target.value;
                               updateField(editingField.id, { options: newOpts });
                             }}
-                            className="flex-1 text-sm bg-black/5"
+                            className="flex-1 text-caption"
                           />
                           <button 
                             onClick={() => {
@@ -406,15 +422,12 @@ export const FormBuilder = () => {
                               newOpts.splice(i, 1);
                               updateField(editingField.id, { options: newOpts });
                             }}
-                            className="p-2 text-slate-500 hover:text-red-400 bg-black/5 hover:bg-red-500/10 rounded-lg transition-colors border border-black/5"
+                            className="p-2 text-silver-blue hover:text-accent-red bg-[#fbfbfd] hover:bg-[rgba(239,68,68,0.08)] rounded-[8px] transition-colors border border-border-gray cursor-pointer"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
-                      {(!editingField.options || editingField.options.length === 0) && (
-                        <p className="text-xs text-slate-500 italic">No options defined.</p>
-                      )}
                     </div>
                   </div>
                 )}
@@ -432,81 +445,80 @@ export const FormBuilder = () => {
 const ToolboxItem = ({ tool, addField, getIcon }: { tool: any, addField: any, getIcon: any }) => (
   <button 
     onClick={() => addField(tool.type)}
-    className="w-full flex items-center p-3 rounded-xl bg-black/[0.02] hover:bg-black/[0.06] border border-black/5 hover:border-black/20 transition-all duration-300 text-sm text-zinc-600 hover:text-zinc-900 group hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:-translate-y-0.5"
+    className="w-full flex items-center p-2 rounded-[10px] bg-white border border-border-gray hover:border-primary/40 hover:bg-[rgba(148,151,169,0.04)] transition-colors text-caption text-ink font-semibold group shadow-subtle cursor-pointer"
   >
-    <div className="w-8 h-8 rounded-lg bg-black/5 border border-black/5 flex items-center justify-center shadow-inner group-hover:bg-black/5 transition-colors">
+    <div className="w-7 h-7 rounded-[8px] bg-primary-subtle border border-primary/20 flex items-center justify-center shrink-0">
       {getIcon(tool.type)}
     </div>
-    <span className="ml-3 font-semibold tracking-wide">{tool.label}</span>
-    <div className="ml-auto w-6 h-6 rounded-md bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-      <Plus className="w-3.5 h-3.5" />
+    <span className="ml-2.5 truncate">{tool.label}</span>
+    <div className="ml-auto w-5 h-5 rounded-[6px] bg-[rgba(148,151,169,0.08)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-silver-blue group-hover:text-primary">
+      <Plus className="w-3 h-3" />
     </div>
   </button>
 );
 
 // Subcomponent: Field Preview Component
 const FieldPreview = ({ field }: { field: FormField }) => {
-  const commonGlass = "w-full bg-[#FBFBFC]/90 border border-black/10 rounded-xl shadow-inner flex items-center";
+  const commonGlass = "w-full bg-[#fbfbfd] border border-border-gray rounded-[10px] flex items-center text-caption text-silver-blue";
   const placeholder = field.placeholder || 'Enter value...';
 
   switch(field.type) {
     case 'textarea':
-      return <div className={`${commonGlass} h-24 p-3 items-start`}><span className="text-slate-600 text-sm">{placeholder}</span></div>;
+      return <div className={`${commonGlass} h-20 p-2.5 items-start`}><span>{placeholder}</span></div>;
     
     case 'select':
       return (
-        <div className={`${commonGlass} h-11 px-4 justify-between`}>
-          <span className="text-slate-500 text-sm font-medium">{placeholder || 'Select an option...'}</span>
-          <ChevronDown className="w-4 h-4 text-slate-500" />
+        <div className={`${commonGlass} h-9 px-3 justify-between`}>
+          <span className="text-silver-blue">{placeholder || 'Select an option...'}</span>
+          <ChevronDown className="w-4 h-4 text-silver-blue" />
         </div>
       );
     
     case 'checkbox':
-      return <div className="w-6 h-6 rounded-md border-2 border-black/20 bg-black/5 shadow-inner"></div>;
+      return <div className="w-5 h-5 rounded-[6px] border border-border-gray bg-[#fbfbfd]"></div>;
     
     case 'toggle':
       return (
-        <div className="w-12 h-6 rounded-full bg-black/5 border border-black/10 relative shadow-inner flex items-center p-0.5">
-          <div className="w-5 h-5 rounded-full bg-slate-400 shadow-md"></div>
+        <div className="w-9 h-5 rounded-full bg-[#dedee5] relative flex items-center p-0.5">
+          <div className="w-4 h-4 rounded-full bg-white shadow-subtle"></div>
         </div>
       );
     
     case 'radio':
       return (
-        <div className="flex space-x-6">
+        <div className="flex space-x-4">
           {(field.options?.length ? field.options.slice(0,3) : ['Option 1', 'Option 2']).map((opt, i) => (
-            <div key={i} className="flex items-center space-x-2">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${i===0 ? 'border-blue-500' : 'border-black/20'}`}>
-                {i===0 && <div className="w-2 h-2 rounded-full bg-blue-500"></div>}
+            <div key={i} className="flex items-center space-x-1.5">
+              <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${i===0 ? 'border-primary' : 'border-border-gray'}`}>
+                {i===0 && <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>}
               </div>
-              <span className="text-sm text-zinc-600 font-medium">{opt}</span>
+              <span className="text-caption text-cool-gray">{opt}</span>
             </div>
           ))}
-          {(field.options?.length || 0) > 3 && <span className="text-slate-500 text-sm">+{field.options!.length - 3} more</span>}
         </div>
       );
 
     case 'date':
       return (
-        <div className={`${commonGlass} h-11 px-4 justify-between`}>
-          <span className="text-slate-600 text-sm">{placeholder || 'YYYY-MM-DD'}</span>
-          <Calendar className="w-4 h-4 text-slate-600" />
+        <div className={`${commonGlass} h-9 px-3 justify-between`}>
+          <span>{placeholder || 'YYYY-MM-DD'}</span>
+          <Calendar className="w-4 h-4 text-silver-blue" />
         </div>
       );
     
     case 'contact':
       return (
-        <div className={`${commonGlass} h-11 px-4`}>
-          <Mail className="w-4 h-4 text-slate-600 mr-3" />
-          <span className="text-slate-600 text-sm">{placeholder || 'email@example.com'}</span>
+        <div className={`${commonGlass} h-9 px-3`}>
+          <Mail className="w-4 h-4 text-silver-blue mr-2" />
+          <span>{placeholder || 'email@example.com'}</span>
         </div>
       );
     
     case 'file':
       return (
-        <div className="w-full h-24 border-2 border-dashed border-black/10 rounded-xl bg-white/[0.01] flex flex-col items-center justify-center text-slate-500">
-          <UploadCloud className="w-6 h-6 mb-2 text-slate-600" />
-          <span className="text-xs font-medium uppercase tracking-widest">Drop file here</span>
+        <div className="w-full h-20 border-2 border-dashed border-border-gray rounded-[10px] bg-[#fbfbfd] flex flex-col items-center justify-center text-silver-blue">
+          <UploadCloud className="w-5 h-5 mb-1 text-silver-blue" />
+          <span className="text-micro font-semibold uppercase tracking-wider">Drop file here</span>
         </div>
       );
 
@@ -514,8 +526,8 @@ const FieldPreview = ({ field }: { field: FormField }) => {
     case 'text':
     default:
       return (
-        <div className={`${commonGlass} h-11 px-4`}>
-          <span className="text-slate-600 text-sm">{placeholder}</span>
+        <div className={`${commonGlass} h-9 px-3`}>
+          <span>{placeholder}</span>
         </div>
       );
   }

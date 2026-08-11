@@ -114,22 +114,22 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-[12px] shadow-level-4 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+        <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center bg-canvas/50">
           <div>
-            <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
               <PackageCheck className="w-5 h-5 text-emerald-600" />
               Goods Receipt Note (GRN)
             </h2>
-            <p className="text-xs text-zinc-500 mt-1">
-              Receiving against PO: <span className="font-mono font-bold text-zinc-700">{po.poNumber}</span>
+            <p className="text-xs text-mute mt-1">
+              Receiving against PO: <span className="font-mono font-semibold text-zinc-700">{po.poNumber}</span>
             </p>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-zinc-200 rounded-lg text-zinc-500 transition-colors"
+            className="p-2 hover:bg-zinc-200 rounded-[12px] text-mute transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -142,8 +142,8 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
               <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
                 <PackageCheck className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-bold text-zinc-900">PO Fully Received</h3>
-              <p className="text-sm text-zinc-500 mt-2 max-w-md">
+              <h3 className="text-lg font-semibold text-ink">PO Fully Received</h3>
+              <p className="text-sm text-mute mt-2 max-w-md">
                 All items in this Purchase Order have already been fully received into inventory. No further GRN can be created.
               </p>
             </div>
@@ -151,45 +151,45 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
             <form id="grn-form" onSubmit={handleSubmit} className="space-y-6">
               
               {/* Header Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-zinc-50 rounded-xl border border-zinc-100">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-canvas rounded-[12px] border border-zinc-100">
                 <div>
-                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">GRN Number *</label>
+                  <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">GRN Number *</label>
                   <input
                     type="text"
                     required
                     value={grnNumber}
                     onChange={(e) => setGrnNumber(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Supplier Challan No.</label>
+                  <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">Supplier Challan No.</label>
                   <input
                     type="text"
                     value={supplierChallan}
                     onChange={(e) => setSupplierChallan(e.target.value)}
                     placeholder="e.g. CH-2024"
-                    className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Remarks</label>
+                  <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">Remarks</label>
                   <input
                     type="text"
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
                     placeholder="Condition notes..."
-                    className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
               </div>
 
               {/* Items Table */}
               <div>
-                <h3 className="text-sm font-bold text-zinc-900 mb-3">Line Items Pending Receipt</h3>
-                <div className="border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
+                <h3 className="text-sm font-semibold text-ink mb-3">Line Items Pending Receipt</h3>
+                <div className="border border-border-gray rounded-[12px] overflow-hidden shadow-sm">
                   <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-zinc-50 text-zinc-500 font-bold uppercase tracking-wider border-b border-zinc-200">
+                    <thead className="bg-canvas text-mute font-semibold uppercase tracking-wider border-b border-border-gray">
                       <tr>
                         <th className="px-3 py-2.5">Material</th>
                         <th className="px-3 py-2.5 text-center">Pending Qty</th>
@@ -202,13 +202,13 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
                         if (item.remainingQty <= 0) return null; // Skip fulfilled items
                         
                         return (
-                          <tr key={idx} className="hover:bg-zinc-50/50">
+                          <tr key={idx} className="hover:bg-canvas/50">
                             <td className="px-3 py-3">
-                              <div className="font-semibold text-zinc-900">{item.partName}</div>
-                              <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{item.length}×{item.width}×{item.height}</div>
+                              <div className="font-semibold text-ink">{item.partName}</div>
+                              <div className="text-[10px] text-mute font-mono mt-0.5">{item.length}×{item.width}×{item.height}</div>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex items-center justify-center px-2 py-1 rounded bg-amber-50 text-amber-700 font-bold border border-amber-200">
+                              <span className="inline-flex items-center justify-center px-2 py-1 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200">
                                 {item.remainingQty}
                               </span>
                             </td>
@@ -220,7 +220,7 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
                                 step="any"
                                 value={item.acceptedQty}
                                 onChange={(e) => updateItem(idx, 'acceptedQty', Number(e.target.value))}
-                                className="w-24 bg-white border border-zinc-300 rounded-lg px-2 py-1.5 text-sm font-bold text-zinc-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                className="w-24 bg-white border border-border-gray rounded-[12px] px-2 py-1.5 text-sm font-semibold text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                               />
                             </td>
                             <td className="px-3 py-3">
@@ -230,7 +230,7 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
                                 value={item.heatNumber}
                                 onChange={(e) => updateItem(idx, 'heatNumber', e.target.value)}
                                 placeholder="Mill Test Cert No."
-                                className="w-32 bg-white border border-zinc-300 rounded-lg px-2 py-1.5 text-sm font-mono text-zinc-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                className="w-32 bg-white border border-border-gray rounded-[12px] px-2 py-1.5 text-sm font-mono text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                               />
                             </td>
                           </tr>
@@ -246,11 +246,11 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-zinc-100 bg-zinc-50 flex justify-end gap-3 shrink-0">
+        <div className="px-6 py-4 border-t border-zinc-100 bg-canvas flex justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-white border border-zinc-300 text-zinc-700 font-semibold text-sm rounded-xl hover:bg-zinc-50 transition-colors shadow-2xs"
+            className="px-4 py-2 bg-white border border-border-gray text-zinc-700 font-semibold text-sm rounded-[12px] hover:bg-canvas transition-colors shadow-subtle"
           >
             Cancel
           </button>
@@ -259,7 +259,7 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
               type="submit"
               form="grn-form"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-[12px] shadow-subtle transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>Processing...</>

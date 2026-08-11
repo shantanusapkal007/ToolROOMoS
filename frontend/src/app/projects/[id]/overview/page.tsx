@@ -63,10 +63,10 @@ export default function ProjectOverviewPage() {
 
   if (error || !project) {
     return (
-      <div className="bg-white rounded-2xl border border-zinc-200 p-8 text-center space-y-3">
+      <div className="bg-white rounded-[12px] border border-border-gray p-8 text-center space-y-3">
         <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
-        <h3 className="text-lg font-bold text-zinc-900">Project Not Found</h3>
-        <p className="text-xs text-zinc-500">Could not retrieve details for project ID: {id}</p>
+        <h3 className="text-lg font-semibold text-ink">Project Not Found</h3>
+        <p className="text-xs text-mute">Could not retrieve details for project ID: {id}</p>
       </div>
     );
   }
@@ -124,34 +124,34 @@ export default function ProjectOverviewPage() {
     : project.plantId;
 
   return (
-    <div className="space-y-5 text-zinc-900 font-sans pb-12">
+    <div className="space-y-5 text-ink font-sans pb-12">
       
       {/* Sleek Enterprise Page Header */}
-      <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white border border-border-gray/80 rounded-[12px] p-5 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           {/* Breadcrumbs */}
           <nav className="flex items-center text-xs font-semibold text-zinc-400 mb-1">
             <span>Projects</span>
             <ChevronRight className="w-3.5 h-3.5 mx-1.5 text-zinc-300" />
-            <span className="font-mono font-bold text-zinc-800">{project.projectNumber}</span>
+            <span className="font-mono font-semibold text-zinc-800">{project.projectNumber}</span>
             <ChevronRight className="w-3.5 h-3.5 mx-1.5 text-zinc-300" />
-            <span className="text-zinc-950 font-bold">Overview & KPIs</span>
+            <span className="text-zinc-950 font-semibold">Overview & KPIs</span>
           </nav>
 
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold shadow-xs">
+            <div className="w-9 h-9 rounded-[12px] bg-zinc-900 text-white flex items-center justify-center font-semibold shadow-subtle">
               <Briefcase className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-extrabold text-zinc-950 tracking-tight">
+                <h1 className="text-xl font-semibold text-zinc-950 tracking-tight">
                   {project.partName || 'Tooling Project'}
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {project.status || 'ACTIVE'}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 font-medium mt-0.5">
+              <p className="text-xs text-mute font-medium mt-0.5">
                 {project.description || 'No description provided for this tooling mission.'}
               </p>
             </div>
@@ -161,10 +161,10 @@ export default function ProjectOverviewPage() {
         {/* Stage Advancement & Actions */}
         <div className="flex items-center gap-2 shrink-0">
           <Button
-            variant="secondary"
+            variant="white"
             size="md"
             onClick={() => setShowDeleteModal(true)}
-            className="border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+            className="border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-semibold rounded-[12px] text-xs shadow-subtle transition-colors cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5 mr-1.5" />
             <span>Delete Project</span>
@@ -175,7 +175,7 @@ export default function ProjectOverviewPage() {
               variant="primary"
               size="md"
               onClick={() => setShowCompleteModal(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-[12px] text-xs shadow-subtle transition-colors cursor-pointer"
             >
               <BadgeCheck className="w-4 h-4 mr-1.5" />
               <span>Mark Project Completed</span>
@@ -187,7 +187,7 @@ export default function ProjectOverviewPage() {
             size="md"
             onClick={() => advanceStageMutation.mutate()}
             isLoading={advanceStageMutation.isPending}
-            className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+            className="bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-[12px] text-xs shadow-subtle transition-colors cursor-pointer"
           >
             <span>Evaluate & Advance Stage</span>
             <ArrowRight className="w-4 h-4 ml-1.5" />
@@ -204,7 +204,7 @@ export default function ProjectOverviewPage() {
       >
         <div className="space-y-4">
           <p className="text-caption text-zinc-700">
-            Are you sure you want to mark project <strong className="font-mono text-zinc-900">{project?.projectNumber}</strong> ({project?.partName}) as <strong>COMPLETED</strong>?
+            Are you sure you want to mark project <strong className="font-mono text-ink">{project?.projectNumber}</strong> ({project?.partName}) as <strong>COMPLETED</strong>?
           </p>
           <div>
             <label className="block text-xs font-semibold text-zinc-700 mb-1 uppercase tracking-wider">
@@ -215,13 +215,13 @@ export default function ProjectOverviewPage() {
               value={completionRemarks}
               onChange={(e) => setCompletionRemarks(e.target.value)}
               placeholder="e.g. All tooling deliverables approved by customer CMM inspection..."
-              className="w-full bg-white border border-zinc-200 px-3 py-2 text-sm text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 resize-none"
+              className="w-full bg-white border border-border-gray px-3 py-2 text-sm text-ink rounded-[12px] focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 resize-none"
             />
           </div>
-          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
-            <Button variant="secondary" onClick={() => setShowCompleteModal(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border-gray">
+            <Button variant="white" onClick={() => setShowCompleteModal(false)}>Cancel</Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
               isLoading={completeProjectMutation.isPending}
               onClick={() => {
                 completeProjectMutation.mutate(completionRemarks || undefined, {
@@ -247,16 +247,16 @@ export default function ProjectOverviewPage() {
       >
         <div className="space-y-4">
           <p className="text-caption text-zinc-700">
-            Are you sure you want to permanently delete project <strong className="font-mono text-zinc-900">{project?.projectNumber}</strong> ({project?.partName})?
+            Are you sure you want to permanently delete project <strong className="font-mono text-ink">{project?.projectNumber}</strong> ({project?.partName})?
           </p>
-          <p className="text-micro text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+          <p className="text-micro text-red-600 bg-red-50 p-3 rounded-[12px] border border-red-200">
             <strong>Warning:</strong> All associated Bill of Materials (BOM), routings, job cards, and cost summaries will be permanently deleted.
           </p>
-          <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border-gray">
+            <Button variant="white" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
             <Button
               variant="danger"
-              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold"
               disabled={deleteProjectMutation.isPending}
               onClick={async () => {
                 try {
@@ -276,24 +276,24 @@ export default function ProjectOverviewPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* KPI 1: Schedule & Target Delivery */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-2">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Schedule & Delivery</span>
-            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Schedule & Delivery</span>
+            <div className="w-7 h-7 rounded-[12px] bg-primary-subtle text-primary-dark flex items-center justify-center">
               <Calendar className="w-3.5 h-3.5" />
             </div>
           </div>
           <div>
-            <div className="text-sm font-extrabold text-zinc-950 font-mono">
+            <div className="text-sm font-semibold text-zinc-950 font-mono">
               {project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Not Scheduled'}
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                 daysRemaining !== null && daysRemaining < 0 
                   ? "bg-red-50 text-red-700 border-red-200"
                   : daysRemaining !== null
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-zinc-100 text-zinc-600 border-zinc-200"
+                  : "bg-zinc-100 text-zinc-600 border-border-gray"
               }`}>
                 {daysRemaining !== null 
                   ? (daysRemaining < 0 ? `${Math.abs(daysRemaining)} Days Overdue` : `${daysRemaining} Days Remaining`) 
@@ -304,17 +304,17 @@ export default function ProjectOverviewPage() {
         </div>
 
         {/* KPI 2: Workflow Stage & Progress */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-2">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Workflow & Progress</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Workflow & Progress</span>
+            <div className="w-7 h-7 rounded-[12px] bg-primary-subtle text-primary-dark flex items-center justify-center">
               <Layers className="w-3.5 h-3.5" />
             </div>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-zinc-900">{project.currentStage?.replace(/_/g, ' ') || 'CREATED'}</span>
-              <span className="text-xs font-mono font-bold text-indigo-700">{progressPercent}%</span>
+              <span className="text-xs font-semibold text-ink">{project.currentStage?.replace(/_/g, ' ') || 'CREATED'}</span>
+              <span className="text-xs font-mono font-semibold text-primary-dark">{progressPercent}%</span>
             </div>
             <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
               <div 
@@ -327,22 +327,22 @@ export default function ProjectOverviewPage() {
         </div>
 
         {/* KPI 3: BOM & Materials Requisitions */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-2">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">BOM & Steel Stock</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">BOM & Steel Stock</span>
+            <div className="w-7 h-7 rounded-[12px] bg-emerald-50 text-emerald-700 flex items-center justify-center">
               <PackageCheck className="w-3.5 h-3.5" />
             </div>
           </div>
           <div>
-            <div className="text-sm font-extrabold text-zinc-950 font-mono">
+            <div className="text-sm font-semibold text-zinc-950 font-mono">
               {totalBomItemsCount} Material Requisitions
             </div>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                 {grnReceivedCount} GRN Received
               </span>
-              <span className="text-[10px] font-bold text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
+              <span className="text-[10px] font-semibold text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded border border-border-gray">
                 {poInProgressCount} In Progress
               </span>
             </div>
@@ -350,19 +350,19 @@ export default function ProjectOverviewPage() {
         </div>
 
         {/* KPI 4: Machining & Shopfloor Capacity */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-2">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Machining Capacity</span>
-            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Machining Capacity</span>
+            <div className="w-7 h-7 rounded-[12px] bg-amber-50 text-amber-700 flex items-center justify-center">
               <Wrench className="w-3.5 h-3.5" />
             </div>
           </div>
           <div>
-            <div className="text-sm font-extrabold text-zinc-950 font-mono">
+            <div className="text-sm font-semibold text-zinc-950 font-mono">
               {totalMachineHours > 0 ? `${totalMachineHours.toFixed(1)} Machine Hrs` : '0.0 Machine Hrs'}
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+              <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                 {reports.length > 0 ? `${reports.length} Daily Log Shifts` : 'No shopfloor logs recorded'}
               </span>
             </div>
@@ -372,16 +372,16 @@ export default function ProjectOverviewPage() {
       </div>
 
       {/* Stage Progress Pipeline Stepper */}
-      <div className="bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3">
+      <div className="bg-white rounded-[12px] border border-border-gray/80 p-5 shadow-subtle space-y-4">
+        <div className="flex items-center justify-between border-b border-border-gray/80 pb-3">
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-zinc-700" />
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-950">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-950">
               Tooling Workflow Pipeline Stepper
             </h3>
           </div>
-          <span className="text-xs font-mono font-bold text-zinc-600">
-            Active: <strong className="text-zinc-950 font-black">{project.currentStage?.replace(/_/g, ' ') || 'CREATED'}</strong>
+          <span className="text-xs font-mono font-semibold text-zinc-600">
+            Active: <strong className="text-zinc-950 font-semibold">{project.currentStage?.replace(/_/g, ' ') || 'CREATED'}</strong>
           </span>
         </div>
 
@@ -393,18 +393,18 @@ export default function ProjectOverviewPage() {
             return (
               <div 
                 key={stg} 
-                className={`p-3 rounded-xl border text-center transition-all ${
+                className={`p-3 rounded-[12px] border text-center transition-all ${
                   isCurrent 
-                    ? "bg-zinc-900 border-zinc-900 text-white shadow-xs" 
+                    ? "bg-zinc-900 border-zinc-900 text-white shadow-subtle" 
                     : isCompleted 
                     ? "bg-emerald-50/70 border-emerald-200 text-emerald-900 font-semibold" 
-                    : "bg-zinc-50/80 border-zinc-200/80 text-zinc-400"
+                    : "bg-canvas/80 border-border-gray/80 text-zinc-400"
                 }`}
               >
-                <div className="text-[10px] font-extrabold uppercase tracking-wider">
+                <div className="text-[10px] font-semibold uppercase tracking-wider">
                   {stg.replace(/_/g, ' ')}
                 </div>
-                <div className="text-[9px] mt-1 font-mono font-bold">
+                <div className="text-[9px] mt-1 font-mono font-semibold">
                   {isCurrent ? "IN PROGRESS" : isCompleted ? "COMPLETED" : "PENDING"}
                 </div>
               </div>
@@ -414,50 +414,50 @@ export default function ProjectOverviewPage() {
       </div>
 
       {/* Mission Specifications Card */}
-      <div className="bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-3">
+      <div className="bg-white rounded-[12px] border border-border-gray/80 p-5 shadow-subtle space-y-4">
+        <div className="flex items-center gap-2 border-b border-border-gray/80 pb-3">
           <FileText className="w-4 h-4 text-zinc-700" />
-          <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-950">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-950">
             Tooling Mission Specifications
           </h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 text-xs">
           <div>
-            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Customer / Client</span>
-            <div className="font-extrabold text-zinc-950 mt-1 flex items-center gap-2">
-              <Building2 className="w-3.5 h-3.5 text-zinc-500" />
+            <span className="text-zinc-400 font-semibold uppercase tracking-wider text-[10px]">Customer / Client</span>
+            <div className="font-semibold text-zinc-950 mt-1 flex items-center gap-2">
+              <Building2 className="w-3.5 h-3.5 text-mute" />
               <span>{project.customer?.companyName || project.customerName || 'Unspecified Customer'}</span>
             </div>
           </div>
 
           <div>
-            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Customer PO Number</span>
-            <div className="font-mono font-bold text-zinc-950 mt-1">
+            <span className="text-zinc-400 font-semibold uppercase tracking-wider text-[10px]">Customer PO Number</span>
+            <div className="font-mono font-semibold text-zinc-950 mt-1">
               {project.customerPoNumber || 'No PO Assigned'}
             </div>
           </div>
 
           <div>
-            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Target Delivery Date</span>
-            <div className="font-mono font-extrabold text-zinc-950 mt-1 flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+            <span className="text-zinc-400 font-semibold uppercase tracking-wider text-[10px]">Target Delivery Date</span>
+            <div className="font-mono font-semibold text-zinc-950 mt-1 flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-mute" />
               <span>{project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Not Scheduled'}</span>
             </div>
           </div>
 
           <div>
-            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Plant / Facility</span>
-            <div className="font-extrabold text-zinc-950 mt-1 flex items-center gap-2">
-              <Factory className="w-3.5 h-3.5 text-zinc-500" />
+            <span className="text-zinc-400 font-semibold uppercase tracking-wider text-[10px]">Plant / Facility</span>
+            <div className="font-semibold text-zinc-950 mt-1 flex items-center gap-2">
+              <Factory className="w-3.5 h-3.5 text-mute" />
               <span>{formattedPlant}</span>
             </div>
           </div>
 
           <div>
-            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[10px]">Project Owner</span>
-            <div className="font-extrabold text-zinc-950 mt-1 flex items-center gap-2">
-              <User className="w-3.5 h-3.5 text-zinc-500" />
+            <span className="text-zinc-400 font-semibold uppercase tracking-wider text-[10px]">Project Owner</span>
+            <div className="font-semibold text-zinc-950 mt-1 flex items-center gap-2">
+              <User className="w-3.5 h-3.5 text-mute" />
               <span>{project.projectOwner || project.manager || 'Unassigned'}</span>
             </div>
           </div>

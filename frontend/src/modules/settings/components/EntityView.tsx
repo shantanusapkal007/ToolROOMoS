@@ -55,10 +55,9 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Assuming all our master data APIs return { data: any[] } or an array directly
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
-      params.append('status', 'ACTIVE'); // Hide deleted (INACTIVE) records
+      params.append('status', 'ACTIVE');
       const query = `?${params.toString()}`;
       
       const res = await api.get(`${buildEndpoint()}${query}`);
@@ -131,58 +130,71 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-white">
       {/* Dense Entity Toolbar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b border-black/5 shrink-0 bg-white/[0.01] backdrop-blur-2xl gap-4 relative overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/50 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
-        
-        <div className="relative z-10 flex items-center">
-          <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mr-3 border border-emerald-200 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-6 py-4 border-b border-border-gray shrink-0 bg-white gap-4">
+        <div className="flex items-center">
+          <span className="w-9 h-9 rounded-[10px] bg-primary text-white flex items-center justify-center mr-3 shadow-subtle">
             <Database className="w-4 h-4" />
           </span>
           <div>
-            <h2 className="text-lg font-bold text-zinc-900 tracking-tight leading-tight">{registry.pluralName}</h2>
-            <div className="flex items-center space-x-2 text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">
+            <h2 className="text-sub-heading font-bold text-ink tracking-tight leading-tight">{registry.pluralName}</h2>
+            <div className="flex items-center space-x-2 text-small font-medium text-silver-blue font-mono mt-0.5">
               <span>{data.length} Records</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 w-full md:w-auto relative z-10">
-          <div className="w-full md:w-56 relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg blur opacity-0 group-focus-within:opacity-10 transition duration-500"></div>
-            <div className="relative">
-              <Input 
-                placeholder={`Search...`} 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                leftIcon={<Search className="h-3.5 w-3.5" />}
-                className="py-1.5 text-xs"
-              />
-            </div>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="w-full md:w-64">
+            <Input 
+              placeholder={`Search ${registry.pluralName.toLowerCase()}...`} 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              leftIcon={<Search className="h-4 w-4 text-silver-blue" />}
+              className="py-2 text-caption"
+            />
           </div>
-          <button onClick={fetchData} title="Refresh" className="p-1.5 text-zinc-500 hover:text-emerald-600 bg-black/5 hover:bg-black/10 rounded-lg border border-black/5 transition-colors">
-            <RefreshCw className="h-3.5 w-3.5" />
-          </button>
-          <button onClick={() => exportToCsv(registry.id, data, registry.columns)} title="Export CSV" className="p-1.5 text-zinc-500 hover:text-emerald-600 bg-black/5 hover:bg-black/10 rounded-lg border border-black/5 transition-colors">
-            <Download className="h-3.5 w-3.5" />
-          </button>
-          <button onClick={() => setIsImportOpen(true)} title="Import CSV" className="p-1.5 text-zinc-500 hover:text-emerald-600 bg-black/5 hover:bg-black/10 rounded-lg border border-black/5 transition-colors">
-            <Upload className="h-3.5 w-3.5" />
-          </button>
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-            <button onClick={handleCreateNew} className="relative bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center shadow-sm transition-all">
-              <Plus className="h-3.5 w-3.5 mr-1" /> New
-            </button>
-          </div>
+          
+          <Button 
+            variant="white" 
+            size="sm" 
+            onClick={fetchData} 
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+
+          <Button 
+            variant="white" 
+            size="sm" 
+            onClick={() => exportToCsv(registry.id, data, registry.columns)} 
+            title="Export CSV"
+          >
+            <Download className="h-4 w-4 mr-1 text-silver-blue" /> Export
+          </Button>
+
+          <Button 
+            variant="white" 
+            size="sm" 
+            onClick={() => setIsImportOpen(true)} 
+            title="Import CSV"
+          >
+            <Upload className="h-4 w-4 mr-1 text-silver-blue" /> Import
+          </Button>
+
+          <Button 
+            variant="primary" 
+            size="sm" 
+            onClick={handleCreateNew}
+          >
+            <Plus className="h-4 w-4 mr-1" /> New
+          </Button>
         </div>
       </div>
 
       {/* Entity Table */}
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
         <SmartTable 
           columns={registry.columns} 
           data={data} 
@@ -191,7 +203,7 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onHistory={handleHistory}
-          exportable={true}
+          exportable={false}
           exportFilename={registry.singularName}
         />
       </div>
@@ -220,20 +232,20 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
       >
         {viewingRecord && (
           <div className="space-y-4 max-h-[70vh] overflow-y-auto hide-scrollbar pr-2">
-            <div className="bg-black/5 p-4 rounded-xl border border-black/5 space-y-3">
-              <h4 className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 border-b border-black/10 pb-1.5">Primary Details</h4>
+            <div className="bg-[rgba(148,151,169,0.04)] p-4 rounded-[12px] border border-border-gray space-y-3">
+              <h4 className="text-caption font-semibold text-primary uppercase tracking-wider mb-2 border-b border-border-gray pb-1.5">Primary Details</h4>
               {registry.columns.map(col => (
-                <div key={col.key} className="grid grid-cols-3 gap-3 border-b border-black/5 pb-2 last:border-0 last:pb-0 hover:bg-black/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center">{col.label}</div>
-                  <div className="col-span-2 text-xs text-zinc-900 font-medium">
+                <div key={col.key} className="grid grid-cols-3 gap-3 border-b border-border-gray/60 pb-2 last:border-0 last:pb-0 p-1.5 -mx-1.5 rounded transition-colors">
+                  <div className="text-small font-semibold text-cool-gray uppercase tracking-wider flex items-center">{col.label}</div>
+                  <div className="col-span-2 text-caption text-ink font-medium">
                     {col.render ? col.render(viewingRecord[col.key], viewingRecord) : viewingRecord[col.key] || '-'}
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="bg-black/5 p-4 rounded-xl border border-black/5 space-y-3">
-              <h4 className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 border-b border-black/10 pb-1.5">All Data Fields</h4>
+            <div className="bg-[rgba(148,151,169,0.04)] p-4 rounded-[12px] border border-border-gray space-y-3">
+              <h4 className="text-caption font-semibold text-primary uppercase tracking-wider mb-2 border-b border-border-gray pb-1.5">All Data Fields</h4>
               {registry.fields.map(field => {
                 const rawVal = viewingRecord[field.name];
                 let displayVal: any = '-';
@@ -241,9 +253,9 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
                 if (rawVal !== undefined && rawVal !== null && rawVal !== '') {
                   if (typeof rawVal === 'boolean') {
                     displayVal = rawVal ? (
-                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">Yes</span>
+                      <span className="text-[#026b3f] bg-[rgba(20,158,97,0.16)] px-2 py-0.5 rounded-[6px] font-medium text-xs">Yes</span>
                     ) : (
-                      <span className="text-slate-500 bg-black/5 border border-black/10 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">No</span>
+                      <span className="text-[#484b5e] bg-[rgba(104,107,130,0.12)] px-2 py-0.5 rounded-[8px] font-medium text-xs">No</span>
                     );
                   } else if (field.name.endsWith('Id')) {
                     const relKey = field.name.slice(0, -2);
@@ -259,9 +271,9 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
                 }
 
                 return (
-                  <div key={field.name} className="grid grid-cols-3 gap-3 border-b border-black/5 pb-2 last:border-0 last:pb-0 hover:bg-black/[0.02] p-1.5 -mx-1.5 rounded transition-colors">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center">{field.label}</div>
-                    <div className="col-span-2 text-xs text-zinc-900 font-medium">
+                  <div key={field.name} className="grid grid-cols-3 gap-3 border-b border-border-gray/60 pb-2 last:border-0 last:pb-0 p-1.5 -mx-1.5 rounded transition-colors">
+                    <div className="text-small font-semibold text-cool-gray uppercase tracking-wider flex items-center">{field.label}</div>
+                    <div className="col-span-2 text-caption text-ink font-medium">
                       {displayVal}
                     </div>
                   </div>
@@ -269,8 +281,8 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
               })}
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-black/10">
-              <button onClick={() => setIsViewOpen(false)} className="px-4 py-2 bg-black/5 hover:bg-black/10 rounded-lg text-xs font-bold text-zinc-900 transition-colors">Close</button>
+            <div className="flex justify-end pt-3 border-t border-border-gray">
+              <Button variant="white" onClick={() => setIsViewOpen(false)}>Close</Button>
             </div>
           </div>
         )}
@@ -310,10 +322,10 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
         maxWidth="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-zinc-600 font-medium">
-            Are you sure you want to archive <span className="font-bold text-zinc-900">{deletingRecord?.name || deletingRecord?.companyName || deletingRecord?.customerCode || deletingRecord?.vendorName || deletingRecord?.materialCode || deletingRecord?.machineCode || 'this record'}</span>? This will change its status to INACTIVE.
+          <p className="text-caption text-cool-gray font-medium">
+            Are you sure you want to archive <span className="font-semibold text-ink">{deletingRecord?.name || deletingRecord?.companyName || deletingRecord?.customerCode || deletingRecord?.vendorName || deletingRecord?.materialCode || deletingRecord?.machineCode || 'this record'}</span>? This will change its status to INACTIVE.
           </p>
-          <div className="flex justify-end space-x-3 pt-4 border-t border-black/10">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-border-gray">
             <Button variant="ghost" onClick={() => setDeletingRecord(null)}>
               Cancel
             </Button>

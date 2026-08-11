@@ -147,7 +147,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
             { num: 3, label: 'Verify & Confirm' }
           ].map(s => (
             <div key={s.num} className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-micro font-bold border ${
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-micro font-semibold border ${
                 step >= s.num ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-zinc-100 text-zinc-400 border-zinc-200'
               }`}>
                 {s.num}
@@ -161,10 +161,10 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
 
         {step === 1 && (
           <div className="text-center py-8 space-y-4">
-            <div className="w-12 h-12 bg-blue-50 border border-blue-200 rounded-full flex items-center justify-center mx-auto text-blue-600">
+            <div className="w-12 h-12 bg-primary-subtle border border-blue-200 rounded-full flex items-center justify-center mx-auto text-primary">
               <Download className="w-6 h-6" />
             </div>
-            <h3 className="text-section-title font-bold text-zinc-900">Download CSV Template</h3>
+            <h3 className="text-section-title font-semibold text-zinc-900">Download CSV Template</h3>
             <p className="text-caption text-zinc-500 max-w-md mx-auto">
               Download the official template pre-formatted with column headers for {registry.pluralName}.
             </p>
@@ -193,24 +193,24 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
               className="border-2 border-dashed border-zinc-300 hover:border-zinc-500 rounded-lg p-8 cursor-pointer transition-colors max-w-md mx-auto bg-zinc-50"
             >
               <Upload className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
-              <p className="text-caption font-bold text-zinc-800">Click to Select CSV File</p>
+              <p className="text-caption font-semibold text-zinc-800">Click to Select CSV File</p>
               <p className="text-micro text-zinc-400 mt-1">Supports standard CSV spreadsheets</p>
             </div>
             <div className="flex justify-center gap-2">
-              <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
+              <Button variant="white" onClick={() => setStep(1)}>Back</Button>
             </div>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-4">
-            <div className="flex justify-between items-center bg-zinc-50 border border-zinc-200 p-3 rounded-md">
+            <div className="flex justify-between items-center bg-zinc-50 border border-zinc-200 p-3 rounded-[12px]">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span className="text-caption font-bold text-zinc-800">{parsedData.length} Valid Records Ready</span>
+                <span className="text-caption font-semibold text-zinc-800">{parsedData.length} Valid Records Ready</span>
               </div>
               {errors.length > 0 && (
-                <div className="flex items-center gap-1.5 text-red-600 text-caption font-bold">
+                <div className="flex items-center gap-1.5 text-red-600 text-caption font-semibold">
                   <AlertCircle className="w-4 h-4" />
                   <span>{errors.length} Errors Found</span>
                 </div>
@@ -218,8 +218,8 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
             </div>
 
             {errors.length > 0 && (
-              <div className="max-h-40 overflow-y-auto border border-red-200 bg-red-50/50 rounded-md p-3 space-y-1">
-                <p className="text-micro font-bold text-red-700 uppercase">Validation Warnings:</p>
+              <div className="max-h-40 overflow-y-auto border border-red-200 bg-red-50/50 rounded-[12px] p-3 space-y-1">
+                <p className="text-micro font-semibold text-red-700 uppercase">Validation Warnings:</p>
                 {errors.map((err, i) => (
                   <div key={i} className="text-caption text-red-600">
                     Row {err.row}: {err.message}
@@ -230,7 +230,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
 
             {isImporting && (
               <div className="space-y-2">
-                <div className="flex justify-between text-caption font-bold text-zinc-700">
+                <div className="flex justify-between text-caption font-semibold text-zinc-700">
                   <span>Importing Records...</span>
                   <span>{progress.current} / {progress.total}</span>
                 </div>
@@ -244,7 +244,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
             )}
 
             <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200">
-              <Button variant="secondary" onClick={() => setStep(2)} disabled={isImporting}>Re-upload</Button>
+              <Button variant="white" onClick={() => setStep(2)} disabled={isImporting}>Re-upload</Button>
               <Button 
                 onClick={handleExecuteImport} 
                 disabled={isImporting || parsedData.length === 0}

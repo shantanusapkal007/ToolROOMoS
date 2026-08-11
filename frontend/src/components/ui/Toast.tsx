@@ -23,6 +23,10 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+/**
+ * Toast Component matching Design System tokens:
+ * - bg canvas, 1px hairline border, radius md (8px), level-2 shadow
+ */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -34,7 +38,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `toast-${Date.now()}-${Math.floor(Math.random()*1000)}`;
     setToasts((prev) => [...prev, { id, type, title, message, onUndo }]);
     
-    // Auto-remove after 5 seconds
     setTimeout(() => {
       removeToast(id);
     }, 5000);
@@ -47,19 +50,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const getIcon = (type: ToastType) => {
     switch (type) {
-      case 'success': return <CheckCircle2 className="h-5 w-5 text-emerald-600" />;
-      case 'error': return <AlertCircle className="h-5 w-5 text-red-600" />;
-      case 'warning': return <AlertTriangle className="h-5 w-5 text-amber-600" />;
-      case 'info': return <Info className="h-5 w-5 text-blue-600" />;
-    }
-  };
-
-  const getBgClass = (type: ToastType) => {
-    switch (type) {
-      case 'success': return 'bg-white/95 border-emerald-500/20 shadow-emerald-500/5';
-      case 'error': return 'bg-white/95 border-red-500/20 shadow-red-500/5';
-      case 'warning': return 'bg-white/95 border-amber-500/20 shadow-amber-500/5';
-      case 'info': return 'bg-white/95 border-blue-500/20 shadow-blue-500/5';
+      case 'success': return <CheckCircle2 className="h-4.5 w-4.5 text-accent-green" />;
+      case 'error': return <AlertCircle className="h-4.5 w-4.5 text-accent-red" />;
+      case 'warning': return <AlertTriangle className="h-4.5 w-4.5 text-accent-orange" />;
+      case 'info': return <Info className="h-4.5 w-4.5 text-accent-blue-info" />;
     }
   };
 
@@ -70,16 +64,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`animate-slide-up pointer-events-auto relative overflow-hidden flex flex-col p-4 rounded-2xl border backdrop-blur-2xl shadow-floating w-full transition-all duration-300 ${getBgClass(t.type)}`}
+            className="pointer-events-auto relative overflow-hidden flex flex-col p-4 rounded-[12px] border border-border-gray bg-canvas shadow-subtle w-full transition-all duration-200"
           >
             <div className="flex items-start">
               <div className="shrink-0 mr-3 mt-0.5">
                 {getIcon(t.type)}
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-bold text-zinc-900 leading-5">{t.title}</h4>
+                <h4 className="text-body-sm-strong text-ink">{t.title}</h4>
                 {t.message && (
-                  <p className="text-xs text-zinc-600 mt-1 leading-relaxed">{t.message}</p>
+                  <p className="text-caption text-mute mt-0.5">{t.message}</p>
                 )}
               </div>
               {t.onUndo && (
@@ -88,21 +82,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     t.onUndo?.();
                     removeToast(t.id);
                   }}
-                  className="shrink-0 ml-3 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md transition-colors"
+                  className="shrink-0 ml-3 text-caption font-medium text-ink bg-canvas border border-border-gray px-2 py-1 rounded-[10px] hover:bg-hairline/20 transition-colors"
                 >
                   Undo
                 </button>
               )}
               <button
                 onClick={() => removeToast(t.id)}
-                className="shrink-0 ml-3 text-zinc-400 hover:text-zinc-700 transition-colors p-0.5 rounded-md hover:bg-black/5"
+                className="shrink-0 ml-3 text-mute hover:text-ink transition-colors p-1 rounded-[10px] hover:bg-hairline/20"
               >
                 <X className="h-4 w-4" />
               </button>
-            </div>
-            {/* Ambient Progress Countdown Line */}
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/5">
-              <div className="h-full bg-blue-500/40 animate-[shrink_5s_linear_forwards]" style={{ width: '100%' }} />
             </div>
           </div>
         ))}

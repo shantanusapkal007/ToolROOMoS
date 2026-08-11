@@ -27,14 +27,14 @@ export default function OeeDashboard() {
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-3">
+          <h1 className="text-3xl font-semibold text-ink tracking-tight flex items-center gap-3">
             <Activity className="w-8 h-8 text-purple-400" />
             OEE Performance Analytics
           </h1>
-          <p className="text-zinc-500 mt-2 font-mono text-sm">Overall Equipment Effectiveness historical & live analytics</p>
+          <p className="text-mute mt-2 font-mono text-sm">Overall Equipment Effectiveness historical & live analytics</p>
         </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl">
-          <span className="text-emerald-400 text-xs font-bold flex items-center gap-2">
+        <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-[12px]">
+          <span className="text-emerald-400 text-xs font-semibold flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
             LIVE STREAM ACTIVE
           </span>
@@ -43,57 +43,57 @@ export default function OeeDashboard() {
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-black/5 backdrop-blur-xl border border-black/10 rounded-2xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+        <div className="bg-black/5 backdrop-blur-xl border border-border-gray rounded-[12px] p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all duration-500">
             <Gauge className="w-16 h-16 text-purple-400" />
           </div>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Fleet OEE</p>
-          <p className="text-4xl font-black text-purple-600 font-mono">{fleetOee}%</p>
+          <p className="text-mute text-xs font-semibold uppercase tracking-wider mb-2">Fleet OEE</p>
+          <p className="text-4xl font-semibold text-purple-600 font-mono">{fleetOee}%</p>
           <p className="text-purple-400 text-xs mt-2 flex items-center gap-1"><Zap className="w-3 h-3"/> Combined Efficiency</p>
         </div>
-        <div className="bg-black/5 backdrop-blur-xl border border-black/10 rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all duration-300">
+        <div className="bg-black/5 backdrop-blur-xl border border-border-gray rounded-[12px] p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all duration-300">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all duration-500">
             <BatteryCharging className="w-16 h-16 text-blue-400" />
           </div>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Availability</p>
-          <p className="text-4xl font-black text-blue-600 font-mono">{availabilityRate}%</p>
-          <p className="text-xs text-zinc-500 mt-1">{runningMachines} of {totalMachines} machines operating</p>
+          <p className="text-mute text-xs font-semibold uppercase tracking-wider mb-2">Availability</p>
+          <p className="text-4xl font-semibold text-primary font-mono">{availabilityRate}%</p>
+          <p className="text-xs text-mute mt-1">{runningMachines} of {totalMachines} machines operating</p>
         </div>
-        <div className="bg-black/5 backdrop-blur-xl border border-black/10 rounded-2xl p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all duration-300">
+        <div className="bg-black/5 backdrop-blur-xl border border-border-gray rounded-[12px] p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all duration-300">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all duration-500">
             <Activity className="w-16 h-16 text-orange-400" />
           </div>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Performance</p>
-          <p className="text-4xl font-black text-orange-600 font-mono">{performanceRate}%</p>
-          <p className="text-xs text-zinc-500 mt-1">{totalProducedQty} parts produced</p>
+          <p className="text-mute text-xs font-semibold uppercase tracking-wider mb-2">Performance</p>
+          <p className="text-4xl font-semibold text-orange-600 font-mono">{performanceRate}%</p>
+          <p className="text-xs text-mute mt-1">{totalProducedQty} parts produced</p>
         </div>
-        <div className="bg-black/5 backdrop-blur-xl border border-black/10 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+        <div className="bg-black/5 backdrop-blur-xl border border-border-gray rounded-[12px] p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all duration-500">
             <Activity className="w-16 h-16 text-emerald-400" />
           </div>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Quality</p>
-          <p className="text-4xl font-black text-emerald-600 font-mono">{qualityRate}%</p>
-          <p className="text-xs text-zinc-500 mt-1">Inspection pass rate</p>
+          <p className="text-mute text-xs font-semibold uppercase tracking-wider mb-2">Quality</p>
+          <p className="text-4xl font-semibold text-emerald-600 font-mono">{qualityRate}%</p>
+          <p className="text-xs text-mute mt-1">Inspection pass rate</p>
         </div>
       </div>
 
-      <div className="bg-black/5 backdrop-blur-xl border border-black/10 rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-zinc-900 mb-2 flex items-center gap-2">
+      <div className="bg-black/5 backdrop-blur-xl border border-border-gray rounded-[12px] p-6">
+        <h3 className="text-lg font-semibold text-ink mb-2 flex items-center gap-2">
           <Gauge className="w-5 h-5 text-purple-500" />
           <span>Machine Fleet OEE Breakdown</span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
           {machines.map((mac: any) => (
-            <div key={mac.id} className="p-4 bg-white border border-zinc-200 rounded-xl space-y-2">
+            <div key={mac.id} className="p-4 bg-white border border-border-gray rounded-[12px] space-y-2">
               <div className="flex justify-between items-center">
-                <span className="font-bold text-xs text-zinc-900">{mac.machineName}</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                <span className="font-semibold text-xs text-ink">{mac.machineName}</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-purple-50 text-purple-700 border border-purple-200">
                   [{mac.machineCode}]
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-zinc-500">
-                <span>Status: <strong className="text-emerald-600 font-bold">{mac.status || 'RUNNING'}</strong></span>
-                <span>OEE: <strong className="font-mono text-zinc-900">89.5%</strong></span>
+              <div className="flex justify-between text-xs text-mute">
+                <span>Status: <strong className="text-emerald-600 font-semibold">{mac.status || 'RUNNING'}</strong></span>
+                <span>OEE: <strong className="font-mono text-ink">89.5%</strong></span>
               </div>
             </div>
           ))}

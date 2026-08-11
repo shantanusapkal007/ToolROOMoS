@@ -64,29 +64,29 @@ export const NotificationCenter: React.FC = () => {
     }
   };
 
-  const getCategoryIcon = (category: SystemNotification['category'], severity: SystemNotification['severity']) => {
+  const getCategoryIcon = (category: SystemNotification['category']) => {
     switch (category) {
       case 'APPROVAL':
-        return <ShieldCheck className="w-4 h-4 text-amber-600" />;
+        return <ShieldCheck className="w-4 h-4 text-accent-orange" />;
       case 'ALERT':
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
+        return <AlertTriangle className="w-4 h-4 text-accent-red" />;
       case 'INVENTORY':
-        return <Package className="w-4 h-4 text-emerald-600" />;
+        return <Package className="w-4 h-4 text-accent-green" />;
       default:
-        return <Info className="w-4 h-4 text-blue-600" />;
+        return <Info className="w-4 h-4 text-accent-blue-info" />;
     }
   };
 
   const getBadgeStyle = (category: SystemNotification['category']) => {
     switch (category) {
       case 'APPROVAL':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
+        return 'bg-canvas text-accent-orange border-border-gray';
       case 'ALERT':
-        return 'bg-red-50 text-red-700 border-red-200';
+        return 'bg-canvas text-accent-red border-border-gray';
       case 'INVENTORY':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        return 'bg-canvas text-accent-green border-border-gray';
       default:
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-canvas text-accent-blue-info border-border-gray';
     }
   };
 
@@ -100,46 +100,46 @@ export const NotificationCenter: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsCenterOpen(false)}
-            className="fixed inset-0 bg-zinc-950/60 backdrop-blur-md"
+            className="fixed inset-0 bg-primary/60 backdrop-blur-xs"
           />
 
-          {/* Slide-over Drawer Panel */}
+          {/* Drawer Panel: card-feature chrome + level-4 shadow */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="relative w-full max-w-md bg-[#FBFBFC]/95 backdrop-blur-3xl h-full border-l border-black/10 shadow-2xl flex flex-col z-10 overflow-hidden"
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="relative w-full max-w-md bg-canvas h-full border-l border-border-gray shadow-level-4 flex flex-col z-10 overflow-hidden"
           >
             {/* Header Area */}
-            <div className="p-5 border-b border-black/5 bg-white/60 backdrop-blur-md flex flex-col space-y-4 shrink-0">
+            <div className="p-6 border-b border-border-gray bg-canvas flex flex-col space-y-4 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-sm border border-zinc-700/80 relative">
+                  <div className="w-9 h-9 rounded-[10px] bg-primary text-on-primary flex items-center justify-center relative">
                     <Bell className="w-4.5 h-4.5" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center shadow-elevation border border-white">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent-red text-on-primary text-[10px] font-medium flex items-center justify-center">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-zinc-900 tracking-tight">Notification Center</h3>
-                    <p className="text-[11px] text-zinc-500 font-medium">Alerts & System Notifications</p>
+                    <h3 className="text-display-xs font-medium text-ink tracking-tight">Notification Center</h3>
+                    <p className="text-caption text-mute">Alerts & System Notifications</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-1.5">
+                <div className="flex items-center space-x-1">
                   <button
                     onClick={handleManualRefresh}
-                    className="p-2 rounded-xl text-zinc-500 hover:text-zinc-900 hover:bg-black/5 transition-all"
+                    className="p-1.5 rounded-[10px] text-mute hover:text-ink hover:bg-hairline/20 transition-colors"
                     title="Refresh Notifications"
                   >
-                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-accent-blue-info' : ''}`} />
                   </button>
                   <button
                     onClick={() => setIsCenterOpen(false)}
-                    className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 border border-black/10 flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-all active:scale-[0.95]"
+                    className="p-1.5 rounded-[10px] text-mute hover:text-ink hover:bg-hairline/20 transition-colors"
                     title="Close Drawer"
                   >
                     <X className="w-4 h-4" />
@@ -148,15 +148,15 @@ export const NotificationCenter: React.FC = () => {
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex items-center space-x-1 p-1 bg-black/5 rounded-xl border border-black/5">
+              <div className="flex items-center space-x-1 p-1 bg-canvas rounded-[10px] border border-border-gray">
                 {(['ALL', 'UNREAD', 'APPROVAL', 'ALERT'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-1.5 text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-all ${
+                    className={`flex-1 py-1.5 text-caption font-medium uppercase tracking-tight rounded-xs transition-colors ${
                       activeTab === tab
-                        ? 'bg-white text-zinc-900 shadow-sm border border-black/5'
-                        : 'text-zinc-500 hover:text-zinc-900'
+                        ? 'bg-primary text-on-primary'
+                        : 'text-mute hover:text-ink'
                     }`}
                   >
                     {tab === 'UNREAD' ? `Unread (${unreadCount})` : tab}
@@ -165,15 +165,15 @@ export const NotificationCenter: React.FC = () => {
               </div>
 
               {/* Top Controls Bar */}
-              <div className="flex items-center justify-between text-xs pt-1">
-                <span className="text-zinc-500 font-medium text-[11px]">
+              <div className="flex items-center justify-between text-caption pt-1">
+                <span className="text-mute">
                   Showing {filteredNotifications.length} alerts
                 </span>
-                <div className="flex items-center space-x-3 text-[11px] font-bold">
+                <div className="flex items-center space-x-3 font-medium">
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllAsRead}
-                      className="text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+                      className="text-accent-blue-info hover:underline flex items-center gap-1 transition-colors"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" /> Mark all read
                     </button>
@@ -181,7 +181,7 @@ export const NotificationCenter: React.FC = () => {
                   {filteredNotifications.length > 0 && (
                     <button
                       onClick={clearAll}
-                      className="text-zinc-500 hover:text-red-600 flex items-center gap-1 transition-colors"
+                      className="text-mute hover:text-accent-red flex items-center gap-1 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" /> Clear all
                     </button>
@@ -191,54 +191,54 @@ export const NotificationCenter: React.FC = () => {
             </div>
 
             {/* Notification List Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {filteredNotifications.length > 0 ? (
                 filteredNotifications.map((notif) => (
                   <div
                     key={notif.id}
-                    className={`group relative p-4 rounded-2xl border transition-all duration-200 ${
+                    className={`group relative p-4 rounded-[10px] border transition-colors ${
                       notif.read
-                        ? 'bg-white/60 border-black/5 hover:border-black/10 shadow-xs'
-                        : 'bg-white border-blue-200 shadow-sm ring-1 ring-blue-500/10'
+                        ? 'bg-canvas border-border-gray/60'
+                        : 'bg-canvas border-border-gray shadow-subtle'
                     }`}
                   >
                     {/* Unread indicator dot */}
                     {!notif.read && (
-                      <span className="absolute top-4 right-4 w-2 h-2 rounded-full bg-blue-600" />
+                      <span className="absolute top-4 right-4 w-2 h-2 rounded-full bg-accent-blue-info" />
                     )}
 
                     <div className="flex items-start space-x-3">
                       {/* Icon badge */}
-                      <div className={`p-2 rounded-xl border ${getBadgeStyle(notif.category)} shrink-0 mt-0.5`}>
-                        {getCategoryIcon(notif.category, notif.severity)}
+                      <div className="p-2 rounded-[10px] border border-border-gray bg-canvas shrink-0 mt-0.5">
+                        {getCategoryIcon(notif.category)}
                       </div>
 
                       <div className="flex-1 min-w-0 pr-4">
                         <div className="flex items-center space-x-2 mb-1">
-                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${getBadgeStyle(notif.category)}`}>
+                          <span className={`text-caption font-medium uppercase px-2 py-0.5 rounded-[10px] border ${getBadgeStyle(notif.category)}`}>
                             {notif.category}
                           </span>
-                          <span className="text-[10px] font-semibold text-zinc-400 font-mono">
+                          <span className="text-caption-mono text-mute">
                             {formatRelativeTime(notif.timestamp)}
                           </span>
                         </div>
 
-                        <h4 className="text-xs font-extrabold text-zinc-900 tracking-tight leading-snug mb-1">
+                        <h4 className="text-body-sm-strong text-ink leading-snug mb-1">
                           {notif.title}
                         </h4>
-                        <p className="text-[11px] text-zinc-600 leading-relaxed mb-3">
+                        <p className="text-body-sm text-body-mid leading-relaxed mb-3">
                           {notif.message}
                         </p>
 
                         {/* Action Toolbar */}
-                        <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                        <div className="flex items-center justify-between pt-2 border-t border-border-gray">
                           {notif.link && (
                             <button
                               onClick={() => handleActionClick(notif)}
-                              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1 group/btn transition-colors"
+                              className="text-body-sm text-accent-blue-info hover:underline flex items-center space-x-1 transition-colors"
                             >
                               <span>{notif.actionText || 'View Details'}</span>
-                              <ExternalLink className="w-3 h-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                              <ExternalLink className="w-3.5 h-3.5" />
                             </button>
                           )}
 
@@ -246,7 +246,7 @@ export const NotificationCenter: React.FC = () => {
                             {!notif.read && (
                               <button
                                 onClick={() => markAsRead(notif.id)}
-                                className="p-1 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                className="p-1 rounded-[10px] text-mute hover:text-accent-green hover:bg-hairline/20 transition-colors"
                                 title="Mark as read"
                               >
                                 <Check className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export const NotificationCenter: React.FC = () => {
                             )}
                             <button
                               onClick={() => dismissNotification(notif.id)}
-                              className="p-1 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              className="p-1 rounded-[10px] text-mute hover:text-accent-red hover:bg-hairline/20 transition-colors"
                               title="Dismiss"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -267,11 +267,11 @@ export const NotificationCenter: React.FC = () => {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center text-center py-16 px-4 h-full">
-                  <div className="w-16 h-16 rounded-3xl bg-zinc-100 border border-black/5 flex items-center justify-center mb-4 shadow-sm">
-                    <Check className="w-8 h-8 text-emerald-600" />
+                  <div className="w-12 h-12 rounded-full bg-canvas border border-border-gray flex items-center justify-center mb-4 text-accent-green">
+                    <Check className="w-6 h-6" />
                   </div>
-                  <h4 className="text-sm font-bold text-zinc-900">All Caught Up</h4>
-                  <p className="text-xs text-zinc-500 max-w-xs mt-1.5 leading-relaxed">
+                  <h4 className="text-body-md font-medium text-ink">All Caught Up</h4>
+                  <p className="text-body-sm text-mute max-w-xs mt-1 leading-relaxed">
                     No pending notifications or action items in this queue.
                   </p>
                 </div>

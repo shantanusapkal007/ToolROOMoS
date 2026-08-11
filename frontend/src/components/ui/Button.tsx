@@ -1,66 +1,90 @@
-"use client";
+import React from 'react';
+import { Loader2 } from 'lucide-react';
 
-import React, { useRef } from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
-
-export interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
-  variant?: 'primary' | 'secondary' | 'glass' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  icon?: React.ReactNode;
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outlined' | 'subtle' | 'gray' | 'white' | 'ghost' | 'danger' | 'text-arrow' | 'icon-circular';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
+  isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  isLoading?: boolean;
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
-  children,
-  className = '',
-  variant = 'primary',
-  size = 'md',
-  icon,
-  leftIcon,
-  rightIcon,
-  isLoading,
-  ...props
-}, ref) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  React.useImperativeHandle(ref, () => buttonRef.current as HTMLButtonElement);
+/**
+ * Button component matching Design_System.md (Kraken theme):
+ * - Primary Purple: bg #7132f5, text #ffffff, padding 13px 16px, radius 12px
+ * - Purple Outlined: bg #ffffff, text #5741d8, border 1px solid #5741d8, radius 12px
+ * - Purple Subtle: bg rgba(133,91,251,0.16), text #7132f5, padding 8px, radius 12px
+ * - White Button: bg #ffffff, text #101114, radius 10px, shadow rgba(0,0,0,0.03) 0px 4px 24px
+ * - Secondary Gray: bg rgba(148,151,169,0.08), text #101114, radius 12px
+ */
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      children,
+      variant = 'primary',
+      size = 'md',
+      isLoading = false,
+      leftIcon,
+      rightIcon,
+      className = '',
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
+    // Base styles
+    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer';
 
-  const baseClasses = "relative inline-flex items-center justify-center font-semibold tracking-tight transition-all outline-none focus:ring-2 focus:ring-zinc-900/20 disabled:opacity-50 disabled:pointer-events-none cursor-pointer rounded-lg border shrink-0 shadow-2xs";
-  
-  const sizeClasses = {
-    sm: "h-8 px-3 text-xs font-semibold",
-    md: "h-[var(--size-button-secondary)] px-4 text-xs font-bold uppercase tracking-wider",
-    lg: "h-[var(--size-button-primary)] px-5 text-sm font-bold uppercase tracking-wider",
-  };
+    // Variant mapping
+    const variantStyles: Record<string, string> = {
+      // 1. Primary Purple
+      primary: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-deep rounded-[12px]',
+      
+      // 2. Purple Outlined
+      outlined: 'bg-white text-primary-dark border border-primary-dark hover:bg-primary-subtle/50 active:bg-primary-subtle rounded-[12px]',
+      
+      // 3. Purple Subtle
+      subtle: 'bg-primary-subtle text-primary hover:bg-[rgba(133,91,251,0.24)] rounded-[12px]',
+      
+      // 4. White Button / Secondary Default
+      white: 'bg-white text-ink border border-border-gray hover:border-cool-gray/40 rounded-[10px] shadow-subtle',
+      secondary: 'bg-white text-ink border border-border-gray hover:border-cool-gray/40 rounded-[10px] shadow-subtle',
+      
+      // 5. Secondary Gray
+      gray: 'bg-[rgba(148,151,169,0.08)] text-ink hover:bg-[rgba(148,151,169,0.16)] rounded-[12px]',
+      
+      // Supporting variants
+      ghost: 'bg-transparent text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)] rounded-[12px]',
+      danger: 'bg-accent-red text-white hover:bg-red-700 rounded-[12px]',
+      'text-arrow': 'bg-transparent text-ink hover:text-primary p-0 border-0',
+      'icon-circular': 'bg-white text-ink border border-border-gray hover:bg-[rgba(148,151,169,0.08)] rounded-full',
+    };
 
-  const variantClasses = {
-    primary: "bg-zinc-900 hover:bg-zinc-800 text-white border-zinc-900 shadow-xs",
-    secondary: "bg-white hover:bg-zinc-100 text-zinc-800 border-zinc-200 shadow-xs",
-    glass: "bg-white hover:bg-zinc-50 text-zinc-900 border-zinc-200 shadow-xs",
-    danger: "bg-red-600 hover:bg-red-700 text-white border-red-600 shadow-xs",
-    ghost: "bg-transparent text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent",
-  };
+    // Size mapping
+    const sizeStyles: Record<string, string> = {
+      sm: 'text-caption py-2 px-3 gap-1.5',
+      md: 'text-body-medium py-[13px] px-4 gap-2',
+      lg: 'text-body-lg py-4 px-6 gap-2.5',
+      icon: 'p-2 aspect-square',
+    };
 
-  return (
-    <motion.button
-      ref={buttonRef}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.1 }}
-      className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
-      {...props}
-    >
-      <span className="flex items-center gap-1.5">
-        {isLoading ? (
-          <div className="w-3.5 h-3.5 rounded-full border-2 border-current/30 border-t-current animate-spin" />
-        ) : (icon || leftIcon) ? (
-          <span className="flex-shrink-0">{icon || leftIcon}</span>
-        ) : null}
-        {children as React.ReactNode}
-        {rightIcon && !isLoading && <span className="flex-shrink-0">{rightIcon}</span>}
-      </span>
-    </motion.button>
-  );
-});
+    const appliedVariant = variantStyles[variant] || variantStyles.primary;
+    const appliedSize = variant === 'text-arrow' ? 'py-2 px-0 gap-2' : sizeStyles[size] || sizeStyles.md;
+
+    return (
+      <button
+        ref={ref}
+        disabled={disabled || isLoading}
+        className={`${baseStyles} ${appliedVariant} ${appliedSize} ${className}`}
+        {...props}
+      >
+        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin text-current shrink-0" />}
+        {!isLoading && leftIcon && <span className="inline-flex shrink-0">{leftIcon}</span>}
+        {children}
+        {!isLoading && rightIcon && <span className="inline-flex shrink-0">{rightIcon}</span>}
+      </button>
+    );
+  }
+);
 
 Button.displayName = 'Button';

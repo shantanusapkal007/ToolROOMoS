@@ -57,40 +57,40 @@ export const Combobox: React.FC<ComboboxProps> = ({
           type="button"
           disabled={disabled}
           className={cn(
-            "flex w-full items-center justify-between rounded-lg border border-zinc-200 bg-white h-[var(--size-input)] px-3.5 text-sm font-medium text-zinc-900 shadow-2xs hover:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all",
+            "flex w-full items-center justify-between rounded-[10px] border border-border-gray bg-canvas px-4 py-3 text-body-md text-ink hover:border-mute-soft focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors",
             className
           )}
         >
-          <span className={cn("truncate", !selectedOption && "text-zinc-400")}>
+          <span className={cn("truncate", !selectedOption && "text-mute")}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <ChevronDown className="h-3.5 w-3.5 text-zinc-400 shrink-0 ml-2" />
+          <ChevronDown className="h-4 w-4 text-mute shrink-0 ml-2" />
         </button>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
           align="start"
           sideOffset={4}
-          className="z-[100] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-md border border-zinc-200 bg-white shadow-md animate-in fade-in-0 zoom-in-95"
+          className="z-[100] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-[12px] border border-border-gray bg-canvas shadow-subtle animate-in fade-in-0 zoom-in-95"
         >
-          <div className="flex items-center border-b border-zinc-200 px-2.5 bg-zinc-50">
-            <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-zinc-400" />
+          <div className="flex items-center border-b border-border-gray px-3 py-2 bg-canvas">
+            <Search className="mr-2 h-4 w-4 shrink-0 text-mute" />
             <input
               ref={inputRef}
-              className="flex h-8 w-full bg-transparent py-1 text-caption text-zinc-900 outline-none placeholder:text-zinc-400"
+              className="flex w-full bg-transparent text-body-sm text-ink outline-none placeholder:text-mute"
               placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="ml-1 text-zinc-400 hover:text-zinc-700">
+              <button onClick={() => setSearch('')} className="ml-1 text-mute hover:text-ink">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
-          <div className="max-h-56 overflow-y-auto p-1">
+          <div className="max-h-56 overflow-y-auto p-1.5">
             {filteredOptions.length === 0 ? (
-              <p className="p-3 text-center text-caption text-zinc-500">{emptyText}</p>
+              <p className="p-3 text-center text-caption text-mute">{emptyText}</p>
             ) : (
               filteredOptions.map((option) => (
                 <button
@@ -100,16 +100,16 @@ export const Combobox: React.FC<ComboboxProps> = ({
                     setOpen(false);
                   }}
                   className={cn(
-                    "relative flex w-full cursor-pointer select-none items-center rounded px-2.5 py-1.5 text-caption transition-colors",
+                    "relative flex w-full cursor-pointer select-none items-center rounded-xs px-3 py-2 text-body-sm transition-colors",
                     value === option.value 
-                      ? "bg-zinc-900 text-white font-semibold" 
-                      : "text-zinc-800 hover:bg-zinc-100"
+                      ? "bg-primary text-on-primary font-medium" 
+                      : "text-ink hover:bg-hairline/20"
                   )}
                 >
                   <span className="truncate">{option.label}</span>
                   {value === option.value && (
                     <span className="ml-auto pl-2 flex items-center justify-center">
-                      <Check className="h-3.5 w-3.5 text-white" />
+                      <Check className="h-4 w-4 text-on-primary" />
                     </span>
                   )}
                 </button>
