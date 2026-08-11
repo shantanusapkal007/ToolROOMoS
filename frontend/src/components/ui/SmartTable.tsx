@@ -167,11 +167,23 @@ export function SmartTable<T extends { id?: string | number }>({
                       : 'hover:bg-[rgba(148,151,169,0.06)]'
                   }`}
                 >
-                  {columns.map((col) => (
-                    <td key={col.key} className="py-3.5 px-4">
-                      {col.render ? col.render((row as any)[col.key], row) : (row as any)[col.key] ?? '—'}
-                    </td>
-                  ))}
+                  {columns.map((col) => {
+                      const cellVal = (row as any)[col.key];
+                      let display: React.ReactNode;
+                      if (col.render) {
+                        display = col.render(cellVal, row);
+                      } else if (cellVal !== null && cellVal !== undefined && typeof cellVal === 'object' && !React.isValidElement(cellVal)) {
+                        // Safety: extract a readable label from nested relation objects
+                        display = cellVal.name || cellVal.departmentName || cellVal.plantName || cellVal.shiftName || cellVal.companyName || cellVal.label || JSON.stringify(cellVal);
+                      } else {
+                        display = cellVal ?? '—';
+                      }
+                      return (
+                        <td key={col.key} className="py-3.5 px-4">
+                          {display}
+                        </td>
+                      );
+                    })}
                   {hasActions && (
                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1">

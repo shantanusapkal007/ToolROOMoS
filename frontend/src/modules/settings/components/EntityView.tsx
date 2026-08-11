@@ -265,6 +265,9 @@ export const EntityView: React.FC<EntityViewProps> = ({ registry }) => {
                     } else {
                       displayVal = rawVal;
                     }
+                  } else if (typeof rawVal === 'object' && rawVal !== null && !React.isValidElement(rawVal)) {
+                    // Nested relation object rendered directly (e.g. `department` field containing the full relation)
+                    displayVal = rawVal.departmentName || rawVal.plantName || rawVal.shiftName || rawVal.companyName || rawVal.name || rawVal.label || JSON.stringify(rawVal);
                   } else {
                     displayVal = rawVal;
                   }
