@@ -66,7 +66,7 @@ export const PremiumDrawer: React.FC<PremiumDrawerProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute inset-0 bg-primary/60 backdrop-blur-xs print:hidden" 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm print:hidden" 
             onClick={onClose} 
           />
           

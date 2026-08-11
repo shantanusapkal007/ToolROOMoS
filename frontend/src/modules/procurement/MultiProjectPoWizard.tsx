@@ -24,6 +24,9 @@ import { ProcurementService } from '@/services/procurement.service';
 import { ProjectsService } from '@/services/projects.service';
 import { AuthenticPoDocument } from './AuthenticPoDocument';
 import { useToast } from '@/components/ui/Toast';
+import { Button } from '@/components/ui/Button';
+import { SearchInput } from '@/components/ui/SearchInput';
+import { Select } from '@/components/ui/Select';
 
 export interface WizardItem {
   id: string;
@@ -480,22 +483,22 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
 
         {/* Step Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-[12px] text-xs font-semibold transition-all ${step === 1 ? "bg-emerald-600 text-white shadow-subtle" : "bg-zinc-100/80 text-zinc-600 border border-border-gray/60"}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold ${step === 1 ? "bg-white text-emerald-700" : "bg-zinc-200 text-zinc-700"}`}>1</span>
+          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-caption font-semibold transition-all ${step === 1 ? "bg-primary text-white shadow-subtle" : "bg-neutral-100/80 text-silver-blue border border-border-gray"}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold ${step === 1 ? "bg-white text-primary" : "bg-neutral-200 text-cool-gray"}`}>1</span>
             <span>Select Materials WRT Projects</span>
           </div>
 
-          <ArrowRight className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+          <ArrowRight className="w-3.5 h-3.5 text-silver-blue shrink-0" />
 
-          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-[12px] text-xs font-semibold transition-all ${step === 2 ? "bg-emerald-600 text-white shadow-subtle" : "bg-zinc-100/80 text-zinc-600 border border-border-gray/60"}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold ${step === 2 ? "bg-white text-emerald-700" : "bg-zinc-200 text-zinc-700"}`}>2</span>
+          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-caption font-semibold transition-all ${step === 2 ? "bg-primary text-white shadow-subtle" : "bg-neutral-100/80 text-silver-blue border border-border-gray"}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold ${step === 2 ? "bg-white text-primary" : "bg-neutral-200 text-cool-gray"}`}>2</span>
             <span>Edit Worksheet</span>
           </div>
 
-          <ArrowRight className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+          <ArrowRight className="w-3.5 h-3.5 text-silver-blue shrink-0" />
 
-          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-[12px] text-xs font-semibold transition-all ${step === 3 ? "bg-emerald-600 text-white shadow-subtle" : "bg-zinc-100/80 text-zinc-600 border border-border-gray/60"}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold ${step === 3 ? "bg-white text-emerald-700" : "bg-zinc-200 text-zinc-700"}`}>3</span>
+          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-caption font-semibold transition-all ${step === 3 ? "bg-primary text-white shadow-subtle" : "bg-neutral-100/80 text-silver-blue border border-border-gray"}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold ${step === 3 ? "bg-white text-primary" : "bg-neutral-200 text-cool-gray"}`}>3</span>
             <span>Document & Print</span>
           </div>
         </div>
@@ -506,31 +509,27 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
         <div className="space-y-5">
           
           {/* Sticky Top Bar - Total Materials Selected & Proceed Action */}
-          <div className="sticky top-0 z-30 flex items-center justify-between bg-white/95 backdrop-blur-xl p-3.5 px-5 rounded-[12px] border border-border-gray/90 shadow-subtle text-ink transition-all duration-300">
+          <div className="sticky top-0 z-30 flex items-center justify-between bg-white/95 backdrop-blur-xl p-3.5 px-5 rounded-[12px] border border-border-gray shadow-subtle text-ink transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-[12px] bg-emerald-50 flex items-center justify-center border border-emerald-200 text-emerald-600 shadow-subtle">
+              <div className="w-8 h-8 rounded-[10px] bg-semantic-success-subtle flex items-center justify-center border border-semantic-success/20 text-semantic-success-dark shadow-subtle">
                 <PackageCheck className="w-4 h-4" />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-zinc-600">Total Materials Selected:</span>
-                <span className="bg-emerald-100 text-emerald-900 font-mono font-semibold text-xs px-2.5 py-1 rounded-[12px] border border-emerald-300">
+                <span className="text-caption font-semibold text-cool-gray">Total Materials Selected:</span>
+                <span className="bg-semantic-success-subtle text-semantic-success-dark font-mono font-bold text-caption px-2.5 py-1 rounded-[8px] border border-semantic-success/20">
                   {selectedItemIds.size} {selectedItemIds.size === 1 ? 'Item' : 'Items'}
                 </span>
               </div>
             </div>
 
-            <button
+            <Button
+              variant="primary"
               onClick={handleProceedToWorksheet}
               disabled={selectedItemIds.size === 0}
-              className={`px-5 py-2.5 rounded-[12px] text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-                selectedItemIds.size > 0
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-subtle active:scale-[0.98]"
-                  : "bg-zinc-100 text-zinc-400 border border-border-gray cursor-not-allowed"
-              }`}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              <span>Proceed to Calculation Worksheet</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              Proceed to Calculation Worksheet
+            </Button>
           </div>
 
           {/* Target Supplier & PO Header Details Card */}
@@ -613,42 +612,39 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
 
               {/* Search & Material Filters */}
               <div className="flex flex-wrap items-center gap-3">
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search tool code, grade, dimensions..."
-                    className="pl-9 pr-3.5 py-2 bg-canvas/80 border border-border-gray rounded-[12px] text-xs focus:bg-white focus:ring-2 focus:ring-zinc-900/10 outline-none w-64 font-medium transition-all"
-                  />
-                </div>
+                <SearchInput
+                  context="local"
+                  placeholder="Search tool code, grade, dimensions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onClear={() => setSearchQuery('')}
+                  containerClassName="w-64"
+                />
 
-                <select
+                <Select
+                  options={[
+                    { label: 'All Material Grades', value: '' },
+                    ...uniqueMaterials.map(m => ({ label: m, value: m }))
+                  ]}
                   value={materialFilter}
                   onChange={(e) => setMaterialFilter(e.target.value)}
-                  className="px-3.5 py-2 bg-canvas/80 border border-border-gray rounded-[12px] text-xs focus:bg-white focus:ring-2 focus:ring-zinc-900/10 outline-none font-semibold text-zinc-800 transition-all"
-                >
-                  <option value="">All Material Grades</option>
-                  {uniqueMaterials.map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
+                  size="sm"
+                />
               </div>
             </div>
 
             {/* Premium Project Filter Bar - Horizontal Scrollable Pill Strip */}
-            <div className="space-y-2 pt-3 border-t border-zinc-100">
+            <div className="space-y-2 pt-3 border-t border-border-gray">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sliders className="w-3.5 h-3.5 text-mute" />
+                <span className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-silver-blue" />
                   <span>Project Filter ({uniqueProjects.length} Projects Available)</span>
                 </span>
                 
                 {projectFilter.length > 0 && (
                   <button
                     onClick={() => setProjectFilter([])}
-                    className="text-[10px] font-semibold text-mute hover:text-ink underline transition-colors cursor-pointer"
+                    className="text-[10px] font-semibold text-primary hover:text-primary-hover underline transition-colors cursor-pointer"
                   >
                     Clear Filter ({projectFilter.length} Active)
                   </button>
@@ -656,13 +652,13 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
               </div>
 
               {/* Scrollable Chips Row */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-zinc-200">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-neutral-200">
                 <button
                   onClick={() => setProjectFilter([])}
-                  className={`px-3.5 py-1.5 rounded-[12px] text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-[10px] text-caption font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     projectFilter.length === 0 
-                      ? "bg-indigo-600 text-white shadow-subtle border border-indigo-600" 
-                      : "bg-zinc-100/90 text-zinc-700 hover:bg-zinc-200 border border-border-gray/60"
+                      ? "bg-primary text-white shadow-subtle border border-primary" 
+                      : "bg-white text-ink hover:bg-neutral-100/80 border border-border-gray"
                   }`}
                 >
                   All Projects ({availableBomItems.length} Materials)
@@ -679,14 +675,14 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                           isSelected ? prev.filter(t => t !== tool) : [...prev, tool]
                         );
                       }}
-                      className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-[10px] text-caption font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected 
-                          ? "bg-indigo-600 text-white shadow-subtle border border-indigo-600" 
-                          : "bg-zinc-100/90 text-zinc-700 hover:bg-zinc-200 border border-border-gray/60"
+                          ? "bg-primary text-white shadow-subtle border border-primary" 
+                          : "bg-white text-ink hover:bg-neutral-100/80 border border-border-gray"
                       }`}
                     >
                       <span>{tool}</span>
-                      <span className={`px-1.5 py-0.2 rounded-[12px] text-[10px] font-mono ${isSelected ? "bg-white/20 text-white" : "bg-zinc-200 text-zinc-700"}`}>
+                      <span className={`px-1.5 py-0.2 rounded-[6px] text-[10px] font-mono ${isSelected ? "bg-white/20 text-white" : "bg-neutral-100 text-cool-gray"}`}>
                         {count}
                       </span>
                     </button>
@@ -761,10 +757,10 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                 const isCollapsed = expandedProjects[projGroup.toolNo] === true;
 
                 return (
-                  <div key={projGroup.toolNo} className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden transition-all">
+                  <div key={projGroup.toolNo} className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden transition-all">
                     
                     {/* Project Header Bar WRT Project */}
-                    <div className="p-4 bg-canvas/80 border-b border-border-gray/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="p-4 bg-canvas border-b border-border-gray flex flex-col md:flex-row md:items-center justify-between gap-3">
                       
                       <div className="flex items-center gap-3">
                         <button
@@ -772,51 +768,48 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                           className="flex items-center gap-2 text-xs font-semibold text-ink cursor-pointer"
                         >
                           {isAllSelected ? (
-                            <CheckSquare className="w-4 h-4 text-emerald-600" />
+                            <CheckSquare className="w-4 h-4 text-semantic-success-dark" />
                           ) : selectedCount > 0 ? (
-                            <div className="w-4 h-4 rounded border-2 border-emerald-600 bg-emerald-100 flex items-center justify-center font-semibold text-[9px] text-emerald-800">
+                            <div className="w-4 h-4 rounded border-2 border-semantic-success bg-semantic-success-subtle flex items-center justify-center font-semibold text-[9px] text-semantic-success-dark">
                               -
                             </div>
                           ) : (
-                            <div className="w-4 h-4 rounded border-2 border-border-gray bg-white" />
+                            <div className="w-4 h-4 rounded border-2 border-border-gray bg-white inline-block" />
                           )}
                         </button>
 
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-semibold text-sm text-zinc-950 bg-zinc-200/80 px-2.5 py-0.5 rounded-[12px] border border-border-gray/60">
+                          <span className="font-mono font-semibold text-xs text-ink bg-canvas px-2.5 py-0.5 rounded-[8px] border border-border-gray">
                             {projGroup.toolNo}
                           </span>
                           <div>
                             <span className="font-semibold text-xs text-ink block">{projGroup.projectName}</span>
-                            <span className="text-[10px] text-mute font-medium">Client: {projGroup.customerName}</span>
+                            <span className="text-[10px] text-silver-blue font-medium">Client: {projGroup.customerName}</span>
                           </div>
                         </div>
 
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-primary-subtle text-primary-dark border border-blue-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-primary-subtle text-primary border border-primary/20">
                           {projGroup.stage}
                         </span>
                       </div>
 
                       {/* Project Right Action Controls */}
                       <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-zinc-600 bg-white px-3 py-1 rounded-[12px] border border-border-gray/80">
-                          <strong className="text-zinc-950">{selectedCount}</strong> / {projItems.length} Items | Total Est: <strong className="font-mono text-zinc-950">{totalProjWt.toFixed(2)} KG</strong>
+                        <span className="text-xs font-semibold text-silver-blue bg-canvas px-3 py-1 rounded-[8px] border border-border-gray">
+                          <strong className="text-ink">{selectedCount}</strong> / {projItems.length} Items | Total Est: <strong className="font-mono text-ink">{totalProjWt.toFixed(2)} KG</strong>
                         </span>
 
-                        <button
+                        <Button
+                          variant={isAllSelected ? "primary" : "secondary"}
+                          size="sm"
                           onClick={() => toggleProjectSelection(projGroup.toolNo, projItems)}
-                          className={`px-3 py-1 rounded-[12px] text-xs font-semibold transition-colors cursor-pointer border ${
-                            isAllSelected 
-                              ? "bg-emerald-600 text-white border-emerald-600 shadow-subtle" 
-                              : "bg-white text-zinc-700 hover:bg-zinc-100 border-border-gray"
-                          }`}
                         >
                           {isAllSelected ? "Deselect Tool Items" : "Select Tool Items"}
-                        </button>
+                        </Button>
 
                         <button
                           onClick={() => toggleExpandProject(projGroup.toolNo)}
-                          className="p-1 rounded-[12px] hover:bg-zinc-200 text-mute transition-colors cursor-pointer"
+                          className="p-1 rounded-[8px] hover:bg-neutral-100 text-silver-blue transition-colors cursor-pointer"
                         >
                           {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                         </button>
@@ -827,13 +820,13 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                     {!isCollapsed && (
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs border-collapse">
-                          <thead className="bg-zinc-100/80 text-zinc-700 font-semibold uppercase tracking-wider text-[10px] border-b border-border-gray">
+                          <thead className="bg-canvas border-b border-border-gray text-silver-blue font-semibold uppercase tracking-wider text-[10px]">
                             <tr>
                               <th className="p-2.5 text-center w-10">Select</th>
                               <th className="p-2.5 text-center w-14">Det #</th>
-                              <th className="p-2.5 text-center w-16 bg-zinc-200/60 border-x border-border-gray text-ink font-semibold">L</th>
-                              <th className="p-2.5 text-center w-16 bg-zinc-200/60 border-r border-border-gray text-ink font-semibold">W</th>
-                              <th className="p-2.5 text-center w-16 bg-zinc-200/60 border-r border-border-gray text-ink font-semibold">H</th>
+                              <th className="p-2.5 text-center w-16 bg-canvas border-x border-border-gray text-ink font-semibold">L</th>
+                              <th className="p-2.5 text-center w-16 bg-canvas border-r border-border-gray text-ink font-semibold">W</th>
+                              <th className="p-2.5 text-center w-16 bg-canvas border-r border-border-gray text-ink font-semibold">H</th>
                               <th className="p-2.5">Material Grade</th>
                               <th className="p-2.5 text-center w-14">Qty</th>
                               <th className="p-2.5 text-right w-24">Est. Weight (kg)</th>
@@ -841,10 +834,10 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                               <th className="p-2.5">Remarks / Notes</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-zinc-100">
+                          <tbody className="divide-y divide-border-gray">
                             {projItems.length === 0 ? (
                               <tr>
-                                <td colSpan={10} className="p-6 text-center text-zinc-400 italic">
+                                <td colSpan={10} className="p-6 text-center text-silver-blue italic">
                                   No pre-requisitioned BOM items for project {projGroup.toolNo} yet. You can proceed to Step 2 or click 'Add Custom Row' to include materials for this project.
                                 </td>
                               </tr>
@@ -858,21 +851,21 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                                   <tr 
                                     key={item.id} 
                                     onClick={() => toggleSelectItem(item.id)}
-                                    className={`hover:bg-canvas/80 transition-colors cursor-pointer ${isChecked ? "bg-canvas/90 font-semibold" : ""}`}
+                                    className={`hover:bg-neutral-50/60 transition-colors cursor-pointer ${isChecked ? "bg-neutral-100/60 font-semibold" : ""}`}
                                   >
                                     <td className="p-2.5 text-center">
                                       {isChecked ? (
-                                        <CheckSquare className="w-4 h-4 text-zinc-950 inline" />
+                                        <CheckSquare className="w-4 h-4 text-primary inline" />
                                       ) : (
                                         <div className="w-4 h-4 rounded border-2 border-border-gray bg-white inline-block" />
                                       )}
                                     </td>
                                     <td className="p-2.5 text-center font-mono font-semibold text-ink">{item.detNo || "1"}</td>
-                                    <td className="p-2.5 text-center font-mono font-semibold text-zinc-950 bg-canvas/60 border-x border-border-gray/60">{lVal}</td>
-                                    <td className="p-2.5 text-center font-mono font-semibold text-zinc-950 bg-canvas/60 border-r border-border-gray/60">{wVal}</td>
-                                    <td className="p-2.5 text-center font-mono font-semibold text-zinc-950 bg-canvas/60 border-r border-border-gray/60">{hVal}</td>
+                                    <td className="p-2.5 text-center font-mono font-semibold text-ink bg-canvas border-x border-border-gray">{lVal}</td>
+                                    <td className="p-2.5 text-center font-mono font-semibold text-ink bg-canvas border-r border-border-gray">{wVal}</td>
+                                    <td className="p-2.5 text-center font-mono font-semibold text-ink bg-canvas border-r border-border-gray">{hVal}</td>
                                     <td className="p-2.5">
-                                      <span className="px-2 py-0.5 rounded bg-zinc-100 text-ink font-semibold text-[11px] border border-border-gray/80">
+                                      <span className="px-2 py-0.5 rounded bg-canvas text-ink font-semibold text-[11px] border border-border-gray">
                                         {item.materialGrade || "MS"}
                                       </span>
                                     </td>
@@ -881,13 +874,13 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                                     <td className="p-3">
                                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
                                         item.status === 'ORDERED' 
-                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
-                                          : "bg-amber-50 text-amber-800 border border-amber-200"
+                                          ? "bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20" 
+                                          : "bg-semantic-warning-subtle text-semantic-warning-dark border border-semantic-warning/20"
                                       }`}>
                                         {item.status || "PENDING"}
                                       </span>
                                     </td>
-                                    <td className="p-3 text-mute text-xs italic">{item.remarks || "-"}</td>
+                                    <td className="p-3 text-silver-blue text-xs italic">{item.remarks || "-"}</td>
                                   </tr>
                                 );
                               })

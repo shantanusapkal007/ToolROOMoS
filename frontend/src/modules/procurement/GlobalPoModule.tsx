@@ -5,27 +5,23 @@ import {
   ShoppingCart, 
   Plus, 
   FileText, 
-  Building2, 
   Download, 
   Eye, 
-  Search,
-  Layers,
-  ChevronRight,
-  TrendingUp,
-  FileCheck,
-  AlertTriangle,
-  Clock,
-  Archive,
-  RefreshCw,
-  DollarSign,
-  Package
+  TrendingUp, 
+  AlertTriangle, 
+  RefreshCw 
 } from 'lucide-react';
 import { ProcurementService } from '@/services/procurement.service';
-import { MultiProjectPoWizard, parseLwh } from './MultiProjectPoWizard';
+import { MultiProjectPoWizard } from './MultiProjectPoWizard';
 import { AuthenticPoDocument } from './AuthenticPoDocument';
 import { exportPoToExcel } from './poExcelExporter';
 import { SkeletonBox } from '@/components/ui/SkeletonLoader';
 import { useToast } from '@/components/ui/Toast';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/Button';
+import { SearchInput } from '@/components/ui/SearchInput';
+import { Tabs } from '@/components/ui/Tabs';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export function GlobalPoModule() {
   const { success } = useToast();
@@ -100,113 +96,67 @@ export function GlobalPoModule() {
 
   return (
     <div className="space-y-6 text-ink font-sans">
-      
-      {/* Top Header Bar */}
-      <div className="bg-white p-5 rounded-[12px] border border-border-gray/80 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4 hide-on-print">
-        <div>
-          {/* Breadcrumb Navigation */}
-          <nav className="flex items-center text-xs font-semibold text-zinc-400 mb-1">
-            <span className="hover:text-zinc-600 transition-colors">Procurement</span>
-            <ChevronRight className="w-3.5 h-3.5 mx-1.5 text-zinc-300" />
-            <span className="text-ink font-semibold bg-zinc-100 px-2 py-0.5 rounded-[12px] border border-border-gray/60">Multi-Project Purchase Orders</span>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[12px] bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center font-semibold shadow-subtle">
-              <ShoppingCart className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-ink tracking-tight flex items-center gap-2">
-                <span>Global Purchase Order Module</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full">
-                  ENTERPRISE
-                </span>
-              </h1>
-              <p className="text-xs text-mute">
-                Consolidate material requirements across tool projects into authentic supplier Purchase Orders
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Switcher Buttons */}
-        <div className="flex items-center p-1 bg-zinc-100 rounded-[12px] border border-border-gray/80 gap-1">
-          <button
-            onClick={() => { setActiveTab('create'); setPreviewPo(null); }}
-            className={`px-4 py-2 rounded-[12px] text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'create'
-                ? "bg-indigo-600 text-white shadow-subtle"
-                : "text-zinc-600 hover:text-ink hover:bg-white"
-            }`}
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create PO</span>
-          </button>
-
-          <button
-            onClick={() => { setActiveTab('history'); setPreviewPo(null); }}
-            className={`px-4 py-2 rounded-[12px] text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'history'
-                ? "bg-indigo-600 text-white shadow-subtle"
-                : "text-zinc-600 hover:text-ink hover:bg-white"
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>PO Register ({totalCount})</span>
-          </button>
-
-          <button
-            onClick={() => { setActiveTab('dead'); setPreviewPo(null); }}
-            className={`px-4 py-2 rounded-[12px] text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'dead'
-                ? "bg-rose-600 text-white shadow-subtle"
-                : "text-zinc-600 hover:text-rose-600 hover:bg-white"
-            }`}
-          >
-            <AlertTriangle className="w-4 h-4" />
-            <span>Dead Material ({deadCount})</span>
-          </button>
-        </div>
-      </div>
+      {/* Design System Page Header */}
+      <PageHeader
+        title="Global Purchase Order Module"
+        description="Consolidate material requirements across tool projects into authentic supplier Purchase Orders"
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Procurement', href: '/purchase-orders' },
+          { label: 'Purchase Orders' },
+        ]}
+        icon={<ShoppingCart className="w-5 h-5 text-primary" />}
+        actions={
+          <Tabs
+            activeTab={activeTab}
+            onChange={(tab) => { setActiveTab(tab as any); setPreviewPo(null); }}
+            tabs={[
+              { id: 'create', label: 'Create PO', icon: <Plus className="w-3.5 h-3.5" /> },
+              { id: 'history', label: `PO Register (${totalCount})`, icon: <FileText className="w-3.5 h-3.5" /> },
+              { id: 'dead', label: `Dead Material (${deadCount})`, icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+            ]}
+          />
+        }
+      />
 
       {/* KPI Metrics Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 hide-on-print">
         {/* Issued POs */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Issued POs</div>
-            <div className="text-2xl font-semibold text-ink mt-0.5">{totalCount}</div>
-            <div className="text-[10px] text-mute mt-0.5">Supplier purchase orders</div>
+            <div className="text-[11px] font-semibold text-silver-blue uppercase tracking-wider">Issued POs</div>
+            <div className="text-2xl font-bold text-ink mt-0.5">{totalCount}</div>
+            <div className="text-caption text-silver-blue mt-0.5">Supplier purchase orders</div>
           </div>
-          <div className="w-10 h-10 rounded-[12px] bg-primary-subtle flex items-center justify-center text-primary">
+          <div className="w-10 h-10 rounded-[10px] bg-primary-subtle flex items-center justify-center text-primary">
             <ShoppingCart className="w-5 h-5" />
           </div>
         </div>
 
         {/* Total Procurement */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Total Procurement</div>
-            <div className="text-2xl font-semibold text-emerald-700 mt-0.5">
+            <div className="text-[11px] font-semibold text-silver-blue uppercase tracking-wider">Total Procurement</div>
+            <div className="text-2xl font-bold text-semantic-success-dark mt-0.5">
               ₹{totalValue > 0 ? totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '0'}
             </div>
-            <div className="text-[10px] text-mute mt-0.5">Total material spend</div>
+            <div className="text-caption text-silver-blue mt-0.5">Total material spend</div>
           </div>
-          <div className="w-10 h-10 rounded-[12px] bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <div className="w-10 h-10 rounded-[10px] bg-semantic-success-subtle flex items-center justify-center text-semantic-success-dark">
             <TrendingUp className="w-5 h-5" />
           </div>
         </div>
 
         {/* Dead Stock */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-rose-500 uppercase tracking-wider">Dead Stock (6+ Mths)</div>
-            <div className="text-2xl font-semibold text-rose-700 mt-0.5">{deadCount} Batches</div>
-            <div className="text-[10px] text-mute mt-0.5">
+            <div className="text-[11px] font-semibold text-semantic-danger uppercase tracking-wider">Dead Stock (6+ Mths)</div>
+            <div className="text-2xl font-bold text-semantic-danger-dark mt-0.5">{deadCount} Batches</div>
+            <div className="text-caption text-silver-blue mt-0.5">
               Idle stock value: ₹{totalDeadValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </div>
           </div>
-          <div className="w-10 h-10 rounded-[12px] bg-rose-50 flex items-center justify-center text-rose-600">
+          <div className="w-10 h-10 rounded-[10px] bg-semantic-danger-subtle flex items-center justify-center text-semantic-danger-dark">
             <AlertTriangle className="w-5 h-5" />
           </div>
         </div>
@@ -247,73 +197,75 @@ export function GlobalPoModule() {
       ) : activeTab === 'create' ? (
         <MultiProjectPoWizard onSuccess={fetchGlobalOrders} />
       ) : activeTab === 'history' ? (
-        <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden space-y-4 p-4">
+        <div className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden space-y-4 p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-ink">Purchase Order Register</h3>
-              <p className="text-xs text-mute">History of issued multi-project and single project purchase orders</p>
+              <h3 className="text-display-xs font-bold text-ink">Purchase Order Register</h3>
+              <p className="text-caption text-silver-blue">History of issued multi-project and single project purchase orders</p>
             </div>
 
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-3" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search PO #, vendor, project..."
-                className="pl-9 pr-3.5 py-2 bg-canvas border border-border-gray rounded-[12px] text-xs text-ink focus:bg-white outline-none w-64"
-              />
-            </div>
+            <SearchInput
+              context="local"
+              placeholder="Search PO #, vendor, project..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              containerClassName="w-full sm:w-72"
+            />
           </div>
 
-          <div className="overflow-x-auto border border-border-gray/80 rounded-[12px]">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-canvas border-b border-border-gray text-mute uppercase text-[10px] font-semibold tracking-wider">
+          <div className="overflow-x-auto border border-border-gray rounded-[12px]">
+            <table className="w-full text-left text-body-sm">
+              <thead className="bg-canvas border-b border-border-gray text-silver-blue uppercase text-[10px] font-semibold tracking-wider">
                 <tr>
-                  <th className="p-3">PO Number</th>
-                  <th className="p-3">Vendor / Supplier</th>
-                  <th className="p-3 text-right">Items</th>
-                  <th className="p-3 text-right">Total Amount (₹)</th>
-                  <th className="p-3 text-center">Status</th>
-                  <th className="p-3 text-right">Actions</th>
+                  <th className="py-3 px-4">PO Number</th>
+                  <th className="py-3 px-4">Vendor / Supplier</th>
+                  <th className="py-3 px-4 text-right">Items</th>
+                  <th className="py-3 px-4 text-right">Total Amount (₹)</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-border-gray">
                 {isLoading ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center"><SkeletonBox className="h-10 w-full" /></td>
                   </tr>
                 ) : filteredOrders.length > 0 ? (
                   filteredOrders.map((po) => (
-                    <tr key={po.id} className="hover:bg-canvas transition-colors">
-                      <td className="p-3 font-mono font-semibold text-primary-dark">{po.poNumber}</td>
-                      <td className="p-3 font-semibold text-ink">{po.vendor?.vendorName || po.vendorName || "Standard Vendor"}</td>
-                      <td className="p-3 text-right font-mono font-semibold">{po.items?.length || 1} items</td>
-                      <td className="p-3 text-right font-mono font-semibold text-emerald-700">₹{(Number(po.totalAmount) || 0).toLocaleString('en-IN')}</td>
-                      <td className="p-3 text-center">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          {po.status || "ISSUED"}
-                        </span>
+                    <tr key={po.id} className="hover:bg-neutral-50/60 transition-colors">
+                      <td className="py-3 px-4 font-mono font-semibold text-primary">{po.poNumber}</td>
+                      <td className="py-3 px-4 font-semibold text-ink">{po.vendor?.vendorName || po.vendorName || "Standard Vendor"}</td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold">{po.items?.length || 1} items</td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-semantic-success-dark">₹{(Number(po.totalAmount) || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-3 px-4 text-center">
+                        <StatusBadge status={po.status || "COMPLETED"} size="sm" />
                       </td>
-                      <td className="p-3 text-right space-x-2">
-                        <button
-                          onClick={() => setPreviewPo(po)}
-                          className="px-2.5 py-1 rounded-[12px] bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-[11px] inline-flex items-center gap-1 transition-colors"
-                        >
-                          <Eye className="w-3 h-3" /> View PO
-                        </button>
-                        <button
-                          onClick={() => exportPoToExcel(po)}
-                          className="px-2.5 py-1 rounded-[12px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-[11px] inline-flex items-center gap-1 transition-colors border border-emerald-200"
-                        >
-                          <Download className="w-3 h-3" /> Excel
-                        </button>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            leftIcon={<Eye className="w-3.5 h-3.5" />}
+                            onClick={() => setPreviewPo(po)}
+                          >
+                            View PO
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            leftIcon={<Download className="w-3.5 h-3.5" />}
+                            onClick={() => exportPoToExcel(po)}
+                          >
+                            Excel
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-zinc-400 italic">
+                    <td colSpan={6} className="p-8 text-center text-silver-blue italic">
                       No purchase orders found. Click 'Create PO' to issue a new multi-project order.
                     </td>
                   </tr>
@@ -324,55 +276,66 @@ export function GlobalPoModule() {
         </div>
       ) : (
         /* Dead Material Register */
-        <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden space-y-4 p-4">
+        <div className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden space-y-4 p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-rose-900 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
+              <h3 className="text-display-xs font-bold text-semantic-danger-dark flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-semantic-danger" />
                 <span>Dead Material & Excess Stock Register</span>
               </h3>
-              <p className="text-xs text-mute">Unused steel batches idle for over 6 months available for re-allocation</p>
+              <p className="text-caption text-silver-blue">Unused steel batches idle for over 6 months available for re-allocation</p>
             </div>
+
+            <SearchInput
+              context="local"
+              placeholder="Search batch #, heat #, grade..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              containerClassName="w-full sm:w-72"
+            />
           </div>
 
-          <div className="overflow-x-auto border border-border-gray/80 rounded-[12px]">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-rose-50 border-b border-rose-200 text-rose-800 uppercase text-[10px] font-semibold tracking-wider">
+          <div className="overflow-x-auto border border-border-gray rounded-[12px]">
+            <table className="w-full text-left text-body-sm">
+              <thead className="bg-semantic-danger-subtle border-b border-border-gray text-semantic-danger-dark uppercase text-[10px] font-semibold tracking-wider">
                 <tr>
-                  <th className="p-3">Batch #</th>
-                  <th className="p-3">Material Grade</th>
-                  <th className="p-3">Dimensions / Spec</th>
-                  <th className="p-3 text-right">Idle Qty (NOS)</th>
-                  <th className="p-3 text-right">Idle Weight (KG)</th>
-                  <th className="p-3 text-right">Idle Value (₹)</th>
-                  <th className="p-3 text-right">Actions</th>
+                  <th className="py-3 px-4">Batch #</th>
+                  <th className="py-3 px-4">Material Grade</th>
+                  <th className="py-3 px-4">Dimensions / Spec</th>
+                  <th className="py-3 px-4 text-right">Idle Qty (NOS)</th>
+                  <th className="py-3 px-4 text-right">Idle Weight (KG)</th>
+                  <th className="py-3 px-4 text-right">Idle Value (₹)</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-border-gray">
                 {isLoadingDead ? (
                   <tr><td colSpan={7} className="p-8 text-center"><SkeletonBox className="h-10 w-full" /></td></tr>
                 ) : filteredDeadMaterials.length > 0 ? (
                   filteredDeadMaterials.map((item) => (
-                    <tr key={item.id} className="hover:bg-canvas transition-colors">
-                      <td className="p-3 font-mono font-semibold text-ink">{item.batchNumber}</td>
-                      <td className="p-3 font-mono font-semibold text-rose-700">{item.materialGrade}</td>
-                      <td className="p-3 text-zinc-600 font-mono">{item.dimensions || item.spec || "-"}</td>
-                      <td className="p-3 text-right font-mono font-semibold">{item.idleQty || 1} NOS</td>
-                      <td className="p-3 text-right font-mono font-semibold">{item.idleWeight || 0} KG</td>
-                      <td className="p-3 text-right font-mono font-semibold text-rose-700">₹{(Number(item.totalIdleValue) || 0).toLocaleString('en-IN')}</td>
-                      <td className="p-3 text-right">
-                        <button
+                    <tr key={item.id} className="hover:bg-neutral-50/60 transition-colors">
+                      <td className="py-3 px-4 font-mono font-semibold text-ink">{item.batchNumber}</td>
+                      <td className="py-3 px-4 font-mono font-semibold text-semantic-danger-dark">{item.materialGrade}</td>
+                      <td className="py-3 px-4 text-cool-gray font-mono">{item.dimensions || item.spec || "-"}</td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold">{item.idleQty || 1} NOS</td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold">{item.idleWeight || 0} KG</td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-semantic-danger-dark">₹{(Number(item.totalIdleValue) || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-3 px-4 text-right">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
                           onClick={() => handleReallocateDead(item.id, item.batchNumber)}
-                          className="px-3 py-1 rounded-[12px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] inline-flex items-center gap-1 transition-colors shadow-subtle"
                         >
-                          <RefreshCw className="w-3 h-3" /> Reallocate
-                        </button>
+                          Reallocate
+                        </Button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-zinc-400 italic">
+                    <td colSpan={7} className="p-8 text-center text-silver-blue italic">
                       No dead stock batches detected. All inventory is active and allocated.
                     </td>
                   </tr>

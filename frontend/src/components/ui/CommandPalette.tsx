@@ -91,7 +91,7 @@ export function CommandPalette() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 z-[100] bg-primary/60 backdrop-blur-xs"
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
           />
 
           {/* Palette Dialog */}

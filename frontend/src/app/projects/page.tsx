@@ -205,22 +205,6 @@ export default function ProjectsPage() {
           </span>
         );
       }
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (_: any, row: any) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setDeletingProject(row);
-          }}
-          className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
-          title="Delete Project"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      )
     }
   ];
 
@@ -237,11 +221,11 @@ export default function ProjectsPage() {
             actions={
               <div className="flex items-center gap-3">
                 <Button 
-                  variant="white" 
+                  variant="secondary" 
                   size="md"
                   onClick={() => exportPremiumProjects(projects)}
                 >
-                  <FileSpreadsheet className="w-4 h-4 mr-1.5 text-green" />
+                  <FileSpreadsheet className="w-4 h-4 mr-1.5 text-semantic-success-dark" />
                   <span>Export Excel</span>
                 </Button>
                 <Button 
@@ -271,9 +255,9 @@ export default function ProjectsPage() {
             <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">On Track</span>
-                <div className="text-2xl font-bold font-mono text-green mt-1">{onTrackCount}</div>
+                <div className="text-2xl font-bold font-mono text-semantic-success-dark mt-1">{onTrackCount}</div>
               </div>
-              <div className="w-9 h-9 rounded-[8px] bg-[rgba(20,158,97,0.16)] text-[#026b3f] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-[8px] bg-semantic-success-subtle text-semantic-success-dark flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
@@ -281,9 +265,9 @@ export default function ProjectsPage() {
             <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Overdue Alerts</span>
-                <div className="text-2xl font-bold font-mono text-accent-red mt-1">{delayedProjects.length}</div>
+                <div className="text-2xl font-bold font-mono text-semantic-danger-dark mt-1">{delayedProjects.length}</div>
               </div>
-              <div className="w-9 h-9 rounded-[8px] bg-red-50 text-accent-red flex items-center justify-center">
+              <div className="w-9 h-9 rounded-[8px] bg-semantic-danger-subtle text-semantic-danger-dark flex items-center justify-center">
                 <AlertTriangle className="w-4 h-4" />
               </div>
             </div>
@@ -293,7 +277,7 @@ export default function ProjectsPage() {
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-cool-gray">Total Records</span>
                 <div className="text-2xl font-bold font-mono text-ink mt-1">{projects.length}</div>
               </div>
-              <div className="w-9 h-9 rounded-[8px] bg-[rgba(148,151,169,0.08)] border border-border-gray text-silver-blue flex items-center justify-center">
+              <div className="w-9 h-9 rounded-[8px] bg-neutral-100 dark:bg-neutral-800 border border-border-gray text-silver-blue flex items-center justify-center">
                 <Clock className="w-4 h-4" />
               </div>
             </div>
@@ -306,6 +290,7 @@ export default function ProjectsPage() {
             data={projects}
             isLoading={projectsLoading}
             onView={(row) => router.push(`/projects/${row.id}/overview`)}
+            onDelete={(row) => setDeletingProject(row)}
             exportFilename="Projects_Register"
           />
 

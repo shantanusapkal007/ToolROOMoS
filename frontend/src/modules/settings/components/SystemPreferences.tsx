@@ -16,8 +16,6 @@ export const SystemPreferences = () => {
     slackIntegration: false,
     autoBackup: true,
     maintenanceMode: false,
-    projectNumberPrefix: 'KTD-',
-    projectStartingNumber: 1,
   });
 
   useEffect(() => {
@@ -34,8 +32,6 @@ export const SystemPreferences = () => {
             ...(data.slackIntegration !== undefined && { slackIntegration: Boolean(data.slackIntegration) }),
             ...(data.autoBackup !== undefined && { autoBackup: Boolean(data.autoBackup) }),
             ...(data.maintenanceMode !== undefined && { maintenanceMode: Boolean(data.maintenanceMode) }),
-            ...(data.projectNumberPrefix !== undefined && { projectNumberPrefix: String(data.projectNumberPrefix) }),
-            ...(data.projectStartingNumber !== undefined && { projectStartingNumber: Number(data.projectStartingNumber) }),
           }));
         }
       } catch (err) {
@@ -87,45 +83,13 @@ export const SystemPreferences = () => {
           </div>
           <div>
             <h2 className="text-section-heading font-bold text-ink tracking-tight">System Preferences</h2>
-            <p className="text-caption text-silver-blue">Configure global OS behavior, notification alerts, and project numbering sequence.</p>
+            <p className="text-caption text-silver-blue">Configure global OS behavior, notification alerts, and automated maintenance backups.</p>
           </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 hide-scrollbar bg-[#fbfbfd]">
         <div className="max-w-3xl space-y-6">
-
-          {/* Project Numbering Configuration Card */}
-          <div className="border border-border-gray p-5 rounded-[12px] bg-white shadow-subtle space-y-4">
-            <h3 className="text-body font-bold text-ink border-b border-border-gray pb-3">Project Numbering Setup</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-micro font-semibold uppercase text-silver-blue mb-1">Project Number Prefix</label>
-                <input 
-                  type="text"
-                  value={preferences.projectNumberPrefix}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, projectNumberPrefix: e.target.value }))}
-                  className="w-full px-3 py-2 border border-border-gray rounded-[10px] text-caption bg-white font-mono text-ink focus:outline-none focus:border-primary shadow-subtle"
-                  placeholder="e.g. KTD-"
-                />
-                <p className="text-small text-silver-blue mt-1">Default prefix attached to newly initialized projects.</p>
-              </div>
-
-              <div>
-                <label className="block text-micro font-semibold uppercase text-silver-blue mb-1">Starting / Next Project Number</label>
-                <input 
-                  type="number"
-                  min="1"
-                  value={preferences.projectStartingNumber}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, projectStartingNumber: parseInt(e.target.value, 10) || 1 }))}
-                  className="w-full px-3 py-2 border border-border-gray rounded-[10px] text-caption bg-white font-mono text-ink focus:outline-none focus:border-primary shadow-subtle"
-                  placeholder="e.g. 33"
-                />
-                <p className="text-small text-silver-blue mt-1">Set to 33 to start project sequence from KTD-33.</p>
-              </div>
-            </div>
-          </div>
           
           <div className="border border-border-gray p-5 rounded-[12px] bg-white shadow-subtle space-y-3">
             <h3 className="text-body font-bold text-ink border-b border-border-gray pb-3">Notifications & Alerts</h3>
@@ -160,7 +124,7 @@ export const SystemPreferences = () => {
             
             <div className="flex items-center justify-between py-2 border-t border-border-gray">
               <div>
-                <p className="font-bold text-caption text-[#b91c1c]">Maintenance Mode</p>
+                <p className="font-bold text-caption text-semantic-danger-dark">Maintenance Mode</p>
                 <p className="text-small text-silver-blue">Lock out all non-admin users for scheduled system maintenance.</p>
               </div>
               <Toggle checked={preferences.maintenanceMode} onChange={() => togglePref('maintenanceMode')} danger />
@@ -185,7 +149,7 @@ const Toggle = ({ checked, onChange, danger = false }: { checked: boolean, onCha
       onClick={onChange}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out ${
         checked 
-          ? danger ? 'bg-accent-red' : 'bg-primary' 
+          ? danger ? 'bg-semantic-danger' : 'bg-primary' 
           : 'bg-[#dedee5]'
       }`}
     >
