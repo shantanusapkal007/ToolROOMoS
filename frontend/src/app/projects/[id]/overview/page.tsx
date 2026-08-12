@@ -404,59 +404,6 @@ export default function ProjectOverviewPage() {
 
       {/* Stage Progress Pipeline Stepper */}
       <ToolingWorkflowStepper currentStage={project.currentStage} />
-
-      {/* Mission Specifications Card */}
-      <div className="bg-white rounded-[12px] border border-border-gray p-5 shadow-subtle space-y-4">
-        <div className="flex items-center gap-2 border-b border-border-gray pb-3">
-          <FileText className="w-4 h-4 text-cool-gray" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-ink">
-            Tooling Mission Specifications
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 text-xs">
-          <div>
-            <span className="text-cool-gray font-semibold uppercase tracking-wider text-[10px]">Customer / Client</span>
-            <div className="font-semibold text-ink mt-1 flex items-center gap-2">
-              <Building2 className="w-3.5 h-3.5 text-silver-blue" />
-              <span>{project.customer?.companyName || project.customerName || 'Unspecified Customer'}</span>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-cool-gray font-semibold uppercase tracking-wider text-[10px]">Customer PO Number</span>
-            <div className="font-mono font-semibold text-ink mt-1">
-              {project.customerPoNumber || 'No PO Assigned'}
-            </div>
-          </div>
-
-          <div>
-            <span className="text-cool-gray font-semibold uppercase tracking-wider text-[10px]">Target Delivery Date</span>
-            <div className="font-mono font-semibold text-ink mt-1 flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5 text-silver-blue" />
-              <span>{project.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : 'Not Scheduled'}</span>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-cool-gray font-semibold uppercase tracking-wider text-[10px]">Plant / Facility</span>
-            <div className="font-semibold text-ink mt-1 flex items-center gap-2">
-              <Factory className="w-3.5 h-3.5 text-silver-blue" />
-              <span>{formattedPlant}</span>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-cool-gray font-semibold uppercase tracking-wider text-[10px]">Project Owner</span>
-            <div className="font-semibold text-ink mt-1 flex items-center gap-2">
-              <User className="w-3.5 h-3.5 text-silver-blue" />
-              <span>{project.projectOwner || project.manager || 'Unassigned'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }
-

@@ -18,7 +18,9 @@ import {
   Building2,
   ArrowLeft,
   Activity,
-  ShoppingCart
+  ShoppingCart,
+  Factory,
+  User
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "@/lib/formatters";
@@ -35,6 +37,14 @@ export default function ProjectDetailLayout({
   const id = params?.id as string;
 
   const { data: project } = useProject(id);
+
+  const plantDisplay = typeof project?.plant === 'string'
+    ? project.plant.replace(/_/g, " ")
+    : (project?.plant?.name || project?.plant?.code || "Toolroom Main Facility");
+
+  const ownerDisplay = typeof project?.projectOwner === 'string'
+    ? project.projectOwner
+    : (project?.projectOwner?.name || project?.manager?.name || (typeof project?.manager === 'string' ? project.manager : "Unassigned"));
 
   const tabs = [
     { label: "Overview", path: `/projects/${id}/overview`, icon: Briefcase },
@@ -73,7 +83,7 @@ export default function ProjectDetailLayout({
                   </Button>
 
                   <div className="flex items-center gap-2.5">
-                    <span className="px-2.5 py-0.5 rounded-[6px] text-[11px] font-semibold font-mono bg-purple-100/90 text-purple-700 border border-purple-200/80 shrink-0">
+                    <span className="px-2.5 py-0.5 rounded-[6px] text-[11px] font-semibold font-mono bg-primary-subtle text-primary border border-primary/20 shrink-0">
                       {project?.projectNumber || "PRJ-2025-086"}
                     </span>
                     <h1 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
@@ -84,17 +94,17 @@ export default function ProjectDetailLayout({
 
                 <div className="flex items-center gap-2 self-end sm:self-auto">
                   <span className="text-xs font-semibold text-mute">Stage:</span>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200/80 shadow-subtle">
-                    {project?.currentStage?.replace(/_/g, " ") || "DISPATCHED"}
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-subtle text-primary border border-primary/20 shadow-subtle">
+                    {typeof project?.currentStage === 'string' ? project.currentStage.replace(/_/g, " ") : "DISPATCHED"}
                   </span>
                 </div>
               </div>
 
               {/* Quick Metadata Bar */}
-              <div className="flex items-center gap-6 text-xs text-cool-gray font-medium">
+              <div className="flex items-center gap-6 text-xs text-cool-gray font-medium flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <Building2 className="w-4 h-4 text-cool-gray shrink-0" />
-                  <span className="font-bold text-ink">{project?.customer?.companyName || "Tata Motors Ltd"}</span>
+                  <span className="font-bold text-ink">{project?.customer?.companyName || project?.customerName || "Tata Motors Ltd"}</span>
                 </div>
                 <div className="flex items-center gap-1.5 font-mono">
                   <span className="text-mute font-sans">PO #:</span>
@@ -103,6 +113,10 @@ export default function ProjectDetailLayout({
                 <div className="flex items-center gap-1.5 font-mono">
                   <Calendar className="w-4 h-4 text-mute shrink-0" />
                   <span>Target: {project?.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : "08 Aug 2026"}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-mute shrink-0" />
+                  <span>Owner: {ownerDisplay}</span>
                 </div>
               </div>
             </div>
