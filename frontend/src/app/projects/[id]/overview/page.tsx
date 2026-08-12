@@ -32,6 +32,7 @@ import { formatDate, formatCurrency } from "@/lib/formatters";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 
 import { useGlobalDailyReports } from "@/hooks/useDailyReports";
+import { ToolingWorkflowStepper } from "@/components/workspace/ToolingWorkflowStepper";
 
 export default function ProjectOverviewPage() {
   const params = useParams();
@@ -402,46 +403,7 @@ export default function ProjectOverviewPage() {
       </div>
 
       {/* Stage Progress Pipeline Stepper */}
-      <div className="bg-white rounded-[12px] border border-border-gray p-5 shadow-subtle space-y-4">
-        <div className="flex items-center justify-between border-b border-border-gray pb-3">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-cool-gray" />
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-ink">
-              Tooling Workflow Pipeline Stepper
-            </h3>
-          </div>
-          <span className="text-xs font-mono font-semibold text-cool-gray">
-            Active: <strong className="text-primary uppercase font-bold">{project.currentStage?.replace(/_/g, ' ') || 'CREATED'}</strong>
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5">
-          {STAGE_STEPS.map((step, idx) => {
-            const isCompleted = idx < currentStageIdx;
-            const isCurrent = idx === currentStageIdx;
-
-            return (
-              <div 
-                key={step.id} 
-                className={`p-3 rounded-[12px] border text-center transition-all ${
-                  isCurrent 
-                    ? "bg-primary border-primary text-white shadow-subtle" 
-                    : isCompleted 
-                    ? "bg-semantic-success-subtle border-semantic-success/30 text-semantic-success-dark font-semibold" 
-                    : "bg-canvas border-border-gray text-cool-gray"
-                }`}
-              >
-                <div className="text-[10px] font-semibold uppercase tracking-wider">
-                  {step.label}
-                </div>
-                <div className="text-[9px] mt-1 font-mono font-semibold">
-                  {isCurrent ? "IN PROGRESS" : isCompleted ? "COMPLETED" : "PENDING"}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <ToolingWorkflowStepper currentStage={project.currentStage} />
 
       {/* Mission Specifications Card */}
       <div className="bg-white rounded-[12px] border border-border-gray p-5 shadow-subtle space-y-4">

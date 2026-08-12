@@ -30,3 +30,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ### 5. UI Components & Button Usage
 - ALWAYS use the standardized `Button` component (`variant="primary"`, `variant="secondary"`, `variant="white"`, `variant="danger"`) with proper size and icon props instead of unstyled raw `<button>` elements.
+
+### 6. Mandatory Light & Dark Theme Compatibility
+- Whenever creating any new component, refactoring an existing component, or modifying any UI layout, agents MUST ensure 100% full compatibility for BOTH Light and Dark themes.
+- Test and verify that background contrast, text visibility, card borders, icons, and status badges remain crisp, legible, and visually balanced in both Light Mode (`.light`) and Dark Mode (`.dark`).
+- Never introduce hardcoded light-only or dark-only surface colors or text styles that break readability or visual quality in either theme.
+
