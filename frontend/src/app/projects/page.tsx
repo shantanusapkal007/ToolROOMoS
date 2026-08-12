@@ -20,6 +20,7 @@ export default function ProjectsPage() {
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const { data: customers } = useMasterData('customers');
   const { data: plants } = useMasterData('plants');
+  const { data: employees } = useMasterData('employees');
   const createProjectMutation = useCreateProject();
   const queryClient = useQueryClient();
   const { success, error } = useToast();
@@ -36,6 +37,7 @@ export default function ProjectsPage() {
   const [newRevenue, setNewRevenue] = useState("");
   const [newTargetDeliveryDate, setNewTargetDeliveryDate] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [newProjectOwner, setNewProjectOwner] = useState("");
 
   const computeNextProjectNumber = (currentProjects: any[], prefix: string, startingNum: number) => {
     const cleanPrefix = prefix.endsWith('-') ? prefix : `${prefix}-`;
@@ -116,6 +118,8 @@ export default function ProjectsPage() {
         plantId: plants?.[0]?.id || "PL-01",
         revenue: newRevenue ? parseFloat(newRevenue) : 0,
         targetDeliveryDate: newTargetDeliveryDate ? new Date(newTargetDeliveryDate).toISOString() : undefined,
+        projectOwner: newProjectOwner,
+        manager: newProjectOwner,
       } as any);
 
       // Auto update next starting project counter in settings
@@ -374,6 +378,38 @@ export default function ProjectsPage() {
               </select>
             </div>
           )}
+
+          <div>
+            <label className="block text-caption font-semibold text-ink mb-1">Project Owner / Lead Manager</label>
+            {employees && employees.length > 0 ? (
+              <select
+                value={newProjectOwner}
+                onChange={(e) => setNewProjectOwner(e.target.value)}
+                className="w-full px-3 py-2 border border-border-gray rounded-md text-caption text-ink bg-canvas"
+              >
+                <option value="">-- Assign Project Owner --</option>
+                {employees.map((emp: any) => {
+                  const deptLabel = typeof emp.department === 'object'
+                    ? (emp.department?.departmentName || emp.department?.departmentCode || 'Staff')
+                    : (typeof emp.department === 'string' ? emp.department : (emp.designation || 'Staff'));
+                  const name = emp.name || emp.employeeName || 'Unknown Employee';
+                  return (
+                    <option key={emp.id} value={name}>
+                      {name} ({deptLabel})
+                    </option>
+                  );
+                })}
+              </select>
+            ) : (
+              <input 
+                type="text"
+                placeholder="e.g. Rajesh Kumar"
+                value={newProjectOwner}
+                onChange={(e) => setNewProjectOwner(e.target.value)}
+                className="w-full px-3 py-2 border border-border-gray rounded-md text-caption text-ink bg-canvas"
+              />
+            )}
+          </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t border-border-gray">
             <Button variant="white" type="button" onClick={() => setShowNewProjectModal(false)}>Cancel</Button>

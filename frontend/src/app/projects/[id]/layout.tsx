@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useProject } from "@/hooks/useProjects";
+import { useProject, useUpdateProject } from "@/hooks/useProjects";
+import { useMasterData } from "@/hooks/useMasterData";
 import { 
   Briefcase, 
   Layers, 
@@ -20,11 +21,13 @@ import {
   Activity,
   ShoppingCart,
   Factory,
-  User
+  User,
+  Edit
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "@/lib/formatters";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 
 export default function ProjectDetailLayout({
   children,
@@ -37,14 +40,27 @@ export default function ProjectDetailLayout({
   const id = params?.id as string;
 
   const { data: project } = useProject(id);
+  const updateProjectMutation = useUpdateProject(id);
+  const { data: employees = [] } = useMasterData('employees');
 
-  const plantDisplay = typeof project?.plant === 'string'
-    ? project.plant.replace(/_/g, " ")
-    : (project?.plant?.name || project?.plant?.code || "Toolroom Main Facility");
+  const [showOwnerModal, setShowOwnerModal] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState("");
 
-  const ownerDisplay = typeof project?.projectOwner === 'string'
+  const rawOwner = (typeof project?.projectOwner === 'string' && project.projectOwner.trim())
     ? project.projectOwner
-    : (project?.projectOwner?.name || project?.manager?.name || (typeof project?.manager === 'string' ? project.manager : "Unassigned"));
+    : (project?.projectOwner?.name || project?.manager?.name || (typeof project?.manager === 'string' && project.manager.trim() ? project.manager : ""));
+
+  const ownerDisplay = rawOwner.trim() ? rawOwner.trim() : "Unassigned";
+
+  const handleSaveOwner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOwner) return;
+    await updateProjectMutation.mutateAsync({
+      projectOwner: selectedOwner,
+      manager: selectedOwner,
+    });
+    setShowOwnerModal(false);
+  };
 
   const tabs = [
     { label: "Overview", path: `/projects/${id}/overview`, icon: Briefcase },
@@ -116,7 +132,18 @@ export default function ProjectDetailLayout({
                 </div>
                 <div className="flex items-center gap-1.5">
                   <User className="w-4 h-4 text-mute shrink-0" />
-                  <span>Owner: {ownerDisplay}</span>
+                  <span>Owner: <strong className="text-ink font-semibold">{ownerDisplay}</strong></span>
+                  <button 
+                    onClick={() => {
+                      setSelectedOwner(ownerDisplay !== "Unassigned" ? ownerDisplay : "");
+                      setShowOwnerModal(true);
+                    }}
+                    className="ml-1 p-1 hover:bg-canvas rounded text-primary transition-colors inline-flex items-center gap-1 text-[11px] font-semibold"
+                    title="Assign Project Owner"
+                  >
+                    <Edit className="w-3 h-3" />
+                    <span>Assign</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -154,6 +181,54 @@ export default function ProjectDetailLayout({
         <div className="flex-1 w-full max-w-[1440px] mx-auto overflow-y-auto p-6">
           {children}
         </div>
+
+        {/* Assign Project Owner Modal */}
+        <Modal
+          isOpen={showOwnerModal}
+          onClose={() => setShowOwnerModal(false)}
+          title="Assign Project Owner"
+          subtitle={`Assign a lead project engineer or manager to ${project?.projectNumber || 'this project'}.`}
+        >
+          <form onSubmit={handleSaveOwner} className="space-y-4 font-sans">
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1.5">Select Project Owner / Lead Manager</label>
+              <select
+                value={selectedOwner}
+                onChange={(e) => setSelectedOwner(e.target.value)}
+                className="w-full px-3 py-2 border border-border-gray rounded-[10px] text-xs text-ink bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">-- Select Employee / Manager --</option>
+                {employees.map((emp: any) => {
+                  const deptLabel = typeof emp.department === 'object'
+                    ? (emp.department?.departmentName || emp.department?.departmentCode || 'Staff')
+                    : (typeof emp.department === 'string' ? emp.department : (emp.designation || 'Staff'));
+                  const name = emp.name || emp.employeeName || 'Unknown Employee';
+                  return (
+                    <option key={emp.id} value={name}>
+                      {name} ({deptLabel})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1.5">Or Type Custom Owner Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Rajesh Kumar"
+                value={selectedOwner}
+                onChange={(e) => setSelectedOwner(e.target.value)}
+                className="w-full px-3 py-2 border border-border-gray rounded-[10px] text-xs text-ink bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-border-gray">
+              <Button variant="white" type="button" onClick={() => setShowOwnerModal(false)}>Cancel</Button>
+              <Button variant="primary" type="submit" isLoading={updateProjectMutation.isPending}>Save Assignment</Button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </AppLayout>
   );
