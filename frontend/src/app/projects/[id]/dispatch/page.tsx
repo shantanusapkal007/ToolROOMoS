@@ -178,23 +178,6 @@ export default function ProjectDispatchPage() {
               </button>
             </>
           )}
-
-          {canCompleteProject && (
-            <button
-              onClick={() => setShowCompleteModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[12px] bg-semantic-warning-dark hover:bg-semantic-warning-dark/90 text-white text-xs font-semibold shadow-subtle transition-all cursor-pointer border border-semantic-warning/20 uppercase tracking-wider"
-            >
-              <BadgeCheck className="w-4 h-4" />
-              <span>Mark Project Completed</span>
-            </button>
-          )}
-
-          {isProjectClosed && (
-            <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[12px] bg-canvas text-mute text-xs font-semibold border border-border-gray">
-              <Lock className="w-4 h-4" />
-              <span>Project Completed</span>
-            </div>
-          )}
         </div>
       </div>
 

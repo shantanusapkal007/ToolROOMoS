@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 import { useProject } from "@/hooks/useProjects";
 import { useQuery } from "@tanstack/react-query";
-import { ShoppingCart, Plus, Eye, PackageCheck, Edit3 } from "lucide-react";
+import { ShoppingCart, Plus, Eye, PackageCheck, Edit3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { SmartTable } from "@/components/ui/SmartTable";
 import { Modal } from "@/components/ui/Modal";
@@ -19,6 +19,7 @@ export default function ProjectPurchasePage() {
   const params = useParams();
   const id = params?.id as string;
   const { data: project, isLoading: isLoadingProject, refetch: refetchProject } = useProject(id);
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [previewPo, setPreviewPo] = useState<any | null>(null);
   const [grnTargetPo, setGrnTargetPo] = useState<any | null>(null);
@@ -136,25 +137,29 @@ export default function ProjectPurchasePage() {
               <Eye className="w-3.5 h-3.5" />
               <span>View</span>
             </button>
-            <button
-              onClick={() => {
-                setEditingPo(row);
-                setIsFormOpen(true);
-              }}
-              className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
-              title="Edit Purchase Order"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit</span>
-            </button>
-            <button
-              onClick={() => setGrnTargetPo(row)}
-              className="p-1.5 rounded-[12px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
-              title="Receive Material (GRN)"
-            >
-              <PackageCheck className="w-3.5 h-3.5" />
-              <span>Receive</span>
-            </button>
+            {!isProjectClosed && (
+              <>
+                <button
+                  onClick={() => {
+                    setEditingPo(row);
+                    setIsFormOpen(true);
+                  }}
+                  className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+                  title="Edit Purchase Order"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={() => setGrnTargetPo(row)}
+                  className="p-1.5 rounded-[12px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+                  title="Receive Material (GRN)"
+                >
+                  <PackageCheck className="w-3.5 h-3.5" />
+                  <span>Receive</span>
+                </button>
+              </>
+            )}
           </div>
         );
       }
@@ -185,17 +190,19 @@ export default function ProjectPurchasePage() {
               <p className="text-xs text-mute ml-[42px]">Manage supplier purchase orders, steel raw material requisitions, and GRNs.</p>
             </div>
 
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => {
-                setEditingPo(null);
-                setIsFormOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              <span>Generate New PO</span>
-            </Button>
+            {!isProjectClosed && (
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => {
+                  setEditingPo(null);
+                  setIsFormOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                <span>Generate New PO</span>
+              </Button>
+            )}
           </div>
 
           <SmartTable 

@@ -169,6 +169,7 @@ export default function ProjectFinancePage() {
   ];
 
   const invoices = project.invoiceHeaders || [];
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
 
   return (
     <div className="space-y-6 font-sans text-ink">
@@ -187,32 +188,34 @@ export default function ProjectFinancePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {project.currentStage === 'INVOICED' && (
-            <Button
-              variant="white"
-              size="md"
-              onClick={handleCloseProject}
-              className="text-semantic-danger-dark border-semantic-danger/20 hover:bg-semantic-danger-subtle font-semibold text-xs"
-            >
-              <Lock className="w-4 h-4 mr-1" />
-              <span>Close Project</span>
-            </Button>
-          )}
+        {!isProjectClosed && (
+          <div className="flex items-center gap-2">
+            {project.currentStage === 'INVOICED' && (
+              <Button
+                variant="white"
+                size="md"
+                onClick={handleCloseProject}
+                className="text-semantic-danger-dark border-semantic-danger/20 hover:bg-semantic-danger-subtle font-semibold text-xs"
+              >
+                <Lock className="w-4 h-4 mr-1" />
+                <span>Close Project</span>
+              </Button>
+            )}
 
-          <Button 
-            variant="primary" 
-            size="md" 
-            onClick={() => {
-              setInvNum(`INV-${Date.now().toString().slice(-4)}`);
-              setShowInvoiceModal(true);
-            }}
-            className="bg-semantic-success-dark hover:bg-semantic-success-dark/90 text-white font-semibold text-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Generate Tax Invoice</span>
-          </Button>
-        </div>
+            <Button 
+              variant="primary" 
+              size="md" 
+              onClick={() => {
+                setInvNum(`INV-${Date.now().toString().slice(-4)}`);
+                setShowInvoiceModal(true);
+              }}
+              className="bg-semantic-success-dark hover:bg-semantic-success-dark/90 text-white font-semibold text-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Generate Tax Invoice</span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 7 KPI Summary Cards */}
@@ -365,7 +368,7 @@ export default function ProjectFinancePage() {
                         <span className="px-2 py-0.5 rounded text-[9px] font-semibold bg-semantic-success-subtle text-semantic-success-dark uppercase">
                           PAID
                         </span>
-                      ) : (
+                      ) : !isProjectClosed ? (
                         <button
                           onClick={() => {
                             setSelectedInvoiceId(inv.id);
@@ -377,7 +380,7 @@ export default function ProjectFinancePage() {
                         >
                           Record Payment
                         </button>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>

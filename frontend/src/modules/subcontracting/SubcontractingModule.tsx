@@ -10,12 +10,16 @@ import { Select } from "../../components/ui/Select";
 import { SmartTable } from "../../components/ui/SmartTable";
 import { useToast } from "../../components/ui/Toast";
 import { formatCurrency, formatDate } from "../../lib/formatters";
+import { useProject } from "@/hooks/useProjects";
 
 interface SubcontractingModuleProps {
   projectId: string;
 }
 
 export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
+  const { data: project } = useProject(projectId);
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
+
   const { success, error } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,7 +212,7 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
       key: 'actions',
       label: 'Actions',
       render: (_: any, row: any) => (
-        row.status !== 'CLOSED' && (
+        !isProjectClosed && row.status !== 'CLOSED' && (
           <Button variant="white" size="sm" onClick={() => openReceiptModal(row)}>
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             <span>Process Return Receipt</span>
@@ -235,12 +239,14 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="primary" size="md" onClick={() => setIsOrderModalOpen(true)}>
-            <Plus className="w-4 h-4" />
-            <span>Create Outsource Challan</span>
-          </Button>
-        </div>
+        {!isProjectClosed && (
+          <div className="flex items-center gap-2">
+            <Button variant="primary" size="md" onClick={() => setIsOrderModalOpen(true)}>
+              <Plus className="w-4 h-4" />
+              <span>Create Outsource Challan</span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* KPI Stat Strips */}

@@ -392,7 +392,20 @@ export class ProjectsService {
     });
   }
 
-  async update(id: string, dto: any, userId?: string) {
+  private async assertProjectNotClosed(idOrCode: string) {
+    const id = await this.resolveProjectId(idOrCode);
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      select: { currentStage: true, status: true }
+    });
+    if (project && (project.currentStage === 'CLOSED' || project.status === 'CLOSED' || project.status === 'COMPLETED')) {
+      throw new BadRequestException('Project is CLOSED and read-only. All audit records are locked.');
+    }
+  }
+
+  async update(idOrCode: string, dto: any, userId?: string) {
+    const id = await this.resolveProjectId(idOrCode);
+    await this.assertProjectNotClosed(id);
     if (dto.targetDeliveryDate) {
       dto.targetDeliveryDate = new Date(dto.targetDeliveryDate).toISOString() as any;
     }
@@ -696,6 +709,7 @@ export class ProjectsService {
   }
 
   async createTask(projectId: string, data: any, userId?: string) {
+    await this.assertProjectNotClosed(projectId);
     const { title, dueDate, priority, estimatedHours, remarks, ...rest } = data;
     return this.prisma.projectTask.create({
       data: {

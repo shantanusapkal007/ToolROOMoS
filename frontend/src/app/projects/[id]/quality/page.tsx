@@ -55,6 +55,7 @@ export default function ProjectQualityPage() {
   });
 
   const { data: project, isLoading } = useProject(id);
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
   const logInspectionMutation = useLogInspection(id);
   const closeNcrMutation = useCloseNcr(id);
 
@@ -149,13 +150,15 @@ export default function ProjectQualityPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <button
-            onClick={() => setShowInspectionModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Quality Entry</span>
-          </button>
+          {!isProjectClosed && (
+            <button
+              onClick={() => setShowInspectionModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Quality Entry</span>
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab("QC_CERTIFICATE")}

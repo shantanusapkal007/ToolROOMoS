@@ -212,6 +212,8 @@ export default function ProjectTasksPage() {
     return new Date(task.endDate) < new Date();
   };
 
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
+
   return (
     <div className="space-y-6 font-sans text-ink">
       {/* Header */}
@@ -228,10 +230,12 @@ export default function ProjectTasksPage() {
           </p>
         </div>
 
-        <Button variant="primary" size="md" onClick={() => { setFormData({ ...emptyForm }); setShowCreateModal(true); }}>
-          <Plus className="w-4 h-4" />
-          <span>Create Task Item</span>
-        </Button>
+        {!isProjectClosed && (
+          <Button variant="primary" size="md" onClick={() => { setFormData({ ...emptyForm }); setShowCreateModal(true); }}>
+            <Plus className="w-4 h-4" />
+            <span>Create Task Item</span>
+          </Button>
+        )}
       </div>
 
       {/* Stats Strip */}

@@ -169,6 +169,8 @@ export default function ProjectInventoryPage() {
     { key: 'reference', label: 'Reference Doc' },
   ];
 
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
+
   return (
     <div className="space-y-8">
       
@@ -228,10 +230,12 @@ export default function ProjectInventoryPage() {
             </div>
             <p className="text-xs text-mute ml-[42px]">Track raw material blocks, standard hardware, and consumables issued to shop floor.</p>
           </div>
-          <Button variant="primary" size="md" onClick={() => setIsFormOpen(true)}>
-            <Plus className="w-4 h-4" />
-            <span>Request Material Issue</span>
-          </Button>
+          {!isProjectClosed && (
+            <Button variant="primary" size="md" onClick={() => setIsFormOpen(true)}>
+              <Plus className="w-4 h-4" />
+              <span>Request Material Issue</span>
+            </Button>
+          )}
         </div>
         <SmartTable 
           title="Material Issues"

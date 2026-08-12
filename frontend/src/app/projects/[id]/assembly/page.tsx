@@ -90,6 +90,8 @@ export default function ProjectAssemblyPage() {
 
   if (isProjectLoading) return <SkeletonBox className="h-96 w-full" />;
 
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
+
   // Real BOM items & issued materials
   const bomItems = project?.boms?.[0]?.items || [];
   const materialIssues = (project?.materialIssueHeaders || []).flatMap((h: any) => (h.items || []).map((item: any) => ({
@@ -382,13 +384,15 @@ export default function ProjectAssemblyPage() {
               <h3 className="text-sm font-semibold text-ink">Sub-Assembly Breakdown</h3>
               <p className="text-xs text-mute">Group BOM components into fitting sub-assemblies for sequential trial</p>
             </div>
-            <button
-              onClick={() => setShowOrderModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Sub-Assembly Work Order</span>
-            </button>
+            {!isProjectClosed && (
+              <button
+                onClick={() => setShowOrderModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Sub-Assembly Work Order</span>
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -438,13 +442,15 @@ export default function ProjectAssemblyPage() {
               <h3 className="text-sm font-semibold text-ink">Press Tryout Performance Register</h3>
               <p className="text-xs text-mute">Official log of T0 (Initial), T1 (Post-Mod), T2 (Final) press tryouts</p>
             </div>
-            <button
-              onClick={() => setShowTrialModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
-            >
-              <Gauge className="w-4 h-4" />
-              <span>Record Trial Run</span>
-            </button>
+            {!isProjectClosed && (
+              <button
+                onClick={() => setShowTrialModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+              >
+                <Gauge className="w-4 h-4" />
+                <span>Record Trial Run</span>
+              </button>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -473,7 +479,7 @@ export default function ProjectAssemblyPage() {
                       </td>
                       <td className="p-3 text-cool-gray">{t.remarks}</td>
                       <td className="p-3 text-right">
-                        {t.status === "APPROVED" ? (
+                        {t.status === "APPROVED" || isProjectClosed ? (
                           <span className="text-semantic-success-dark font-semibold flex items-center justify-end gap-1 text-[11px]">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Signed Off
                           </span>

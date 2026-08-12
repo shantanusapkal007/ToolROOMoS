@@ -19,7 +19,8 @@ import {
   ShoppingCart,
   ChevronDown,
   ChevronRight,
-  Plus
+  Plus,
+  Lock
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import { useProjectBOM } from '@/hooks/useEngineering';
@@ -69,6 +70,7 @@ export interface ParsedBOMRow {
 
 export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, materials = [], onSaveBOM, onProceedToPO }) => {
   const { success, error, warning } = useToast();
+  const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
 
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState<boolean>(false);
@@ -1012,31 +1014,34 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             <h3 className="text-sm font-semibold text-ink mb-1">Drag & Drop Engineering BOM Excel</h3>
             <p className="text-[11px] text-mute mb-4">Compatible with standard structured .xlsx and .xls formats</p>
             
-            <input 
-              id="bom-excel-upload"
-              type="file" 
-              accept=".xlsx, .xls"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            {!isProjectClosed && (
+              <>
+                <input 
+                  id="bom-excel-upload"
+                  type="file" 
+                  accept=".xlsx, .xls"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <label 
+                    htmlFor="bom-excel-upload"
+                    className="bg-white hover:bg-canvas text-ink border border-border-gray font-semibold text-xs px-4.5 py-2 rounded-[12px] shadow-subtle transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    Browse Local File
+                  </label>
 
-              <label 
-                htmlFor="bom-excel-upload"
-                className="bg-white hover:bg-canvas text-ink border border-border-gray font-semibold text-xs px-4.5 py-2 rounded-[12px] shadow-subtle transition-all active:scale-[0.98] cursor-pointer"
-              >
-                Browse Local File
-              </label>
-
-              <button
-                type="button"
-                onClick={handleCreateNewManualBOM}
-                className="bg-primary hover:bg-primary-hover active:scale-[0.98] px-4.5 py-2 rounded-[12px] text-xs font-semibold text-white shadow-subtle transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Manual BOM Sheet</span>
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={handleCreateNewManualBOM}
+                    className="bg-primary hover:bg-primary-hover active:scale-[0.98] px-4.5 py-2 rounded-[12px] text-xs font-semibold text-white shadow-subtle transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create Manual BOM Sheet</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -1291,29 +1296,33 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         <span>Export Premium BOM</span>
                       </button>
 
-                      <button 
-                        onClick={() => {
-                          if (onSaveBOM) onSaveBOM(rows);
-                        }} 
-                        className="flex items-center space-x-1.5 bg-white hover:bg-canvas text-ink border border-border-gray font-semibold text-xs px-3.5 py-1.5 rounded-[12px] shadow-subtle transition-all cursor-pointer"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                        <span>Save to Database</span>
-                      </button>
+                      {!isProjectClosed && (
+                        <>
+                          <button 
+                            onClick={() => {
+                              if (onSaveBOM) onSaveBOM(rows);
+                            }} 
+                            className="flex items-center space-x-1.5 bg-white hover:bg-canvas text-ink border border-border-gray font-semibold text-xs px-3.5 py-1.5 rounded-[12px] shadow-subtle transition-all cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                            <span>Save to Database</span>
+                          </button>
 
-                      <button 
-                        onClick={() => {
-                          if (onProceedToPO) {
-                            onProceedToPO(rows);
-                          } else if (onSaveBOM) {
-                            onSaveBOM(rows);
-                          }
-                        }} 
-                        className="flex items-center space-x-1.5 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white font-semibold text-xs px-4 py-1.5 rounded-[12px] shadow-subtle transition-all cursor-pointer"
-                      >
-                        <ShoppingCart className="w-3.5 h-3.5" />
-                        <span>Save & Proceed to PO</span>
-                      </button>
+                          <button 
+                            onClick={() => {
+                              if (onProceedToPO) {
+                                onProceedToPO(rows);
+                              } else if (onSaveBOM) {
+                                onSaveBOM(rows);
+                              }
+                            }} 
+                            className="flex items-center space-x-1.5 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white font-semibold text-xs px-4 py-1.5 rounded-[12px] shadow-subtle transition-all cursor-pointer"
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            <span>Save & Proceed to PO</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
 
