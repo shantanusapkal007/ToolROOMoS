@@ -43,7 +43,7 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
       icon: Globe,
       color: "text-primary",
       bg: "bg-primary-subtle",
-      border: "border-primary/20/60",
+      border: "border-primary/20",
     },
     {
       label: "Total Operation Hours",
@@ -51,23 +51,23 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
       icon: Clock,
       color: "text-primary",
       bg: "bg-primary-subtle",
-      border: "border-blue-200/60",
+      border: "border-primary/20",
     },
     {
       label: "Export Output",
       value: `${totalOutputQty} pcs`,
       icon: Package,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-200/60",
+      color: "text-semantic-success-dark",
+      bg: "bg-semantic-success-subtle",
+      border: "border-semantic-success/20",
     },
     {
       label: "Active Operators",
       value: `${uniqueOperators.size}`,
       icon: Truck,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-200/60",
+      color: "text-semantic-warning-dark",
+      bg: "bg-semantic-warning-subtle",
+      border: "border-semantic-warning/20",
     },
   ];
 
@@ -76,7 +76,7 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
       key: "logDate",
       label: "Date",
       render: (val: string) => (
-        <span className="font-mono text-zinc-700">{val ? formatDate(val) : "N/A"}</span>
+        <span className="font-mono text-ink">{val ? formatDate(val) : "N/A"}</span>
       ),
     },
     {
@@ -90,14 +90,14 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
       key: "personName",
       label: "Operator",
       render: (val: string) => (
-        <span className="text-zinc-700 font-medium">{val || "Operator"}</span>
+        <span className="text-cool-gray font-medium">{val || "Operator"}</span>
       ),
     },
     {
       key: "workStageOrOperation",
       label: "Process Type",
       render: (val: string) => (
-        <span className="text-xs font-mono font-medium text-zinc-800 bg-primary-subtle px-2 py-0.5 rounded border border-primary/20/60">
+        <span className="text-xs font-mono font-medium text-ink bg-primary-subtle px-2 py-0.5 rounded border border-primary/20">
           {val || "Export Fabrication"}
         </span>
       ),
@@ -106,14 +106,14 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
       key: "partOrDrawing",
       label: "Part / Assembly",
       render: (val: string) => (
-        <span className="font-mono text-zinc-600 text-[11px]">{val || "N/A"}</span>
+        <span className="font-mono text-cool-gray text-[11px]">{val || "N/A"}</span>
       ),
     },
     {
       key: "description",
       label: "Work Description",
       render: (val: string) => (
-        <span className="text-xs text-zinc-600 truncate max-w-[160px] block">{val || "-"}</span>
+        <span className="text-xs text-cool-gray truncate max-w-[160px] block">{val || "-"}</span>
       ),
     },
     {
@@ -136,8 +136,8 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
       render: (val: string) => (
         <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border ${
           val === "COMPLETED"
-            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-            : "bg-primary-subtle text-primary-dark border-primary/20"
+            ? "bg-semantic-success-subtle text-semantic-success-dark border-semantic-success/20"
+            : "bg-primary-subtle text-primary border-primary/20"
         }`}>
           {val || "IN PROGRESS"}
         </span>
@@ -152,7 +152,7 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
             e.stopPropagation();
             onMarkComplete(row);
           }}
-          className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-zinc-900 text-white hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap"
+          className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-primary text-white hover:bg-primary-hover transition-colors cursor-pointer whitespace-nowrap"
         >
           Complete → Move
         </button>
@@ -161,14 +161,14 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-sans">
       {/* Section Header */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-[12px] bg-teal-100 border border-teal-200/60 flex items-center justify-center">
-          <Globe className="w-4.5 h-4.5 text-teal-700" />
+        <div className="w-9 h-9 rounded-[12px] bg-primary-subtle border border-primary/20 flex items-center justify-center">
+          <Globe className="w-4.5 h-4.5 text-primary" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-ink">Fab Export</h3>
+          <h3 className="text-sm font-semibold text-ink">Fabrication (Foreign / Export)</h3>
         </div>
       </div>
 
@@ -182,7 +182,7 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
               className={`p-3.5 rounded-[12px] bg-white border ${kpi.border} shadow-subtle flex items-center justify-between`}
             >
               <div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-cool-gray block">
                   {kpi.label}
                 </span>
                 <span className={`text-lg font-semibold font-mono mt-0.5 block ${kpi.color}`}>
@@ -204,17 +204,17 @@ export function FabExportSection({ data, materialIssues = [], isLoading, onMarkC
           columns={issueColumns}
           data={sectionIssues}
           isLoading={false}
-          exportFilename="FabExport_Issued_Materials"
+          exportFilename="FabForeign_Issued_Materials"
         />
       </div>
 
       {/* Data Table */}
       <SmartTable
-        title="Fabrication Export Daily Reports"
+        title="Fabrication (Foreign) Daily Reports"
         columns={columns}
         data={sectionData}
         isLoading={isLoading}
-        exportFilename="Fabrication_Export_Logs"
+        exportFilename="Fabrication_Foreign_Logs"
       />
     </div>
   );

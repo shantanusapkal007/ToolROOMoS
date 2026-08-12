@@ -163,20 +163,20 @@ export default function ProjectAssemblyPage() {
   return (
     <div className="space-y-6 font-sans text-ink">
       {/* Top Header & Master Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray shadow-subtle">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-purple-600" />
-              <span>Toolroom Assembly & Tryout Workspace</span>
-            </h2>
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+              <Cpu className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold text-ink tracking-tight">Toolroom Assembly & Tryout Workspace</h1>
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-              isAssemblyCompleted ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-purple-100 text-purple-800 border border-purple-200"
+              isAssemblyCompleted ? "bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20" : "bg-primary-subtle text-primary border border-primary/20"
             }`}>
               {project?.currentStage?.replace(/_/g, " ") || "ASSEMBLY & FITTING"}
             </span>
           </div>
-          <p className="text-xs text-mute mt-1">
+          <p className="text-xs text-mute mt-1 ml-[42px]">
             BOM component kitting verification, sub-assembly work orders, press tryouts (T0/T1/T2), and fitter time logs
           </p>
         </div>
@@ -184,21 +184,21 @@ export default function ProjectAssemblyPage() {
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => setShowTrialModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
           >
             <Gauge className="w-4 h-4" />
             <span>Record Press Trial</span>
           </button>
 
           {isAssemblyCompleted ? (
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold shadow-subtle">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-semantic-success-subtle border border-semantic-success/20 text-semantic-success-dark text-xs font-semibold shadow-subtle">
+              <CheckCircle2 className="w-4 h-4 text-semantic-success-dark" />
               <span>Handed Over to Quality</span>
             </div>
           ) : (
             <button
               onClick={() => setShowHandoverModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-semantic-success-dark hover:bg-semantic-success-dark/90 text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Handover to Quality</span>
@@ -212,19 +212,19 @@ export default function ProjectAssemblyPage() {
         {/* Kitting Readiness */}
         <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Kitting Readiness</div>
+            <div className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider">Kitting Readiness</div>
             <div className="text-2xl font-semibold text-ink mt-0.5">{kittingReadinessPct}%</div>
             <div className="text-[10px] text-mute mt-0.5">{issuedMaterialsCount} of {totalBomItems} components in store</div>
           </div>
-          <div className="w-10 h-10 rounded-[12px] bg-purple-50 flex items-center justify-center text-purple-600">
+          <div className="w-10 h-10 rounded-[12px] bg-primary-subtle flex items-center justify-center text-primary">
             <CheckSquare className="w-5 h-5" />
           </div>
         </div>
 
         {/* Active Sub-Assemblies */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Sub-Assemblies</div>
+            <div className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider">Sub-Assemblies</div>
             <div className="text-2xl font-semibold text-ink mt-0.5">{assemblyOrders.length}</div>
             <div className="text-[10px] text-mute mt-0.5">Sub-assembly work orders</div>
           </div>
@@ -234,32 +234,32 @@ export default function ProjectAssemblyPage() {
         </div>
 
         {/* Trial Success Rate */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Press Tryout Pass Rate</div>
+            <div className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider">Press Tryout Pass Rate</div>
             <div className="text-2xl font-semibold text-ink mt-0.5">{trialSuccessRate}%</div>
             <div className="text-[10px] text-mute mt-0.5">{trials.length} total tryout runs logged</div>
           </div>
-          <div className="w-10 h-10 rounded-[12px] bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <div className="w-10 h-10 rounded-[12px] bg-semantic-success-subtle flex items-center justify-center text-semantic-success-dark">
             <Gauge className="w-5 h-5" />
           </div>
         </div>
 
         {/* Fitter Hours */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Fitter Hours Logged</div>
+            <div className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider">Fitter Hours Logged</div>
             <div className="text-2xl font-semibold text-ink mt-0.5">{totalFitterHours.toFixed(1)} hrs</div>
             <div className="text-[10px] text-mute mt-0.5">Toolroom fitting & bedding logs</div>
           </div>
-          <div className="w-10 h-10 rounded-[12px] bg-amber-50 flex items-center justify-center text-amber-600">
+          <div className="w-10 h-10 rounded-[12px] bg-semantic-warning-subtle flex items-center justify-center text-semantic-warning-dark">
             <Wrench className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center p-1 bg-zinc-100 rounded-[12px] border border-border-gray/80 overflow-x-auto gap-1">
+      <div className="flex items-center p-1 bg-canvas rounded-[12px] border border-border-gray overflow-x-auto gap-1">
         <button
           onClick={() => setActiveTab("KITTING")}
           className={`flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
@@ -304,12 +304,12 @@ export default function ProjectAssemblyPage() {
       {/* Tab 1: Kitting Checklist */}
       {activeTab === "KITTING" && (
         <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden">
-          <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+          <div className="p-4 border-b border-border-gray flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-ink">BOM Component Kitting Status</h3>
               <p className="text-xs text-mute">Component readiness check before tool fitting & bench assembly</p>
             </div>
-            <div className="text-xs font-semibold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-[12px] border border-purple-200">
+            <div className="text-xs font-semibold text-primary bg-primary-subtle px-3 py-1.5 rounded-[12px] border border-primary/20">
               Kitting Score: {kittingReadinessPct}% Ready
             </div>
           </div>
@@ -332,14 +332,14 @@ export default function ProjectAssemblyPage() {
                     return (
                       <tr key={idx} className="hover:bg-canvas/80 transition-colors">
                         <td className="p-3 font-semibold text-ink">{item.partName || item.partNumber || `Item #${idx + 1}`}</td>
-                        <td className="p-3 text-zinc-600 font-mono text-[11px]">{item.materialGrade || item.material?.materialGrade || "Standard Steel"}</td>
-                        <td className="p-3 font-semibold text-zinc-800">{item.quantity || item.requiredQty || 1} NOS</td>
+                        <td className="p-3 text-cool-gray font-mono text-[11px]">{item.materialGrade || item.material?.materialGrade || "Standard Steel"}</td>
+                        <td className="p-3 font-semibold text-ink">{item.quantity || item.requiredQty || 1} NOS</td>
                         <td className="p-3 text-mute text-[11px]">{isIssued ? "Toolroom Fitting Shop" : "Project Store"}</td>
                         <td className="p-3 text-center">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                            isIssued ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-amber-100 text-amber-800 border border-amber-300"
+                            isIssued ? "bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20" : "bg-semantic-warning-subtle text-semantic-warning-dark border border-semantic-warning/20"
                           }`}>
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <CheckCircle2 className="w-3 h-3 text-semantic-success-dark" />
                             {isIssued ? "Ready for Fitting" : "In Project Store"}
                           </span>
                         </td>
@@ -350,12 +350,12 @@ export default function ProjectAssemblyPage() {
                   materialIssues.map((item: any, idx: number) => (
                     <tr key={idx} className="hover:bg-canvas/80 transition-colors">
                       <td className="p-3 font-semibold text-ink">{item.inventoryBatch?.material?.materialName || item.inventoryBatch?.material?.materialGrade || "Raw Material Block"}</td>
-                      <td className="p-3 text-zinc-600 font-mono text-[11px]">{item.inventoryBatch?.material?.materialGrade || "Tool Steel"}</td>
-                      <td className="p-3 font-semibold text-zinc-800">{item.issuedQty || 1} NOS</td>
+                      <td className="p-3 text-cool-gray font-mono text-[11px]">{item.inventoryBatch?.material?.materialGrade || "Tool Steel"}</td>
+                      <td className="p-3 font-semibold text-ink">{item.issuedQty || 1} NOS</td>
                       <td className="p-3 text-mute text-[11px]">{formatSectionName(item.section)}</td>
                       <td className="p-3 text-center">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20">
+                          <CheckCircle2 className="w-3 h-3 text-semantic-success-dark" />
                           Issued & Ready
                         </span>
                       </td>
@@ -363,7 +363,7 @@ export default function ProjectAssemblyPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-zinc-400 italic">
+                    <td colSpan={5} className="p-8 text-center text-cool-gray italic">
                       No BOM items or material issues recorded for this project yet.
                     </td>
                   </tr>
@@ -377,14 +377,14 @@ export default function ProjectAssemblyPage() {
       {/* Tab 2: Sub-Assemblies */}
       {activeTab === "SUB_ASSEMBLIES" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle">
+          <div className="flex items-center justify-between bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle">
             <div>
               <h3 className="text-sm font-semibold text-ink">Sub-Assembly Breakdown</h3>
               <p className="text-xs text-mute">Group BOM components into fitting sub-assemblies for sequential trial</p>
             </div>
             <button
               onClick={() => setShowOrderModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Sub-Assembly Work Order</span>
@@ -394,14 +394,14 @@ export default function ProjectAssemblyPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {assemblyOrders.length > 0 ? (
               assemblyOrders.map((asm: any, idx: number) => (
-                <div key={idx} className="bg-white p-5 rounded-[12px] border border-border-gray/80 shadow-subtle space-y-3">
+                <div key={idx} className="bg-white p-5 rounded-[12px] border border-border-gray shadow-subtle space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Layers className="w-4 h-4 text-primary" />
                       <span className="font-mono text-xs font-semibold text-mute">{asm.assemblyNumber || `ASM-${idx + 1}`}</span>
                     </div>
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                      asm.status === "COMPLETED" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                      asm.status === "COMPLETED" ? "bg-semantic-success-subtle text-semantic-success-dark" : "bg-semantic-warning-subtle text-semantic-warning-dark"
                     }`}>
                       {asm.status || "IN_PROGRESS"}
                     </span>
@@ -409,17 +409,17 @@ export default function ProjectAssemblyPage() {
 
                   <div>
                     <h4 className="text-sm font-semibold text-ink">{asm.assemblyName}</h4>
-                    <p className="text-xs text-mute">Target Date: <span className="font-semibold text-zinc-700">{asm.targetDate ? new Date(asm.targetDate).toLocaleDateString() : "Ongoing"}</span></p>
+                    <p className="text-xs text-mute">Target Date: <span className="font-semibold text-ink">{asm.targetDate ? new Date(asm.targetDate).toLocaleDateString() : "Ongoing"}</span></p>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="col-span-2 bg-white p-8 rounded-[12px] border border-border-gray/80 text-center text-mute space-y-2">
-                <Layers className="w-8 h-8 text-zinc-300 mx-auto" />
+              <div className="col-span-2 bg-white p-8 rounded-[12px] border border-border-gray text-center text-mute space-y-2">
+                <Layers className="w-8 h-8 text-cool-gray mx-auto" />
                 <p className="font-semibold text-xs">No sub-assembly work orders created for this project yet.</p>
                 <button
                   onClick={() => setShowOrderModal(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-indigo-600 text-white text-xs font-semibold"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-primary text-white text-xs font-semibold"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create Sub-Assembly Work Order</span>
@@ -432,15 +432,15 @@ export default function ProjectAssemblyPage() {
 
       {/* Tab 3: Press Tryouts */}
       {activeTab === "TRIALS" && (
-        <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden space-y-4">
-          <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+        <div className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden space-y-4">
+          <div className="p-4 border-b border-border-gray flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-ink">Press Tryout Performance Register</h3>
               <p className="text-xs text-mute">Official log of T0 (Initial), T1 (Post-Mod), T2 (Final) press tryouts</p>
             </div>
             <button
               onClick={() => setShowTrialModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
             >
               <Gauge className="w-4 h-4" />
               <span>Record Trial Run</span>
@@ -458,29 +458,29 @@ export default function ProjectAssemblyPage() {
                   <th className="p-3 text-right">Sign-off Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-border-gray">
                 {trials.length > 0 ? (
                   trials.map((t: any) => (
                     <tr key={t.id} className="hover:bg-canvas/80 transition-colors">
-                      <td className="p-3 font-mono font-semibold text-purple-700">{t.trialNumber}</td>
-                      <td className="p-3 font-semibold text-zinc-800">{t.machineName}</td>
+                      <td className="p-3 font-mono font-semibold text-primary">{t.trialNumber}</td>
+                      <td className="p-3 font-semibold text-ink">{t.machineName}</td>
                       <td className="p-3">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                          t.result === "PASS" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                          t.result === "PASS" ? "bg-semantic-success-subtle text-semantic-success-dark" : "bg-semantic-warning-subtle text-semantic-warning-dark"
                         }`}>
                           {t.result}
                         </span>
                       </td>
-                      <td className="p-3 text-zinc-600">{t.remarks}</td>
+                      <td className="p-3 text-cool-gray">{t.remarks}</td>
                       <td className="p-3 text-right">
                         {t.status === "APPROVED" ? (
-                          <span className="text-emerald-700 font-semibold flex items-center justify-end gap-1 text-[11px]">
+                          <span className="text-semantic-success-dark font-semibold flex items-center justify-end gap-1 text-[11px]">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Signed Off
                           </span>
                         ) : (
                           <button
                             onClick={() => signOffMutation.mutate(t.id)}
-                            className="px-2.5 py-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-[12px] shadow-subtle transition-colors"
+                            className="px-2.5 py-1 text-[10px] font-semibold text-white bg-primary hover:bg-primary-hover rounded-[12px] shadow-subtle transition-colors"
                           >
                             Sign Off
                           </button>
@@ -490,7 +490,7 @@ export default function ProjectAssemblyPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-zinc-400 italic">
+                    <td colSpan={5} className="p-8 text-center text-cool-gray italic">
                       No press tryouts recorded yet for this project. Click 'Record Trial Run' to log tryouts.
                     </td>
                   </tr>
@@ -503,8 +503,8 @@ export default function ProjectAssemblyPage() {
 
       {/* Tab 4: Fitter Daily Logs */}
       {activeTab === "FITTER_LOGS" && (
-        <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden">
-          <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+        <div className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden">
+          <div className="p-4 border-b border-border-gray flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-ink">Fitter Daily Shopfloor Logs</h3>
               <p className="text-xs text-mute">Daily shopfloor hours logged under Toolroom Fitting & Assembly section</p>
@@ -522,22 +522,22 @@ export default function ProjectAssemblyPage() {
                   <th className="p-3">Work Description</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-border-gray">
                 {fittingMsdrLogs.length > 0 ? (
                   fittingMsdrLogs.map((log: any) => (
                     <tr key={log.id} className="hover:bg-canvas/80 transition-colors">
-                      <td className="p-3 font-mono text-zinc-600">{new Date(log.logDate).toLocaleDateString()}</td>
+                      <td className="p-3 font-mono text-cool-gray">{new Date(log.logDate).toLocaleDateString()}</td>
                       <td className="p-3 font-semibold text-ink">{log.personName}</td>
-                      <td className="p-3 font-semibold text-purple-700">{log.workStageOrOperation}</td>
+                      <td className="p-3 font-semibold text-primary">{log.workStageOrOperation}</td>
                       <td className="p-3 text-right font-mono font-semibold text-ink">
                         {(Number(log.hoursSpent) || Number(log.cuttingHours) || 0).toFixed(1)} hrs
                       </td>
-                      <td className="p-3 text-zinc-600">{log.workDescription || "-"}</td>
+                      <td className="p-3 text-cool-gray">{log.workDescription || "-"}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-zinc-400 italic">
+                    <td colSpan={5} className="p-8 text-center text-cool-gray italic">
                       No fitting shopfloor logs recorded yet for this project.
                     </td>
                   </tr>
@@ -557,23 +557,23 @@ export default function ProjectAssemblyPage() {
       >
         <form onSubmit={handleCreateOrder} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Sub-Assembly Name</label>
+            <label className="block text-xs font-semibold text-ink mb-1">Sub-Assembly Name</label>
             <input
               type="text"
               required
               value={orderForm.assemblyName}
               onChange={(e) => setOrderForm({ ...orderForm, assemblyName: e.target.value })}
-              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Remarks / Scope</label>
+            <label className="block text-xs font-semibold text-ink mb-1">Remarks / Scope</label>
             <textarea
               rows={3}
               value={orderForm.remarks}
               onChange={(e) => setOrderForm({ ...orderForm, remarks: e.target.value })}
-              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
             />
           </div>
 
@@ -581,14 +581,14 @@ export default function ProjectAssemblyPage() {
             <button
               type="button"
               onClick={() => setShowOrderModal(false)}
-              className="px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-ink rounded-[12px] hover:bg-zinc-100"
+              className="px-3.5 py-2 text-xs font-semibold text-cool-gray hover:text-ink rounded-[12px] hover:bg-canvas transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createOrderMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-[12px] shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-[12px] shadow-sm cursor-pointer"
             >
               <Layers className="w-4 h-4 text-white" />
               <span>{createOrderMutation.isPending ? "Creating..." : "Create Work Order"}</span>
@@ -607,11 +607,11 @@ export default function ProjectAssemblyPage() {
         <form onSubmit={handleCreateTrial} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">Trial Phase</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Trial Phase</label>
               <select
                 value={trialForm.trialNumber}
                 onChange={(e) => setTrialForm({ ...trialForm, trialNumber: e.target.value })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink font-semibold"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink font-semibold bg-canvas"
               >
                 <option value="T0-INITIAL">T0 — Initial Tryout</option>
                 <option value="T1-POST-MOD">T1 — Post Tool Modification</option>
@@ -620,11 +620,11 @@ export default function ProjectAssemblyPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">Trial Verdict</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Trial Verdict</label>
               <select
                 value={trialForm.result}
                 onChange={(e) => setTrialForm({ ...trialForm, result: e.target.value })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink font-semibold"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink font-semibold bg-canvas"
               >
                 <option value="PASS">PASS — Samples Accepted</option>
                 <option value="REWORK_REQUIRED">REWORK REQUIRED — Tool Adjustment</option>
@@ -635,32 +635,32 @@ export default function ProjectAssemblyPage() {
 
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">Press Machine Used</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Press Machine Used</label>
               <input
                 type="text"
                 value={trialForm.machineName}
                 onChange={(e) => setTrialForm({ ...trialForm, machineName: e.target.value })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">Sample Qty (Pcs)</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Sample Qty (Pcs)</label>
               <input
                 type="number"
                 value={trialForm.sampleQty}
                 onChange={(e) => setTrialForm({ ...trialForm, sampleQty: e.target.value })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Tryout Observations & Remarks</label>
+            <label className="block text-xs font-semibold text-ink mb-1">Tryout Observations & Remarks</label>
             <textarea
               rows={3}
               value={trialForm.remarks}
               onChange={(e) => setTrialForm({ ...trialForm, remarks: e.target.value })}
-              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
             />
           </div>
 
@@ -668,14 +668,14 @@ export default function ProjectAssemblyPage() {
             <button
               type="button"
               onClick={() => setShowTrialModal(false)}
-              className="px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-ink rounded-[12px] hover:bg-zinc-100"
+              className="px-3.5 py-2 text-xs font-semibold text-cool-gray hover:text-ink rounded-[12px] hover:bg-canvas transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createTrialMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-[12px] shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-[12px] shadow-sm cursor-pointer"
             >
               <Gauge className="w-4 h-4 text-white" />
               <span>{createTrialMutation.isPending ? "Logging..." : "Save Trial Record"}</span>
@@ -692,24 +692,24 @@ export default function ProjectAssemblyPage() {
         subtitle={`Advance project ${project?.projectNumber || id} to Quality Inspection stage`}
       >
         <form onSubmit={handleHandoverToQuality} className="space-y-4">
-          <div className="p-3.5 bg-emerald-50 rounded-[12px] border border-emerald-200 text-xs text-emerald-950 space-y-1">
-            <div className="flex items-center gap-1.5 font-semibold text-emerald-900">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <div className="p-3.5 bg-semantic-success-subtle rounded-[12px] border border-semantic-success/20 text-xs text-ink space-y-1">
+            <div className="flex items-center gap-1.5 font-semibold text-semantic-success-dark">
+              <CheckCircle2 className="w-4 h-4 text-semantic-success-dark" />
               <span>Quality Inspection Milestone</span>
             </div>
-            <p className="text-emerald-800">
+            <p className="text-cool-gray">
               This action confirms toolroom fitting & press tryouts are completed. The project stage will advance to <strong>QUALITY INSPECTION</strong> for CMM and PDI clearance.
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Handover Remarks</label>
+            <label className="block text-xs font-semibold text-ink mb-1">Handover Remarks</label>
             <textarea
               rows={3}
               placeholder="e.g. Die bedding completed, shut height locked at 320mm, T0 samples stamped cleanly."
               value={handoverRemarks}
               onChange={(e) => setHandoverRemarks(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
             />
           </div>
 
@@ -717,14 +717,14 @@ export default function ProjectAssemblyPage() {
             <button
               type="button"
               onClick={() => setShowHandoverModal(false)}
-              className="px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-ink rounded-[12px] hover:bg-zinc-100"
+              className="px-3.5 py-2 text-xs font-semibold text-cool-gray hover:text-ink rounded-[12px] hover:bg-canvas transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={completeProductionMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-[12px] shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-semantic-success-dark hover:bg-semantic-success-dark/90 rounded-[12px] shadow-sm cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4 text-white" />
               <span>{completeProductionMutation.isPending ? "Submitting..." : "Confirm & Handover"}</span>

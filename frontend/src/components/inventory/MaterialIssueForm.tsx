@@ -182,8 +182,8 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                   <option value="MACHINE_SHOP">Machine Shop</option>
                   <option value="TOOL_ROOM_FITTING">Toolroom Fitting & Assembly</option>
                   <option value="PRESS_SHOP">Press Shop & Tryout</option>
-                  <option value="FABRICATION_INDIAN">Fabrication (Domestic)</option>
-                  <option value="FABRICATION_EXPORT">Fabrication (Export)</option>
+                  <option value="FABRICATION_INDIAN">Fabrication (India)</option>
+                  <option value="FABRICATION_EXPORT">Fabrication (Foreign)</option>
                 </select>
               </div>
 

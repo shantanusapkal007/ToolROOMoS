@@ -88,8 +88,8 @@ const PRODUCTION_SECTIONS = [
  { id: 'MACHINE_SHOP', label: 'Machine Shop' },
  { id: 'PRESS_SHOP', label: 'Press Shop & Tryout' },
  { id: 'TOOL_ROOM_FITTING', label: 'Tool Room Fitting & Assembly' },
- { id: 'FABRICATION_INDIAN', label: 'Fabrication (Domestic)' },
- { id: 'FABRICATION_EXPORT', label: 'Fabrication (Export)' },
+ { id: 'FABRICATION_INDIAN', label: 'Fabrication (India)' },
+ { id: 'FABRICATION_EXPORT', label: 'Fabrication (Foreign)' },
  { id: 'QUALITY_INSPECTION', label: 'Quality & CMM Inspection' },
 ];
 

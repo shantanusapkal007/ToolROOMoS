@@ -88,7 +88,7 @@ export default function ProjectInventoryPage() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setPrintIssueData(row)}
-            className="p-1.5 rounded-[12px] bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+            className="p-1.5 rounded-[12px] bg-canvas hover:bg-white text-ink border border-border-gray transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
             title="Print Issue Slip"
           >
             <Printer className="w-3.5 h-3.5" />
@@ -96,7 +96,7 @@ export default function ProjectInventoryPage() {
           </button>
           <button
             onClick={() => handleExportIssueRow(row)}
-            className="p-1.5 rounded-[12px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+            className="p-1.5 rounded-[12px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
             title="Export Issue Excel"
           >
             <Download className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ export default function ProjectInventoryPage() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setViewingGrnDetails(rawGrn)}
-              className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-blue-100 text-primary-dark border border-blue-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="View GRN Details"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -140,7 +140,7 @@ export default function ProjectInventoryPage() {
             </button>
             <button
               onClick={() => handleExportGrnRow(row)}
-              className="p-1.5 rounded-[12px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="Export GRN Excel"
             >
               <Download className="w-3.5 h-3.5" />
@@ -174,13 +174,15 @@ export default function ProjectInventoryPage() {
       
       {/* GRN Section */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-              <PackageCheck className="w-5 h-5 text-emerald-600" />
-              <span>Goods Receipt Notes (GRN)</span>
-            </h2>
-            <p className="text-xs text-mute">Inward materials received against Purchase Orders for this project.</p>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+                <PackageCheck className="h-4 w-4 text-white" />
+              </div>
+              <h1 className="text-xl font-semibold text-ink tracking-tight">Goods Receipt Notes (GRN)</h1>
+            </div>
+            <p className="text-xs text-mute ml-[42px]">Inward materials received against Purchase Orders for this project.</p>
           </div>
         </div>
         <SmartTable 
@@ -194,13 +196,15 @@ export default function ProjectInventoryPage() {
 
       {/* Live Inventory Ledger Section */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-primary" />
-              <span>Live Inventory Ledger (Stock Movements)</span>
-            </h2>
-            <p className="text-xs text-mute">Real-time ledger of all stock additions (GRNs) and deductions (Issues).</p>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+                <ShoppingCart className="h-4 w-4 text-white" />
+              </div>
+              <h1 className="text-xl font-semibold text-ink tracking-tight">Live Inventory Ledger (Stock Movements)</h1>
+            </div>
+            <p className="text-xs text-mute ml-[42px]">Real-time ledger of all stock additions (GRNs) and deductions (Issues).</p>
           </div>
         </div>
         <SmartTable 
@@ -214,13 +218,15 @@ export default function ProjectInventoryPage() {
 
       {/* Material Issues Section */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-              <PackageCheck className="w-5 h-5 text-amber-600" />
-              <span>Material Issues & Requisitions</span>
-            </h2>
-            <p className="text-xs text-mute">Track raw material blocks, standard hardware, and consumables issued to shop floor.</p>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+                <PackageCheck className="h-4 w-4 text-white" />
+              </div>
+              <h1 className="text-xl font-semibold text-ink tracking-tight">Material Issues & Requisitions</h1>
+            </div>
+            <p className="text-xs text-mute ml-[42px]">Track raw material blocks, standard hardware, and consumables issued to shop floor.</p>
           </div>
           <Button variant="primary" size="md" onClick={() => setIsFormOpen(true)}>
             <Plus className="w-4 h-4" />
@@ -255,7 +261,7 @@ export default function ProjectInventoryPage() {
       )}
 
       {printIssueData && (
-        <div className="fixed inset-0 z-[200] bg-zinc-200 overflow-y-auto">
+        <div className="fixed inset-0 z-[200] bg-canvas overflow-y-auto">
           <AuthenticMaterialIssueDocument 
             data={printIssueData} 
             onBack={() => setPrintIssueData(null)} 
@@ -293,10 +299,10 @@ export default function ProjectInventoryPage() {
 
             {/* Received Items Table */}
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-2">Received Goods Line Items</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-ink mb-2">Received Goods Line Items</h4>
               <div className="border border-border-gray rounded-[12px] overflow-hidden">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-zinc-100/70 text-zinc-600 font-semibold text-[10px] uppercase tracking-wider border-b border-border-gray">
+                  <thead className="bg-canvas text-cool-gray font-semibold text-[10px] uppercase tracking-wider border-b border-border-gray">
                     <tr>
                       <th className="p-2.5">Det #</th>
                       <th className="p-2.5">Tool #</th>
@@ -310,17 +316,17 @@ export default function ProjectInventoryPage() {
                       <th className="p-2.5 text-right">Total (₹)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-200">
+                  <tbody className="divide-y divide-border-gray">
                     {(viewingGrnDetails.items || []).map((item: any, idx: number) => (
                       <tr key={item.id || idx} className="hover:bg-canvas font-mono">
                         <td className="p-2.5 font-semibold text-ink">{item.detNo || idx + 1}</td>
                         <td className="p-2.5">{item.toolNo || project?.projectNumber || 'TOOL'}</td>
-                        <td className="p-2.5 font-sans font-medium text-zinc-800">{item.poItem?.material?.materialGrade || item.poItem?.material?.materialName || 'Raw Material'}</td>
+                        <td className="p-2.5 font-sans font-medium text-ink">{item.poItem?.material?.materialGrade || item.poItem?.material?.materialName || 'Raw Material'}</td>
                         <td className="p-2.5">{item.heatNumber || '-'}</td>
                         <td className="p-2.5 text-right">{item.poItem?.orderedQty || item.receivedQty || 0}</td>
                         <td className="p-2.5 text-right font-semibold text-primary-dark">{item.receivedQty || 0}</td>
-                        <td className="p-2.5 text-right font-semibold text-emerald-700">{item.acceptedQty || 0}</td>
-                        <td className="p-2.5 text-right font-semibold text-rose-600">{item.rejectedQty || 0}</td>
+                        <td className="p-2.5 text-right font-semibold text-semantic-success-dark">{item.acceptedQty || 0}</td>
+                        <td className="p-2.5 text-right font-semibold text-semantic-danger-dark">{item.rejectedQty || 0}</td>
                         <td className="p-2.5 text-right">₹{Number(item.actualRate || 0).toLocaleString()}</td>
                         <td className="p-2.5 text-right font-semibold text-ink">₹{Number(item.total || item.basicCost || 0).toLocaleString()}</td>
                       </tr>

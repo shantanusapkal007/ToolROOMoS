@@ -120,8 +120,8 @@ export function ProjectMaterialInventoryTab() {
               <option value="PRESS_SHOP">Press Shop</option>
               <option value="MACHINE_SHOP">Machine Shop</option>
               <option value="TOOL_ROOM_FITTING">Tool Room Fitting</option>
-              <option value="FABRICATION_INDIAN">Fabrication (Indian)</option>
-              <option value="FABRICATION_EXPORT">Fabrication (Export)</option>
+              <option value="FABRICATION_INDIAN">Fabrication (India)</option>
+              <option value="FABRICATION_EXPORT">Fabrication (Foreign)</option>
             </select>
           </div>
         </div>

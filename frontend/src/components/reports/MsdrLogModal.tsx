@@ -163,8 +163,8 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   <option value="MACHINE_SHOP">Machine Shop</option>
                   <option value="PRESS_SHOP">Press Shop & Tryout</option>
                   <option value="TOOL_ROOM_FITTING">Tool Room Fitting & Assembly</option>
-                  <option value="FABRICATION_INDIAN">Fabrication (Domestic)</option>
-                  <option value="FABRICATION_EXPORT">Fabrication (Export)</option>
+                  <option value="FABRICATION_INDIAN">Fabrication (India)</option>
+                  <option value="FABRICATION_EXPORT">Fabrication (Foreign)</option>
                   <option value="QUALITY_INSPECTION">Quality & CMM Inspection</option>
                 </select>
               </div>

@@ -32,30 +32,30 @@ type TaskStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "BLOCKED";
 const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
   PENDING: {
     label: "Pending",
-    color: "text-zinc-600",
-    bg: "bg-zinc-100",
+    color: "text-cool-gray",
+    bg: "bg-canvas",
     border: "border-border-gray",
     icon: <Circle className="w-3.5 h-3.5" />,
   },
   IN_PROGRESS: {
     label: "In Progress",
-    color: "text-primary-dark",
+    color: "text-primary",
     bg: "bg-primary-subtle",
-    border: "border-blue-200",
+    border: "border-primary/20",
     icon: <CircleDot className="w-3.5 h-3.5" />,
   },
   COMPLETED: {
     label: "Completed",
-    color: "text-emerald-700",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
+    color: "text-semantic-success-dark",
+    bg: "bg-semantic-success-subtle",
+    border: "border-semantic-success/20",
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
   BLOCKED: {
     label: "Blocked",
-    color: "text-red-700",
-    bg: "bg-red-50",
-    border: "border-red-200",
+    color: "text-semantic-danger-dark",
+    bg: "bg-semantic-danger-subtle",
+    border: "border-semantic-danger/20",
     icon: <Lock className="w-3.5 h-3.5" />,
   },
 };
@@ -63,9 +63,9 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bg: stri
 const PRIORITY_OPTIONS = ["LOW", "NORMAL", "HIGH", "CRITICAL"];
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   LOW: { label: "Low", color: "text-mute", bg: "bg-canvas", border: "border-border-gray" },
-  NORMAL: { label: "Normal", color: "text-primary", bg: "bg-primary-subtle", border: "border-blue-200" },
-  HIGH: { label: "High", color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200" },
-  CRITICAL: { label: "Critical", color: "text-red-700", bg: "bg-red-50", border: "border-red-300" },
+  NORMAL: { label: "Normal", color: "text-primary", bg: "bg-primary-subtle", border: "border-primary/20" },
+  HIGH: { label: "High", color: "text-semantic-warning-dark", bg: "bg-semantic-warning-subtle", border: "border-semantic-warning/20" },
+  CRITICAL: { label: "Critical", color: "text-semantic-danger-dark", bg: "bg-semantic-danger-subtle", border: "border-semantic-danger/20" },
 };
 
 const emptyForm = {
@@ -215,13 +215,15 @@ export default function ProjectTasksPage() {
   return (
     <div className="space-y-6 font-sans text-ink">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray shadow-subtle">
         <div>
-          <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-            <CheckSquare className="w-5 h-5 text-primary" />
-            <span>Project Action Plan & Task List</span>
-          </h2>
-          <p className="text-xs text-mute mt-0.5">
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+              <CheckSquare className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold text-ink tracking-tight">Project Action Plan & Task List</h1>
+          </div>
+          <p className="text-xs text-mute ml-[42px]">
             Milestone checklists, ECN / ECO engineering change action items, and departmental tasks.
           </p>
         </div>
@@ -234,38 +236,38 @@ export default function ProjectTasksPage() {
 
       {/* Stats Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
-          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Total Tasks</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray shadow-subtle">
+          <div className="text-[10px] font-semibold text-cool-gray uppercase tracking-wider">Total Tasks</div>
           <div className="text-xl font-semibold text-ink mt-0.5">{taskStats.total}</div>
         </div>
-        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
-          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Pending</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray shadow-subtle">
+          <div className="text-[10px] font-semibold text-cool-gray uppercase tracking-wider">Pending</div>
           <div className="text-xl font-semibold text-mute mt-0.5">{taskStats.pending}</div>
         </div>
-        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
-          <div className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider">In Progress</div>
-          <div className="text-xl font-semibold text-primary-dark mt-0.5">{taskStats.inProgress}</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray shadow-subtle">
+          <div className="text-[10px] font-semibold text-primary uppercase tracking-wider">In Progress</div>
+          <div className="text-xl font-semibold text-primary mt-0.5">{taskStats.inProgress}</div>
         </div>
-        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
-          <div className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Completed</div>
-          <div className="text-xl font-semibold text-emerald-700 mt-0.5">{taskStats.completed}</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray shadow-subtle">
+          <div className="text-[10px] font-semibold text-semantic-success-dark uppercase tracking-wider">Completed</div>
+          <div className="text-xl font-semibold text-semantic-success-dark mt-0.5">{taskStats.completed}</div>
         </div>
-        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray/80 shadow-subtle">
-          <div className="text-[10px] font-semibold text-red-400 uppercase tracking-wider">Blocked</div>
-          <div className="text-xl font-semibold text-red-700 mt-0.5">{taskStats.blocked}</div>
+        <div className="bg-white p-3.5 rounded-[12px] border border-border-gray shadow-subtle">
+          <div className="text-[10px] font-semibold text-semantic-danger-dark uppercase tracking-wider">Blocked</div>
+          <div className="text-xl font-semibold text-semantic-danger-dark mt-0.5">{taskStats.blocked}</div>
         </div>
       </div>
 
       {/* Progress Bar */}
       {taskStats.total > 0 && (
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-zinc-600">Overall Completion</span>
+            <span className="text-xs font-semibold text-cool-gray">Overall Completion</span>
             <span className="text-xs font-semibold text-ink">{completionPercent}%</span>
           </div>
-          <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-canvas rounded-full overflow-hidden border border-border-gray/40">
             <div
-              className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+              className="h-full bg-semantic-success-dark rounded-full transition-all duration-500"
               style={{ width: `${completionPercent}%` }}
             />
           </div>
@@ -273,7 +275,7 @@ export default function ProjectTasksPage() {
       )}
 
       {/* Filter Strip */}
-      <div className="flex items-center gap-1.5 p-1 bg-zinc-100 rounded-[12px] border border-border-gray/80 overflow-x-auto">
+      <div className="flex items-center gap-1.5 p-1 bg-canvas rounded-[12px] border border-border-gray overflow-x-auto">
         {[
           { key: "ALL", label: "All" },
           { key: "PENDING", label: "Pending" },
@@ -304,11 +306,11 @@ export default function ProjectTasksPage() {
       </div>
 
       {/* Task Table */}
-      <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between">
+      <div className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border-gray flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-ink">Project Task Register</h3>
-            <p className="text-[10px] text-zinc-400 mt-0.5">
+            <p className="text-[10px] text-mute mt-0.5">
               {filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""} shown
             </p>
           </div>
@@ -317,7 +319,7 @@ export default function ProjectTasksPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-zinc-100 bg-canvas/80">
+              <tr className="border-b border-border-gray bg-canvas">
                 <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider w-[35%]">Task / Action Item</th>
                 <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider">Assigned To</th>
                 <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider">Start Date</th>
@@ -326,7 +328,7 @@ export default function ProjectTasksPage() {
                 <th className="p-3 font-semibold text-[10px] text-mute uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-50">
+            <tbody className="divide-y divide-border-gray">
               {filteredTasks.length > 0 ? (
                 filteredTasks.map((task: any) => {
                   const statusCfg = STATUS_CONFIG[(task.status as TaskStatus) || "PENDING"];
@@ -337,26 +339,26 @@ export default function ProjectTasksPage() {
                       <td className="p-3">
                         <div className="font-semibold text-ink">{task.taskName}</div>
                         {task.description && (
-                          <div className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{task.description}</div>
+                          <div className="text-[11px] text-cool-gray mt-0.5 line-clamp-1">{task.description}</div>
                         )}
                       </td>
                       <td className="p-3">
                         {task.assignedTo ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 rounded-[12px] text-zinc-700 font-semibold text-[11px]">
-                            <User className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-canvas border border-border-gray rounded-[12px] text-ink font-semibold text-[11px]">
+                            <User className="w-3 h-3 text-cool-gray" />
                             {task.assignedTo}
                           </span>
                         ) : (
-                          <span className="text-zinc-300">—</span>
+                          <span className="text-cool-gray">—</span>
                         )}
                       </td>
                       <td className="p-3 font-mono text-mute">
                         {formatDate(task.startDate)}
                       </td>
                       <td className="p-3 font-mono">
-                        <span className={overdue ? "text-red-600 font-semibold" : "text-mute"}>
+                        <span className={overdue ? "text-semantic-danger-dark font-semibold" : "text-mute"}>
                           {formatDate(task.endDate)}
-                          {overdue && <AlertTriangle className="inline w-3 h-3 ml-1 text-red-500" />}
+                          {overdue && <AlertTriangle className="inline w-3 h-3 ml-1 text-semantic-danger-dark" />}
                         </span>
                       </td>
                       <td className="p-3 text-center">
@@ -378,14 +380,14 @@ export default function ProjectTasksPage() {
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => openEditModal(task)}
-                            className="p-1.5 rounded-[12px] hover:bg-primary-subtle text-zinc-400 hover:text-primary transition-colors cursor-pointer"
+                            className="p-1.5 rounded-[12px] hover:bg-primary-subtle text-cool-gray hover:text-primary transition-colors cursor-pointer"
                             title="Edit Task"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => { setDeletingTask(task); setShowDeleteModal(true); }}
-                            className="p-1.5 rounded-[12px] hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-[12px] hover:bg-semantic-danger-subtle text-cool-gray hover:text-semantic-danger-dark transition-colors cursor-pointer"
                             title="Delete Task"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -399,9 +401,9 @@ export default function ProjectTasksPage() {
                 <tr>
                   <td colSpan={6} className="p-12 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <CheckSquare className="w-8 h-8 text-zinc-200" />
-                      <p className="text-sm font-semibold text-zinc-400">No tasks found</p>
-                      <p className="text-xs text-zinc-300">
+                      <CheckSquare className="w-8 h-8 text-cool-gray" />
+                      <p className="text-sm font-semibold text-cool-gray">No tasks found</p>
+                      <p className="text-xs text-mute">
                         {filterStatus === "ALL"
                           ? "Click 'Create Task Item' to add an action item."
                           : "No tasks match the selected filter."}
@@ -433,7 +435,7 @@ export default function ProjectTasksPage() {
           />
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1.5 uppercase tracking-wider">
+            <label className="block text-xs font-semibold text-ink mb-1.5 uppercase tracking-wider">
               Description
             </label>
             <textarea
@@ -441,19 +443,19 @@ export default function ProjectTasksPage() {
               placeholder="Describe the scope, deliverables, or acceptance criteria..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full bg-white border border-border-gray px-3.5 py-2.5 text-sm font-medium text-ink placeholder-zinc-400 rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all resize-none"
+              className="w-full bg-canvas border border-border-gray px-3.5 py-2.5 text-sm font-medium text-ink placeholder:text-mute rounded-[12px] shadow-subtle focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary hover:border-border-gray transition-all resize-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-ink mb-1.5 uppercase tracking-wider">
                 Assigned To
               </label>
               <select
                 value={formData.assignedTo}
                 onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all cursor-pointer"
+                className="w-full h-[var(--size-input)] bg-canvas border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary hover:border-border-gray transition-all cursor-pointer"
               >
                 <option value="">Select Employee</option>
                 {employees.map((emp: any) => (
@@ -464,13 +466,13 @@ export default function ProjectTasksPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-ink mb-1.5 uppercase tracking-wider">
                 Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all cursor-pointer"
+                className="w-full h-[var(--size-input)] bg-canvas border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary hover:border-border-gray transition-all cursor-pointer"
               >
                 <option value="PENDING">Pending</option>
                 <option value="IN_PROGRESS">In Progress</option>
@@ -538,26 +540,26 @@ export default function ProjectTasksPage() {
           />
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1.5 uppercase tracking-wider">
+            <label className="block text-xs font-semibold text-ink mb-1.5 uppercase tracking-wider">
               Description
             </label>
             <textarea
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full bg-white border border-border-gray px-3.5 py-2.5 text-sm font-medium text-ink placeholder-zinc-400 rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all resize-none"
+              className="w-full bg-canvas border border-border-gray px-3.5 py-2.5 text-sm font-medium text-ink placeholder:text-mute rounded-[12px] shadow-subtle focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary hover:border-border-gray transition-all resize-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-ink mb-1.5 uppercase tracking-wider">
                 Assigned To
               </label>
               <select
                 value={formData.assignedTo}
                 onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all cursor-pointer"
+                className="w-full h-[var(--size-input)] bg-canvas border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary hover:border-border-gray transition-all cursor-pointer"
               >
                 <option value="">Select Employee</option>
                 {employees.map((emp: any) => (
@@ -568,13 +570,13 @@ export default function ProjectTasksPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-ink mb-1.5 uppercase tracking-wider">
                 Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full h-[var(--size-input)] bg-white border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 hover:border-border-gray transition-all cursor-pointer"
+                className="w-full h-[var(--size-input)] bg-canvas border border-border-gray px-3 text-sm font-medium text-ink rounded-[12px] shadow-subtle focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary hover:border-border-gray transition-all cursor-pointer"
               >
                 <option value="PENDING">Pending</option>
                 <option value="IN_PROGRESS">In Progress</option>
@@ -634,8 +636,8 @@ export default function ProjectTasksPage() {
         maxWidth="sm"
       >
         <div className="space-y-4">
-          <div className="p-3 bg-red-50 border border-red-200 rounded-[12px]">
-            <p className="text-sm text-red-800">
+          <div className="p-3 bg-semantic-danger-subtle border border-semantic-danger/20 rounded-[12px]">
+            <p className="text-sm text-semantic-danger-dark">
               Are you sure you want to delete <strong>"{deletingTask?.taskName}"</strong>?
             </p>
           </div>

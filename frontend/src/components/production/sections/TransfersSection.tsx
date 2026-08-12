@@ -31,8 +31,8 @@ export function TransfersSection({ projectCode }: TransfersSectionProps) {
       TOOL_ROOM_FITTING: "Toolroom Fitting",
       MACHINE_SHOP: "Machine Shop",
       PRESS_SHOP: "Press Shop",
-      FABRICATION_INDIAN: "Fabrication",
-      FABRICATION_EXPORT: "Fab Export",
+      FABRICATION_INDIAN: "Fabrication India",
+      FABRICATION_EXPORT: "Fabrication Foreign",
     };
     return map[id] || id;
   };

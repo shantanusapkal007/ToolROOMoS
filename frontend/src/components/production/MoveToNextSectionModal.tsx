@@ -30,13 +30,13 @@ const SECTION_FLOW: Record<string, { label: string; color: string; next: string[
     next: ["TOOL_ROOM_FITTING", "FABRICATION_INDIAN", "FABRICATION_EXPORT"],
   },
   FABRICATION_INDIAN: {
-    label: "Fabrication (Domestic)",
-    color: "bg-primary-subtle text-primary-dark border-blue-200",
+    label: "Fabrication (India)",
+    color: "bg-primary-subtle text-primary border-primary/20",
     next: ["TOOL_ROOM_FITTING", "PRESS_SHOP", "FABRICATION_EXPORT"],
   },
   FABRICATION_EXPORT: {
-    label: "Fabrication (Export)",
-    color: "bg-primary-subtle text-primary-dark border-primary/20",
+    label: "Fabrication (Foreign)",
+    color: "bg-primary-subtle text-primary border-primary/20",
     next: ["TOOL_ROOM_FITTING", "PRESS_SHOP", "FABRICATION_INDIAN"],
   },
 };
@@ -45,8 +45,8 @@ const ALL_SECTIONS: Record<string, string> = {
   MACHINE_SHOP: "Machine Shop",
   TOOL_ROOM_FITTING: "Toolroom Fitting & Assembly",
   PRESS_SHOP: "Press Shop & Tryout",
-  FABRICATION_INDIAN: "Fabrication (Domestic)",
-  FABRICATION_EXPORT: "Fabrication (Export)",
+  FABRICATION_INDIAN: "Fabrication (India)",
+  FABRICATION_EXPORT: "Fabrication (Foreign)",
 };
 
 export function MoveToNextSectionModal({

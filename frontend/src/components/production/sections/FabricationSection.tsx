@@ -47,31 +47,31 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
       icon: Flame,
       color: "text-primary",
       bg: "bg-primary-subtle",
-      border: "border-blue-200/60",
+      border: "border-primary/20",
     },
     {
       label: "Assemblies / Structures",
       value: `${totalOutputQty}`,
       icon: Layers,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-200/60",
+      color: "text-semantic-success-dark",
+      bg: "bg-semantic-success-subtle",
+      border: "border-semantic-success/20",
     },
     {
       label: "Active Welders / Fitters",
       value: `${uniqueWelders.size}`,
       icon: Users,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      border: "border-purple-200/60",
+      color: "text-primary",
+      bg: "bg-primary-subtle",
+      border: "border-primary/20",
     },
     {
       label: "Total Operations Logged",
       value: `${totalLogs}`,
       icon: Wrench,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-200/60",
+      color: "text-semantic-warning-dark",
+      bg: "bg-semantic-warning-subtle",
+      border: "border-semantic-warning/20",
     },
   ];
 
@@ -80,7 +80,7 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
       key: "logDate",
       label: "Date",
       render: (val: string) => (
-        <span className="font-mono text-zinc-700">{val ? formatDate(val) : "N/A"}</span>
+        <span className="font-mono text-ink">{val ? formatDate(val) : "N/A"}</span>
       ),
     },
     {
@@ -94,14 +94,14 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
       key: "personName",
       label: "Welder / Fitter",
       render: (val: string) => (
-        <span className="text-zinc-700 font-medium">{val || "Welder"}</span>
+        <span className="text-cool-gray font-medium">{val || "Welder"}</span>
       ),
     },
     {
       key: "workStageOrOperation",
       label: "Operation",
       render: (val: string) => (
-        <span className="text-xs font-mono font-medium text-zinc-800 bg-primary-subtle px-2 py-0.5 rounded border border-blue-200/60">
+        <span className="text-xs font-mono font-medium text-ink bg-primary-subtle px-2 py-0.5 rounded border border-primary/20">
           {val || "Welding"}
         </span>
       ),
@@ -110,14 +110,14 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
       key: "partOrDrawing",
       label: "Assembly / Structure",
       render: (val: string) => (
-        <span className="font-mono text-zinc-600 text-[11px]">{val || "N/A"}</span>
+        <span className="font-mono text-cool-gray text-[11px]">{val || "N/A"}</span>
       ),
     },
     {
       key: "description",
       label: "Work Description",
       render: (val: string) => (
-        <span className="text-xs text-zinc-600 truncate max-w-[160px] block">{val || "-"}</span>
+        <span className="text-xs text-cool-gray truncate max-w-[160px] block">{val || "-"}</span>
       ),
     },
     {
@@ -140,8 +140,8 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
       render: (val: string) => (
         <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border ${
           val === "COMPLETED"
-            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-            : "bg-primary-subtle text-primary-dark border-blue-200"
+            ? "bg-semantic-success-subtle text-semantic-success-dark border-semantic-success/20"
+            : "bg-primary-subtle text-primary border-primary/20"
         }`}>
           {val || "IN PROGRESS"}
         </span>
@@ -156,7 +156,7 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
             e.stopPropagation();
             onMarkComplete(row);
           }}
-          className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-zinc-900 text-white hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap"
+          className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-primary text-white hover:bg-primary-hover transition-colors cursor-pointer whitespace-nowrap"
         >
           Complete → Move
         </button>
@@ -165,14 +165,14 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-sans">
       {/* Section Header */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-[12px] bg-blue-100 border border-blue-200/60 flex items-center justify-center">
-          <Flame className="w-4.5 h-4.5 text-primary-dark" />
+        <div className="w-9 h-9 rounded-[12px] bg-primary-subtle border border-primary/20 flex items-center justify-center">
+          <Flame className="w-4.5 h-4.5 text-primary" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-ink">Fabrication</h3>
+          <h3 className="text-sm font-semibold text-ink">Fabrication (India / Domestic)</h3>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
               className={`p-3.5 rounded-[12px] bg-white border ${kpi.border} shadow-subtle flex items-center justify-between`}
             >
               <div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-cool-gray block">
                   {kpi.label}
                 </span>
                 <span className={`text-lg font-semibold font-mono mt-0.5 block ${kpi.color}`}>
@@ -208,17 +208,17 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
           columns={issueColumns}
           data={sectionIssues}
           isLoading={false}
-          exportFilename="Fabrication_Issued_Materials"
+          exportFilename="Fabrication_India_Issued_Materials"
         />
       </div>
 
       {/* Data Table */}
       <SmartTable
-        title="Fabrication (Domestic) Daily Reports"
+        title="Fabrication (India) Daily Reports"
         columns={columns}
         data={sectionData}
         isLoading={isLoading}
-        exportFilename="Fabrication_Domestic_Logs"
+        exportFilename="Fabrication_India_Logs"
       />
     </div>
   );

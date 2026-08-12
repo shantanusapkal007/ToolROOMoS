@@ -59,20 +59,20 @@ export default function ProjectPurchasePage() {
   const purchaseOrders = Array.from(poMap.values());
 
   const columns = [
-    { key: 'poNumber', label: 'PO #', render: (val: string) => <span className="font-mono font-semibold text-zinc-950">{val}</span> },
+    { key: 'poNumber', label: 'PO #', render: (val: string) => <span className="font-mono font-semibold text-ink">{val}</span> },
     { 
       key: 'supplierName', 
       label: 'Vendor / Supplier', 
       render: (val: string, row: any) => {
         const vendorName = val || row.vendor?.vendorName || (row.customFields as any)?.vendorName || 'Primary Material Supplier';
-        return <span className="font-semibold text-zinc-800">{vendorName}</span>;
+        return <span className="font-semibold text-ink">{vendorName}</span>;
       }
     },
     { 
       key: 'status', 
       label: 'Status', 
       render: (val: string) => (
-        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20 uppercase tracking-wider">
           {val || 'ISSUED'}
         </span>
       ) 
@@ -130,7 +130,7 @@ export default function ProjectPurchasePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPreviewPo(poData)}
-              className="p-1.5 rounded-[12px] bg-zinc-100 hover:bg-zinc-200 text-zinc-800 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-canvas hover:bg-white text-ink border border-border-gray transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="View Authentic PO Sheet"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -141,7 +141,7 @@ export default function ProjectPurchasePage() {
                 setEditingPo(row);
                 setIsFormOpen(true);
               }}
-              className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-blue-100 text-primary-dark border border-blue-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="Edit Purchase Order"
             >
               <Edit3 className="w-3.5 h-3.5" />
@@ -149,7 +149,7 @@ export default function ProjectPurchasePage() {
             </button>
             <button
               onClick={() => setGrnTargetPo(row)}
-              className="p-1.5 rounded-[12px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+              className="p-1.5 rounded-[12px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="Receive Material (GRN)"
             >
               <PackageCheck className="w-3.5 h-3.5" />
@@ -174,13 +174,15 @@ export default function ProjectPurchasePage() {
         />
       ) : (
         <>
-          <div className="flex items-center justify-between">
+          <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-amber-600" />
-                <span>Purchase Orders & Procurement</span>
-              </h2>
-              <p className="text-xs text-mute">Manage supplier purchase orders, steel raw material requisitions, and GRNs.</p>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+                  <ShoppingCart className="h-4 w-4 text-white" />
+                </div>
+                <h1 className="text-xl font-semibold text-ink tracking-tight">Purchase Orders & Procurement</h1>
+              </div>
+              <p className="text-xs text-mute ml-[42px]">Manage supplier purchase orders, steel raw material requisitions, and GRNs.</p>
             </div>
 
             <Button

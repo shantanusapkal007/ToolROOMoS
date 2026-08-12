@@ -130,20 +130,20 @@ export default function ProjectQualityPage() {
   return (
     <div className="space-y-6 font-sans text-ink">
       {/* Top Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray shadow-subtle">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-cyan-600" />
-              <span>Quality Control & Inspection Workspace</span>
-            </h2>
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-              isDispatchReady ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-cyan-100 text-cyan-800 border border-cyan-200"
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+              <ShieldCheck className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold text-ink tracking-tight">Quality Control & Inspection Workspace</h1>
+            <span className={`ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+              isDispatchReady ? "bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20" : "bg-primary-subtle text-primary border border-primary/20"
             }`}>
               {project?.currentStage?.replace(/_/g, " ") || "QUALITY INSPECTION"}
             </span>
           </div>
-          <p className="text-xs text-mute mt-1">
+          <p className="text-xs text-mute ml-[42px]">
             3-Stage Quality Control (IQC, In-Process, Final PDI), CMM dimension measurements, NCR tracking, and QC Certificate
           </p>
         </div>
@@ -151,7 +151,7 @@ export default function ProjectQualityPage() {
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => setShowInspectionModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>New Quality Entry</span>
@@ -159,9 +159,9 @@ export default function ProjectQualityPage() {
 
           <button
             onClick={() => setActiveTab("QC_CERTIFICATE")}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] border border-border-gray bg-white hover:bg-canvas text-zinc-800 text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] border border-border-gray bg-white hover:bg-canvas text-ink text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
           >
-            <BadgeCheck className="w-4 h-4 text-emerald-600" />
+            <BadgeCheck className="w-4 h-4 text-semantic-success-dark" />
             <span>View QC Certificate</span>
           </button>
         </div>
@@ -170,33 +170,33 @@ export default function ProjectQualityPage() {
       {/* KPI Metrics Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Pass Rate */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Quality Pass Yield</div>
+            <div className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider">Quality Pass Yield</div>
             <div className="text-2xl font-semibold text-ink mt-0.5">{passRatePct}%</div>
             <div className="text-[10px] text-mute mt-0.5">{passedInspections} of {totalInspections} checks passed</div>
           </div>
-          <div className="w-10 h-10 rounded-[12px] bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <div className="w-10 h-10 rounded-[12px] bg-semantic-success-subtle flex items-center justify-center text-semantic-success-dark">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
 
         {/* Total Inspections */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Total Inspection Logs</div>
+            <div className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider">Total Inspection Logs</div>
             <div className="text-2xl font-semibold text-ink mt-0.5">{totalInspections}</div>
             <div className="text-[10px] text-mute mt-0.5">IQC, In-Process & PDI</div>
           </div>
-          <div className="w-10 h-10 rounded-[12px] bg-cyan-50 flex items-center justify-center text-cyan-600">
+          <div className="w-10 h-10 rounded-[12px] bg-primary-subtle flex items-center justify-center text-primary">
             <ShieldCheck className="w-5 h-5" />
           </div>
         </div>
 
         {/* Dimensions Measured */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Dimensions Inspected</div>
+            <div className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider">Dimensions Inspected</div>
             <div className="text-2xl font-semibold text-ink mt-0.5">{allMeasurements.length}</div>
             <div className="text-[10px] text-mute mt-0.5">Recorded dimension measurements</div>
           </div>
@@ -206,14 +206,14 @@ export default function ProjectQualityPage() {
         </div>
 
         {/* Open NCR Count */}
-        <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Non-Conformances (NCR)</div>
+            <div className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider">Non-Conformances (NCR)</div>
             <div className="text-2xl font-semibold text-ink mt-0.5">{openNcrsCount}</div>
             <div className="text-[10px] text-mute mt-0.5">Rework or scrap events logged</div>
           </div>
           <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center ${
-            openNcrsCount > 0 ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
+            openNcrsCount > 0 ? "bg-semantic-warning-subtle text-semantic-warning-dark" : "bg-semantic-success-subtle text-semantic-success-dark"
           }`}>
             <AlertCircle className="w-5 h-5" />
           </div>
@@ -221,7 +221,7 @@ export default function ProjectQualityPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center p-1 bg-zinc-100 rounded-[12px] border border-border-gray/80 overflow-x-auto gap-1">
+      <div className="flex items-center p-1 bg-canvas rounded-[12px] border border-border-gray overflow-x-auto gap-1">
         <button
           onClick={() => setActiveTab("REGISTERS")}
           className={`flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
@@ -266,14 +266,14 @@ export default function ProjectQualityPage() {
       {/* Tab 1: 3-Stage Quality Register */}
       {activeTab === "REGISTERS" && (
         <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden space-y-4">
-          <div className="p-4 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 border-b border-border-gray flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-ink">3-Stage Quality Inspection Records</h3>
-              <p className="text-xs text-mute">Incoming Material (IQC), In-Process Machining, and Pre-Dispatch Inspection (PDI)</p>
+              <h3 className="text-sm font-semibold text-ink">Quality Control Inspection Register</h3>
+              <p className="text-xs text-mute">Line item pass/fail verification across IQC, In-Process, and Final PDI</p>
             </div>
 
             {/* Filter Buttons */}
-            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-[12px] border border-border-gray">
+            <div className="flex items-center gap-1 bg-canvas p-1 rounded-[12px] border border-border-gray">
               {["ALL", "INCOMING", "IN_PROCESS", "FINAL_PDI"].map((f) => (
                 <button
                   key={f}
@@ -290,7 +290,7 @@ export default function ProjectQualityPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-canvas border-b border-border-gray/80 text-mute uppercase text-[10px] font-semibold tracking-wider">
+              <thead className="bg-canvas border-b border-border-gray text-mute uppercase text-[10px] font-semibold tracking-wider">
                 <tr>
                   <th className="p-3">Inspection #</th>
                   <th className="p-3">Stage / Type</th>
@@ -306,31 +306,31 @@ export default function ProjectQualityPage() {
                   filteredInspections.map((ins: any) => (
                     <tr key={ins.id} className="hover:bg-canvas/80 transition-colors">
                       <td className="p-3 font-mono font-semibold text-cyan-700">{ins.inspectionNumber}</td>
-                      <td className="p-3 font-semibold text-zinc-800">
-                        <span className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 font-mono text-[10px]">
+                      <td className="p-3 font-semibold text-ink">
+                        <span className="px-2 py-0.5 rounded bg-canvas text-ink border border-border-gray font-mono text-[10px]">
                           {ins.inspectionType}
                         </span>
                       </td>
-                      <td className="p-3 text-right font-mono font-semibold">{ins.inspectedQty}</td>
-                      <td className="p-3 text-right font-mono font-semibold text-emerald-600">{ins.passedQty}</td>
-                      <td className="p-3 text-right font-mono text-amber-600">
-                        {ins.reworkQty || 0} / {ins.scrapQty || 0}
+                      <td className="p-3 text-right font-mono font-semibold text-ink">{ins.inspectedQty}</td>
+                      <td className="p-3 text-right font-mono font-semibold text-semantic-success-dark">{ins.passedQty}</td>
+                      <td className="p-3 text-right font-mono text-semantic-warning-dark">
+                        {ins.reworkQty > 0 ? ins.reworkQty : "-"}
                       </td>
                       <td className="p-3 text-center">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                          ins.result === "PASS" ? "bg-emerald-100 text-emerald-800 border border-emerald-300" :
-                          ins.result === "REWORK" ? "bg-amber-100 text-amber-800 border border-amber-300" :
-                          "bg-red-100 text-red-800 border border-red-300"
+                          ins.result === "PASS" ? "bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20" :
+                          ins.result === "REWORK" ? "bg-semantic-warning-subtle text-semantic-warning-dark border border-semantic-warning/20" :
+                          "bg-semantic-danger-subtle text-semantic-danger-dark border border-semantic-danger/20"
                         }`}>
                           {ins.result}
                         </span>
                       </td>
-                      <td className="p-3 text-zinc-600">{ins.remarks || "-"}</td>
+                      <td className="p-3 text-cool-gray">{ins.remarks || "-"}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-zinc-400 italic">
+                    <td colSpan={7} className="p-8 text-center text-cool-gray italic">
                       No quality inspection logs recorded yet. Click 'New Quality Entry' to log IQC, In-Process, or Final PDI inspections.
                     </td>
                   </tr>
@@ -344,24 +344,23 @@ export default function ProjectQualityPage() {
       {/* Tab 2: CMM & Dimensional Matrix */}
       {activeTab === "CMM_DIMENSIONS" && (
         <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden">
-          <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+          <div className="p-4 border-b border-border-gray flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-ink">CMM & Vernier Dimensional Matrix</h3>
-              <p className="text-xs text-mute">Nominal values vs actual measured tolerances for key tooling standards</p>
+              <h3 className="text-sm font-semibold text-ink">CMM Dimensional Inspection Protocol</h3>
+              <p className="text-xs text-mute">Precision measurement log with nominal, tolerance limits, and actual deviation</p>
             </div>
-            <div className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-[12px] border border-emerald-200">
+            <div className="text-xs font-semibold text-semantic-success-dark bg-semantic-success-subtle px-3 py-1.5 rounded-[12px] border border-semantic-success/20">
               {allMeasurements.length} Dimensions Recorded
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-canvas border-b border-border-gray/80 text-mute uppercase text-[10px] font-semibold tracking-wider">
+              <thead className="bg-canvas border-b border-border-gray text-mute uppercase text-[10px] font-semibold tracking-wider">
                 <tr>
                   <th className="p-3">Inspection Standard Parameter</th>
                   <th className="p-3 text-right">Nominal Value</th>
-                  <th className="p-3 text-right">Upper Tol (+)</th>
-                  <th className="p-3 text-right">Lower Tol (-)</th>
+                  <th className="p-3 text-right">Tolerance</th>
                   <th className="p-3 text-right">Actual Measured</th>
                   <th className="p-3 text-center">Status</th>
                 </tr>
@@ -371,13 +370,12 @@ export default function ProjectQualityPage() {
                   allMeasurements.map((m: any, idx: number) => (
                     <tr key={idx} className="hover:bg-canvas/80 transition-colors">
                       <td className="p-3 font-sans font-semibold text-ink">{m.inspectionStandardId || `Measurement #${idx + 1}`}</td>
-                      <td className="p-3 text-right font-semibold text-zinc-800">{m.nominalValue} mm</td>
-                      <td className="p-3 text-right text-mute">+{m.upperTolerance} mm</td>
-                      <td className="p-3 text-right text-mute">-{m.lowerTolerance} mm</td>
-                      <td className="p-3 text-right font-semibold text-primary-dark">{m.actualValue} mm</td>
+                      <td className="p-3 text-right font-semibold text-ink">{m.nominalValue} mm</td>
+                      <td className="p-3 text-right font-mono text-cool-gray">+{m.upperTol} / -{m.lowerTol}</td>
+                      <td className="p-3 text-right font-mono font-semibold text-ink">{m.actualValue} mm</td>
                       <td className="p-3 text-center">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                          m.result === "PASS" ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-red-100 text-red-800 border border-red-300"
+                          m.result === "PASS" ? "bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20" : "bg-semantic-danger-subtle text-semantic-danger-dark border border-semantic-danger/20"
                         }`}>
                           {m.result}
                         </span>
@@ -386,7 +384,7 @@ export default function ProjectQualityPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-zinc-400 italic">
+                    <td colSpan={6} className="p-8 text-center text-cool-gray italic">
                       No CMM dimensional measurements recorded yet. Add measurements when logging quality entries.
                     </td>
                   </tr>
@@ -402,50 +400,57 @@ export default function ProjectQualityPage() {
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-ink">Non-Conformance Reports (NCR) & Rework Hub</h3>
-              <p className="text-xs text-mute">Track scrap, dimensional non-conformances, and auto-generated rework Job Cards</p>
+              <h3 className="text-sm font-semibold text-ink">Non-Conformance Reports (NCR) & Rework Actions</h3>
+              <p className="text-xs text-mute">Log of component defects, corrective action plans, and closure sign-offs</p>
             </div>
-            <span className={`px-3 py-1 rounded-[12px] text-xs font-semibold border ${
-              openNcrsCount > 0 ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-emerald-50 text-emerald-800 border-emerald-200"
+            <div className={`text-xs font-semibold px-3 py-1.5 rounded-[12px] border ${
+              openNcrsCount > 0 ? "bg-semantic-warning-subtle text-semantic-warning-dark border-semantic-warning/20" : "bg-semantic-success-subtle text-semantic-success-dark border-semantic-success/20"
             }`}>
-              {openNcrsCount} Open NCRs
-            </span>
+              {openNcrsCount > 0 ? `${openNcrsCount} Open NCR(s)` : "All NCRs Closed"}
+            </div>
           </div>
 
           <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden">
             <table className="w-full text-left text-xs">
-              <thead className="bg-canvas border-b border-border-gray/80 text-mute uppercase text-[10px] font-semibold tracking-wider">
+              <thead className="bg-canvas border-b border-border-gray text-mute uppercase text-[10px] font-semibold tracking-wider">
                 <tr>
                   <th className="p-3">NCR #</th>
                   <th className="p-3">Defect Description</th>
-                  <th className="p-3">Action Plan</th>
-                  <th className="p-3 text-center">Status</th>
-                  <th className="p-3 text-right">Resolution Date</th>
+                  <th className="p-3">Corrective / Rework Action</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-border-gray">
                 {ncrReports.length > 0 ? (
                   ncrReports.map((ncr: any) => (
                     <tr key={ncr.id} className="hover:bg-canvas/80 transition-colors">
-                      <td className="p-3 font-mono font-semibold text-amber-700">{ncr.ncrNumber}</td>
-                      <td className="p-3 font-medium text-ink">{ncr.defectDescription}</td>
-                      <td className="p-3 text-zinc-600">{ncr.actionPlan || "Rework Job Card generated"}</td>
-                      <td className="p-3 text-center">
+                      <td className="p-3 font-mono font-semibold text-semantic-warning-dark">{ncr.ncrNumber}</td>
+                      <td className="p-3 font-semibold text-ink">{ncr.defectDescription}</td>
+                      <td className="p-3 text-cool-gray">{ncr.actionPlan || "Rework Job Card generated"}</td>
+                      <td className="p-3">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                          ncr.status === "CLOSED" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                          ncr.status === "CLOSED" ? "bg-semantic-success-subtle text-semantic-success-dark" : "bg-semantic-warning-subtle text-semantic-warning-dark"
                         }`}>
                           {ncr.status}
                         </span>
                       </td>
-                      <td className="p-3 text-right font-mono text-mute">
-                        {new Date(ncr.updatedAt).toLocaleDateString()}
+                      <td className="p-3 text-right">
+                        {ncr.status === "OPEN" && (
+                          <button
+                            onClick={() => {}}
+                            className="px-2.5 py-1 text-[10px] font-semibold text-white bg-primary hover:bg-primary-hover rounded-[12px] shadow-subtle transition-colors cursor-pointer"
+                          >
+                            Close NCR
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-zinc-400 italic">
-                      No Non-Conformance Reports (NCR) recorded for this project. Quality is 100% compliant.
+                    <td colSpan={5} className="p-8 text-center text-cool-gray italic">
+                      No Non-Conformance Reports (NCR) recorded for this project.
                     </td>
                   </tr>
                 )}
@@ -458,14 +463,14 @@ export default function ProjectQualityPage() {
       {/* Tab 4: Printable Quality Certificate */}
       {activeTab === "QC_CERTIFICATE" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white p-4 rounded-[12px] border border-border-gray/80 shadow-subtle print:hidden">
+          <div className="flex items-center justify-between bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle print:hidden">
             <div>
               <h3 className="text-sm font-semibold text-ink">Official Tooling Quality Certificate</h3>
               <p className="text-xs text-mute">Pre-dispatch dimensional & tryout verification certificate</p>
             </div>
             <button
               onClick={handlePrintCertificate}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[12px] bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>Print / Download Certificate</span>
@@ -475,13 +480,13 @@ export default function ProjectQualityPage() {
           {/* Certificate Document Container */}
           <div className="bg-white p-8 rounded-[12px] border border-border-gray shadow-subtle space-y-6 text-ink font-sans max-w-4xl mx-auto print:border-none print:shadow-none">
             {/* Certificate Header */}
-            <div className="flex items-center justify-between border-b-2 border-zinc-900 pb-4">
+            <div className="flex items-center justify-between border-b-2 border-border-gray pb-4">
               <div>
                 <h1 className="text-xl font-semibold tracking-tight text-ink uppercase">ToolRoom OS Manufacturing Inc.</h1>
                 <p className="text-xs text-mute font-medium">Precision Press Tools, Dies & Moulds Quality Assurance Dept.</p>
               </div>
               <div className="text-right">
-                <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-[12px] uppercase tracking-wider border border-emerald-300">
+                <span className="inline-block px-3 py-1 bg-semantic-success-subtle text-semantic-success-dark text-xs font-semibold rounded-[12px] uppercase tracking-wider border border-semantic-success/20">
                   QC CERTIFIED & APPROVED
                 </span>
                 <p className="text-[11px] font-mono text-mute mt-1">Cert #: QC-{project?.projectNumber || "KTD"}-2026</p>
@@ -511,8 +516,8 @@ export default function ProjectQualityPage() {
             {/* Verification Summary Table */}
             <div>
               <h4 className="text-xs font-semibold text-ink uppercase tracking-wider mb-2">Final Inspection & CMM Verification Summary</h4>
-              <table className="w-full text-left text-xs border border-border-gray divide-y divide-zinc-200">
-                <thead className="bg-zinc-100 text-zinc-700 font-semibold text-[10px] uppercase">
+              <table className="w-full text-left text-xs border border-border-gray divide-y divide-border-gray">
+                <thead className="bg-canvas text-cool-gray font-semibold text-[10px] uppercase">
                   <tr>
                     <th className="p-2 border-r">Inspection Parameter</th>
                     <th className="p-2 border-r text-right">Nominal</th>
@@ -521,32 +526,32 @@ export default function ProjectQualityPage() {
                     <th className="p-2 text-center">Verdict</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-200 font-mono">
+                <tbody className="divide-y divide-border-gray font-mono">
                   {allMeasurements.length > 0 ? (
                     allMeasurements.map((m: any, idx: number) => (
                       <tr key={idx}>
-                        <td className="p-2 border-r font-sans font-semibold">{m.inspectionStandardId || `Param #${idx + 1}`}</td>
-                        <td className="p-2 border-r text-right">{m.nominalValue} mm</td>
-                        <td className="p-2 border-r text-right">+{m.upperTolerance} / -{m.lowerTolerance} mm</td>
-                        <td className="p-2 border-r text-right font-semibold text-primary-dark">{m.actualValue} mm</td>
-                        <td className="p-2 text-center text-emerald-700 font-sans font-semibold">{m.result || "PASS"}</td>
+                        <td className="p-2 border-r border-border-gray font-sans font-semibold">{m.inspectionStandardId || `Param #${idx + 1}`}</td>
+                        <td className="p-2 border-r border-border-gray text-right">{m.nominalValue} mm</td>
+                        <td className="p-2 border-r border-border-gray text-right">+{m.upperTolerance} / -{m.lowerTolerance} mm</td>
+                        <td className="p-2 border-r border-border-gray text-right font-semibold text-primary">{m.actualValue} mm</td>
+                        <td className="p-2 text-center text-semantic-success-dark font-sans font-semibold">{m.result || "PASS"}</td>
                       </tr>
                     ))
                   ) : (
                     <>
                       <tr>
-                        <td className="p-2 border-r font-sans font-semibold">Die Shut Height Lock</td>
-                        <td className="p-2 border-r text-right">320.00 mm</td>
-                        <td className="p-2 border-r text-right">±0.05 mm</td>
-                        <td className="p-2 border-r text-right font-semibold text-primary-dark">320.02 mm</td>
-                        <td className="p-2 text-center text-emerald-700 font-sans font-semibold">PASS</td>
+                        <td className="p-2 border-r border-border-gray font-sans font-semibold">Die Shut Height Lock</td>
+                        <td className="p-2 border-r border-border-gray text-right">320.00 mm</td>
+                        <td className="p-2 border-r border-border-gray text-right">±0.05 mm</td>
+                        <td className="p-2 border-r border-border-gray text-right font-semibold text-primary">320.02 mm</td>
+                        <td className="p-2 text-center text-semantic-success-dark font-sans font-semibold">PASS</td>
                       </tr>
                       <tr>
-                        <td className="p-2 border-r font-sans font-semibold">Punch & Die Clearance</td>
-                        <td className="p-2 border-r text-right">0.08 mm</td>
-                        <td className="p-2 border-r text-right">±0.01 mm</td>
-                        <td className="p-2 border-r text-right font-semibold text-primary-dark">0.08 mm</td>
-                        <td className="p-2 text-center text-emerald-700 font-sans font-semibold">PASS</td>
+                        <td className="p-2 border-r border-border-gray font-sans font-semibold">Punch & Die Clearance</td>
+                        <td className="p-2 border-r border-border-gray text-right">0.08 mm</td>
+                        <td className="p-2 border-r border-border-gray text-right">±0.01 mm</td>
+                        <td className="p-2 border-r border-border-gray text-right font-semibold text-primary">0.08 mm</td>
+                        <td className="p-2 text-center text-semantic-success-dark font-sans font-semibold">PASS</td>
                       </tr>
                     </>
                   )}
@@ -557,19 +562,19 @@ export default function ProjectQualityPage() {
             {/* Sign-off Stamps */}
             <div className="pt-8 border-t border-border-gray grid grid-cols-2 gap-8 text-center text-xs">
               <div className="space-y-10">
-                <div className="h-8 flex items-center justify-center font-serif text-zinc-400 italic">
+                <div className="h-8 flex items-center justify-center font-serif text-cool-gray italic">
                   [ Verified by Chief Quality Inspector ]
                 </div>
-                <div className="border-t border-zinc-400 pt-1 font-semibold text-ink">
+                <div className="border-t border-border-gray pt-1 font-semibold text-ink">
                   Head of Quality Assurance
                 </div>
               </div>
 
               <div className="space-y-10">
-                <div className="h-8 flex items-center justify-center font-serif text-zinc-400 italic">
+                <div className="h-8 flex items-center justify-center font-serif text-cool-gray italic">
                   [ Customer Inspection Stamp ]
                 </div>
-                <div className="border-t border-zinc-400 pt-1 font-semibold text-ink">
+                <div className="border-t border-border-gray pt-1 font-semibold text-ink">
                   Customer Receiving Sign-Off
                 </div>
               </div>
@@ -588,11 +593,11 @@ export default function ProjectQualityPage() {
         <form onSubmit={handleLogInspection} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">Inspection Stage</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Inspection Stage</label>
               <select
                 value={inspectionForm.inspectionType}
                 onChange={(e) => setInspectionForm({ ...inspectionForm, inspectionType: e.target.value })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink font-semibold"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink font-semibold bg-canvas"
               >
                 <option value="FINAL_PDI">FINAL_PDI — Pre-Dispatch Inspection</option>
                 <option value="IN_PROCESS">IN_PROCESS — Operation Level Check</option>
@@ -601,11 +606,11 @@ export default function ProjectQualityPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">QC Verdict</label>
+              <label className="block text-xs font-semibold text-ink mb-1">QC Verdict</label>
               <select
                 value={inspectionForm.result}
                 onChange={(e) => setInspectionForm({ ...inspectionForm, result: e.target.value })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink font-semibold"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink font-semibold bg-canvas"
               >
                 <option value="PASS">PASS — Approved</option>
                 <option value="REWORK">REWORK — Rework Job Card</option>
@@ -616,50 +621,50 @@ export default function ProjectQualityPage() {
 
           <div className="grid grid-cols-4 gap-2">
             <div>
-              <label className="block text-[10px] font-semibold text-zinc-600 mb-1">Inspected Qty</label>
+              <label className="block text-[10px] font-semibold text-cool-gray mb-1">Inspected Qty</label>
               <input
                 type="number"
                 value={inspectionForm.inspectedQty}
                 onChange={(e) => setInspectionForm({ ...inspectionForm, inspectedQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-zinc-600 mb-1">Passed Qty</label>
+              <label className="block text-[10px] font-semibold text-cool-gray mb-1">Passed Qty</label>
               <input
                 type="number"
                 value={inspectionForm.passedQty}
                 onChange={(e) => setInspectionForm({ ...inspectionForm, passedQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-zinc-600 mb-1">Rework Qty</label>
+              <label className="block text-[10px] font-semibold text-cool-gray mb-1">Rework Qty</label>
               <input
                 type="number"
                 value={inspectionForm.reworkQty}
                 onChange={(e) => setInspectionForm({ ...inspectionForm, reworkQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-zinc-600 mb-1">Scrap Qty</label>
+              <label className="block text-[10px] font-semibold text-cool-gray mb-1">Scrap Qty</label>
               <input
                 type="number"
                 value={inspectionForm.scrapQty}
                 onChange={(e) => setInspectionForm({ ...inspectionForm, scrapQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+                className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Remarks & Observations</label>
+            <label className="block text-xs font-semibold text-ink mb-1">Remarks & Observations</label>
             <textarea
               rows={2}
               value={inspectionForm.remarks}
               onChange={(e) => setInspectionForm({ ...inspectionForm, remarks: e.target.value })}
-              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink"
+              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas"
             />
           </div>
 
@@ -667,14 +672,14 @@ export default function ProjectQualityPage() {
             <button
               type="button"
               onClick={() => setShowInspectionModal(false)}
-              className="px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-ink rounded-[12px] hover:bg-zinc-100"
+              className="px-3.5 py-2 text-xs font-semibold text-cool-gray hover:text-ink rounded-[12px] hover:bg-canvas transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={logInspectionMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-[12px] shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-[12px] shadow-sm cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4 text-white" />
               <span>{logInspectionMutation.isPending ? "Submitting..." : "Save Inspection"}</span>

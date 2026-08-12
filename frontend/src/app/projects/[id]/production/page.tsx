@@ -29,11 +29,11 @@ import { MoveToNextSectionModal } from "@/components/production/MoveToNextSectio
 type ProductionTab = "TOOLROOM" | "PRESS_SHOP" | "FABRICATION" | "FAB_EXPORT" | "TRANSFERS";
 
 const TABS: { id: ProductionTab; label: string; icon: React.ElementType; activeColor: string }[] = [
-  { id: "TOOLROOM", label: "Toolroom", icon: Cpu, activeColor: "bg-purple-600 text-white shadow-subtle" },
-  { id: "PRESS_SHOP", label: "Press Shop", icon: Factory, activeColor: "bg-amber-600 text-white shadow-subtle" },
-  { id: "FABRICATION", label: "Fabrication", icon: Flame, activeColor: "bg-blue-600 text-white shadow-subtle" },
-  { id: "FAB_EXPORT", label: "Fab Export", icon: Truck, activeColor: "bg-indigo-600 text-white shadow-subtle" },
-  { id: "TRANSFERS", label: "Transfers", icon: RefreshCw, activeColor: "bg-zinc-900 text-white shadow-subtle" },
+  { id: "TOOLROOM", label: "Toolroom", icon: Cpu, activeColor: "bg-primary text-white shadow-subtle" },
+  { id: "PRESS_SHOP", label: "Press Shop", icon: Factory, activeColor: "bg-primary text-white shadow-subtle" },
+  { id: "FABRICATION", label: "Fabrication (India)", icon: Flame, activeColor: "bg-primary text-white shadow-subtle" },
+  { id: "FAB_EXPORT", label: "Fabrication (Foreign)", icon: Truck, activeColor: "bg-primary text-white shadow-subtle" },
+  { id: "TRANSFERS", label: "Transfers", icon: RefreshCw, activeColor: "bg-ink text-white shadow-subtle" },
 ];
 
 export default function ProjectProductionPage() {
@@ -149,27 +149,29 @@ export default function ProjectProductionPage() {
   return (
     <div className="space-y-5 font-sans text-ink">
       {/* Page Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray/80 shadow-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[12px] border border-border-gray shadow-subtle">
         <div>
-          <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-ink" />
-            <span>Production Workspace</span>
-          </h2>
-          <p className="text-xs text-mute">
-            All shopfloor operations sourced from Employee Daily Reports — Toolroom, Press Shop, Fabrication & Export
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
+              <Wrench className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold text-ink tracking-tight">Production Workspace</h1>
+          </div>
+          <p className="text-xs text-mute ml-[42px]">
+            All shopfloor operations sourced from Employee Daily Reports — Toolroom, Press Shop, Fabrication (India) & Fabrication (Foreign)
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {isProductionCompleted ? (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold shadow-subtle">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-semantic-success-subtle border border-semantic-success/20 text-semantic-success-dark text-xs font-semibold shadow-subtle">
+              <CheckCircle2 className="w-4 h-4 text-semantic-success-dark" />
               <span>Production Completed ({project?.currentStage?.replace(/_/g, ' ')})</span>
             </div>
           ) : (
             <button
               onClick={() => setShowCompleteConfirmModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm hover:shadow transition-all cursor-pointer active:scale-98"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-semantic-success-dark hover:bg-semantic-success-dark/90 text-white text-xs font-semibold shadow-sm hover:shadow transition-all cursor-pointer active:scale-98"
             >
               <CheckCircle2 className="w-4 h-4 text-white" />
               <span>Mark Production Completed</span>
@@ -178,7 +180,7 @@ export default function ProjectProductionPage() {
 
           <Link
             href="/employee-daily-report"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] border border-border-gray bg-white hover:bg-canvas text-zinc-800 text-xs font-semibold shadow-subtle transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] border border-border-gray bg-white hover:bg-canvas text-ink text-xs font-semibold shadow-subtle transition-colors"
           >
             <FileSpreadsheet className="w-4 h-4 text-purple-600" />
             <span>Log Daily Report</span>
@@ -187,7 +189,7 @@ export default function ProjectProductionPage() {
       </div>
 
       {/* Section Tabs */}
-      <div className="flex items-center p-1 bg-zinc-100 rounded-[12px] border border-border-gray/80 overflow-x-auto gap-0.5">
+      <div className="flex items-center p-1 bg-canvas rounded-[12px] border border-border-gray overflow-x-auto gap-0.5">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -205,7 +207,7 @@ export default function ProjectProductionPage() {
               {count > 0 && (
                 <span
                   className={`ml-1 px-1.5 py-0 rounded-full text-[10px] font-semibold ${
-                    isActive ? "bg-white/25 text-white" : "bg-zinc-200 text-zinc-600"
+                    isActive ? "bg-white/25 text-white" : "bg-cool-gray/20 text-cool-gray"
                   }`}
                 >
                   {count}
@@ -264,7 +266,7 @@ export default function ProjectProductionPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">
+            <label className="block text-xs font-semibold text-ink mb-1">
               Completion Remarks / Notes (Optional)
             </label>
             <textarea
@@ -272,7 +274,7 @@ export default function ProjectProductionPage() {
               placeholder="e.g. All machining, fitting & shopfloor trials completed successfully. Ready for quality inspection."
               value={completionRemarks}
               onChange={(e) => setCompletionRemarks(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              className="w-full px-3 py-2 text-xs border border-border-gray rounded-[12px] text-ink bg-canvas focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
@@ -280,14 +282,14 @@ export default function ProjectProductionPage() {
             <button
               type="button"
               onClick={() => setShowCompleteConfirmModal(false)}
-              className="px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-ink rounded-[12px] hover:bg-zinc-100 transition-colors cursor-pointer"
+              className="px-3.5 py-2 text-xs font-semibold text-cool-gray hover:text-ink rounded-[12px] hover:bg-canvas transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={completeProductionMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-[12px] shadow-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-semantic-success-dark hover:bg-semantic-success-dark/90 rounded-[12px] shadow-sm transition-colors cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4 text-white" />
               <span>{completeProductionMutation.isPending ? "Submitting..." : "Confirm & Complete Production"}</span>
