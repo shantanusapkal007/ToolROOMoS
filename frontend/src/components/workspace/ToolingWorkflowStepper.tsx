@@ -71,6 +71,7 @@ const STAGE_INDEX_MAP: Record<string, number> = {
 export function ToolingWorkflowStepper({ currentStage = "ENGINEERING" }: ToolingWorkflowStepperProps) {
   const normalizedStage = (currentStage || "ENGINEERING").toUpperCase();
   const currentStageIdx = STAGE_INDEX_MAP[normalizedStage] ?? 5;
+  const isClosedProject = normalizedStage === "CLOSED" || normalizedStage === "COMPLETED";
 
   const row1 = STEPPER_STAGES.slice(0, 6);
   const row2 = STEPPER_STAGES.slice(6, 12);
@@ -100,8 +101,8 @@ export function ToolingWorkflowStepper({ currentStage = "ENGINEERING" }: Tooling
           <div className="hidden lg:block absolute top-[11px] left-[8.33%] right-[8.33%] h-0.5 pointer-events-none z-0">
             <div className="w-full h-full flex items-center">
               {row1.slice(0, 5).map((_, idx) => {
-                const isLineCompleted = idx < currentStageIdx;
-                const isLineActive = idx === currentStageIdx;
+                const isLineCompleted = isClosedProject ? true : idx < currentStageIdx;
+                const isLineActive = isClosedProject ? false : idx === currentStageIdx;
                 return (
                   <div key={idx} className="flex-1">
                     {isLineCompleted ? (
@@ -118,8 +119,8 @@ export function ToolingWorkflowStepper({ currentStage = "ENGINEERING" }: Tooling
           </div>
 
           {row1.map((step, idx) => {
-            const isCompleted = idx < currentStageIdx;
-            const isCurrent = idx === currentStageIdx;
+            const isCompleted = isClosedProject ? true : idx < currentStageIdx;
+            const isCurrent = isClosedProject ? false : idx === currentStageIdx;
             const Icon = step.icon;
 
             return (
@@ -192,7 +193,7 @@ export function ToolingWorkflowStepper({ currentStage = "ENGINEERING" }: Tooling
                       </span>
                     ) : isCompleted ? (
                       <span className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/30 inline-block">
-                        COMPLETED
+                        {step.id === 'CLOSED' ? 'CLOSED' : 'COMPLETED'}
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded-full text-[8px] font-medium uppercase tracking-wider bg-canvas text-cool-gray border border-border-gray inline-flex items-center gap-1">
@@ -214,8 +215,8 @@ export function ToolingWorkflowStepper({ currentStage = "ENGINEERING" }: Tooling
             <div className="w-full h-full flex items-center">
               {row2.slice(0, 5).map((_, idx) => {
                 const globalIdx = idx + 6;
-                const isLineCompleted = globalIdx < currentStageIdx;
-                const isLineActive = globalIdx === currentStageIdx;
+                const isLineCompleted = isClosedProject ? true : globalIdx < currentStageIdx;
+                const isLineActive = isClosedProject ? false : globalIdx === currentStageIdx;
                 return (
                   <div key={idx} className="flex-1">
                     {isLineCompleted ? (
@@ -233,8 +234,8 @@ export function ToolingWorkflowStepper({ currentStage = "ENGINEERING" }: Tooling
 
           {row2.map((step, idx) => {
             const globalIdx = idx + 6;
-            const isCompleted = globalIdx < currentStageIdx;
-            const isCurrent = globalIdx === currentStageIdx;
+            const isCompleted = isClosedProject ? true : globalIdx < currentStageIdx;
+            const isCurrent = isClosedProject ? false : globalIdx === currentStageIdx;
             const Icon = step.icon;
 
             return (
@@ -307,7 +308,7 @@ export function ToolingWorkflowStepper({ currentStage = "ENGINEERING" }: Tooling
                       </span>
                     ) : isCompleted ? (
                       <span className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/30 inline-block">
-                        COMPLETED
+                        {step.id === 'CLOSED' ? 'CLOSED' : 'COMPLETED'}
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded-full text-[8px] font-medium uppercase tracking-wider bg-canvas text-cool-gray border border-border-gray inline-flex items-center gap-1">

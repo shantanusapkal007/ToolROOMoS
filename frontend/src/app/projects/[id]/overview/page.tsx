@@ -179,9 +179,15 @@ export default function ProjectOverviewPage() {
                 <h1 className="text-xl font-semibold text-ink tracking-tight">
                   {project.partName || 'Tooling Project'}
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20">
-                  {project.status || 'ACTIVE'}
-                </span>
+                {project.currentStage === 'CLOSED' || project.currentStage === 'COMPLETED' ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-primary-subtle text-primary border border-primary/20">
+                    CLOSED
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20">
+                    {project.status || 'ACTIVE'}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-mute font-medium mt-0.5">
                 {project.description || 'No description provided for this tooling mission.'}
@@ -202,28 +208,35 @@ export default function ProjectOverviewPage() {
             <span>Delete Project</span>
           </Button>
 
-          {project.currentStage !== 'CLOSED' && project.currentStage !== 'CANCELLED' && (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => setShowCompleteModal(true)}
-              className="bg-semantic-success hover:bg-semantic-success-dark text-white font-semibold rounded-[12px] text-xs shadow-subtle transition-colors cursor-pointer border-none"
-            >
-              <BadgeCheck className="w-4 h-4 mr-1.5" />
-              <span>Mark Project Completed</span>
-            </Button>
-          )}
+          {project.currentStage !== 'CLOSED' && project.currentStage !== 'CANCELLED' && project.currentStage !== 'COMPLETED' ? (
+            <>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => setShowCompleteModal(true)}
+                className="bg-semantic-success hover:bg-semantic-success-dark text-white font-semibold rounded-[12px] text-xs shadow-subtle transition-colors cursor-pointer border-none"
+              >
+                <BadgeCheck className="w-4 h-4 mr-1.5" />
+                <span>Mark Project Completed</span>
+              </Button>
 
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => advanceStageMutation.mutate()}
-            isLoading={advanceStageMutation.isPending}
-            className="bg-primary hover:bg-primary-hover text-white font-semibold rounded-[12px] text-xs shadow-subtle transition-colors cursor-pointer"
-          >
-            <span>Evaluate & Advance Stage</span>
-            <ArrowRight className="w-4 h-4 ml-1.5" />
-          </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => advanceStageMutation.mutate()}
+                isLoading={advanceStageMutation.isPending}
+                className="bg-primary hover:bg-primary-hover text-white font-semibold rounded-[12px] text-xs shadow-subtle transition-colors cursor-pointer"
+              >
+                <span>Evaluate & Advance Stage</span>
+                <ArrowRight className="w-4 h-4 ml-1.5" />
+              </Button>
+            </>
+          ) : (
+            <span className="px-3.5 py-2 rounded-[12px] text-xs font-bold bg-primary-subtle text-primary border border-primary/20 flex items-center gap-1.5 shadow-subtle">
+              <BadgeCheck className="w-4 h-4" />
+              <span>Project Mission Closed</span>
+            </span>
+          )}
         </div>
       </div>
 

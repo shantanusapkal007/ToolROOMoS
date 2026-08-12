@@ -431,6 +431,7 @@ export class ProjectsService {
         where: { id },
         data: {
           currentStage: toStage,
+          ...(toStage === 'CLOSED' ? { status: 'CLOSED', closedAt: new Date(), progress: 100 } : {}),
           updatedBy: userId,
         },
       });
@@ -813,6 +814,7 @@ export class ProjectsService {
         where: { id: projectId },
         data: {
           currentStage: 'CLOSED',
+          status: 'CLOSED',
           closedAt: new Date(),
           actualDeliveryDate: new Date(),
           progress: 100,
