@@ -13,7 +13,7 @@ export default function Home() {
     <AppLayout noPadding>
       <MissionControl 
         projects={projects} 
-        onSelectProject={(proj) => router.push(`/projects/${proj.id}/overview`)} 
+        onSelectProject={(proj) => router.push(`/projects/${proj.projectNumber || proj.id}/overview`)} 
       />
     </AppLayout>
   );

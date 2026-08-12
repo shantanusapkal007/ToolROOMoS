@@ -96,7 +96,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 timestamp: proj.targetDeliveryDate || new Date().toISOString(),
                 read: false,
                 dismissed: false,
-                link: `/projects/${proj.id}/overview`,
+                link: `/projects/${proj.projectNumber || proj.id}/overview`,
                 actionText: 'Review Flight Path',
               });
             }
@@ -113,7 +113,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               timestamp: proj.createdAt || new Date().toISOString(),
               read: false,
               dismissed: false,
-              link: `/projects/${proj.id}/engineering`,
+              link: `/projects/${proj.projectNumber || proj.id}/engineering`,
               actionText: 'Review BOM',
             });
           }
@@ -129,7 +129,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               timestamp: proj.createdAt || new Date().toISOString(),
               read: false,
               dismissed: false,
-              link: `/projects/${proj.id}/engineering`,
+              link: `/projects/${proj.projectNumber || proj.id}/engineering`,
               actionText: 'Review Routing',
             });
           }
@@ -145,7 +145,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               timestamp: proj.createdAt || new Date().toISOString(),
               read: false,
               dismissed: false,
-              link: `/projects/${proj.id}/purchase`,
+              link: `/projects/${proj.projectNumber || proj.id}/purchase`,
               actionText: 'Review PO',
             });
           }

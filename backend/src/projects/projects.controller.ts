@@ -79,7 +79,7 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+  async findOne(@Param('id') id: string) {
     const data = await this.projectsService.findOne(id);
     return {
       status: 'success',
@@ -89,7 +89,7 @@ export class ProjectsController {
   }
 
   @Get(':id/inventory-batches')
-  async getInventoryBatches(@Param('id', ParseUUIDPipe) id: string) {
+  async getInventoryBatches(@Param('id') id: string) {
     const data = await this.projectsService.getInventoryBatches(id);
     return {
       status: 'success',
@@ -101,7 +101,7 @@ export class ProjectsController {
   @Put(':id')
   @Roles('ADMIN', 'SALES_ENGINEER')
   async update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: UpdateProjectDto,
     @CurrentUser() user: any,
   ) {
@@ -116,7 +116,7 @@ export class ProjectsController {
   @Put(':id/status')
   @Roles('ADMIN', 'SALES_ENGINEER')
   async updateStatus(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body('status') status: ProjectStatus,
     @Body('remarks') remarks?: string,
     @CurrentUser() user?: any,
@@ -131,7 +131,7 @@ export class ProjectsController {
 
   @Post(':id/advance-stage')
   @Roles('ADMIN', 'SALES_ENGINEER', 'PRODUCTION')
-  async advanceStage(@Param('id', ParseUUIDPipe) id: string) {
+  async advanceStage(@Param('id') id: string) {
     const result = await this.orchestratorService.evaluateProjectStage(id);
     return {
       status: 'success',
@@ -143,7 +143,7 @@ export class ProjectsController {
   @Post(':id/complete-production')
   @Roles('ADMIN', 'SALES_ENGINEER', 'PRODUCTION')
   async completeProduction(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body('remarks') remarks?: string,
     @CurrentUser() user?: any,
   ) {
@@ -156,7 +156,7 @@ export class ProjectsController {
   }
 
   @Get(':id/timeline')
-  async getTimeline(@Param('id', ParseUUIDPipe) id: string) {
+  async getTimeline(@Param('id') id: string) {
     const data = await this.projectsService.getTimeline(id);
     return {
       status: 'success',
@@ -167,7 +167,7 @@ export class ProjectsController {
 
   @Get(':id/activities')
   async getActivities(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string
   ) {
@@ -183,7 +183,7 @@ export class ProjectsController {
   }
 
   @Get(':id/cost-events')
-  async getCostEvents(@Param('id', ParseUUIDPipe) id: string) {
+  async getCostEvents(@Param('id') id: string) {
     const data = await this.projectsService.getCostEvents(id);
     return {
       status: 'success',
@@ -194,7 +194,7 @@ export class ProjectsController {
 
   // --- NCR ---
   @Get(':id/ncr')
-  async getNcrs(@Param('id', ParseUUIDPipe) id: string) {
+  async getNcrs(@Param('id') id: string) {
     const data = await this.projectsService.getNcrs(id);
     return {
       status: 'success',
@@ -206,7 +206,7 @@ export class ProjectsController {
   @Patch(':id/ncr/:ncrId/close')
   @Roles('ADMIN', 'QUALITY')
   async closeNcr(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Param('ncrId', ParseUUIDPipe) ncrId: string,
     @Body('disposition') disposition?: string,
     @Body('rootCause') rootCause?: string,
@@ -222,7 +222,7 @@ export class ProjectsController {
 
   // --- Tasks (WBS) ---
   @Get(':id/tasks')
-  async getTasks(@Param('id', ParseUUIDPipe) id: string) {
+  async getTasks(@Param('id') id: string) {
     const data = await this.projectsService.getTasks(id);
     return {
       status: 'success',
@@ -233,7 +233,7 @@ export class ProjectsController {
   @Post(':id/tasks')
   @Roles('ADMIN', 'ENGINEERING', 'PRODUCTION')
   async createTask(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: CreateProjectTaskDto,
     @CurrentUser() user: any,
   ) {
@@ -293,7 +293,7 @@ export class ProjectsController {
   @Post(':id/complete-project')
   @Roles('ADMIN', 'SALES_ENGINEER', 'STORES', 'PRODUCTION')
   async completeProject(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body('remarks') remarks?: string,
     @CurrentUser() user?: any,
   ) {
@@ -309,7 +309,7 @@ export class ProjectsController {
   @Post(':id/dispatch-notes')
   @Roles('ADMIN', 'STORES', 'PRODUCTION', 'SALES_ENGINEER')
   async createDispatchNote(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: any,
     @CurrentUser() user?: any,
   ) {
@@ -324,7 +324,7 @@ export class ProjectsController {
   @Post(':id/invoices')
   @Roles('ADMIN', 'FINANCE', 'SALES_ENGINEER')
   async createInvoice(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: any,
     @CurrentUser() user?: any,
   ) {
@@ -340,7 +340,7 @@ export class ProjectsController {
   @Post(':id/close')
   @Roles('ADMIN', 'FINANCE')
   async closeProject(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @CurrentUser() user: any,
   ) {
     const data = await this.projectsService.closeProject(id, user.userId);
@@ -355,7 +355,7 @@ export class ProjectsController {
   @Delete(':id')
   @Roles('ADMIN')
   async removeProject(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @CurrentUser() user: any,
   ) {
     const data = await this.projectsService.remove(id, user.userId);
@@ -369,7 +369,7 @@ export class ProjectsController {
   // --- Revision Engine ---
   @Get(':id/reopen-impact')
   @Roles('ADMIN', 'ENGINEERING')
-  async getReopenImpact(@Param('id', ParseUUIDPipe) id: string) {
+  async getReopenImpact(@Param('id') id: string) {
     const data = await this.projectsService.getReopenImpact(id);
     return {
       status: 'success',
@@ -380,7 +380,7 @@ export class ProjectsController {
   @Patch(':id/reopen-engineering')
   @Roles('ADMIN', 'ENGINEERING')
   async reopenEngineering(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @CurrentUser() user: any,
   ) {
     const data = await this.projectsService.reopenEngineering(id, user.userId);
@@ -394,7 +394,7 @@ export class ProjectsController {
   // --- Designer Work Logs APIs ---
   @Get(':id/design-logs')
   async getDesignLogs(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Query('search') search?: string,
     @Query('designer') designer?: string,
     @Query('workStage') workStage?: string,
@@ -408,7 +408,7 @@ export class ProjectsController {
   }
 
   @Get(':id/design-logs/summary')
-  async getDesignSummary(@Param('id', ParseUUIDPipe) id: string) {
+  async getDesignSummary(@Param('id') id: string) {
     const data = await this.projectsService.getDesignSummary(id);
     return {
       status: 'success',
@@ -419,7 +419,7 @@ export class ProjectsController {
   @Post(':id/design-logs')
   @Roles('ADMIN', 'ENGINEERING')
   async createDesignLog(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: CreateDesignLogDto,
     @CurrentUser() user: any,
   ) {

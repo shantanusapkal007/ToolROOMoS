@@ -495,7 +495,7 @@ function ProfitabilityTab({ data, loading, search, setSearch, sort, setSort }: {
               data.map((p: any) => (
                 <tr key={p.id} className="border-b border-zinc-50 hover:bg-canvas/50 transition-colors group">
                   <td className="px-4 py-2.5">
-                    <Link href={`/projects/${p.id}`} className="group-hover:text-primary transition-colors">
+                    <Link href={`/projects/${p.projectNumber || p.id}/overview`} className="group-hover:text-primary transition-colors">
                       <span className="font-semibold text-ink">{p.projectNumber}</span>
                       <span className="block text-[10px] text-zinc-400 truncate max-w-[140px]">{p.partName}</span>
                     </Link>

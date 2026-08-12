@@ -153,7 +153,7 @@ export default function ProjectsPage() {
       label: 'Project #',
       render: (val: string, row: any) => (
         <button 
-          onClick={() => router.push(`/projects/${row.id}/overview`)} 
+          onClick={() => router.push(`/projects/${row.projectNumber || row.id}/overview`)} 
           className="font-semibold text-primary font-mono hover:text-primary-hover cursor-pointer"
         >
           {val}
@@ -293,7 +293,7 @@ export default function ProjectsPage() {
             columns={columns}
             data={projects}
             isLoading={projectsLoading}
-            onView={(row) => router.push(`/projects/${row.id}/overview`)}
+            onView={(row) => router.push(`/projects/${row.projectNumber || row.id}/overview`)}
             onDelete={(row) => setDeletingProject(row)}
             exportFilename="Projects_Register"
           />

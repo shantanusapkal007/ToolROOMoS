@@ -276,7 +276,26 @@ export class ProjectsService {
     };
   }
 
-  async findOne(id: string) {
+  async resolveProjectId(idOrCode: string): Promise<string> {
+    if (!idOrCode) return idOrCode;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrCode);
+    if (isUuid) return idOrCode;
+    
+    const project = await this.prisma.project.findFirst({
+      where: {
+        OR: [
+          { projectNumber: idOrCode },
+          { projectNumber: { equals: idOrCode, mode: 'insensitive' } }
+        ]
+      },
+      select: { id: true }
+    });
+
+    return project ? project.id : idOrCode;
+  }
+
+  async findOne(idOrCode: string) {
+    const id = await this.resolveProjectId(idOrCode);
     return this.prisma.project.findUniqueOrThrow({
       where: { id },
       include: {
