@@ -55,69 +55,65 @@ export default function ProjectDetailLayout({
     <AppLayout noPadding>
       <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
         {/* Sub Header */}
-        <div className="w-full bg-white border-b border-border-gray px-6 py-4 shrink-0 shadow-subtle">
-          <div className="max-w-[1440px] mx-auto flex flex-col gap-3">
-            
-            {/* Upper Action Bar & Breadcrumb */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="white"
-                  size="sm"
-                  onClick={() => router.push('/projects')}
-                  leftIcon={<ArrowLeft className="w-4 h-4" />}
-                >
-                  Back to Projects
-                </Button>
+        <div className="w-full bg-white border-b border-border-gray shrink-0 shadow-subtle">
+          {/* Upper Header Content */}
+          <div className="w-full px-6 pt-4 pb-3">
+            <div className="max-w-[1440px] mx-auto flex flex-col gap-3">
+              {/* Upper Action Bar & Breadcrumb */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Button
+                    variant="white"
+                    size="sm"
+                    onClick={() => router.push('/projects')}
+                    leftIcon={<ArrowLeft className="w-4 h-4" />}
+                    className="bg-white border border-border-gray hover:bg-canvas text-ink text-xs font-medium rounded-[10px] shadow-subtle px-3 py-1.5"
+                  >
+                    Back to Projects
+                  </Button>
 
-                <span className="text-silver-blue/60">/</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="px-2.5 py-0.5 rounded-[6px] text-[11px] font-semibold font-mono bg-purple-100/90 text-purple-700 border border-purple-200/80 shrink-0">
+                      {project?.projectNumber || "PRJ-2025-086"}
+                    </span>
+                    <h1 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
+                      {project?.partName || "Fender Panel Draw Die"}
+                    </h1>
+                  </div>
+                </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-[6px] text-micro font-semibold font-mono bg-primary-subtle text-primary border border-primary/20">
-                    {project?.projectNumber || id}
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <span className="text-xs font-semibold text-mute">Stage:</span>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200/80 shadow-subtle">
+                    {project?.currentStage?.replace(/_/g, " ") || "DISPATCHED"}
                   </span>
-                  <h1 className="text-sub-heading font-bold text-ink tracking-tight">
-                    {project?.partName || "Project Workspace"}
-                  </h1>
                 </div>
               </div>
 
-              {project?.currentStage && (
-                <div className="flex items-center gap-2">
-                  <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider">Stage:</span>
-                  <span className="px-2.5 py-0.5 rounded-[6px] text-xs font-semibold bg-primary text-white tracking-wide uppercase shadow-subtle">
-                    {project.currentStage.replace('_', ' ')}
-                  </span>
+              {/* Quick Metadata Bar */}
+              <div className="flex items-center gap-6 text-xs text-cool-gray font-medium">
+                <div className="flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4 text-cool-gray shrink-0" />
+                  <span className="font-bold text-ink">{project?.customer?.companyName || "Tata Motors Ltd"}</span>
                 </div>
-              )}
+                <div className="flex items-center gap-1.5 font-mono">
+                  <span className="text-mute font-sans">PO #:</span>
+                  <span className="font-semibold text-ink">{project?.customerPoNumber || "PO/TATA/2025/0445"}</span>
+                </div>
+                <div className="flex items-center gap-1.5 font-mono">
+                  <Calendar className="w-4 h-4 text-mute shrink-0" />
+                  <span>Target: {project?.targetDeliveryDate ? formatDate(project.targetDeliveryDate) : "08 Aug 2026"}</span>
+                </div>
+              </div>
             </div>
+          </div>
 
-            {/* Quick Metadata Bar */}
-            {project && (
-              <div className="flex items-center gap-6 text-caption text-cool-gray pt-1 border-t border-border-gray">
-                {project.customer?.companyName && (
-                  <div className="flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-silver-blue" />
-                    <span className="font-semibold text-ink">{project.customer.companyName}</span>
-                  </div>
-                )}
-                {project.customerPoNumber && (
-                  <div className="flex items-center gap-1.5 font-mono">
-                    <span className="text-silver-blue font-sans">PO #:</span>
-                    <span className="font-semibold text-ink">{project.customerPoNumber}</span>
-                  </div>
-                )}
-                {project.targetDeliveryDate && (
-                  <div className="flex items-center gap-1.5 font-mono">
-                    <Calendar className="w-3.5 h-3.5 text-silver-blue" />
-                    <span>Target: {formatDate(project.targetDeliveryDate)}</span>
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Edge-to-Edge Separator Line */}
+          <div className="w-full border-t border-border-gray" />
 
-            {/* Sub-Navigation Tabs */}
-            <div className="flex items-center gap-1 overflow-x-auto pt-2 scrollbar-none">
+          {/* Sub-Navigation Tabs */}
+          <div className="w-full px-6 py-2">
+            <div className="max-w-[1440px] mx-auto flex items-center gap-1 overflow-x-auto scrollbar-none">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = pathname === tab.path || pathname?.startsWith(`${tab.path}/`);
@@ -125,7 +121,7 @@ export default function ProjectDetailLayout({
                   <Link
                     key={tab.path}
                     href={tab.path}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-[10px] text-caption font-medium transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-[10px] text-xs font-medium transition-all whitespace-nowrap ${
                       isActive
                         ? "bg-primary text-white font-semibold shadow-subtle"
                         : "text-cool-gray hover:text-ink hover:bg-cool-gray/10"
@@ -137,7 +133,6 @@ export default function ProjectDetailLayout({
                 );
               })}
             </div>
-
           </div>
         </div>
 

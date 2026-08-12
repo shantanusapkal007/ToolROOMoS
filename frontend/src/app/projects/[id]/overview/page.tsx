@@ -71,23 +71,54 @@ export default function ProjectOverviewPage() {
     );
   }
 
-  const STAGES = [
-    'CREATED',
-    'ENQUIRY',
-    'QUOTATION',
-    'ORDER_CONFIRMED',
-    'DESIGN_CAD',
-    'CAM_PROGRAMMING',
-    'MACHINING',
-    'BENCH_ASSEMBLY',
-    'TRYOUT',
-    'QUALITY_INSPECTION',
-    'DISPATCH',
-    'CLOSED'
+  const STAGE_STEPS = [
+    { id: 'ENQUIRY', label: '1. ENQUIRY / RFQ' },
+    { id: 'QUOTATION', label: '2. QUOTATION' },
+    { id: 'ORDER_CONFIRMED', label: '3. ORDER CONFIRMED' },
+    { id: 'PROJECT_CREATED', label: '4. PROJECT CREATED' },
+    { id: 'DESIGN_CAD', label: '5. DESIGN CAD' },
+    { id: 'BOM_PROCUREMENT', label: '6. BOM & PROCUREMENT' },
+    { id: 'CAM_MACHINING', label: '7. CAM & MACHINING' },
+    { id: 'BENCH_ASSEMBLY', label: '8. BENCH ASSEMBLY' },
+    { id: 'TRYOUT', label: '9. PRESS TRYOUT' },
+    { id: 'QUALITY_INSPECTION', label: '10. QUALITY INSPECTION' },
+    { id: 'DISPATCH', label: '11. DISPATCH' },
+    { id: 'CLOSED', label: '12. CLOSED' },
   ];
 
-  const currentStageIdx = Math.max(0, STAGES.indexOf(project.currentStage || 'CREATED'));
-  const progressPercent = Math.round(((currentStageIdx + 1) / STAGES.length) * 100);
+  const STAGE_ALIAS_MAP: Record<string, number> = {
+    ENQUIRY: 0,
+    QUOTATION: 1,
+    ORDER_CONFIRMED: 2,
+    CREATED: 3,
+    PROJECT_CREATED: 3,
+    DESIGN_CAD: 4,
+    DESIGN: 4,
+    ENGINEERING: 5,
+    BOM_PROCUREMENT: 5,
+    PURCHASE: 5,
+    INVENTORY: 5,
+    CAM_PROGRAMMING: 6,
+    CAM_MACHINING: 6,
+    MACHINING: 6,
+    PRODUCTION: 6,
+    SUBCONTRACT: 6,
+    BENCH_ASSEMBLY: 7,
+    ASSEMBLY: 7,
+    TRYOUT: 8,
+    QUALITY_INSPECTION: 9,
+    INSPECTION: 9,
+    QUALITY: 9,
+    DISPATCH_READY: 10,
+    DISPATCHED: 10,
+    DISPATCH: 10,
+    INVOICED: 11,
+    CLOSED: 11,
+  };
+
+  const rawStage = (project.currentStage || 'CREATED').toUpperCase();
+  const currentStageIdx = STAGE_ALIAS_MAP[rawStage] ?? 3;
+  const progressPercent = Math.round(((currentStageIdx + 1) / STAGE_STEPS.length) * 100);
 
   // Calculate target delivery countdown
   let daysRemaining = null;
@@ -321,7 +352,7 @@ export default function ProjectOverviewPage() {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span className="text-[10px] text-cool-gray font-mono mt-1 block">Stage {currentStageIdx + 1} of {STAGES.length}</span>
+            <span className="text-[10px] text-cool-gray font-mono mt-1 block">Stage {currentStageIdx + 1} of {STAGE_STEPS.length}</span>
           </div>
         </div>
 
@@ -385,13 +416,13 @@ export default function ProjectOverviewPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5">
-          {STAGES.map((stg, idx) => {
+          {STAGE_STEPS.map((step, idx) => {
             const isCompleted = idx < currentStageIdx;
             const isCurrent = idx === currentStageIdx;
 
             return (
               <div 
-                key={stg} 
+                key={step.id} 
                 className={`p-3 rounded-[12px] border text-center transition-all ${
                   isCurrent 
                     ? "bg-primary border-primary text-white shadow-subtle" 
@@ -401,7 +432,7 @@ export default function ProjectOverviewPage() {
                 }`}
               >
                 <div className="text-[10px] font-semibold uppercase tracking-wider">
-                  {stg.replace(/_/g, ' ')}
+                  {step.label}
                 </div>
                 <div className="text-[9px] mt-1 font-mono font-semibold">
                   {isCurrent ? "IN PROGRESS" : isCompleted ? "COMPLETED" : "PENDING"}
