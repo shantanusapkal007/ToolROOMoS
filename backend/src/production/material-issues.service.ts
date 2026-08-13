@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { ProjectStatus, InventoryMovementType } from '@prisma/client';
@@ -11,10 +11,35 @@ export class MaterialIssuesService {
     private readonly wipService: WipService,
   ) {}
 
+  private async resolveProjectId(projectId: string, tx?: any): Promise<string> {
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async issueMaterial(projectId: string, dto: CreateIssueDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+
       // 1. Fetch project stage for automations
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) {
+        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
+      }
       const currentStage = project.currentStage;
 
       // Determine if header level is marked partial or if items are partials
@@ -31,7 +56,7 @@ export class MaterialIssuesService {
       // 2. Create Material Issue Header
       const issueHeader = await tx.materialIssueHeader.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           issueNumber: dto.issueNumber,
           documentNumber: dto.issueNumber,
           status: hasPartialItem ? 'PARTIAL' : 'COMPLETED',
@@ -149,7 +174,7 @@ export class MaterialIssuesService {
         // 7. Record Inventory Transaction
         await tx.inventoryTransaction.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             inventoryBatchId: batch.id,
             movementType: InventoryMovementType.MATERIAL_ISSUE,
             quantity: item.issuedQty,
@@ -162,7 +187,7 @@ export class MaterialIssuesService {
 
         // 7.1 Initialize WIP Entry
         await this.wipService.initializeWipEntry({
-          projectId,
+          projectId: targetProjectId,
           materialId: batch.materialId,
           batchId: item.inventoryBatchId,
           qtyInWip: item.issuedQty,
@@ -171,9 +196,9 @@ export class MaterialIssuesService {
       }
 
       const summary = await tx.projectCostSummary.upsert({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         create: {
-          projectId,
+          projectId: targetProjectId,
           materialConsumptionCost: totalConsumptionCost,
           totalCost: totalConsumptionCost,
           estimatedMaterialCost: 0,
@@ -197,7 +222,7 @@ export class MaterialIssuesService {
       const currentRevenue = Number(summary.revenue || 0);
       const updatedTotalCost = Number(summary.totalCost || 0);
       await tx.projectCostSummary.update({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         data: {
           profitability: currentRevenue - updatedTotalCost,
         },
@@ -206,7 +231,7 @@ export class MaterialIssuesService {
       // Record detailed cost audit trail event
       await tx.projectCostEvent.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           costType: 'MATERIAL_CONSUMPTION',
           description: `Material consumed under Issue Slip ${dto.issueNumber} (${hasPartialItem ? 'Partial' : 'Full'} Issue)`,
           amount: totalConsumptionCost,
@@ -219,7 +244,7 @@ export class MaterialIssuesService {
       // 8. Log project activity
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'MATERIAL_CONSUMED',
           description: `Material Issue ${dto.issueNumber} (${hasPartialItem ? 'Partial' : 'Full'}) recorded. Value: ₹${totalConsumptionCost}`,
           performedBy: userId || 'SYSTEM',
@@ -229,13 +254,13 @@ export class MaterialIssuesService {
       // 9. Automations: If stage was MATERIAL_AVAILABLE, transition to PRODUCTION automatically
       if (currentStage === ProjectStatus.MATERIAL_AVAILABLE) {
         await tx.project.update({
-          where: { id: projectId },
+          where: { id: targetProjectId },
           data: { currentStage: ProjectStatus.PRODUCTION, updatedBy: userId },
         });
 
         await tx.projectTimeline.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             fromStage: ProjectStatus.MATERIAL_AVAILABLE,
             toStage: ProjectStatus.PRODUCTION,
             transitionedBy: userId || 'SYSTEM',
@@ -245,7 +270,7 @@ export class MaterialIssuesService {
 
         await tx.projectActivity.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             action: 'STAGE_CHANGED',
             description: 'Project advanced to PRODUCTION stage',
             performedBy: userId || 'SYSTEM',
@@ -273,8 +298,9 @@ export class MaterialIssuesService {
   }
 
   async getMaterialIssues(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.materialIssueHeader.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       include: {
         jobCard: {
           include: {

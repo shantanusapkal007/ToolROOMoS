@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBomDto } from './dto/create-bom.dto';
 import { DocumentStatus, ProjectStatus, ApprovalStatus } from '@prisma/client';
@@ -10,19 +10,32 @@ export class BomsService {
   async createBom(projectId: string, dto: CreateBomDto, userId?: string) {
     console.log("CreateBOM DTO items:", JSON.stringify(dto.items, null, 2));
     return this.prisma.$transaction(async (tx) => {
-      // 1. Fetch project to ensure existence
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      // 1. Fetch project to ensure existence (resolving by ID or projectNumber like KTD-433)
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+
+      if (!project) {
+        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
+      }
+
+      const targetProjectId = project.id;
 
       // Stage restriction removed to allow BOM creation at any time
 
       // Check for any active BOM revision
-      const existingBoms = await tx.billOfMaterialHeader.count({ where: { projectId } });
+      const existingBoms = await tx.billOfMaterialHeader.count({ where: { projectId: targetProjectId } });
       const revision = existingBoms + 1;
 
       // Mark old BOMs as obsolete
       if (existingBoms > 0) {
         await tx.billOfMaterialHeader.updateMany({
-          where: { projectId },
+          where: { projectId: targetProjectId },
           data: { status: DocumentStatus.OBSOLETE },
         });
       }
@@ -56,7 +69,7 @@ export class BomsService {
       // 3. Create BOM Header
       const bomHeader = await tx.billOfMaterialHeader.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           revision,
           documentNumber: dto.documentNumber || `BOM-${project.projectNumber}-${revision}`,
           status: DocumentStatus.DRAFT,
@@ -98,7 +111,7 @@ export class BomsService {
       // 5. Record activity
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'BOM_CREATED',
           description: `BOM Rev ${revision} submitted with ${dto.items.length} items. Est Cost: ₹${totalCost}`,
           performedBy: userId || 'SYSTEM',
@@ -112,12 +125,24 @@ export class BomsService {
   async approveBom(projectId: string, bomId: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Fetch project, plant company and BOM
-      const project = await tx.project.findUniqueOrThrow({ 
-        where: { id: projectId },
+      const project = await tx.project.findFirst({ 
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        },
         include: { customer: true, plant: { include: { company: true } } }
       });
+
+      if (!project) {
+        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
+      }
+
+      const targetProjectId = project.id;
+
       const bom = await tx.billOfMaterialHeader.findFirstOrThrow({
-        where: { id: bomId, projectId },
+        where: { id: bomId, projectId: targetProjectId },
         include: { items: { include: { material: true } } },
       });
 
@@ -136,21 +161,17 @@ export class BomsService {
       });
 
       // 3. Financial Integration: Feed the BOM totalEstimatedCost into ProjectCostSummary (ESTIMATED column only)
-      // IMPORTANT: totalCost tracks ACTUAL costs only (consumption + machine + labour + dispatch).
-      // Estimated cost MUST NOT increment totalCost — doing so double-counts against actual issues.
       await tx.projectCostSummary.update({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         data: {
           estimatedMaterialCost: bom.totalEstimatedCost,
-          // totalCost is NOT touched here — actual costs are booked when material is issued/consumed
         },
       });
-
 
       // Also record the Estimated Cost event in project_cost_events for detailed auditing
       await tx.projectCostEvent.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           costType: 'ESTIMATED_MATERIAL',
           description: `Base material estimate defined by BOM Rev ${bom.revision} Approval`,
           amount: bom.totalEstimatedCost,
@@ -160,13 +181,9 @@ export class BomsService {
         },
       });
 
-      // Note: BOM Approval no longer advances the project to PROCUREMENT.
-      // The project only advances once the full Manufacturing Routing Plan is approved.
-
-
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'BOM_APPROVED',
           description: `BOM Approved by Engineering. Project transitioned to PROCUREMENT.`,
           performedBy: userId || 'SYSTEM',
@@ -178,7 +195,7 @@ export class BomsService {
         // Cleanup previous stale auto-generated POs for this project
         const stalePos = await tx.purchaseOrderHeader.findMany({
           where: { 
-            projectId, 
+            projectId: targetProjectId, 
             poNumber: { startsWith: 'PO-AUTO-' },
             status: { in: ['DRAFT', 'ON_HOLD'] }
           },
@@ -226,7 +243,7 @@ export class BomsService {
             
             const poHeader = await tx.purchaseOrderHeader.create({
               data: {
-                projectId,
+                projectId: targetProjectId,
                 vendorId: defaultVendor.id,
                 poNumber: poNumber,
                 status: 'DRAFT',
@@ -254,7 +271,6 @@ export class BomsService {
               const companyStateCode = companyGst.trim().slice(0, 2);
               const vendorStateCode = vendorGst.trim().slice(0, 2);
               
-              // Dynamic intrastate matching: true if state codes match or if state code is unspecified
               const isIntrastate = !vendorStateCode || !companyStateCode || vendorStateCode === companyStateCode;
               
               const round2 = (val: number) => Math.round((val + Number.EPSILON) * 100) / 100;
@@ -305,7 +321,7 @@ export class BomsService {
 
             await tx.projectActivity.create({
               data: {
-                projectId,
+                projectId: targetProjectId,
                 action: 'PO_AUTO_GENERATED',
                 description: `Draft PO ${poHeader.poNumber} auto-generated for ${itemsToOrder.length} BOM items.`,
                 performedBy: 'SYSTEM',
@@ -323,8 +339,19 @@ export class BomsService {
 
   async rejectBom(projectId: string, bomId: string, remarks?: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      const bom = await tx.billOfMaterialHeader.findFirstOrThrow({ where: { id: bomId, projectId } });
+      const project = await tx.project.findFirst({ 
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) {
+        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
+      }
+      const targetProjectId = project.id;
+      const bom = await tx.billOfMaterialHeader.findFirstOrThrow({ where: { id: bomId, projectId: targetProjectId } });
 
       if (bom.approvalStatus !== ApprovalStatus.PENDING) {
         throw new BadRequestException('Only pending BOMs can be rejected.');
@@ -342,7 +369,7 @@ export class BomsService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'BOM_REJECTED',
           description: `BOM Rev ${bom.revision} Rejected. Reason: ${remarks || 'No reason provided'}`,
           performedBy: userId || 'SYSTEM',
@@ -354,11 +381,21 @@ export class BomsService {
   }
 
   async getBom(projectId: string) {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    if (!project) return null;
     return this.prisma.billOfMaterialHeader.findFirst({
-      where: { projectId, status: { not: DocumentStatus.OBSOLETE } },
+      where: { projectId: project.id, status: { not: DocumentStatus.OBSOLETE } },
       include: { items: { include: { material: true } } },
     });
   }
 
 }
+
 

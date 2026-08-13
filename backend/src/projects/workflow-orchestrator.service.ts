@@ -12,8 +12,13 @@ export class WorkflowOrchestratorService {
 
     const tx = txClient || this.prisma;
 
-    const project = await tx.project.findUnique({
-      where: { id: projectId },
+    const project = await tx.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      },
       include: {
         billOfMaterialHeaders: { where: { status: 'APPROVED' } },
         goodsReceiptHeaders: true,
@@ -32,6 +37,7 @@ export class WorkflowOrchestratorService {
       return; // Terminal states — no auto progression
     }
 
+    const targetProjectId = project.id;
     let nextStage: ProjectStatus = project.currentStage;
 
     // Evaluate stage progression strictly in order
@@ -87,13 +93,13 @@ export class WorkflowOrchestratorService {
     // Only update if there is actual progression
     if (nextStage !== project.currentStage) {
       await tx.project.update({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         data: { currentStage: nextStage },
       });
 
       await tx.projectTimeline.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           fromStage: project.currentStage,
           toStage: nextStage,
           remarks: 'System Auto-Progression based on Workflow rules.',
@@ -101,7 +107,7 @@ export class WorkflowOrchestratorService {
       });
 
       // Recursively evaluate — pass depth+1 to prevent infinite loops
-      await this.evaluateProjectStage(projectId, tx, depth + 1);
+      await this.evaluateProjectStage(targetProjectId, tx, depth + 1);
     }
   }
 }

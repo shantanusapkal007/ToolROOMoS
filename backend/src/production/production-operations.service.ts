@@ -13,8 +13,23 @@ export class ProductionOperationsService {
     private readonly wipService: WipService
   ) {}
 
+  private async resolveProjectId(projectId: string, tx?: any): Promise<string> {
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async logMachineShopReport(projectId: string, dto: CreateMsdrDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+
       // 1. Fetch machine and employee rate details
       const machine = await tx.machine.findUniqueOrThrow({ where: { id: dto.machineId } });
       const employee = await tx.employee.findUniqueOrThrow({ where: { id: dto.employeeId } });
@@ -22,7 +37,7 @@ export class ProductionOperationsService {
       // 2. Create the MSDR Header
       const header = await tx.msdrHeader.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           machineId: dto.machineId,
           employeeId: dto.employeeId,
           reportDate: new Date(dto.reportDate),
@@ -78,7 +93,7 @@ export class ProductionOperationsService {
         // Update WIP Progress (Accrue machine and labor costs)
         if (item.materialId) {
           await this.wipService.updateWipProgress({
-            projectId,
+            projectId: targetProjectId,
             machineId: dto.machineId,
             materialId: item.materialId,
             accruedMachineCost: mCost,
@@ -89,7 +104,7 @@ export class ProductionOperationsService {
         // Cost logging per item
         await tx.projectCostEvent.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             costType: 'MACHINE_COST',
             description: `Machine cost logged on ${machine.machineCode} for ${machineHrs.toFixed(2)} hrs (Tool: ${item.toolNo || 'N/A'})`,
             amount: mCost,
@@ -102,7 +117,7 @@ export class ProductionOperationsService {
         if (lCost > 0) {
           await tx.projectCostEvent.create({
             data: {
-              projectId,
+              projectId: targetProjectId,
               costType: 'LABOUR_COST',
               description: `Shopfloor labour: ${employee.name || 'Operator'} – ${machineHrs.toFixed(2)} hrs @ ₹${employee.hourlyRate.toNumber()}/hr on ${machine.machineCode}`,
               amount: lCost,
@@ -116,7 +131,7 @@ export class ProductionOperationsService {
         // Synchronize matching JobCard status to IN_PROGRESS
         await tx.jobCard.updateMany({
           where: {
-            projectId,
+            projectId: targetProjectId,
             machineId: dto.machineId,
             status: 'READY'
           },
@@ -129,9 +144,9 @@ export class ProductionOperationsService {
 
       // 4. Rollup costs to ProjectCostSummary & synchronize live profitability
       const summary = await tx.projectCostSummary.upsert({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         create: {
-          projectId,
+          projectId: targetProjectId,
           materialConsumptionCost: 0,
           totalCost: totalMachineCost + totalLabourCost,
           estimatedMaterialCost: 0,
@@ -155,7 +170,7 @@ export class ProductionOperationsService {
       const currentRevenue = Number(summary.revenue || 0);
       const updatedTotalCost = Number(summary.totalCost || 0);
       await tx.projectCostSummary.update({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         data: {
           profitability: currentRevenue - updatedTotalCost,
         },
@@ -164,7 +179,7 @@ export class ProductionOperationsService {
       // 5. Activity Log
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'PRODUCTION_LOGGED',
           description: `MSDR ${header.msdrNumber} (${header.productionSection}) recorded with ${(dto.items || []).length} operations. Cost: ₹${(totalMachineCost + totalLabourCost).toFixed(2)}`,
           performedBy: userId || 'SYSTEM',
@@ -176,7 +191,8 @@ export class ProductionOperationsService {
   }
 
   async getMachineShopReports(projectId: string, section?: string) {
-    const whereClause: any = { projectId };
+    const targetProjectId = await this.resolveProjectId(projectId);
+    const whereClause: any = { projectId: targetProjectId };
     if (section) {
       whereClause.productionSection = section;
     }

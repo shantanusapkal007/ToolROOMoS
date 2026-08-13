@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { api } from '../../lib/api';
 import { Input } from '../../components/ui/Input';
-import { Lock, Mail, AlertCircle, ArrowRight, Shield } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Lock, Mail, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState('admin@toolroom.com');
   const [password, setPassword] = useState('admin123');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -17,7 +19,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    
+
     try {
       const response = await api.post<any>('/auth/login', { email, password });
       const data = response as any;
@@ -34,23 +36,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent">
-      {/* Background is handled by layout.tsx (Premium orbs) */}
-
-      <div className="w-full max-w-[420px] p-10 glass-panel relative z-10">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-canvas text-ink select-none">
+      <div className="w-full max-w-[420px] p-8 sm:p-10 bg-white dark:bg-canvas border border-border-gray dark:border-hairline rounded-[16px] shadow-subtle relative z-10">
         
-        <div className="text-center mb-10">
-          <div className="mx-auto w-16 h-16 rounded-[1.25rem] bg-white border border-hairline/60 shadow-[0_8px_16px_rgba(15,15,20,0.04)] flex items-center justify-center mb-6">
-            <Shield className="w-8 h-8 text-ink" strokeWidth={1.5} />
+        {/* Header with Official Logo & Wordmark */}
+        <div className="text-center mb-8">
+          <div className="mx-auto w-16 h-16 rounded-[14px] bg-white border border-border-gray shadow-micro flex items-center justify-center mb-4 p-2.5">
+            <img 
+              src="/short_logo.png" 
+              alt="ToolRoomOS Official Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
-          <h1 className="text-2xl font-semibold text-ink mb-2 tracking-tight">ToolRoomOS</h1>
-          <p className="text-zinc-600 font-medium text-sm">Sign in to your account</p>
+          <h1 className="text-heading-xl font-bold mb-1.5 tracking-tight">
+            <span className="text-[#7d849b]">ToolRoom</span><span className="text-primary">OS</span>
+          </h1>
+          <p className="text-body-sm text-cool-gray font-medium">Sign in to your account</p>
         </div>
 
+        {/* Semantic Status Alert */}
         {error && (
-          <div className="mb-6 p-4 rounded-md bg-red-50 border border-red-100 flex items-start space-x-3 text-red-600 text-sm font-medium">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <p>{error}</p>
+          <div className="mb-6 p-3.5 rounded-[10px] bg-semantic-danger-subtle border border-semantic-danger/20 flex items-start space-x-3 text-semantic-danger-dark text-caption font-medium shadow-micro">
+            <AlertCircle className="w-5 h-5 shrink-0 text-semantic-danger" />
+            <p className="leading-snug">{error}</p>
           </div>
         )}
 
@@ -70,32 +78,47 @@ export default function LoginPage() {
           <div className="space-y-1">
             <Input
               label="Password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
               leftIcon={<Lock className="h-5 w-5" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-silver-blue hover:text-ink transition-colors cursor-pointer p-1"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              }
             />
           </div>
 
           <div className="pt-2">
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full h-12 bg-primary hover:bg-black text-white rounded-md font-semibold text-sm transition-all shadow-[0_4px_14px_rgba(10,10,12,0.15)] hover:shadow-[0_6px_20px_rgba(10,10,12,0.2)] flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+              variant="primary"
+              size="lg"
+              className="w-full font-semibold"
+              isLoading={isLoading}
+              rightIcon={!isLoading ? <ArrowRight className="w-4 h-4" /> : undefined}
             >
-              <span>{isLoading ? 'Authenticating...' : 'Sign In'}</span>
-              {!isLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-            </button>
+              Sign In
+            </Button>
           </div>
         </form>
         
-        <div className="mt-8 text-center text-[11px] font-medium text-mute uppercase tracking-widest">
+        {/* Security Caption */}
+        <div className="mt-8 text-center text-eyebrow-uppercase-sm text-silver-blue tracking-widest">
           Authorized Personnel Only
         </div>
       </div>
     </div>
   );
 }
+
 

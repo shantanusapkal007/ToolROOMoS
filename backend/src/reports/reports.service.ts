@@ -146,6 +146,20 @@ export class ReportsService {
     }));
   }
 
+  async resolveProjectId(projectId?: string, tx?: any): Promise<string | undefined> {
+    if (!projectId || projectId === 'ALL') return projectId;
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async getGlobalEmployeeDailyReports(query?: {
     date?: string;
     projectId?: string;
@@ -159,8 +173,9 @@ export class ReportsService {
     const msdrWhere: any = {};
 
     if (query?.projectId && query.projectId !== 'ALL') {
-      designerWhere.projectId = query.projectId;
-      msdrWhere.projectId = query.projectId;
+      const targetProjectId = await this.resolveProjectId(query.projectId);
+      designerWhere.projectId = targetProjectId;
+      msdrWhere.projectId = targetProjectId;
     }
 
     if (query?.date) {
@@ -418,9 +433,11 @@ export class ReportsService {
     const hoursSpent = Number(dto.hoursSpent) || 0;
 
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(dto.projectId, tx);
+
       const log = await (tx as any).designWorkLog.create({
         data: {
-          projectId: dto.projectId,
+          projectId: targetProjectId,
           designerName: dto.designerName,
           designerId: dto.designerId,
           workStage: dto.workStage,
@@ -440,7 +457,7 @@ export class ReportsService {
       });
 
       // --- Finance Integration: Auto-generate labour cost events ---
-      if (dto.projectId && hoursSpent > 0) {
+      if (targetProjectId && hoursSpent > 0) {
         let labourRate = 0;
 
         // Look up employee hourly rate if designerId is provided
@@ -467,7 +484,7 @@ export class ReportsService {
           // Create cost event
           await tx.projectCostEvent.create({
             data: {
-              projectId: dto.projectId,
+              projectId: targetProjectId,
               costType: 'LABOUR_COST',
               description: `Design labour: ${dto.designerName || 'Designer'} – ${hoursSpent.toFixed(1)}hrs × ₹${labourRate}/hr (${dto.workStage || 'Design'})`,
               amount: labourCost,
@@ -479,9 +496,9 @@ export class ReportsService {
 
           // Update project cost summary
           await tx.projectCostSummary.upsert({
-            where: { projectId: dto.projectId },
+            where: { projectId: targetProjectId },
             create: {
-              projectId: dto.projectId,
+              projectId: targetProjectId,
               labourCost: labourCost,
               totalCost: labourCost,
               profitability: -labourCost,
@@ -502,10 +519,10 @@ export class ReportsService {
           });
 
           // Re-sync profitability
-          const summary = await tx.projectCostSummary.findUnique({ where: { projectId: dto.projectId } });
+          const summary = await tx.projectCostSummary.findUnique({ where: { projectId: targetProjectId } });
           if (summary) {
             await tx.projectCostSummary.update({
-              where: { projectId: dto.projectId },
+              where: { projectId: targetProjectId },
               data: { profitability: Number(summary.revenue) - Number(summary.totalCost) },
             });
           }
@@ -522,7 +539,14 @@ export class ReportsService {
       let validProjectId = dto.projectId;
       let project: any = null;
       if (validProjectId) {
-        project = await tx.project.findUnique({ where: { id: validProjectId } }).catch(() => null);
+        project = await tx.project.findFirst({
+          where: {
+            OR: [
+              { id: validProjectId },
+              { projectNumber: validProjectId }
+            ]
+          }
+        }).catch(() => null);
       }
       if (!project) {
         project = await tx.project.findFirst({ where: { status: { not: 'CLOSED' } } }) || await tx.project.findFirst();
@@ -763,8 +787,10 @@ export class ReportsService {
     search?: string;
   }) {
     const issueWhere: any = {};
+    let targetProjectId: string | undefined = undefined;
     if (query?.projectId && query.projectId !== 'ALL') {
-      issueWhere.projectId = query.projectId;
+      targetProjectId = await this.resolveProjectId(query.projectId);
+      issueWhere.projectId = targetProjectId;
     }
 
     const materialIssues = await (this.prisma as any).materialIssueHeader.findMany({
@@ -908,7 +934,7 @@ export class ReportsService {
     let filtered = items;
 
     if (query?.projectId && query.projectId !== 'ALL') {
-      filtered = filtered.filter(i => i.projectId === query.projectId);
+      filtered = filtered.filter(i => i.projectId === targetProjectId || i.projectId === query.projectId || i.projectCode === query.projectId);
     }
 
     if (query?.section && query.section !== 'ALL') {

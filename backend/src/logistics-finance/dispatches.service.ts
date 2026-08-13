@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { ProjectStatus } from '@prisma/client';
@@ -7,17 +7,40 @@ import { ProjectStatus } from '@prisma/client';
 export class DispatchesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async resolveProjectId(projectId: string, tx?: any): Promise<string> {
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async createDispatch(projectId: string, dto: CreateDispatchDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+
       // 1. Fetch project to get customerId
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      // 2. Business Rule: Cannot dispatch without Passed PDI - Removed
-      // 3. Business Rule: Cannot dispatch with Open NCR - Removed
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) {
+        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
+      }
 
       // 2. Create Dispatch Note
       const dispatch = await tx.dispatchNote.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           customerId: project.customerId,
           dispatchNumber: dto.dispatchNumber,
           documentNumber: dto.dispatchNumber,
@@ -35,12 +58,11 @@ export class DispatchesService {
       });
 
       // 3. Costing Integration: Rollup logistics cost to ProjectCostSummary (Layer 5 - Outcomes)
-      // Guard against null/undefined logisticsCost (free deliveries)
       const safeLogisticsCost = dto.logisticsCost || 0;
-      const summary = await tx.projectCostSummary.upsert({
-        where: { projectId },
+      await tx.projectCostSummary.upsert({
+        where: { projectId: targetProjectId },
         create: {
-          projectId,
+          projectId: targetProjectId,
           materialConsumptionCost: 0,
           totalCost: safeLogisticsCost,
           estimatedMaterialCost: 0,
@@ -55,62 +77,46 @@ export class DispatchesService {
           profitability: -safeLogisticsCost,
         },
         update: {
-          dispatchCost: { increment: safeLogisticsCost },
           totalCost: { increment: safeLogisticsCost },
+          dispatchCost: { increment: safeLogisticsCost },
+          profitability: { decrement: safeLogisticsCost },
         },
       });
 
-      const currentRevenue = Number(summary.revenue || 0);
-      const updatedTotalCost = Number(summary.totalCost || 0);
-      await tx.projectCostSummary.update({
-        where: { projectId },
-        data: {
-          profitability: currentRevenue - updatedTotalCost,
-        },
-      });
+      // 4. Record Project Cost Event
+      if (safeLogisticsCost > 0) {
+        await tx.projectCostEvent.create({
+          data: {
+            projectId: targetProjectId,
+            costType: 'DISPATCH_COST',
+            description: `Logistics Cost for Dispatch ${dto.dispatchNumber}`,
+            amount: safeLogisticsCost,
+            referenceDocType: 'DISPATCH',
+            referenceDocId: dispatch.id,
+            createdBy: userId,
+          },
+        });
+      }
 
-      // Record detailed cost audit trail event
-      await tx.projectCostEvent.create({
-        data: {
-          projectId,
-          costType: 'DISPATCH_COST',
-          description: `Logistics cost logged for Dispatch Note ${dto.dispatchNumber}`,
-          amount: safeLogisticsCost,
-          referenceDocType: 'DISPATCH',
-          referenceDocId: dispatch.id,
-          createdBy: userId,
-        },
-      });
-
-      // 4. Log project activity
-      await tx.projectActivity.create({
-        data: {
-          projectId,
-          action: 'PROJECT_DISPATCHED',
-          description: `Dispatch Note ${dto.dispatchNumber} logged. Parts sent: ${dto.dispatchQty}. Logistics Cost booked: ₹${safeLogisticsCost}`,
-          performedBy: userId || 'SYSTEM',
-        },
-      });
-
-      // 5. Workflow Automation: Advance Project to DISPATCHED
+      // 5. Workflow Stage Progression
       await tx.project.update({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         data: { currentStage: ProjectStatus.DISPATCHED, updatedBy: userId },
       });
 
       await tx.projectTimeline.create({
         data: {
-          projectId,
-          fromStage: ProjectStatus.DISPATCH_READY,
+          projectId: targetProjectId,
+          fromStage: project.currentStage,
           toStage: ProjectStatus.DISPATCHED,
           transitionedBy: userId || 'SYSTEM',
-          remarks: `Material loaded and dispatched. Shipping value: ₹${dto.logisticsCost}`,
+          remarks: `Dispatch ${dto.dispatchNumber} logged.`,
         },
       });
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'STAGE_CHANGED',
           description: 'Project advanced to DISPATCHED stage',
           performedBy: userId || 'SYSTEM',
@@ -122,8 +128,9 @@ export class DispatchesService {
   }
 
   async getDispatches(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.dispatchNote.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       include: { items: true },
       orderBy: { dispatchDate: 'desc' },
     });

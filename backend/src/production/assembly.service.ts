@@ -5,12 +5,25 @@ import { PrismaService } from '../prisma/prisma.service';
 export class AssemblyService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveProjectId(projectId: string): Promise<string> {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   // ======================
   // Assembly Work Orders
   // ======================
   async getAssemblyHeaders(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.assemblyHeader.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       include: {
         components: {
           include: { material: true }
@@ -23,13 +36,14 @@ export class AssemblyService {
   }
 
   async createAssemblyHeader(projectId: string, data: any) {
-    const count = await this.prisma.assemblyHeader.count({ where: { projectId } });
+    const targetProjectId = await this.resolveProjectId(projectId);
+    const count = await this.prisma.assemblyHeader.count({ where: { projectId: targetProjectId } });
     const seqStr = (count + 1).toString().padStart(3, '0');
-    const assemblyNumber = `ASM-${projectId.substring(0, 4).toUpperCase()}-${seqStr}`;
+    const assemblyNumber = `ASM-${targetProjectId.substring(0, 4).toUpperCase()}-${seqStr}`;
     
     return this.prisma.assemblyHeader.create({
       data: {
-        projectId,
+        projectId: targetProjectId,
         assemblyNumber,
         assemblyName: data.assemblyName || 'Final Assembly',
         status: 'DRAFT',
@@ -66,19 +80,21 @@ export class AssemblyService {
   // Project Trials
   // ======================
   async getProjectTrials(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.projectTrial.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       orderBy: { createdAt: 'desc' }
     });
   }
 
   async createProjectTrial(projectId: string, data: any) {
-    const trialCount = await this.prisma.projectTrial.count({ where: { projectId } });
-    const trialNumber = `TRIAL-${projectId.substring(0, 4).toUpperCase()}-0${trialCount + 1}`;
+    const targetProjectId = await this.resolveProjectId(projectId);
+    const trialCount = await this.prisma.projectTrial.count({ where: { projectId: targetProjectId } });
+    const trialNumber = `TRIAL-${targetProjectId.substring(0, 4).toUpperCase()}-0${trialCount + 1}`;
     
     return this.prisma.projectTrial.create({
       data: {
-        projectId,
+        projectId: targetProjectId,
         trialNumber,
         trialDate: data.trialDate ? new Date(data.trialDate) : new Date(),
         status: data.status || 'PENDING',

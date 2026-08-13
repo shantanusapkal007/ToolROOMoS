@@ -33,7 +33,7 @@ export class ProductionController {
   @Post('material-issues')
   @Roles('ADMIN', 'PRODUCTION')
   async issueMaterial(
-    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('projectId') projectId: string,
     @Body() dto: CreateIssueDto,
     @CurrentUser() user: any,
   ) {
@@ -46,7 +46,7 @@ export class ProductionController {
   }
 
   @Get('material-issues')
-  async getMaterialIssues(@Param('projectId', ParseUUIDPipe) projectId: string) {
+  async getMaterialIssues(@Param('projectId') projectId: string) {
     const data = await this.issueService.getMaterialIssues(projectId);
     return {
       status: 'success',
@@ -58,7 +58,7 @@ export class ProductionController {
   @Post('material-returns')
   @Roles('ADMIN', 'PRODUCTION')
   async returnMaterial(
-    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('projectId') projectId: string,
     @Body() dto: CreateReturnDto,
     @CurrentUser() user: any,
   ) {
@@ -74,7 +74,7 @@ export class ProductionController {
   @Post('machine-shop-reports')
   @Roles('ADMIN', 'PRODUCTION')
   async logMachineShopReport(
-    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('projectId') projectId: string,
     @Body() dto: CreateMsdrDto,
     @CurrentUser() user: any,
   ) {
@@ -88,7 +88,7 @@ export class ProductionController {
 
   @Get('machine-shop-reports')
   async getMachineShopReports(
-    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('projectId') projectId: string,
     @Query('section') section?: string
   ) {
     const data = await this.msdrService.getMachineShopReports(projectId, section);

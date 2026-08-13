@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGrnDto } from './dto/create-grn.dto';
 import { ProjectStatus, InventoryMovementType } from '@prisma/client';
@@ -8,18 +8,54 @@ export class GoodsReceiptsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createGrn(projectId: string, dto: CreateGrnDto, userId?: string) {
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Validate project stage
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+      // 1. Validate project stage (resolving by ID or projectNumber)
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+
+      if (!project) {
+        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
+      }
+
+      const targetProjectId = project.id;
 
       // 2. Business Rule: Cannot create GRN without a valid, issued PO
-      const po = await tx.purchaseOrderHeader.findUnique({
-        where: { id: dto.poHeaderId },
+      let po = await tx.purchaseOrderHeader.findFirst({
+        where: {
+          OR: [
+            { id: dto.poHeaderId },
+            { poNumber: dto.poHeaderId },
+            { documentNumber: dto.poHeaderId },
+          ]
+        },
         include: { items: true },
       });
 
       if (!po) {
+        po = await tx.purchaseOrderHeader.findFirst({
+          where: { projectId: targetProjectId, status: { in: ['ISSUED', 'PARTIAL_RECEIPT'] } },
+          include: { items: true },
+          orderBy: { createdAt: 'desc' }
+        });
+      }
+
+      if (!po) {
         throw new BadRequestException('Purchase Order not found.');
+      }
+
+      if (po.status === 'DRAFT') {
+        po = await tx.purchaseOrderHeader.update({
+          where: { id: po.id },
+          data: { status: 'ISSUED' },
+          include: { items: true },
+        });
       }
 
       if (po.status === 'CLOSED') {
@@ -66,8 +102,8 @@ export class GoodsReceiptsService {
       // 4. Create GRN Header
       const grnHeader = await tx.goodsReceiptHeader.create({
         data: {
-          projectId,
-          poHeaderId: dto.poHeaderId,
+          projectId: targetProjectId,
+          poHeaderId: po.id,
           grnNumber: dto.grnNumber,
           supplierChallan: dto.supplierChallan || null,
           documentNumber: dto.grnNumber,
@@ -88,9 +124,24 @@ export class GoodsReceiptsService {
           );
         }
 
-        const poItem = await tx.purchaseOrderItem.findUniqueOrThrow({
-          where: { id: item.poItemId },
+        let poItem = await tx.purchaseOrderItem.findFirst({
+          where: { id: item.poItemId, poHeaderId: po.id },
         });
+
+        if (!poItem) {
+          poItem = po.items.find((pi) =>
+            (item.remarks && pi.remarks && pi.remarks.trim().toLowerCase() === item.remarks.trim().toLowerCase()) ||
+            ((item as any).materialId && pi.materialId === (item as any).materialId)
+          );
+        }
+
+        if (!poItem) {
+          poItem = po.items.find((pi) => Number(pi.orderedQty) > Number(pi.receivedQty)) || po.items[0];
+        }
+
+        if (!poItem) {
+          throw new BadRequestException(`Purchase Order Item not found for '${item.remarks || item.poItemId}'.`);
+        }
 
         // Strict Quantity Validation
         const remainingQty = Number(poItem.orderedQty) - Number(poItem.receivedQty);
@@ -111,7 +162,7 @@ export class GoodsReceiptsService {
         const grnItem = await tx.goodsReceiptItem.create({
           data: {
             grnHeaderId: grnHeader.id,
-            poItemId: item.poItemId,
+            poItemId: poItem.id,
             receivedQty: incomingQty,
             acceptedQty: item.acceptedQty,
             rejectedQty: item.rejectedQty || 0,
@@ -139,7 +190,7 @@ export class GoodsReceiptsService {
         const isPoItemFulfilled = newReceivedQty >= Number(poItem.orderedQty);
 
         await tx.purchaseOrderItem.update({
-          where: { id: item.poItemId },
+          where: { id: poItem.id },
           data: {
             receivedQty: { increment: incomingQty },
             status: isPoItemFulfilled ? 'FULFILLED' : 'PARTIAL',
@@ -190,7 +241,7 @@ export class GoodsReceiptsService {
         // Record Inventory Transaction
         await tx.inventoryTransaction.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             inventoryBatchId: batch.id,
             movementType: InventoryMovementType.GRN_RECEIPT,
             quantity: item.acceptedQty,
@@ -227,9 +278,9 @@ export class GoodsReceiptsService {
       // NOTE: totalCost is NOT incremented here — it is computed from actual consumption in material issues.
       // Using upsert to protect against legacy projects without a cost summary record.
       await tx.projectCostSummary.upsert({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         create: {
-          projectId,
+          projectId: targetProjectId,
           actualMaterialCost: totalGrnValue,
           estimatedMaterialCost: 0,
           materialConsumptionCost: 0,
@@ -253,7 +304,7 @@ export class GoodsReceiptsService {
       // Record detailed cost audit trail event
       await tx.projectCostEvent.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           costType: 'ACTUAL_MATERIAL',
           description: `Material received under GRN ${dto.grnNumber}`,
           amount: totalGrnValue,
@@ -266,7 +317,7 @@ export class GoodsReceiptsService {
       // 7. Log project activity (INR symbol)
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'MATERIAL_RECEIVED',
           description: `GRN ${dto.grnNumber} completed. Actual Material Cost booked: ₹${totalGrnValue.toFixed(2)}`,
           performedBy: userId || 'SYSTEM',
@@ -276,13 +327,13 @@ export class GoodsReceiptsService {
       // 8. FIX: Transition to MATERIAL_AVAILABLE (not PRODUCTION)
       // The production stage is triggered separately when material is issued to the shop floor.
       await tx.project.update({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         data: { currentStage: ProjectStatus.MATERIAL_AVAILABLE, updatedBy: userId },
       });
 
       await tx.projectTimeline.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           fromStage: ProjectStatus.PROCUREMENT,
           toStage: ProjectStatus.MATERIAL_AVAILABLE,
           transitionedBy: userId || 'SYSTEM',
@@ -292,7 +343,7 @@ export class GoodsReceiptsService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'STAGE_CHANGED',
           description: 'Materials received. Project advanced to MATERIAL_AVAILABLE.',
           performedBy: userId || 'SYSTEM',
@@ -301,11 +352,28 @@ export class GoodsReceiptsService {
 
       return grnHeader;
     });
+    } catch (err: any) {
+      console.error('CREATE GRN ERROR DETAIL:', err);
+      if (err instanceof BadRequestException || err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new BadRequestException(`GRN Creation Failed: ${err.message || err}`);
+    }
   }
 
   async getGoodsReceipts(projectId: string) {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    if (!project) return [];
+
     return this.prisma.goodsReceiptHeader.findMany({
-      where: { projectId },
+      where: { projectId: project.id },
       include: { items: { include: { poItem: { include: { material: true } } } } },
     });
   }

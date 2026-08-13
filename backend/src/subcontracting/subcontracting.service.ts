@@ -14,9 +14,23 @@ export class SubcontractingService {
     return `${prefix}-${timestamp}-${random}`;
   }
 
+  private async resolveProjectId(projectId: string, tx?: any): Promise<string> {
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async createOrder(projectId: string, dto: CreateSubcontractOrderDto) {
     return this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.findUnique({ where: { id: projectId } });
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+      const project = await tx.project.findUnique({ where: { id: targetProjectId } });
       if (!project) throw new NotFoundException('Project not found');
 
       let totalEstimatedCost = 0;
@@ -37,7 +51,7 @@ export class SubcontractingService {
 
       const order = await tx.subcontractOrder.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           vendorId: dto.vendorId,
           challanNumber,
           documentNumber: dto.documentNumber,
@@ -63,13 +77,13 @@ export class SubcontractingService {
         project.currentStage === 'MATERIAL_AVAILABLE'
       ) {
         await tx.project.update({
-          where: { id: projectId },
+          where: { id: targetProjectId },
           data: { currentStage: 'PRODUCTION' },
         });
 
         await tx.projectTimeline.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             fromStage: project.currentStage,
             toStage: 'PRODUCTION',
             remarks: `Subcontract Order ${challanNumber} issued.`,
@@ -79,7 +93,7 @@ export class SubcontractingService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'SUBCONTRACT_ORDER_ISSUED',
           description: `Challan ${challanNumber} generated for Vendor.`,
         },
@@ -90,8 +104,9 @@ export class SubcontractingService {
   }
 
   async getOrders(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.subcontractOrder.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       include: {
         vendor: true,
         items: {
@@ -112,6 +127,7 @@ export class SubcontractingService {
 
   async createReceipt(projectId: string, dto: CreateSubcontractReceiptDto) {
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
       const order = await tx.subcontractOrder.findUnique({
         where: { id: dto.subcontractOrderId },
         include: { items: { include: { inventoryBatch: { include: { material: true } } } } },
@@ -162,7 +178,7 @@ export class SubcontractingService {
 
       const receipt = await tx.subcontractReceipt.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           subcontractOrderId: dto.subcontractOrderId,
           receiptNumber,
           documentNumber: dto.documentNumber,
@@ -190,7 +206,7 @@ export class SubcontractingService {
       // Costing Event
       await tx.projectCostEvent.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           costType: 'OUTSIDE_PROCESS',
           description: `Subcontract Receipt ${receiptNumber}`,
           amount: totalProcessCost,
@@ -200,13 +216,13 @@ export class SubcontractingService {
       });
 
       // Update Cost Summary
-      const costSummary = await tx.projectCostSummary.findUnique({ where: { projectId } });
+      const costSummary = await tx.projectCostSummary.findUnique({ where: { projectId: targetProjectId } });
       if (costSummary) {
         const newCost = Number(costSummary.outsideProcessCost) + totalProcessCost;
         const newTotal = Number(costSummary.totalCost) + totalProcessCost;
         const newProfit = Number(costSummary.revenue) - newTotal;
         await tx.projectCostSummary.update({
-          where: { projectId },
+          where: { projectId: targetProjectId },
           data: {
             outsideProcessCost: newCost,
             totalCost: newTotal,
@@ -217,7 +233,7 @@ export class SubcontractingService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'SUBCONTRACT_RECEIPT',
           description: `Receipt ${receiptNumber} processed. Cost: ₹${totalProcessCost}`,
         },
@@ -228,8 +244,9 @@ export class SubcontractingService {
   }
 
   async getReceipts(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.subcontractReceipt.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       include: {
         items: {
           include: {

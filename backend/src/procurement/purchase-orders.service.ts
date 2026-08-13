@@ -333,7 +333,18 @@ export class PurchaseOrdersService {
 
   async createPo(projectId: string, dto: CreatePoDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) {
+        throw new BadRequestException(`Project not found for ID or project number '${projectId}'.`);
+      }
+      const targetProjectId = project.id;
       
       let vendorId = dto.vendorId;
       if (!vendorId) {
@@ -367,7 +378,6 @@ export class PurchaseOrdersService {
         vendorId = defaultVendor.id;
       }
 
-
       let finalPoNumber = dto.poNumber;
       if (!finalPoNumber || finalPoNumber.trim() === '') {
         finalPoNumber = await this.sequenceEngine.generateNextNumber('PO');
@@ -383,7 +393,7 @@ export class PurchaseOrdersService {
 
       const poHeader = await tx.purchaseOrderHeader.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           vendorId: vendorId,
           poNumber: finalPoNumber,
           documentNumber: finalPoNumber,
@@ -426,7 +436,7 @@ export class PurchaseOrdersService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'PO_GENERATED',
           description: `Purchase Order ${finalPoNumber} issued to Vendor. Value: ₹${totalAmount}`,
           performedBy: userId || 'SYSTEM',
@@ -438,8 +448,18 @@ export class PurchaseOrdersService {
   }
 
   async getPurchaseOrders(projectId: string) {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    if (!project) return [];
+
     return this.prisma.purchaseOrderHeader.findMany({
-      where: { projectId },
+      where: { projectId: project.id },
       include: { 
         vendor: true, 
         items: { 
@@ -462,13 +482,27 @@ export class PurchaseOrdersService {
           }
         }
       },
+      orderBy: { createdAt: 'desc' }
     });
   }
 
   async updatePo(projectId: string, poId: string, dto: CreatePoDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      const po = await tx.purchaseOrderHeader.findUniqueOrThrow({
-        where: { id: poId, projectId }
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) {
+        throw new BadRequestException(`Project not found for ID or project number '${projectId}'.`);
+      }
+      const targetProjectId = project.id;
+
+      const po = await tx.purchaseOrderHeader.findFirstOrThrow({
+        where: { id: poId, projectId: targetProjectId }
       });
 
       if (po.status === 'CLOSED' || (po.status as string) === 'COMPLETED') {
@@ -529,7 +563,7 @@ export class PurchaseOrdersService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'PO_UPDATED',
           description: `Purchase Order ${dto.poNumber} was modified. New Value: ₹${totalAmount}`,
           performedBy: userId || 'SYSTEM',
@@ -542,8 +576,21 @@ export class PurchaseOrdersService {
 
   async issuePo(projectId: string, poId: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      const po = await tx.purchaseOrderHeader.findUniqueOrThrow({
-        where: { id: poId, projectId }
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) {
+        throw new BadRequestException(`Project not found for ID or project number '${projectId}'.`);
+      }
+      const targetProjectId = project.id;
+
+      const po = await tx.purchaseOrderHeader.findFirstOrThrow({
+        where: { id: poId, projectId: targetProjectId }
       });
       
       if (po.status !== 'ON_HOLD' && po.status !== 'DRAFT') {
@@ -562,8 +609,19 @@ export class PurchaseOrdersService {
 
   async deletePo(projectId: string, poId: string) {
     return this.prisma.$transaction(async (tx) => {
-      const po = await tx.purchaseOrderHeader.findUniqueOrThrow({
-        where: { id: poId, projectId }
+      const project = await this.prisma.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) return;
+      const targetProjectId = project.id;
+
+      const po = await tx.purchaseOrderHeader.findFirstOrThrow({
+        where: { id: poId, projectId: targetProjectId }
       });
       
       if (po.status === 'PARTIAL_RECEIPT' || po.status === 'CLOSED') {

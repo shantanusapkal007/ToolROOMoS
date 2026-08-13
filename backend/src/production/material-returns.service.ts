@@ -5,8 +5,23 @@ import { PrismaService } from '../prisma/prisma.service';
 export class MaterialReturnsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async resolveProjectId(projectId: string, tx?: any): Promise<string> {
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async returnMaterial(projectId: string, issueId: string, returnQty: number, remarks: string, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+
       // 1. Fetch the material issue item
       const issueItem = await tx.materialIssueItem.findUnique({
         where: { id: issueId },
@@ -24,7 +39,7 @@ export class MaterialReturnsService {
         throw new NotFoundException('Material Issue Item not found');
       }
 
-      if (issueItem.issueHeader.projectId !== projectId) {
+      if (issueItem.issueHeader.projectId !== targetProjectId) {
         throw new BadRequestException('Issue Item does not belong to this project');
       }
 
@@ -88,7 +103,7 @@ export class MaterialReturnsService {
       }
 
       // 5. Reverse the costs in ProjectCostSummary
-      const summary = await tx.projectCostSummary.findUnique({ where: { projectId } });
+      const summary = await tx.projectCostSummary.findUnique({ where: { projectId: targetProjectId } });
       if (summary) {
         const currentConsumptionCost = Number(summary.materialConsumptionCost || 0);
         const newConsumptionCost = Math.max(0, currentConsumptionCost - returnCost);
@@ -102,7 +117,7 @@ export class MaterialReturnsService {
         const newProfit = currentRevenue - newTotalCost;
 
         await tx.projectCostSummary.update({
-          where: { projectId },
+          where: { projectId: targetProjectId },
           data: {
             materialConsumptionCost: newConsumptionCost,
             totalCost: newTotalCost,
@@ -111,11 +126,10 @@ export class MaterialReturnsService {
         });
       }
 
-
       // 6. Log negative cost event to maintain the ledger
       await tx.projectCostEvent.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           costType: 'MATERIAL_CONSUMPTION',
           description: `Material Return: ${returnQty} x ${issueItem.inventoryBatch.material.materialGrade}`,
           amount: -returnCost,
@@ -128,7 +142,7 @@ export class MaterialReturnsService {
       // 7. Record Inventory Transaction
       await tx.inventoryTransaction.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           inventoryBatchId: issueItem.inventoryBatchId,
           movementType: 'MATERIAL_RETURN',
           quantity: returnQty,
@@ -142,7 +156,7 @@ export class MaterialReturnsService {
       // 8. Log Project Activity
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'MATERIAL_RETURN',
           description: `Returned ${returnQty} of ${issueItem.inventoryBatch.material.materialGrade}. Cost credit: ₹${returnCost.toFixed(2)}. Remarks: ${remarks || 'None'}`,
           performedBy: userId || 'SYSTEM',

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInspectionDto } from './dto/create-inspection.dto';
 import { ProjectStatus, InspectionResult, InspectionType } from '@prisma/client';
@@ -7,10 +7,35 @@ import { ProjectStatus, InspectionResult, InspectionType } from '@prisma/client'
 export class InspectionsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async resolveProjectId(projectId: string, tx?: any): Promise<string> {
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async createInspection(projectId: string, dto: CreateInspectionDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+
       // 1. Validate project stage
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) {
+        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
+      }
       const currentStage = project.currentStage;
 
       if (currentStage !== ProjectStatus.PRODUCTION && currentStage !== ProjectStatus.INSPECTION) {
@@ -31,7 +56,7 @@ export class InspectionsService {
       // 3. Create Inspection Header
       const inspection = await tx.inspectionHeader.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           routingOperationId: dto.routingOperationId || null,
           inspectionType: dto.inspectionType as InspectionType,
           inspectionNumber: `INS-${project.projectNumber}-${Date.now().toString().slice(-4)}`,
@@ -60,7 +85,7 @@ export class InspectionsService {
       // 3. Log project activity
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'INSPECTION_COMPLETED',
           description: `Inspection completed. Result: ${dto.result}. Passed: ${dto.passedQty}, Rework: ${dto.reworkQty || 0}, Scrap: ${dto.scrapQty || 0}`,
           performedBy: userId || 'SYSTEM',
@@ -72,13 +97,13 @@ export class InspectionsService {
         if (dto.inspectionType === 'FINAL_PDI') {
           // Transition Project to DISPATCH_READY
           await tx.project.update({
-            where: { id: projectId },
+            where: { id: targetProjectId },
             data: { currentStage: ProjectStatus.DISPATCH_READY, updatedBy: userId },
           });
 
           await tx.projectTimeline.create({
             data: {
-              projectId,
+              projectId: targetProjectId,
               fromStage: currentStage,
               toStage: ProjectStatus.DISPATCH_READY,
               transitionedBy: userId || 'SYSTEM',
@@ -88,7 +113,7 @@ export class InspectionsService {
 
           await tx.projectActivity.create({
             data: {
-              projectId,
+              projectId: targetProjectId,
               action: 'STAGE_CHANGED',
               description: 'Project advanced to DISPATCH_READY stage',
               performedBy: userId || 'SYSTEM',
@@ -102,7 +127,7 @@ export class InspectionsService {
           if (routingOp) {
             await tx.jobCard.create({
               data: {
-                projectId,
+                projectId: targetProjectId,
                 routingOperationId: routingOp.id,
                 machineId: routingOp.plannedMachineId || '',
                 status: 'READY',
@@ -111,7 +136,7 @@ export class InspectionsService {
               }
             });
             await tx.projectActivity.create({
-              data: { projectId, action: 'JOB_CARD_GENERATED', description: `Rework Job Card generated for operation.`, performedBy: userId || 'SYSTEM' }
+              data: { projectId: targetProjectId, action: 'JOB_CARD_GENERATED', description: `Rework Job Card generated for operation.`, performedBy: userId || 'SYSTEM' }
             });
           }
         }
@@ -119,13 +144,13 @@ export class InspectionsService {
         // Force project stage back to PRODUCTION if not already there
         if (currentStage !== ProjectStatus.PRODUCTION) {
           await tx.project.update({
-            where: { id: projectId },
+            where: { id: targetProjectId },
             data: { currentStage: ProjectStatus.PRODUCTION, updatedBy: userId },
           });
 
           await tx.projectTimeline.create({
             data: {
-              projectId,
+              projectId: targetProjectId,
               fromStage: currentStage,
               toStage: ProjectStatus.PRODUCTION,
               transitionedBy: userId || 'SYSTEM',
@@ -137,7 +162,7 @@ export class InspectionsService {
         // Create an NCR Report automatically
         await tx.ncrReport.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             ncrNumber: `NCR-${project.projectNumber}-${Date.now().toString().slice(-4)}`,
             defectDescription: `Dimensional scrap logged during QC. Qty scrapped: ${dto.scrapQty}. Remarks: ${dto.remarks}`,
             status: 'OPEN',
@@ -149,7 +174,7 @@ export class InspectionsService {
 
         await tx.projectActivity.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             action: 'NCR_GENERATED',
             description: `Non-Conformance Report (NCR) generated due to QC Scrap result`,
             performedBy: userId || 'SYSTEM',
@@ -162,8 +187,9 @@ export class InspectionsService {
   }
 
   async getInspections(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.inspectionHeader.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       include: { measurements: true },
       orderBy: { createdAt: 'desc' },
     });

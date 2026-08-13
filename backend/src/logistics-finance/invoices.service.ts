@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { ProjectStatus } from '@prisma/client';
@@ -7,23 +7,48 @@ import { ProjectStatus } from '@prisma/client';
 export class InvoicesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async resolveProjectId(projectId: string, tx?: any): Promise<string> {
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async createInvoice(projectId: string, dto: CreateInvoiceDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Fetch project stage - Removed restriction
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+
+      // 1. Fetch project stage
+      const project = await tx.project.findFirst({
+        where: {
+          OR: [
+            { id: projectId },
+            { projectNumber: projectId }
+          ]
+        }
+      });
+      if (!project) {
+        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
+      }
 
       // 2. Business Rule: Cannot invoice undispatched goods
       const dispatch = await tx.dispatchNote.findUnique({
         where: { id: dto.dispatchNoteId }
       });
-      if (!dispatch || dispatch.projectId !== projectId) {
+      if (!dispatch || dispatch.projectId !== targetProjectId) {
         throw new BadRequestException('Business Rule Violation: Cannot generate invoice without a valid Dispatch Note.');
       }
 
       // 2. Create Invoice Header
       const invoice = await tx.invoiceHeader.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           dispatchNoteId: dto.dispatchNoteId,
           invoiceNumber: dto.invoiceNumber,
           documentNumber: dto.invoiceNumber,
@@ -39,14 +64,14 @@ export class InvoicesService {
 
       // 3. Costing & Profitability Integration (Layer 5 - Outcomes)
       const allInvoices = await tx.invoiceHeader.findMany({
-        where: { projectId },
+        where: { projectId: targetProjectId },
       });
       const totalRevenue = allInvoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
 
       const costSummary = await tx.projectCostSummary.upsert({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         create: {
-          projectId,
+          projectId: targetProjectId,
           revenue: totalRevenue,
           totalCost: 0,
           profitability: totalRevenue,
@@ -60,7 +85,7 @@ export class InvoicesService {
       const newProfitability = totalRevenue - totalCost;
 
       await tx.projectCostSummary.update({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         data: {
           profitability: newProfitability,
         },
@@ -75,7 +100,7 @@ export class InvoicesService {
       // Log financial audit trail event for invoice generation
       await tx.projectCostEvent.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           costType: 'REVENUE',
           description: `Customer Tax Invoice ${dto.invoiceNumber} generated for ₹${Number(dto.subtotal || 0).toLocaleString('en-IN')}`,
           amount: dto.subtotal,
@@ -88,7 +113,7 @@ export class InvoicesService {
       // 4. Log project activity
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'INVOICE_GENERATED',
           description: `Invoice ${dto.invoiceNumber} billed. Subtotal: ₹${dto.subtotal}. Total Revenue: ₹${totalRevenue}. Live Project Profitability: ₹${newProfitability}`,
           performedBy: userId || 'SYSTEM',
@@ -97,13 +122,13 @@ export class InvoicesService {
 
       // 5. Workflow Automation: Advance Project to INVOICED
       await tx.project.update({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         data: { currentStage: ProjectStatus.INVOICED, updatedBy: userId },
       });
 
       await tx.projectTimeline.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           fromStage: ProjectStatus.DISPATCHED,
           toStage: ProjectStatus.INVOICED,
           transitionedBy: userId || 'SYSTEM',
@@ -113,7 +138,7 @@ export class InvoicesService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'STAGE_CHANGED',
           description: 'Project advanced to INVOICED stage',
           performedBy: userId || 'SYSTEM',
@@ -125,8 +150,9 @@ export class InvoicesService {
   }
 
   async getInvoices(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.invoiceHeader.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       include: { items: true },
       orderBy: { invoiceDate: 'desc' },
     });
@@ -134,8 +160,9 @@ export class InvoicesService {
 
   async recordPayment(projectId: string, dto: import('./dto/record-payment.dto').RecordPaymentDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
       const invoice = await tx.invoiceHeader.findFirstOrThrow({
-        where: { id: dto.invoiceId, projectId }
+        where: { id: dto.invoiceId, projectId: targetProjectId }
       });
 
       const paymentAmount = dto.amount || invoice.totalAmount;
@@ -165,7 +192,7 @@ export class InvoicesService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'PAYMENT_RECEIVED',
           description: `Payment recorded against Invoice ${invoice.invoiceNumber}. Amount: ₹${paymentAmount}. Status: ${paymentStatus}`,
           performedBy: userId || 'SYSTEM',
@@ -175,7 +202,7 @@ export class InvoicesService {
       // Log financial audit event for payment received
       await tx.projectCostEvent.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           costType: 'REVENUE',
           description: `Customer payment received for Invoice ${invoice.invoiceNumber}. Ref: ${dto.paymentReference || 'N/A'}. Amount: ₹${Number(paymentAmount).toLocaleString('en-IN')}`,
           amount: paymentAmount,
@@ -187,16 +214,16 @@ export class InvoicesService {
 
       // Update project stage to PAYMENT_PENDING if it was INVOICED
       // (Assuming PAYMENT_PENDING means we are actively collecting, but if it's PAID, we can just move to CLOSED or let user close it)
-      const project = await tx.project.findUnique({ where: { id: projectId } });
+      const project = await tx.project.findUnique({ where: { id: targetProjectId } });
       if (project && project.currentStage === 'INVOICED') {
         // Move to PAYMENT_PENDING to indicate payment is in progress/completed
         await tx.project.update({
-          where: { id: projectId },
+          where: { id: targetProjectId },
           data: { currentStage: 'PAYMENT_PENDING' }
         });
         await tx.projectTimeline.create({
           data: {
-            projectId,
+            projectId: targetProjectId,
             fromStage: 'INVOICED',
             toStage: 'PAYMENT_PENDING',
             transitionedBy: userId || 'SYSTEM',

@@ -5,9 +5,23 @@ import { PrismaService } from '../prisma/prisma.service';
 export class JobCardsService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveProjectId(projectId: string, tx?: any): Promise<string> {
+    const db = tx || this.prisma;
+    const project = await db.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { projectNumber: projectId }
+        ]
+      }
+    });
+    return project?.id || projectId;
+  }
+
   async getJobCardsForProject(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.jobCard.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       include: {
         routingOperation: {
           include: { operation: true }
@@ -23,9 +37,11 @@ export class JobCardsService {
 
   async generateJobCardsFromRouting(projectId: string) {
     return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+
       // Find the approved routing for this project
       const routing = await tx.routingHeader.findFirst({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         orderBy: { createdAt: 'desc' },
         include: { operations: true }
       });
@@ -47,7 +63,7 @@ export class JobCardsService {
             throw new BadRequestException(`Routing Operation ${op.sequenceOrder} is missing a planned machine.`);
         }
         return {
-          projectId,
+          projectId: targetProjectId,
           routingOperationId: op.id,
           machineId: op.plannedMachineId,
           status: 'READY',
@@ -63,7 +79,7 @@ export class JobCardsService {
         data: jobCardsToCreate
       });
 
-      return this.getJobCardsForProject(projectId);
+      return this.getJobCardsForProject(targetProjectId);
     });
   }
 

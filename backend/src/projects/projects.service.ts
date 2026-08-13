@@ -375,18 +375,35 @@ export class ProjectsService {
   }
 
   async getInventoryBatches(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.inventoryBatch.findMany({
       where: {
-        grnItem: {
-          grnHeader: {
-            projectId
+        OR: [
+          {
+            grnItem: {
+              grnHeader: {
+                projectId: targetProjectId,
+              }
+            }
+          },
+          {
+            inventoryTransactions: {
+              some: {
+                projectId: targetProjectId,
+              }
+            }
           }
-        },
+        ],
         status: 'AVAILABLE',
         availableQty: { gt: 0 }
       },
       include: {
-        material: true
+        material: true,
+        grnItem: {
+          include: {
+            poItem: true
+          }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -427,21 +444,18 @@ export class ProjectsService {
   }
 
   async updateTimeline(id: string, toStage: ProjectStatus, remarks?: string, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(id);
     return this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.findUniqueOrThrow({ where: { id } });
+      const project = await tx.project.findUniqueOrThrow({ where: { id: targetProjectId } });
       const fromStage = project.currentStage;
 
       if (fromStage === toStage) {
         throw new BadRequestException('Project is already in this stage.');
       }
 
-
-      // All hardcoded phase locks have been removed to allow independent usage of modules.
-
-
       // Update project stage
       const updatedProject = await tx.project.update({
-        where: { id },
+        where: { id: targetProjectId },
         data: {
           currentStage: toStage,
           ...(toStage === 'CLOSED' ? { status: 'CLOSED', closedAt: new Date(), progress: 100 } : {}),
@@ -452,7 +466,7 @@ export class ProjectsService {
       // Record stage transition
       await tx.projectTimeline.create({
         data: {
-          projectId: id,
+          projectId: targetProjectId,
           fromStage,
           toStage,
           transitionedBy: userId || 'SYSTEM',
@@ -463,7 +477,7 @@ export class ProjectsService {
       // Record activity log
       await tx.projectActivity.create({
         data: {
-          projectId: id,
+          projectId: targetProjectId,
           action: 'STAGE_CHANGED',
           description: `Advanced from ${fromStage} to ${toStage}`,
           performedBy: userId || 'SYSTEM',
@@ -475,22 +489,23 @@ export class ProjectsService {
   }
 
   async completeProduction(id: string, remarks?: string, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(id);
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.findUniqueOrThrow({
-        where: { id },
+        where: { id: targetProjectId },
       });
 
       const fromStage = project.currentStage;
       let msdrCount = 0;
       try {
-        msdrCount = await (tx as any).msdrHeader.count({ where: { projectId: id } });
+        msdrCount = await (tx as any).msdrHeader.count({ where: { projectId: targetProjectId } });
       } catch {
         /* skip if table not found */
       }
 
       // 1. Advance project stage to INSPECTION (Quality Inspection stage)
       const updatedProject = await tx.project.update({
-        where: { id },
+        where: { id: targetProjectId },
         data: {
           currentStage: ProjectStatus.INSPECTION,
           progress: 85,
@@ -505,7 +520,7 @@ export class ProjectsService {
 
       await tx.projectTimeline.create({
         data: {
-          projectId: id,
+          projectId: targetProjectId,
           fromStage,
           toStage: ProjectStatus.INSPECTION,
           transitionedBy: userId || 'SYSTEM',
@@ -516,7 +531,7 @@ export class ProjectsService {
       // 3. Record project activity log
       await tx.projectActivity.create({
         data: {
-          projectId: id,
+          projectId: targetProjectId,
           action: 'PRODUCTION_COMPLETED',
           description: `Production phase marked complete (${msdrCount} daily report logs). Advanced stage from ${fromStage} to INSPECTION.`,
           performedBy: userId || 'SYSTEM',
@@ -526,7 +541,7 @@ export class ProjectsService {
       // 4. Update status of any related job cards to COMPLETED
       try {
         await (tx as any).jobCard.updateMany({
-          where: { projectId: id, status: { not: 'COMPLETED' } },
+          where: { projectId: targetProjectId, status: { not: 'COMPLETED' } },
           data: { status: 'COMPLETED' },
         });
       } catch {
@@ -538,24 +553,26 @@ export class ProjectsService {
   }
 
   async getTimeline(id: string) {
+    const targetProjectId = await this.resolveProjectId(id);
     return this.prisma.projectTimeline.findMany({
-      where: { projectId: id },
+      where: { projectId: targetProjectId },
       orderBy: { transitionedAt: 'asc' },
     });
   }
 
   async getActivities(id: string, page: number = 1, limit: number = 20) {
+    const targetProjectId = await this.resolveProjectId(id);
     const skip = (page - 1) * limit;
     
     const [data, total] = await Promise.all([
       this.prisma.projectActivity.findMany({
-        where: { projectId: id },
+        where: { projectId: targetProjectId },
         orderBy: { performedAt: 'desc' },
         skip,
         take: limit,
       }),
       this.prisma.projectActivity.count({
-        where: { projectId: id },
+        where: { projectId: targetProjectId },
       })
     ]);
 
@@ -571,15 +588,17 @@ export class ProjectsService {
   }
 
   async getNcrs(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.ncrReport.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async closeNcr(projectId: string, ncrId: string, data: { disposition?: string; rootCause?: string }, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.$transaction(async (tx) => {
-      const ncr = await tx.ncrReport.findFirstOrThrow({ where: { id: ncrId, projectId } });
+      const ncr = await tx.ncrReport.findFirstOrThrow({ where: { id: ncrId, projectId: targetProjectId } });
       if (ncr.status === 'CLOSED') {
         throw new BadRequestException('NCR is already closed.');
       }
@@ -596,7 +615,7 @@ export class ProjectsService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'NCR_CLOSED',
           description: `NCR ${ncr.ncrNumber} closed. Disposition: ${data.disposition || 'N/A'}`,
           performedBy: userId || 'SYSTEM',
@@ -608,8 +627,9 @@ export class ProjectsService {
   }
 
   async getTasks(projectId: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.projectTask.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
       orderBy: { startDate: 'asc' },
     });
   }
@@ -617,8 +637,9 @@ export class ProjectsService {
   // --- Revision Engine ---
   
   async getReopenImpact(id: string) {
+    const targetProjectId = await this.resolveProjectId(id);
     const project = await this.prisma.project.findUniqueOrThrow({
-      where: { id },
+      where: { id: targetProjectId },
       include: {
         purchaseOrderHeaders: {
           where: { status: { in: ['DRAFT', 'ISSUED'] } },
@@ -634,13 +655,8 @@ export class ProjectsService {
       }
     });
 
-    const hasGrns = project.goodsReceiptHeaders.length > 0;
-    const hasIssues = project.materialIssueHeaders.length > 0;
-    const hasProduction = project.machineShopReports.length > 0;
-
     const isReopenBlocked = false;
     let blockReason = null;
-
 
     const affectedPosCount = project.purchaseOrderHeaders.length;
     const affectedRoutingCount = project.routingHeaders.length;
@@ -657,37 +673,38 @@ export class ProjectsService {
   }
 
   async reopenEngineering(id: string, userId?: string) {
-    const impact = await this.getReopenImpact(id);
+    const targetProjectId = await this.resolveProjectId(id);
+    const impact = await this.getReopenImpact(targetProjectId);
     if (impact.isBlocked) {
       throw new BadRequestException(impact.blockReason || "Cannot reopen engineering: stage constraints violated.");
     }
 
     return this.prisma.$transaction(async (tx) => {
       // Get current stage before changing it
-      const currentProj = await tx.project.findUniqueOrThrow({ where: { id } });
+      const currentProj = await tx.project.findUniqueOrThrow({ where: { id: targetProjectId } });
 
       // 1. Reopen Project Stage
       const project = await tx.project.update({
-        where: { id },
+        where: { id: targetProjectId },
         data: { currentStage: 'ENGINEERING', updatedBy: userId },
       });
 
       // 2. Put POs on Hold
       await tx.purchaseOrderHeader.updateMany({
-        where: { projectId: id, status: { in: ['DRAFT', 'ISSUED'] } },
+        where: { projectId: targetProjectId, status: { in: ['DRAFT', 'ISSUED'] } },
         data: { status: 'ON_HOLD', remarks: 'Engineering Reopened - Verify Revision' },
       });
 
       // 3. Obsolete current Routing (forcing a new plan)
       await tx.routingHeader.updateMany({
-        where: { projectId: id, status: 'APPROVED' },
+        where: { projectId: targetProjectId, status: 'APPROVED' },
         data: { status: 'OBSOLETE', remarks: 'Engineering Reopened' },
       });
 
       // 4. Log Activity
       await tx.projectTimeline.create({
         data: {
-          projectId: id,
+          projectId: targetProjectId,
           fromStage: currentProj.currentStage,
           toStage: 'ENGINEERING',
           transitionedBy: userId || 'SYSTEM',
@@ -697,7 +714,7 @@ export class ProjectsService {
 
       await tx.projectActivity.create({
         data: {
-          projectId: id,
+          projectId: targetProjectId,
           action: 'ENGINEERING_REOPENED',
           description: `Engineering Reopened. POs placed ON_HOLD. Routing obsoleted.`,
           performedBy: userId || 'SYSTEM',
@@ -709,7 +726,8 @@ export class ProjectsService {
   }
 
   async createTask(projectId: string, data: any, userId?: string) {
-    await this.assertProjectNotClosed(projectId);
+    const targetProjectId = await this.resolveProjectId(projectId);
+    await this.assertProjectNotClosed(targetProjectId);
     const { title, dueDate, priority, estimatedHours, remarks, ...rest } = data;
     return this.prisma.projectTask.create({
       data: {
@@ -720,7 +738,7 @@ export class ProjectsService {
         endDate: dueDate ? new Date(dueDate) : (rest.endDate ? new Date(rest.endDate) : null),
         status: rest.status || 'PENDING',
         dependsOn: rest.dependsOn,
-        projectId,
+        projectId: targetProjectId,
         createdBy: userId,
       },
     });
@@ -753,15 +771,13 @@ export class ProjectsService {
 
   // --- Closing Engine ---
   async closeProject(projectId: string, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
-      
-      // 1. Validate Stage - Removed to allow closing from any stage
-
+      const project = await tx.project.findUniqueOrThrow({ where: { id: targetProjectId } });
 
       // 2. Validate No Open NCRs
       const openNcr = await tx.ncrReport.findFirst({
-        where: { projectId, status: 'OPEN' }
+        where: { projectId: targetProjectId, status: 'OPEN' }
       });
       if (openNcr) {
         throw new BadRequestException('Cannot close project with an OPEN NCR.');
@@ -769,7 +785,7 @@ export class ProjectsService {
 
       // 3. Finalize and Close
       const closedProject = await tx.project.update({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         data: {
           currentStage: 'CLOSED',
           closedAt: new Date(),
@@ -779,7 +795,7 @@ export class ProjectsService {
 
       await tx.projectTimeline.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           fromStage: project.currentStage,
           toStage: 'CLOSED',
           transitionedBy: userId || 'SYSTEM',
@@ -789,7 +805,7 @@ export class ProjectsService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'PROJECT_CLOSED',
           description: `Project fully closed. Final Cost and Profit locked.`,
           performedBy: userId || 'SYSTEM',
@@ -802,9 +818,10 @@ export class ProjectsService {
 
   // --- Project Completion Engine (from Dispatch page or Overview) ---
   async completeProject(projectId: string, remarks?: string, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.findUniqueOrThrow({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         include: { dispatchNotes: true },
       });
 
@@ -815,7 +832,7 @@ export class ProjectsService {
 
       // Guard: No open NCRs
       const openNcr = await tx.ncrReport.findFirst({
-        where: { projectId, status: 'OPEN' },
+        where: { projectId: targetProjectId, status: 'OPEN' },
       });
       if (openNcr) {
         throw new BadRequestException('Cannot complete project with an OPEN NCR.');
@@ -825,7 +842,7 @@ export class ProjectsService {
 
       // 1. Update project to CLOSED with completion metadata
       const completedProject = await tx.project.update({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         data: {
           currentStage: 'CLOSED',
           status: 'CLOSED',
@@ -839,7 +856,7 @@ export class ProjectsService {
       // 2. Record stage transition in project timeline
       await tx.projectTimeline.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           fromStage,
           toStage: 'CLOSED',
           transitionedBy: userId || 'SYSTEM',
@@ -850,7 +867,7 @@ export class ProjectsService {
       // 3. Record project activity log
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'PROJECT_COMPLETED',
           description: `Project marked as completed. Stage transitioned from ${fromStage} to CLOSED.`,
           performedBy: userId || 'SYSTEM',
@@ -858,12 +875,12 @@ export class ProjectsService {
       });
 
       // 4. Finalize cost summary profitability snapshot
-      const summary = await tx.projectCostSummary.findUnique({ where: { projectId } });
+      const summary = await tx.projectCostSummary.findUnique({ where: { projectId: targetProjectId } });
       if (summary) {
         const finalRevenue = Number(summary.revenue || 0);
         const finalCost = Number(summary.totalCost || 0);
         await tx.projectCostSummary.update({
-          where: { projectId },
+          where: { projectId: targetProjectId },
           data: {
             profitability: finalRevenue - finalCost,
           },
@@ -876,13 +893,14 @@ export class ProjectsService {
 
   // --- Dispatch & Invoicing Engine ---
   async createDispatchNote(projectId: string, dto: any, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      const project = await tx.project.findUniqueOrThrow({ where: { id: targetProjectId } });
       const dispatchNumber = `DC-${Date.now().toString().slice(-6)}`;
 
       const dispatchNote = await tx.dispatchNote.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           customerId: project.customerId,
           dispatchNumber,
           vehicleNumber: dto.vehicleNumber,
@@ -907,13 +925,13 @@ export class ProjectsService {
 
       // Update stage to DISPATCHED
       await tx.project.update({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         data: { currentStage: 'DISPATCHED' },
       });
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'DISPATCH_NOTE_CREATED',
           description: `Delivery Challan ${dispatchNumber} created for vehicle ${dto.vehicleNumber || 'transport'}.`,
           performedBy: userId || 'SYSTEM',
@@ -925,9 +943,10 @@ export class ProjectsService {
   }
 
   async createInvoice(projectId: string, dto: any, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.findUniqueOrThrow({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         include: { dispatchNotes: true },
       });
 
@@ -939,7 +958,7 @@ export class ProjectsService {
 
       const invoice = await tx.invoiceHeader.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           dispatchNoteId: project.dispatchNotes[0]?.id || null,
           invoiceNumber,
           subtotal: basicValue,
@@ -952,7 +971,7 @@ export class ProjectsService {
 
       await tx.projectActivity.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           action: 'INVOICE_ISSUED',
           description: `Tax Invoice ${invoiceNumber} issued for ₹${totalAmount.toLocaleString()}`,
           performedBy: userId || 'SYSTEM',
@@ -964,20 +983,20 @@ export class ProjectsService {
   }
 
   async getCostEvents(id: string) {
+    const targetProjectId = await this.resolveProjectId(id);
     return this.prisma.projectCostEvent.findMany({
-      where: { projectId: id },
+      where: { projectId: targetProjectId },
       orderBy: { createdAt: 'asc' },
     });
   }
 
   // --- Deletion Engine ---
   async remove(id: string, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(id);
     return this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.findUniqueOrThrow({ where: { id } });
-      // Delete the project permanently. Due to Prisma onDelete: Cascade,
-      // all related entities will also be deleted.
+      const project = await tx.project.findUniqueOrThrow({ where: { id: targetProjectId } });
       const deletedProject = await tx.project.delete({
-        where: { id }
+        where: { id: targetProjectId }
       });
 
       return deletedProject;
@@ -1010,9 +1029,10 @@ export class ProjectsService {
 
   private async recalculateProjectCostSummary(projectId: string) {
     try {
+      const targetProjectId = await this.resolveProjectId(projectId);
       // 1. Clean up orphaned design cost events whose design log was deleted
       const designCostEvents = await this.prisma.projectCostEvent.findMany({
-        where: { projectId, referenceDocType: 'DESIGN_WORK_LOG' },
+        where: { projectId: targetProjectId, referenceDocType: 'DESIGN_WORK_LOG' },
       });
 
       for (const event of designCostEvents) {
@@ -1028,41 +1048,41 @@ export class ProjectsService {
 
       // 2. Sum up active LABOUR_COST events
       const labourEvents = await this.prisma.projectCostEvent.findMany({
-        where: { projectId, costType: 'LABOUR_COST' },
+        where: { projectId: targetProjectId, costType: 'LABOUR_COST' },
       });
       const totalLabourCost = labourEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
       // 3. Sum up active MACHINE_COST events
       const machineEvents = await this.prisma.projectCostEvent.findMany({
-        where: { projectId, costType: 'MACHINE_COST' },
+        where: { projectId: targetProjectId, costType: 'MACHINE_COST' },
       });
       const totalMachineCost = machineEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
       // 4. Sum up active MATERIAL_CONSUMPTION events
       const materialEvents = await this.prisma.projectCostEvent.findMany({
-        where: { projectId, costType: 'MATERIAL_CONSUMPTION' },
+        where: { projectId: targetProjectId, costType: 'MATERIAL_CONSUMPTION' },
       });
       const totalMaterialCost = materialEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
       // 5. Sum up active OUTSIDE_PROCESS events
       const outsideEvents = await this.prisma.projectCostEvent.findMany({
-        where: { projectId, costType: 'OUTSIDE_PROCESS' },
+        where: { projectId: targetProjectId, costType: 'OUTSIDE_PROCESS' },
       });
       const totalOutsideCost = outsideEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
       // 6. Sum up active DISPATCH_COST events
       const dispatchEvents = await this.prisma.projectCostEvent.findMany({
-        where: { projectId, costType: 'DISPATCH_COST' },
+        where: { projectId: targetProjectId, costType: 'DISPATCH_COST' },
       });
       const totalDispatchCost = dispatchEvents.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
       // 7. Calculate total revenue from all issued invoices for the project
       const projectInvoices = await this.prisma.invoiceHeader.findMany({
-        where: { projectId },
+        where: { projectId: targetProjectId },
       });
       const totalRevenue = projectInvoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
 
-      const summary = await this.prisma.projectCostSummary.findUnique({ where: { projectId } });
+      const summary = await this.prisma.projectCostSummary.findUnique({ where: { projectId: targetProjectId } });
 
       const safeDispatchCost = totalDispatchCost > 0 ? totalDispatchCost : Number(summary?.dispatchCost || 0);
       const grandTotal = totalMaterialCost + totalMachineCost + totalLabourCost + totalOutsideCost + Number(summary?.inspectionCost || 0) + Number(summary?.packingCost || 0) + safeDispatchCost;
@@ -1071,9 +1091,9 @@ export class ProjectsService {
       const calculatedProfitability = effectiveRevenue - grandTotal;
 
       await this.prisma.projectCostSummary.upsert({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         create: {
-          projectId,
+          projectId: targetProjectId,
           actualMaterialCost: totalMaterialCost,
           materialConsumptionCost: totalMaterialCost,
           machineCost: totalMachineCost,
@@ -1102,8 +1122,9 @@ export class ProjectsService {
 
   private async syncMissingDesignLogCosts(projectId: string) {
     try {
+      const targetProjectId = await this.resolveProjectId(projectId);
       const logs: any[] = await (this.prisma as any).designWorkLog.findMany({
-        where: { projectId },
+        where: { projectId: targetProjectId },
       });
 
       for (const log of logs) {
@@ -1117,7 +1138,7 @@ export class ProjectsService {
 
           await this.prisma.projectCostEvent.create({
             data: {
-              projectId,
+              projectId: targetProjectId,
               costType: 'LABOUR_COST',
               description: `Designer ${log.designerName} logged ${log.hoursSpent} hrs for ${log.workStage} (${log.partName || 'CAD Design'}) @ ₹${hourlyRate}/hr`,
               amount: costAmount,
@@ -1129,7 +1150,7 @@ export class ProjectsService {
         }
       }
 
-      await this.recalculateProjectCostSummary(projectId);
+      await this.recalculateProjectCostSummary(targetProjectId);
     } catch (err) {
       // Ignore background sync errors
     }
@@ -1139,9 +1160,10 @@ export class ProjectsService {
     projectId: string,
     query?: { search?: string; designer?: string; workStage?: string; status?: string }
   ) {
-    await this.syncMissingDesignLogCosts(projectId);
+    const targetProjectId = await this.resolveProjectId(projectId);
+    await this.syncMissingDesignLogCosts(targetProjectId);
 
-    const where: any = { projectId };
+    const where: any = { projectId: targetProjectId };
 
     if (query?.designer && query.designer !== 'ALL') {
       where.designerName = query.designer;
@@ -1168,12 +1190,13 @@ export class ProjectsService {
   }
 
   async createDesignLog(projectId: string, dto: CreateDesignLogDto, userId?: string) {
+    const targetProjectId = await this.resolveProjectId(projectId);
     const workDate = dto.workDate ? new Date(dto.workDate) : new Date();
     const hoursSpent = Number(dto.hoursSpent) || 0;
 
     const log = await (this.prisma as any).designWorkLog.create({
       data: {
-        projectId,
+        projectId: targetProjectId,
         designerName: dto.designerName,
         designerId: dto.designerId,
         workStage: dto.workStage,
@@ -1200,7 +1223,7 @@ export class ProjectsService {
       // 2. Record ProjectCostEvent for Financial Audits & Breakdown
       await this.prisma.projectCostEvent.create({
         data: {
-          projectId,
+          projectId: targetProjectId,
           costType: 'LABOUR_COST',
           description: `Designer ${dto.designerName} logged ${hoursSpent} hrs for ${dto.workStage} (${dto.partName || 'CAD Design'}) @ ₹${hourlyRate}/hr`,
           amount: labourCostAmount,
@@ -1211,13 +1234,13 @@ export class ProjectsService {
       });
 
       // 3. Rollup cost to ProjectCostSummary (Finance Section)
-      await this.recalculateProjectCostSummary(projectId);
+      await this.recalculateProjectCostSummary(targetProjectId);
     }
 
     // 4. Also log activity in Project Timeline/Activity for transparency
     await this.prisma.projectActivity.create({
       data: {
-        projectId,
+        projectId: targetProjectId,
         action: 'DESIGN_WORK_LOGGED',
         description: `Designer ${dto.designerName} logged ${hoursSpent} hrs for ${dto.workStage} (${dto.partName || 'General'}). Cost: ₹${labourCostAmount.toFixed(2)}`,
         performedBy: userId || dto.designerName,
@@ -1315,10 +1338,11 @@ export class ProjectsService {
   }
 
   async getDesignSummary(projectId: string) {
-    await this.syncMissingDesignLogCosts(projectId);
+    const targetProjectId = await this.resolveProjectId(projectId);
+    await this.syncMissingDesignLogCosts(targetProjectId);
 
     const logs: any[] = await (this.prisma as any).designWorkLog.findMany({
-      where: { projectId },
+      where: { projectId: targetProjectId },
     });
 
     const totalHours = logs.reduce((sum: number, log: any) => sum + Number(log.hoursSpent || 0), 0);

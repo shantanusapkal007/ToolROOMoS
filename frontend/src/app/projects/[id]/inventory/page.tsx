@@ -251,7 +251,8 @@ export default function ProjectInventoryPage() {
           isOpen={isFormOpen} 
           onClose={() => setIsFormOpen(false)}
           title="Material Issue Requisition"
-          maxWidth="2xl"
+          subtitle="Dispatch raw materials and inventory batches from stores to shopfloor sections."
+          maxWidth="3xl"
         >
           <MaterialIssueForm 
             projectId={id} 
