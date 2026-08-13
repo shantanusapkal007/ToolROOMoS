@@ -61,7 +61,7 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
   const activeProjects = projects.filter(p => p.currentStage !== "CLOSED" && p.currentStage !== "CANCELLED");
   const delayedProjects = activeProjects.filter(p => p.targetDeliveryDate && new Date(p.targetDeliveryDate).getTime() < new Date().getTime());
 
-  const monthlyTarget = metrics?.monthlyTarget || 15000000;
+  const monthlyTarget = metrics?.monthlyTarget || Math.round(estimatedRevenue / 12);
   const mtdRevenue = metrics?.mtdRevenue || 0;
   const targetPct = Math.min(100, Math.round((mtdRevenue / monthlyTarget) * 100));
 

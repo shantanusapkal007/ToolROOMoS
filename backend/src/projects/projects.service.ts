@@ -168,7 +168,19 @@ export class ProjectsService {
     const mtdRevenue = mtdInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
     const mtdSalesWithoutGst = mtdInvoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
 
-    // Management Indicators derived dynamically from active project pipeline estimates & cost summaries
+    // User-configured Annual Target from preferences (or default 15 Cr)
+    const annualSetting = await this.prisma.systemSetting.findUnique({
+      where: { settingKey: 'estimated_revenue_target' }
+    });
+    const annualTarget = annualSetting && !isNaN(Number(annualSetting.settingValue)) 
+      ? Number(annualSetting.settingValue) 
+      : 150000000;
+
+    // Monthly Target dynamically derived as Annual Target / 12
+    const monthlyTarget = Math.round(annualTarget / 12);
+    const monthlyRemaining = Math.max(0, monthlyTarget - mtdRevenue);
+    
+    // Dynamic Yearly Projected Revenue (YTD actual revenue + open pipeline estimated value)
     const activeProjectSummaries = await this.prisma.projectCostSummary.findMany({
       where: { project: { currentStage: { notIn: ['CANCELLED', 'CLOSED'] } } }
     });
@@ -176,10 +188,6 @@ export class ProjectsService {
       (sum, s) => sum + Number(s.estimatedMaterialCost || 0) + Number(s.revenue || 0), 
       0
     );
-
-    // Dynamic Monthly Target based on active open pipeline / 3-month rolling average or minimum baseline
-    const monthlyTarget = totalPipelineEstimatedValue > 0 ? Math.round(totalPipelineEstimatedValue / 3) : 5000000;
-    const monthlyRemaining = Math.max(0, monthlyTarget - mtdRevenue);
     
     // Dynamic Yearly Projected Revenue (YTD actual revenue + open pipeline estimated value)
     const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
@@ -995,6 +1003,125 @@ export class ProjectsService {
     const targetProjectId = await this.resolveProjectId(id);
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.findUniqueOrThrow({ where: { id: targetProjectId } });
+
+      // 1. Quality, NCRs & Inspections
+      await tx.ncrReport.deleteMany({ where: { projectId: targetProjectId } });
+      const inspections = await tx.inspectionHeader.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (inspections.length > 0) {
+        const inspIds = inspections.map(i => i.id);
+        await tx.inspectionMeasurement.deleteMany({ where: { inspectionHeaderId: { in: inspIds } } });
+        await tx.inspectionHeader.deleteMany({ where: { projectId: targetProjectId } });
+      }
+
+      // 2. Dispatch Notes
+      const dispatches = await tx.dispatchNote.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (dispatches.length > 0) {
+        const dIds = dispatches.map(d => d.id);
+        await tx.dispatchItem.deleteMany({ where: { dispatchNoteId: { in: dIds } } });
+        await tx.dispatchNote.deleteMany({ where: { projectId: targetProjectId } });
+      }
+
+      // 3. Invoices & Payments
+      const invoices = await tx.invoiceHeader.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (invoices.length > 0) {
+        const invIds = invoices.map(i => i.id);
+        await tx.invoicePayment.deleteMany({ where: { invoiceHeaderId: { in: invIds } } });
+        await tx.invoiceItem.deleteMany({ where: { invoiceHeaderId: { in: invIds } } });
+        await tx.invoiceHeader.deleteMany({ where: { projectId: targetProjectId } });
+      }
+
+      // 4. Shopfloor Jobs, MSDRs, Assembly & Trials
+      await tx.jobCardTimeLog.deleteMany({ where: { jobCard: { projectId: targetProjectId } } });
+      await tx.jobCard.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.machineShopDailyReport.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.designWorkLog.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectTrial.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.assemblyHeader.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.maintenanceTicket.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.wipLedger.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.productionSchedule.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.productionBatch.deleteMany({ where: { projectId: targetProjectId } });
+
+      // 5. Material Issues & Inventory Transactions
+      const issues = await tx.materialIssueHeader.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (issues.length > 0) {
+        const issueIds = issues.map(i => i.id);
+        await tx.materialIssueItem.deleteMany({ where: { issueHeaderId: { in: issueIds } } });
+        await tx.materialIssueHeader.deleteMany({ where: { projectId: targetProjectId } });
+      }
+      await tx.inventoryReservation.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.inventoryTransaction.deleteMany({ where: { projectId: targetProjectId } });
+
+      // 6. Subcontracting
+      const subReceipts = await tx.subcontractReceipt.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (subReceipts.length > 0) {
+        const srIds = subReceipts.map(sr => sr.id);
+        await tx.subcontractReceiptItem.deleteMany({ where: { subcontractReceiptId: { in: srIds } } });
+        await tx.subcontractReceipt.deleteMany({ where: { projectId: targetProjectId } });
+      }
+      const subOrders = await tx.subcontractOrder.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (subOrders.length > 0) {
+        const soIds = subOrders.map(so => so.id);
+        await tx.subcontractOrderItem.deleteMany({ where: { subcontractOrderId: { in: soIds } } });
+        await tx.subcontractOrder.deleteMany({ where: { projectId: targetProjectId } });
+      }
+
+      // 7. Goods Receipts & Inventory Batches
+      const grns = await tx.goodsReceiptHeader.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (grns.length > 0) {
+        const grnIds = grns.map(g => g.id);
+        const grnItems = await tx.goodsReceiptItem.findMany({ where: { grnHeaderId: { in: grnIds } }, select: { id: true } });
+        const grnItemIds = grnItems.map(gi => gi.id);
+        if (grnItemIds.length > 0) {
+          await tx.inventoryBatch.deleteMany({ where: { grnItemId: { in: grnItemIds } } });
+        }
+        await tx.goodsReceiptItem.deleteMany({ where: { grnHeaderId: { in: grnIds } } });
+        await tx.goodsReceiptHeader.deleteMany({ where: { projectId: targetProjectId } });
+      }
+
+      // 8. Purchase Orders & Requests
+      const pos = await tx.purchaseOrderHeader.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (pos.length > 0) {
+        const poIds = pos.map(p => p.id);
+        await tx.purchaseOrderItem.deleteMany({ where: { poHeaderId: { in: poIds } } });
+        await tx.purchaseOrderHeader.deleteMany({ where: { projectId: targetProjectId } });
+      }
+      const prs = await tx.purchaseRequestHeader.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (prs.length > 0) {
+        const prIds = prs.map(p => p.id);
+        await tx.purchaseRequestItem.deleteMany({ where: { prHeaderId: { in: prIds } } });
+        await tx.purchaseRequestHeader.deleteMany({ where: { projectId: targetProjectId } });
+      }
+
+      // 9. Routing & BOMs
+      const routings = await tx.routingHeader.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (routings.length > 0) {
+        const rIds = routings.map(r => r.id);
+        await tx.routingOperation.deleteMany({ where: { routingHeaderId: { in: rIds } } });
+        await tx.routingHeader.deleteMany({ where: { projectId: targetProjectId } });
+      }
+      const boms = await tx.billOfMaterialHeader.findMany({ where: { projectId: targetProjectId }, select: { id: true } });
+      if (boms.length > 0) {
+        const bomIds = boms.map(b => b.id);
+        await tx.billOfMaterialItem.deleteMany({ where: { bomHeaderId: { in: bomIds } } });
+        await tx.billOfMaterialHeader.deleteMany({ where: { projectId: targetProjectId } });
+      }
+
+      // 10. Financial Summary, Cost Events, Approvals, Activities, Documents, Tasks, Teams, Budget, Account Entries, Timeline
+      await tx.materialRequirement.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.planningRun.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectCostEvent.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectCostSummary.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.approval.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectActivity.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectDocument.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectTask.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectTeam.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectBudget.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.accountEntry.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.projectTimeline.deleteMany({ where: { projectId: targetProjectId } });
+
+      // 11. Finally delete the Project record
       const deletedProject = await tx.project.delete({
         where: { id: targetProjectId }
       });

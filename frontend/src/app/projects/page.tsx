@@ -342,15 +342,15 @@ export default function ProjectsPage() {
           </div>
 
           <div>
-            <label className="block text-caption font-semibold text-ink mb-1">Expected Contract / Project Order Value (₹)</label>
+            <label className="block text-caption font-semibold text-ink mb-1">Customer PO / Contract Order Value (₹)</label>
             <input 
               type="number"
               min="0"
-              step="1000"
-              placeholder="e.g. 250000 (How much money you will receive for this project)"
+              step="any"
+              placeholder="e.g. 250000 (Agreed Customer PO value)"
               value={newRevenue}
               onChange={(e) => setNewRevenue(e.target.value)}
-              className="w-full px-3 py-2 border border-border-gray rounded-md text-caption text-ink bg-canvas"
+              className="w-full px-3 py-2 border border-border-gray rounded-md font-mono text-caption text-ink bg-canvas"
             />
           </div>
 
