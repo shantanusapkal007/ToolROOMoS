@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useGlobalDailyReports } from "@/hooks/useDailyReports";
 import { useProject, useCompleteProduction } from "@/hooks/useProjects";
@@ -78,7 +78,20 @@ export default function ProjectProductionPage() {
     }));
   });
 
-  // Section counts for tab badges (MSDRs + Issued Materials)
+  // Local transfers sync
+  const [transfersList, setTransfersList] = useState<any[]>([]);
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("toolroom_material_transfers") || "[]");
+      const currentCode = project?.projectNumber || id;
+      const filtered = currentCode ? stored.filter((t: any) => !t.projectCode || t.projectCode === currentCode) : stored;
+      setTransfersList(filtered);
+    } catch {
+      setTransfersList([]);
+    }
+  }, [project?.projectNumber, id]);
+
+  // Section counts for tab badges (MSDRs + Issued Materials + Direct Transfers)
   const toolroomCount = allMsdrs.filter(
     (m: any) => m.section === "MACHINE_SHOP" || m.section === "TOOL_ROOM_FITTING" || !m.section
   ).length + allMaterialIssues.filter(
@@ -102,7 +115,7 @@ export default function ProjectProductionPage() {
     PRESS_SHOP: pressCount,
     FABRICATION: fabCount,
     FAB_EXPORT: fabExportCount,
-    TRANSFERS: 0,
+    TRANSFERS: transfersList.length,
   };
 
   // Resolve currentSection for the move modal
@@ -232,7 +245,13 @@ export default function ProjectProductionPage() {
         <FabExportSection data={allMsdrs} materialIssues={allMaterialIssues} isLoading={isLoading} onMarkComplete={handleMarkComplete} />
       )}
       {activeTab === "TRANSFERS" && (
-        <TransfersSection projectCode={project?.projectNumber || id} />
+        <TransfersSection 
+          projectCode={project?.projectNumber || id} 
+          materialIssues={allMaterialIssues}
+          onTransferComplete={(newRecord) => {
+            setTransfersList(prev => [newRecord, ...prev]);
+          }}
+        />
       )}
 
       {/* Move to Next Section Modal */}
