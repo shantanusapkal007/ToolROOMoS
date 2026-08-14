@@ -111,7 +111,7 @@ export function GlobalPoModule() {
   };
 
   return (
-    <div className="space-y-6 text-ink font-sans">
+    <div className="space-y-6 text-ink font-sans pb-24 mb-10">
       {/* Design System Page Header */}
       <PageHeader
         title="Global Purchase Order Module"

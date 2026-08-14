@@ -60,9 +60,9 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
 
       const rate = Number(item.agreedRate || 0);
       const basicCost = Number(item.basicValue || (totalWt > 0 ? totalWt * rate : qty * rate));
-      const gstPct = Number(item.gstPercent || itemCustom.gstPercent || 18);
-      const gst = Number(item.gstAmount || itemCustom.gstAmount || (basicCost * (gstPct / 100)));
-      const total = Number(item.lineTotal || (basicCost + gst));
+      const gstPct = Number((item as any).gstPercent || itemCustom.gstPercent || 18);
+      const gst = Number((item as any).gstAmount || itemCustom.gstAmount || (basicCost * (gstPct / 100)));
+      const total = Number((item as any).lineTotal || (basicCost + gst));
 
       grandTotalQty += qty;
       grandTotalApWt += apWt;

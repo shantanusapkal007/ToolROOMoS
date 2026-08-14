@@ -1536,14 +1536,14 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           <div className="flex items-center justify-center space-x-0.5">
                             {isParent ? (
                               <button 
-                                onClick={() => toggleNode(row.id)}
+                                onClick={() => toggleNodeExpanded(String(row.srNo))}
                                 className="p-0.5 text-primary hover:text-primary-hover focus:outline-none cursor-pointer"
                                 title={isExpanded ? "Collapse Assembly" : "Expand Assembly"}
                               >
                                 {isExpanded ? <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" /> : <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />}
                               </button>
                             ) : level > 0 ? (
-                              <CornerDownRight className="w-3 h-3 text-cool-gray/50 shrink-0" />
+                              <span className="text-zinc-400 font-mono text-[10px] shrink-0">└</span>
                             ) : null}
                             <span>{row.srNo}</span>
                           </div>

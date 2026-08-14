@@ -196,10 +196,9 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
     }
   };
 
-  // Combine unique projects from all active database projects and BOM items
+  // Combine unique projects from available BOM items with pending purchases
   const uniqueProjects = Array.from(
     new Set([
-      ...allProjectsList.map((p: any) => p.projectNumber),
       ...availableBomItems.map((i: any) => i.toolNo)
     ])
   ).filter(Boolean);
@@ -219,22 +218,8 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
     return matchesProj && matchesMat && matchesSearch;
   });
 
-  // Group filtered items by project (WRT Project) — Seed ALL active projects first
+  // Group filtered items by project (WRT Project) — Only include projects with items
   const projectGroups: { [toolNo: string]: { toolNo: string; projectName: string; customerName: string; stage: string; items: any[] } } = {};
-
-  allProjectsList.forEach((proj: any) => {
-    const toolNo = proj.projectNumber || 'PRJ-UNNAMED';
-    if (projectFilter.length === 0 || projectFilter.includes(toolNo)) {
-      const custName = proj.customer?.companyName || proj.customerName || proj.clientName || 'Project Customer';
-      projectGroups[toolNo] = {
-        toolNo,
-        projectName: proj.partName || proj.projectName || 'Tool Assembly',
-        customerName: custName,
-        stage: proj.currentStage || 'PRODUCTION',
-        items: []
-      };
-    }
-  });
 
   filteredItems.forEach(item => {
     const key = item.toolNo || 'KTD-GENERAL';
@@ -249,6 +234,8 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
     }
     projectGroups[key].items.push(item);
   });
+
+  const activeProjectGroups = Object.values(projectGroups).filter(g => g.items.length > 0);
 
   const toggleSelectItem = (id: string) => {
     setSelectedItemIds(prev => {
@@ -464,7 +451,7 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
   };
 
   return (
-    <div className="space-y-5 text-ink font-sans">
+    <div className="space-y-5 text-ink font-sans pb-24 mb-10">
       
       {/* Wizard Step Progress Indicator - Liquid Glass Stepper */}
       <div className="bg-white/90 backdrop-blur-xl border border-border-gray/80 p-4 rounded-[12px] shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4 hide-on-print">
@@ -742,14 +729,14 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
             </div>
 
             {/* Render Each Project Card WRT Project */}
-            {Object.values(projectGroups).length === 0 ? (
+            {activeProjectGroups.length === 0 ? (
               <div className="p-12 text-center text-mute bg-white rounded-[12px] border border-border-gray/80">
                 <Briefcase className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-                <p className="font-semibold text-sm text-zinc-800">No Project Materials Match Filter</p>
-                <p className="text-xs text-zinc-400">Try adjusting your search query or project filter pills.</p>
+                <p className="font-semibold text-sm text-zinc-800">No Pending Materials to Purchase</p>
+                <p className="text-xs text-zinc-400">All materials for active projects are ordered or received, or try adjusting your filters.</p>
               </div>
             ) : (
-              Object.values(projectGroups).map((projGroup) => {
+              activeProjectGroups.map((projGroup) => {
                 const projItems = projGroup.items;
                 const isAllSelected = projItems.length > 0 && projItems.every(i => selectedItemIds.has(i.id));
                 const selectedCount = projItems.filter(i => selectedItemIds.has(i.id)).length;

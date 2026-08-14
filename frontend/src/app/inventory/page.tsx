@@ -602,7 +602,7 @@ export default function InventoryPage() {
                           </td>
                           <td className="p-3.5 text-right">
                             <div className="flex items-center justify-end space-x-1.5 font-mono">
-                              {isLowStock && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" title="Low stock threshold" />}
+                              {isLowStock && <span title="Low stock threshold"><AlertTriangle className="w-3.5 h-3.5 text-amber-500" /></span>}
                               <span className="font-bold text-ink text-sm">{availQty}</span>
                               <span className="text-[10px] text-mute uppercase font-semibold">{batch.material?.defaultUom || 'NOS'}</span>
                             </div>
@@ -997,7 +997,7 @@ export default function InventoryPage() {
                       className="w-full border border-border-gray rounded-[10px] px-3.5 py-2 text-xs focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
                     >
                       {PRODUCTION_SHOPS.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
+                        <option key={s.id} value={s.id}>{s.label}</option>
                       ))}
                     </select>
                   </div>
