@@ -298,14 +298,26 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
       const W = wVal === "-" ? "" : wVal;
       const H = hVal === "-" ? "" : hVal;
 
+      const matGradeUpper = (raw.materialGrade || '').toUpperCase();
+      const isStandardMat = 
+        (raw as any).isBoughtOut === true ||
+        (raw as any).customFields?.isBoughtOut === true ||
+        matGradeUpper.includes('STD') ||
+        matGradeUpper.includes('STANDARD') ||
+        matGradeUpper.includes('BOUGHT-OUT') ||
+        matGradeUpper.includes('BOUGHT OUT') ||
+        ((!L || L === '' || L === '-') && (!W || W === '' || W === '-') && (!H || H === '' || H === '-'));
+
       const qty = Number(raw.requiredQty) || 1;
-      const apWt = Number(raw.calculatedWeight) || 10.5;
-      const totalWt = qty * apWt;
-      const rate = 85; // Standard raw steel rate ₹85/kg
-      const basicValue = totalWt * rate;
+      const apWt = isStandardMat ? 0 : (Number(raw.calculatedWeight) || 0);
+      const totalWt = isStandardMat ? 0 : Math.round((qty * apWt + Number.EPSILON) * 100) / 100;
+      const rate = isStandardMat ? (Number(raw.estimatedCost) > 0 ? Number(raw.estimatedCost) / qty : 40) : 85;
+      const basicValue = isStandardMat 
+        ? Math.round((qty * rate + Number.EPSILON) * 100) / 100 
+        : Math.round(((totalWt > 0 ? totalWt * rate : qty * rate) + Number.EPSILON) * 100) / 100;
       const gstPercent = 18;
-      const gstAmount = basicValue * 0.18;
-      const lineTotal = basicValue + gstAmount;
+      const gstAmount = Math.round((basicValue * 0.18 + Number.EPSILON) * 100) / 100;
+      const lineTotal = Math.round((basicValue + gstAmount + Number.EPSILON) * 100) / 100;
 
       return {
         id: raw.id,
@@ -315,7 +327,7 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
         length: L,
         width: W,
         height: H,
-        materialGrade: raw.materialGrade || 'MS',
+        materialGrade: raw.materialGrade || (isStandardMat ? 'Standard Bought-Out Component' : 'MS'),
         materialId: raw.materialId,
         bomItemId: raw.id,
         orderedQty: qty,
@@ -344,7 +356,8 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
         const wt = Number(updated.apWt) || 0;
         const totalWt = q * wt;
         const r = Number(updated.agreedRate) || 0;
-        const basic = totalWt > 0 ? totalWt * r : q * r;
+        // If apWt is 0 (standard items), basic cost is per piece (q * r)
+        const basic = (wt > 0 && totalWt > 0) ? totalWt * r : q * r;
         const gstPct = Number(updated.gstPercent) || 18;
         const gstAmt = basic * (gstPct / 100);
         const total = basic + gstAmt;
@@ -1000,16 +1013,20 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                         />
                       </td>
                       <td className="p-1.5 text-right">
-                        <input
-                          type="number"
-                          value={item.apWt}
-                          onChange={(e) => updateWorksheetItem(item.id, 'apWt', Number(e.target.value))}
-                          step="0.01"
-                          className="w-full px-1 py-1 bg-canvas border border-border-gray rounded text-right font-mono text-xs text-ink outline-none focus:border-zinc-900"
-                        />
+                        {item.apWt > 0 ? (
+                          <input
+                            type="number"
+                            value={item.apWt}
+                            onChange={(e) => updateWorksheetItem(item.id, 'apWt', Number(e.target.value))}
+                            step="0.01"
+                            className="w-full px-1 py-1 bg-canvas border border-border-gray rounded text-right font-mono text-xs text-ink outline-none focus:border-zinc-900"
+                          />
+                        ) : (
+                          <span className="font-mono text-xs text-zinc-400 block text-right font-semibold pr-2">-</span>
+                        )}
                       </td>
                       <td className="p-1.5 text-right font-mono font-semibold text-ink">
-                        {item.totalWt.toFixed(2)}
+                        {item.totalWt > 0 ? item.totalWt.toFixed(2) : '-'}
                       </td>
                       <td className="p-1.5 text-right">
                         <input

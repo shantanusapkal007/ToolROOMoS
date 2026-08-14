@@ -43,7 +43,13 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
         item.height || itemCustom.height
       );
 
-      if (apWt === 0 && totalWt === 0) {
+      const matGradeUpper = (item.materialGrade || (item as any).material?.materialGrade || '').toUpperCase();
+      const isStd = matGradeUpper.includes('STD') || matGradeUpper.includes('STANDARD') || matGradeUpper.includes('BOUGHT') || (item as any).isBoughtOut;
+
+      if (isStd) {
+        apWt = 0;
+        totalWt = 0;
+      } else if (apWt === 0 && totalWt === 0) {
         const l = parseFloat(lVal);
         const w = parseFloat(wVal);
         const h = parseFloat(hVal);
