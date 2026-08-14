@@ -12,6 +12,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { PurchaseOrdersService } from './purchase-orders.service';
+import { GoodsReceiptsService } from './goods-receipts.service';
 import { CreateMultiPoDto } from './dto/create-multi-po.dto';
 
 @Controller('api/v1/procurement')
@@ -19,7 +20,18 @@ import { CreateMultiPoDto } from './dto/create-multi-po.dto';
 export class GlobalProcurementController {
   constructor(
     private readonly poService: PurchaseOrdersService,
+    private readonly grnService: GoodsReceiptsService,
   ) {}
+
+  @Get('goods-receipts')
+  async getAllGoodsReceipts() {
+    const data = await this.grnService.getAllGoodsReceipts();
+    return {
+      status: 'success',
+      message: 'All Goods Receipt Notes retrieved successfully.',
+      data,
+    };
+  }
 
   @Get('bom-items')
   async getAllProjectBomItems() {

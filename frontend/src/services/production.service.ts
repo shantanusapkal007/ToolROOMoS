@@ -17,6 +17,11 @@ export const ProductionService = {
     return res.data;
   },
 
+  getAllMaterialIssues: async (): Promise<any> => {
+    const res = await api.get(`production/material-issues`);
+    return res.data;
+  },
+
   generateJobCards: async (projectId: string): Promise<any> => {
     const res = await api.post(`projects/${projectId}/job-cards/generate`);
     return res.data;

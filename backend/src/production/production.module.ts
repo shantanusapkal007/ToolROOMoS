@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ProductionController } from './production.controller';
+import { GlobalProductionController } from './global-production.controller';
 import { MaterialIssuesService } from './material-issues.service';
 import { MaterialReturnsService } from './material-returns.service';
 import { ProductionOperationsService } from './production-operations.service';
@@ -16,7 +17,8 @@ import { AssemblyService } from './assembly.service';
 @Module({
   imports: [PrismaModule],
   controllers: [
-    ProductionController, 
+    ProductionController,
+    GlobalProductionController,
     JobCardsController, 
     WipController, 
     SchedulingController,

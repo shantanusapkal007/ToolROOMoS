@@ -41,6 +41,16 @@ export const ProcurementService = {
     return res.data;
   },
 
+  getAllGoodsReceipts: async (): Promise<any> => {
+    const res = await api.get(`procurement/goods-receipts`);
+    return res.data;
+  },
+
+  getGoodsReceipts: async (projectId: string): Promise<any> => {
+    const res = await api.get(`projects/${projectId}/goods-receipts`);
+    return res.data;
+  },
+
   deletePurchaseOrder: async (projectId: string, poId: string): Promise<any> => {
     try {
       const res = await api.delete(`projects/${projectId}/purchase-orders/${poId}`);

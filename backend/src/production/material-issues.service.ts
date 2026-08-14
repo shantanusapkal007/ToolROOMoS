@@ -324,4 +324,24 @@ export class MaterialIssuesService {
       include: { material: true },
     });
   }
+
+  async getAllMaterialIssues() {
+    return this.prisma.materialIssueHeader.findMany({
+      include: {
+        project: true,
+        jobCard: {
+          include: {
+            routingOperation: { include: { operation: true } },
+            machine: true,
+          },
+        },
+        items: {
+          include: {
+            inventoryBatch: { include: { material: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

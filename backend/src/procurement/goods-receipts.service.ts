@@ -171,14 +171,14 @@ export class GoodsReceiptsService {
             actualMaterialCost: itemCost,
             toolNo: item.toolNo,
             detNo: item.detNo,
-            length: item.length,
-            width: item.width,
-            height: item.height,
-            apWeight: item.apWeight,
-            totalWeight: item.totalWeight,
-            basicCost: item.basicCost,
-            gst: item.gst,
-            total: item.total,
+            length: (item.length !== undefined && item.length !== null && item.length !== '' && !isNaN(parseFloat(String(item.length)))) ? parseFloat(String(item.length)) : null,
+            width: (item.width !== undefined && item.width !== null && item.width !== '' && !isNaN(parseFloat(String(item.width)))) ? parseFloat(String(item.width)) : null,
+            height: (item.height !== undefined && item.height !== null && item.height !== '' && !isNaN(parseFloat(String(item.height)))) ? parseFloat(String(item.height)) : null,
+            apWeight: (item.apWeight !== undefined && item.apWeight !== null && !isNaN(Number(item.apWeight))) ? Number(item.apWeight) : null,
+            totalWeight: (item.totalWeight !== undefined && item.totalWeight !== null && !isNaN(Number(item.totalWeight))) ? Number(item.totalWeight) : null,
+            basicCost: (item.basicCost !== undefined && item.basicCost !== null && !isNaN(Number(item.basicCost))) ? Number(item.basicCost) : null,
+            gst: (item.gst !== undefined && item.gst !== null && !isNaN(Number(item.gst))) ? Number(item.gst) : null,
+            total: (item.total !== undefined && item.total !== null && !isNaN(Number(item.total))) ? Number(item.total) : null,
             remarks: item.remarks,
             createdBy: userId,
             updatedBy: userId,
@@ -375,6 +375,29 @@ export class GoodsReceiptsService {
     return this.prisma.goodsReceiptHeader.findMany({
       where: { projectId: project.id },
       include: { items: { include: { poItem: { include: { material: true } } } } },
+    });
+  }
+
+  async getAllGoodsReceipts() {
+    return this.prisma.goodsReceiptHeader.findMany({
+      include: {
+        project: true,
+        poHeader: {
+          include: {
+            vendor: true,
+          }
+        },
+        items: {
+          include: {
+            poItem: {
+              include: {
+                material: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 }

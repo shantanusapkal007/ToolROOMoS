@@ -853,8 +853,14 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
   };
 
   const handleDeleteRow = (rowId: string) => {
-    setRows(prev => prev.filter(r => r.id !== rowId));
-    success("Row Removed", "Item removed from the conversion queue.");
+    setRows(prev => {
+      const remaining = prev.filter(r => r.id !== rowId);
+      return remaining.map((r, idx) => ({
+        ...r,
+        srNo: (idx + 1).toString(),
+      }));
+    });
+    success("Row Removed", "Item removed and serial numbers re-sequenced.");
   };
 
   const handleConvert = () => {
@@ -1778,7 +1784,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                     });
                   }
 
-                  return filteredRows.map((row) => renderRow(row, false));
+                  return filteredRows.map((row, idx) => renderRow(row, idx));
                 })()}
               </tbody>
             </table>

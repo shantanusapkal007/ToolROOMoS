@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import { useProject } from "@/hooks/useProjects";
-import { PackageCheck, Plus, ShoppingCart, Printer, Download, Eye } from "lucide-react";
+import { PackageCheck, Plus, ShoppingCart, Printer, Download, Eye, Layers, PackageMinus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { SmartTable } from "@/components/ui/SmartTable";
 import { Modal } from "@/components/ui/Modal";
@@ -17,6 +17,7 @@ export default function ProjectInventoryPage() {
   const params = useParams();
   const id = params?.id as string;
   const { data: project, isLoading, refetch } = useProject(id);
+  const [activeTab, setActiveTab] = useState<'grn' | 'ledger' | 'issues'>('grn');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [printIssueData, setPrintIssueData] = useState<any | null>(null);
   const [viewingGrnDetails, setViewingGrnDetails] = useState<any | null>(null);
@@ -88,7 +89,7 @@ export default function ProjectInventoryPage() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setPrintIssueData(row)}
-            className="p-1.5 rounded-[12px] bg-canvas hover:bg-white text-ink border border-border-gray transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+            className="p-1.5 rounded-[10px] bg-canvas hover:bg-white text-ink border border-border-gray transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
             title="Print Issue Slip"
           >
             <Printer className="w-3.5 h-3.5" />
@@ -96,7 +97,7 @@ export default function ProjectInventoryPage() {
           </button>
           <button
             onClick={() => handleExportIssueRow(row)}
-            className="p-1.5 rounded-[12px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+            className="p-1.5 rounded-[10px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
             title="Export Issue Excel"
           >
             <Download className="w-3.5 h-3.5" />
@@ -132,7 +133,7 @@ export default function ProjectInventoryPage() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setViewingGrnDetails(rawGrn)}
-              className="p-1.5 rounded-[12px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+              className="p-1.5 rounded-[10px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="View GRN Details"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -140,7 +141,7 @@ export default function ProjectInventoryPage() {
             </button>
             <button
               onClick={() => handleExportGrnRow(row)}
-              className="p-1.5 rounded-[12px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
+              className="p-1.5 rounded-[10px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer"
               title="Export GRN Excel"
             >
               <Download className="w-3.5 h-3.5" />
@@ -172,80 +173,141 @@ export default function ProjectInventoryPage() {
   const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       
-      {/* GRN Section */}
-      <div>
-        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between mb-4">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
-                <PackageCheck className="h-4 w-4 text-white" />
-              </div>
-              <h1 className="text-xl font-semibold text-ink tracking-tight">Goods Receipt Notes (GRN)</h1>
-            </div>
-            <p className="text-xs text-mute ml-[42px]">Inward materials received against Purchase Orders for this project.</p>
-          </div>
-        </div>
-        <SmartTable 
-          title="Project GRNs"
-          columns={grnColumns}
-          data={grnHeaders}
-          isLoading={false}
-          exportFilename="GRN_History"
-        />
+      {/* 3 Interactive Tabs */}
+      <div className="flex items-center gap-2 border-b border-border-gray pb-px">
+        <button
+          onClick={() => setActiveTab('grn')}
+          className={`px-5 py-3 rounded-t-[10px] text-xs font-semibold flex items-center gap-2 border-t border-x transition-all cursor-pointer ${
+            activeTab === 'grn'
+              ? 'bg-white border-border-gray text-primary border-b-2 border-b-white shadow-subtle font-bold translate-y-[1px]'
+              : 'bg-canvas/50 border-transparent text-silver-blue hover:text-ink hover:bg-canvas'
+          }`}
+        >
+          <PackageCheck className="w-4 h-4" />
+          <span>Goods Receipts (GRN)</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            activeTab === 'grn' ? 'bg-primary-subtle text-primary' : 'bg-zinc-200 text-zinc-700'
+          }`}>
+            {grnHeaders.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('ledger')}
+          className={`px-5 py-3 rounded-t-[10px] text-xs font-semibold flex items-center gap-2 border-t border-x transition-all cursor-pointer ${
+            activeTab === 'ledger'
+              ? 'bg-white border-border-gray text-primary border-b-2 border-b-white shadow-subtle font-bold translate-y-[1px]'
+              : 'bg-canvas/50 border-transparent text-silver-blue hover:text-ink hover:bg-canvas'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Live Stock Movements</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            activeTab === 'ledger' ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-200 text-zinc-700'
+          }`}>
+            {transactions.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('issues')}
+          className={`px-5 py-3 rounded-t-[10px] text-xs font-semibold flex items-center gap-2 border-t border-x transition-all cursor-pointer ${
+            activeTab === 'issues'
+              ? 'bg-white border-border-gray text-primary border-b-2 border-b-white shadow-subtle font-bold translate-y-[1px]'
+              : 'bg-canvas/50 border-transparent text-silver-blue hover:text-ink hover:bg-canvas'
+          }`}
+        >
+          <PackageMinus className="w-4 h-4" />
+          <span>Material Issues (MIN)</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            activeTab === 'issues' ? 'bg-purple-100 text-purple-800' : 'bg-zinc-200 text-zinc-700'
+          }`}>
+            {materialHeaders.length}
+          </span>
+        </button>
       </div>
 
-      {/* Live Inventory Ledger Section */}
-      <div>
-        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between mb-4">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
-                <ShoppingCart className="h-4 w-4 text-white" />
+      {/* TAB 1: GRN */}
+      {activeTab === 'grn' && (
+        <div className="space-y-4">
+          <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="h-8 w-8 rounded-[10px] bg-primary-subtle border border-primary/20 flex items-center justify-center text-primary shadow-sm shrink-0">
+                  <PackageCheck className="h-4 w-4" />
+                </div>
+                <h2 className="text-base font-bold text-ink tracking-tight">Goods Receipt Notes (GRN)</h2>
               </div>
-              <h1 className="text-xl font-semibold text-ink tracking-tight">Live Inventory Ledger (Stock Movements)</h1>
+              <p className="text-xs text-silver-blue ml-[42px]">Inward raw materials and parts received against Purchase Orders for this project.</p>
             </div>
-            <p className="text-xs text-mute ml-[42px]">Real-time ledger of all stock additions (GRNs) and deductions (Issues).</p>
           </div>
+          <SmartTable 
+            title="Project GRNs"
+            columns={grnColumns}
+            data={grnHeaders}
+            isLoading={false}
+            exportFilename="GRN_History"
+          />
         </div>
-        <SmartTable 
-          title="Inventory Ledger"
-          columns={txColumns}
-          data={transactions}
-          isLoading={false}
-          exportFilename="Inventory_Ledger"
-        />
-      </div>
+      )}
 
-      {/* Material Issues Section */}
-      <div>
-        <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
-                <PackageCheck className="h-4 w-4 text-white" />
+      {/* TAB 2: LIVE STOCK LEDGER */}
+      {activeTab === 'ledger' && (
+        <div className="space-y-4">
+          <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="h-8 w-8 rounded-[10px] bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-sm shrink-0">
+                  <Layers className="h-4 w-4" />
+                </div>
+                <h2 className="text-base font-bold text-ink tracking-tight">Stock Movements Ledger</h2>
               </div>
-              <h1 className="text-xl font-semibold text-ink tracking-tight">Material Issues & Requisitions</h1>
+              <p className="text-xs text-silver-blue ml-[42px]">Real-time ledger of all stock additions (GRNs) and deductions (Shopfloor Issues).</p>
             </div>
-            <p className="text-xs text-mute ml-[42px]">Track raw material blocks, standard hardware, and consumables issued to shop floor.</p>
           </div>
-          {!isProjectClosed && (
-            <Button variant="primary" size="md" onClick={() => setIsFormOpen(true)}>
-              <Plus className="w-4 h-4" />
-              <span>Request Material Issue</span>
-            </Button>
-          )}
+          <SmartTable 
+            title="Stock Movement Ledger"
+            columns={txColumns}
+            data={transactions}
+            isLoading={false}
+            exportFilename="Inventory_Ledger"
+          />
         </div>
-        <SmartTable 
-          title="Material Issues"
-          columns={issueColumns}
-          data={materialHeaders}
-          isLoading={false}
-          exportFilename="Material_Requisitions"
-        />
-      </div>
+      )}
 
+      {/* TAB 3: MATERIAL ISSUES */}
+      {activeTab === 'issues' && (
+        <div className="space-y-4">
+          <div className="bg-white border border-border-gray rounded-[12px] p-5 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="h-8 w-8 rounded-[10px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 shadow-sm shrink-0">
+                  <PackageMinus className="h-4 w-4" />
+                </div>
+                <h2 className="text-base font-bold text-ink tracking-tight">Material Issues & Requisitions</h2>
+              </div>
+              <p className="text-xs text-silver-blue ml-[42px]">Track raw material blocks, standard hardware, and parts issued to machine shop sections.</p>
+            </div>
+            {!isProjectClosed && (
+              <Button variant="primary" size="md" onClick={() => setIsFormOpen(true)}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                <span>Issue Material</span>
+              </Button>
+            )}
+          </div>
+          <SmartTable 
+            title="Material Issues"
+            columns={issueColumns}
+            data={materialHeaders}
+            isLoading={false}
+            exportFilename="Material_Requisitions"
+          />
+        </div>
+      )}
+
+      {/* MODALS */}
       {isFormOpen && (
         <Modal 
           isOpen={isFormOpen} 
@@ -285,19 +347,19 @@ export default function ProjectInventoryPage() {
             {/* Header info */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-canvas rounded-[12px] border border-border-gray text-xs">
               <div>
-                <span className="text-mute font-semibold block uppercase tracking-wider text-[10px]">GRN Number</span>
+                <span className="text-cool-gray font-semibold block uppercase tracking-wider text-[10px]">GRN Number</span>
                 <span className="font-mono font-semibold text-ink">{viewingGrnDetails.grnNumber}</span>
               </div>
               <div>
-                <span className="text-mute font-semibold block uppercase tracking-wider text-[10px]">PO Reference</span>
+                <span className="text-cool-gray font-semibold block uppercase tracking-wider text-[10px]">PO Reference</span>
                 <span className="font-mono font-semibold text-ink">{viewingGrnDetails.poHeader?.poNumber || viewingGrnDetails.documentNumber || 'PO-001'}</span>
               </div>
               <div>
-                <span className="text-mute font-semibold block uppercase tracking-wider text-[10px]">Supplier Challan</span>
+                <span className="text-cool-gray font-semibold block uppercase tracking-wider text-[10px]">Supplier Challan</span>
                 <span className="font-mono text-ink">{viewingGrnDetails.supplierChallan || '-'}</span>
               </div>
               <div>
-                <span className="text-mute font-semibold block uppercase tracking-wider text-[10px]">Date Received</span>
+                <span className="text-cool-gray font-semibold block uppercase tracking-wider text-[10px]">Date Received</span>
                 <span className="font-mono text-ink">{new Date(viewingGrnDetails.createdAt || Date.now()).toLocaleDateString('en-GB')}</span>
               </div>
             </div>

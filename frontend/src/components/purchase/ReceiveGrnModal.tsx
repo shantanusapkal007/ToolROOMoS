@@ -27,24 +27,33 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
     return (po.items || []).map((item: any) => {
       const custom = item.customFields || {};
       const remainingQty = Number(item.orderedQty || 0) - Number(item.receivedQty || 0);
+      const initialQty = remainingQty > 0 ? remainingQty : Number(item.orderedQty || 1);
+      const apWeight = Number(custom.apWt ?? (item as any).calculatedWeight ?? 0);
+      const totalWeight = Number(custom.totalWt ?? (apWeight > 0 ? apWeight * initialQty : 0));
+      const actualRate = Number(item.agreedRate || 0);
+      const basicCost = Number(item.basicValue || (totalWeight > 0 ? totalWeight * actualRate : initialQty * actualRate));
+      const gstPercent = Number(item.gstPercent || custom.gstPercent || 18);
+      const gst = Number(custom.gstAmount || (basicCost * (gstPercent / 100)));
+      const total = Number((basicCost + gst).toFixed(2));
+
       return {
         poItemId: item.id,
         orderedQty: Number(item.orderedQty || 0),
         remainingQty,
-        acceptedQty: remainingQty > 0 ? remainingQty : 0, // default to receiving the remaining amount
+        acceptedQty: remainingQty > 0 ? remainingQty : 0,
         rejectedQty: 0,
-        heatNumber: "HEAT-" + Math.floor(1000 + Math.random() * 9000), // Mock standard heat number
-        actualRate: Number(item.agreedRate || 0),
+        heatNumber: "HEAT-" + Math.floor(1000 + Math.random() * 9000),
+        actualRate,
         toolNo: custom.toolNo || "TOOL",
         detNo: custom.detNo || "",
         length: custom.length || "",
         width: custom.width || "",
         height: custom.height || "",
-        apWeight: Number(custom.apWt || 0),
-        totalWeight: Number(custom.totalWt || 0),
-        basicCost: Number(item.basicValue || 0),
-        gst: Number(custom.gstAmount || 0),
-        total: Number(item.lineTotal || 0),
+        apWeight,
+        totalWeight,
+        basicCost: Math.round((basicCost + Number.EPSILON) * 100) / 100,
+        gst: Math.round((gst + Number.EPSILON) * 100) / 100,
+        total,
         remarks: item.remarks || "",
         partName: custom.materialGrade || item.material?.materialGrade || "Material"
       };
@@ -54,7 +63,21 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
   const updateItem = (index: number, field: string, value: any) => {
     setItems((prev: any[]) => {
       const newItems = [...prev];
-      newItems[index] = { ...newItems[index], [field]: value };
+      const updated = { ...newItems[index], [field]: value };
+      
+      const inQty = Number(updated.acceptedQty || 0) + Number(updated.rejectedQty || 0);
+      const apWt = Number(updated.apWeight || 0);
+      if (apWt > 0) {
+        updated.totalWeight = Number((apWt * inQty).toFixed(2));
+      }
+      const rate = Number(updated.actualRate || 0);
+      const basic = Number((updated.totalWeight > 0 ? updated.totalWeight * rate : inQty * rate).toFixed(2));
+      const gst = Number((basic * 0.18).toFixed(2));
+      updated.basicCost = basic;
+      updated.gst = gst;
+      updated.total = Number((basic + gst).toFixed(2));
+
+      newItems[index] = updated;
       return newItems;
     });
   };

@@ -48,17 +48,14 @@ export class CreateGrnItemDto {
   @IsOptional()
   detNo?: string;
 
-  @IsNumber()
   @IsOptional()
-  length?: number;
+  length?: any;
 
-  @IsNumber()
   @IsOptional()
-  width?: number;
+  width?: any;
 
-  @IsNumber()
   @IsOptional()
-  height?: number;
+  height?: any;
 
   @IsNumber()
   @IsOptional()
