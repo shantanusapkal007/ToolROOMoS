@@ -16,11 +16,19 @@ export class PurchaseOrdersService {
    * Fetch all active projects and their BOM items across the system for global PO creation
    */
   async getAllProjectBomItems() {
-    // 1. Fetch ALL projects in the database with customer and BOM headers
+    // 1. Fetch projects in the database with customer, POs, GRNs and latest BOM header
     const projects = await this.prisma.project.findMany({
       include: {
         customer: true,
+        purchaseOrderHeaders: {
+          include: {
+            items: true,
+          }
+        },
+        goodsReceiptHeaders: true,
         billOfMaterialHeaders: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
           include: {
             items: {
               include: {
@@ -36,12 +44,51 @@ export class PurchaseOrdersService {
     const resultItems: any[] = [];
 
     projects.forEach(project => {
-      // Collect items from BOM headers if available
-      let hasItems = false;
-      project.billOfMaterialHeaders.forEach(header => {
-        header.items.forEach((item, index) => {
-          hasItems = true;
+      // 1. Skip projects that are CLOSED or COMPLETED
+      const stage = (project.currentStage || '').toUpperCase();
+      if (stage === 'CLOSED' || stage === 'COMPLETED') {
+        return;
+      }
+
+      // 2. Check if all POs for this project are CLOSED or fully received via GRN
+      const pos = project.purchaseOrderHeaders || [];
+      const grns = project.goodsReceiptHeaders || [];
+      if (pos.length > 0) {
+        const allPosClosed = pos.every(po => 
+          po.status === 'CLOSED' || 
+          (po.items && po.items.length > 0 && po.items.every(i => Number(i.receivedQty || 0) >= Number(i.orderedQty || 1)))
+        );
+        // If all POs are closed and at least one GRN was processed, all materials are received
+        if (allPosClosed && grns.length > 0) {
+          return;
+        }
+      }
+
+      // 3. Collect items from the latest BOM header
+      const latestHeader = project.billOfMaterialHeaders[0];
+      if (latestHeader) {
+        // Collect all PO item descriptions/materials for this project that are already ordered/received
+        const poItemRemarks = new Set<string>();
+        pos.forEach(po => {
+          po.items.forEach(pi => {
+            if (Number(pi.receivedQty || 0) >= Number(pi.orderedQty || 1) || po.status === 'CLOSED') {
+              if (pi.remarks) poItemRemarks.add(pi.remarks.trim().toLowerCase());
+            }
+          });
+        });
+
+        latestHeader.items.forEach((item, index) => {
           const custom = (item.customFields as any) || {};
+          const itemStatus = (custom.status || '').toUpperCase();
+          if (itemStatus === 'ORDERED' || itemStatus === 'RECEIVED' || itemStatus === 'FULFILLED' || itemStatus === 'COMPLETED') {
+            return;
+          }
+
+          // If a matching PO item for this part name/remarks is fully received, skip it
+          if (item.remarks && poItemRemarks.has(item.remarks.trim().toLowerCase())) {
+            return;
+          }
+
           resultItems.push({
             id: item.id,
             bomHeaderId: item.bomHeaderId,
@@ -64,9 +111,7 @@ export class PurchaseOrdersService {
             status: custom.status || 'PENDING',
           });
         });
-      });
-
-      // No fake fallbacks - return only authentic database BOM items
+      }
     });
 
     return resultItems;
@@ -297,19 +342,33 @@ export class PurchaseOrdersService {
    */
   async getAllGlobalPurchaseOrders() {
     const pos = await this.prisma.purchaseOrderHeader.findMany({
+      where: {
+        status: { notIn: [PurchaseOrderStatus.CLOSED, PurchaseOrderStatus.CANCELLED] }
+      },
       include: {
         vendor: true,
         project: true,
         items: {
           include: {
             material: true,
+            goodsReceiptItems: true,
           }
-        }
+        },
+        goodsReceiptHeaders: true
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    return pos;
+    return pos.filter((po: any) => {
+      if (po.status === PurchaseOrderStatus.CLOSED || po.status === PurchaseOrderStatus.CANCELLED) {
+        return false;
+      }
+      if (po.items && po.items.length > 0) {
+        const isFullyReceived = po.items.every((i: any) => Number(i.receivedQty || 0) >= Number(i.orderedQty || 1));
+        if (isFullyReceived) return false;
+      }
+      return true;
+    });
   }
 
   /**
