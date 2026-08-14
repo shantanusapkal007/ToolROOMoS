@@ -332,7 +332,30 @@ async function main() {
     },
   });
 
-  console.log(`✅ Seeded Materials: MA-01 (Aluminium), MA-02 (D2 Tool Steel), MA-03 (H13), MA-04 (EN31), MA-05 (Mild Steel), MA-06 (Brass), MA-07 (Copper)`);
+  const materialSTD = await prisma.material.upsert({
+    where: { materialCode: 'STD' },
+    update: {
+      materialGrade: 'Standard Bought-Out Component',
+      materialCategory: 'STANDARD_PART',
+      density: 1.0,
+      standardCost: 0,
+      defaultUom: 'NOS',
+      defaultVendor: 'Standard Parts Supplier',
+      status: 'ACTIVE',
+    },
+    create: {
+      materialCode: 'STD',
+      materialGrade: 'Standard Bought-Out Component',
+      materialCategory: 'STANDARD_PART',
+      density: 1.0,
+      standardCost: 0,
+      defaultUom: 'NOS',
+      defaultVendor: 'Standard Parts Supplier',
+      status: 'ACTIVE',
+    },
+  });
+
+  console.log(`✅ Seeded Materials: MA-01 (Aluminium), MA-02 (D2 Tool Steel), MA-03 (H13), MA-04 (EN31), MA-05 (Mild Steel), MA-06 (Brass), MA-07 (Copper), STD (Standard Bought-Out)`);
 
   // 9. Seed Machine
   const machine = await prisma.machine.upsert({

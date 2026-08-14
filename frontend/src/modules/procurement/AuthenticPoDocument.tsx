@@ -30,15 +30,52 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
   let grandTotalValue = 0;
 
   Object.values(grouped).forEach(items => {
-    items.forEach(i => {
-      grandTotalQty += Number(i.orderedQty || 0);
-      grandTotalApWt += Number(i.apWt || 0);
-      grandTotalWt += Number(i.totalWt || 0);
-      grandBasicCost += Number(i.basicValue || 0);
-      grandGst += Number(i.gstAmount || 0);
-      grandTotalValue += Number(i.lineTotal || 0);
+    items.forEach(item => {
+      const qty = Number(item.orderedQty || 0);
+      const itemCustom = (item as any).customFields || {};
+      let apWt = Number(item.apWt ?? itemCustom.apWt ?? (item as any).calculatedWeight ?? 0);
+      let totalWt = Number(item.totalWt ?? itemCustom.totalWt ?? 0);
+      
+      const { lVal, wVal, hVal } = parseLwh(
+        (item as any).dimensions || (item as any).rawSize || itemCustom.rawMaterialSize,
+        item.length || itemCustom.length,
+        item.width || itemCustom.width,
+        item.height || itemCustom.height
+      );
+
+      if (apWt === 0 && totalWt === 0) {
+        const l = parseFloat(lVal);
+        const w = parseFloat(wVal);
+        const h = parseFloat(hVal);
+        if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
+          const density = Number((item as any).material?.density || 7.85);
+          apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
+          totalWt = Number((apWt * qty).toFixed(2));
+        }
+      } else if (totalWt === 0 && apWt > 0) {
+        totalWt = Number((qty * apWt).toFixed(2));
+      } else if (apWt === 0 && totalWt > 0 && qty > 0) {
+        apWt = Number((totalWt / qty).toFixed(2));
+      }
+
+      const rate = Number(item.agreedRate || 0);
+      const basicCost = Number(item.basicValue || (totalWt > 0 ? totalWt * rate : qty * rate));
+      const gstPct = Number(item.gstPercent || itemCustom.gstPercent || 18);
+      const gst = Number(item.gstAmount || itemCustom.gstAmount || (basicCost * (gstPct / 100)));
+      const total = Number(item.lineTotal || (basicCost + gst));
+
+      grandTotalQty += qty;
+      grandTotalApWt += apWt;
+      grandTotalWt += totalWt;
+      grandBasicCost += basicCost;
+      grandGst += gst;
+      grandTotalValue += total;
     });
   });
+
+  grandBasicCost = Math.round((grandBasicCost + Number.EPSILON) * 100) / 100;
+  grandGst = Math.round((grandGst + Number.EPSILON) * 100) / 100;
+  grandTotalValue = Math.round((grandBasicCost + grandGst + Number.EPSILON) * 100) / 100;
 
   // Helper for circled detail numbers (①, ②, ③, etc.)
   const formatCircledNum = (val: string | number) => {
@@ -211,11 +248,35 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
                   <React.Fragment key={toolNo}>
                     {items.map((item, itemIdx) => {
                       const qty = Number(item.orderedQty || 0);
-                      const apWt = Number(item.apWt || 0);
-                      const totalWt = Number(item.totalWt || (qty * apWt));
+                      const itemCustom = (item as any).customFields || {};
+                      let apWt = Number(item.apWt ?? itemCustom.apWt ?? (item as any).calculatedWeight ?? 0);
+                      let totalWt = Number(item.totalWt ?? itemCustom.totalWt ?? 0);
+                      
+                      const { lVal, wVal, hVal } = parseLwh(
+                        (item as any).dimensions || (item as any).rawSize || itemCustom.rawMaterialSize,
+                        item.length || itemCustom.length,
+                        item.width || itemCustom.width,
+                        item.height || itemCustom.height
+                      );
+
+                      if (apWt === 0 && totalWt === 0) {
+                        const l = parseFloat(lVal);
+                        const w = parseFloat(wVal);
+                        const h = parseFloat(hVal);
+                        if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
+                          const density = Number((item as any).material?.density || 7.85);
+                          apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
+                          totalWt = Number((apWt * qty).toFixed(2));
+                        }
+                      } else if (totalWt === 0 && apWt > 0) {
+                        totalWt = Number((qty * apWt).toFixed(2));
+                      } else if (apWt === 0 && totalWt > 0 && qty > 0) {
+                        apWt = Number((totalWt / qty).toFixed(2));
+                      }
+
                       const rate = Number(item.agreedRate || 0);
                       const basicCost = Number(item.basicValue || (totalWt > 0 ? totalWt * rate : qty * rate));
-                      const gst = Number(item.gstAmount || (basicCost * 0.18));
+                      const gst = Number(item.gstAmount || itemCustom.gstAmount || (basicCost * 0.18));
                       const total = Number(item.lineTotal || (basicCost + gst));
 
                       groupQty += qty;
@@ -224,13 +285,6 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
                       groupBasicSum += basicCost;
                       groupGstSum += gst;
                       groupTotalSum += total;
-
-                      const { lVal, wVal, hVal } = parseLwh(
-                        (item as any).dimensions || (item as any).rawSize,
-                        item.length,
-                        item.width,
-                        item.height
-                      );
 
                       return (
                         <tr key={`${toolNo}-${itemIdx}`} className="hover:bg-canvas transition-colors">
@@ -321,7 +375,7 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
             <div className="pt-2 border-t-2 border-zinc-900 flex justify-between items-center bg-zinc-900 text-white p-3 rounded-[12px] mt-2">
               <span className="font-semibold uppercase tracking-wider text-xs">PURCHASE ORDER VALUE (INR):</span>
               <span className="font-mono font-semibold text-lg text-amber-400">
-                ₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                ₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           </div>

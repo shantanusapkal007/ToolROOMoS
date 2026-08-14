@@ -40,15 +40,19 @@ export class BomsService {
         });
       }
 
-      // 2. Calculate estimated cost summation and fetch standard costs
-      const validMaterialIds = dto.items.map(i => i.materialId).filter((id): id is string => Boolean(id));
+      // 2. Fetch materials for estimated cost calculation
+      const validMaterialIds = dto.items
+        .map(i => i.materialId)
+        .filter((id): id is string => Boolean(id));
       const materials = validMaterialIds.length > 0
         ? await tx.material.findMany({ where: { id: { in: validMaterialIds } } })
         : [];
       const materialMap = new Map(materials.map(m => [m.id, m]));
 
-      // Fallback material for items without an explicit materialId
-      const defaultMaterial = await tx.material.findFirst();
+      // Fallback default material if none provided
+      const defaultMaterial = await tx.material.findFirst({
+        where: { materialCode: 'STD' }
+      }) || await tx.material.findFirst();
       const defaultMatId = defaultMaterial?.id || '';
 
       let totalCost = 0;

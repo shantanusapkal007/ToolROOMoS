@@ -41,6 +41,16 @@ export const ProcurementService = {
     return res.data;
   },
 
+  deletePurchaseOrder: async (projectId: string, poId: string): Promise<any> => {
+    try {
+      const res = await api.delete(`projects/${projectId}/purchase-orders/${poId}`);
+      return res.data;
+    } catch (err) {
+      const res = await api.delete(`procurement/purchase-orders/${poId}`);
+      return res.data;
+    }
+  },
+
   getDeadMaterials: async (): Promise<any> => {
     const res = await api.get(`procurement/dead-materials`);
     return res.data;

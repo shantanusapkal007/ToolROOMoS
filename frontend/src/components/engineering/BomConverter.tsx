@@ -116,35 +116,54 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         const defaultPartName = project?.partName || project?.name || '';
         const nameVal = cf.partName || item.partName || defaultPartName;
 
+        const isBoughtOut = cf.isBoughtOut === true || 
+                            item.material?.materialCode === 'STD' || 
+                            (cf.materialInput && cf.materialInput.toString().toUpperCase().includes('STD')) ||
+                            (!fDimensions.isValid && !dimensions.isValid && !item.rawSize && !cf.rawMaterialSize);
+
+        const materialDisplay = isBoughtOut 
+          ? (cf.materialInput || 'STD') 
+          : (item.material && item.material.materialCode !== 'STD' ? `${item.material.materialCode} - ${item.material.materialGrade || item.material.materialName}` : (cf.materialInput || nameVal));
+
+        const stdRate = cf.rate !== undefined && cf.rate !== null 
+          ? Number(cf.rate) 
+          : (cf.unitCost !== undefined && cf.unitCost !== null 
+              ? Number(cf.unitCost) 
+              : (item.estimatedCost && item.requiredQty ? Number(item.estimatedCost) / Number(item.requiredQty) : null));
+
+        const rmRate = cf.rate !== undefined && cf.rate !== null
+          ? Number(cf.rate)
+          : (item.estimatedCost && item.calculatedWeight ? Number(item.estimatedCost) / Number(item.calculatedWeight) : null);
+
         const parsedItem: ParsedBOMRow = {
           id: item.id || `db-row-${idx}`,
           toolNo: cf.toolNo || project?.projectNumber || '',
           srNo: cf.srNo || (idx + 1).toString(),
           partName: nameVal,
           description: item.remarks || cf.description || '',
-          quantity: item.requiredQty || 1,
+          quantity: Number(item.requiredQty) || 1,
           finishSize: finishVal,
           finishL: fDimensions.length as any,
           finishW: fDimensions.width as any,
           finishH: fDimensions.height as any,
           rawMaterialSize: rmVal,
-          materialInput: item.material ? `${item.material.materialCode} - ${item.material.materialGrade}` : (cf.materialInput || nameVal),
+          materialInput: materialDisplay,
           catalogSize: item.catalogSize || cf.catalogSize || '',
           stockSize: item.stockSize || cf.stockSize || '',
           length: cf.length || dimensions.length as any,
           width: cf.width || dimensions.width as any,
           height: cf.height || dimensions.height as any,
-          matchedMaterialId: item.materialId || null,
-          matchedMaterialName: item.material ? `${item.material.materialCode} - ${item.material.materialGrade}` : null,
-          density: cf.density || null,
-          rate: item.estimatedCost && item.calculatedWeight ? item.estimatedCost / item.calculatedWeight : null,
-          unitCost: cf.unitCost || null,
-          apWeight: cf.apWeight || item.calculatedWeight || null,
-          totalWeight: item.calculatedWeight || cf.totalWeight || null,
-          basicCost: item.estimatedCost || cf.basicCost || null,
+          matchedMaterialId: isBoughtOut ? null : (item.materialId || null),
+          matchedMaterialName: isBoughtOut ? 'STD - Standard Bought-out Component' : (item.material ? `${item.material.materialCode} - ${item.material.materialGrade}` : null),
+          density: isBoughtOut ? null : (cf.density || null),
+          rate: isBoughtOut ? stdRate : rmRate,
+          unitCost: isBoughtOut ? stdRate : null,
+          apWeight: isBoughtOut ? null : (cf.apWeight || item.calculatedWeight || null),
+          totalWeight: isBoughtOut ? null : (item.calculatedWeight || cf.totalWeight || null),
+          basicCost: Number(item.estimatedCost) || cf.basicCost || null,
           hsnCode: item.hsnCode || null,
           gstPercent: cf.gstPercent || 18,
-          isBoughtOut: cf.isBoughtOut || false,
+          isBoughtOut: isBoughtOut,
           validationError: null
         };
         return populateCalculations(parsedItem);
@@ -335,31 +354,49 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
        matchedMat = allMaterials.find((m: any) => 
           (item.matchedMaterialId && m.id === item.matchedMaterialId) ||
           `${m.materialCode || ''} - ${m.materialGrade || m.materialName || ''}`.toLowerCase() === search ||
+          m.materialCode?.toLowerCase() === search || 
+          m.materialGrade?.toLowerCase() === search ||
           m.materialCode?.toLowerCase().includes(search) || 
           m.materialGrade?.toLowerCase().includes(search)
        ) || null;
     }
 
-    
-    item.matchedMaterialId = matchedMat ? matchedMat.id : null;
+    item.matchedMaterialId = matchedMat ? matchedMat.id : (item.matchedMaterialId || null);
     item.matchedMaterialName = matchedMat ? `${matchedMat.materialCode} - ${matchedMat.materialGrade}` : null;
     item.hsnCode = matchedMat?.hsnCode || null;
     item.gstPercent = matchedMat?.gstPercent ? Number(matchedMat.gstPercent) : 18; // Default GST 18% if not set
     
     if (item.isBoughtOut) {
-      // Bought-out / Standard items: Unit Cost × Quantity model
-      // Weight fields are N/A for bought-out items
+      // Standard Bought-out items: Unit Rate (₹/pc) × Quantity model
+      const stdMat = allMaterials.find((m: any) => m.materialCode === 'STD');
+      if (stdMat) {
+        item.matchedMaterialId = stdMat.id;
+        item.matchedMaterialName = `${stdMat.materialCode} - ${stdMat.materialGrade || stdMat.materialName}`;
+      }
       item.density = null;
-      item.rate = null;
       item.apWeight = null;
       item.totalWeight = null;
-      // Preserve user-entered unitCost, don't reset it
-      if (item.unitCost === undefined) item.unitCost = 0;
-      item.basicCost = (item.unitCost || 0) * (item.quantity || 0);
+
+      const effectiveRate = item.rate !== undefined && item.rate !== null && !isNaN(Number(item.rate)) && item.rate !== ('' as any)
+        ? Number(item.rate)
+        : (item.unitCost !== undefined && item.unitCost !== null && !isNaN(Number(item.unitCost)) && item.unitCost !== ('' as any) ? Number(item.unitCost) : null);
+
+      item.rate = effectiveRate;
+      item.unitCost = effectiveRate;
+      item.basicCost = effectiveRate !== null ? Number((effectiveRate * (Number(item.quantity) || 1)).toFixed(2)) : null;
+
+      // Auto-tag STD in material description if not present
+      if (!item.materialInput || !item.materialInput.trim()) {
+        item.materialInput = 'STD';
+      } else if (!item.materialInput.toUpperCase().includes('STD')) {
+        item.materialInput = `${item.materialInput} (STD)`;
+      }
     } else {
       // Raw Material items: Weight × Rate model
-      item.density = matchedMat ? Number(matchedMat.density || 7.85) : 7.85;
-      item.rate = matchedMat ? Number(matchedMat.standardCost || 0) : 0;
+      item.density = matchedMat ? Number(matchedMat.density || 7.85) : (item.density || 7.85);
+      if (matchedMat && (!item.rate || Number(item.rate) === 0)) {
+        item.rate = Number(matchedMat.standardCost || matchedMat.ratePerKg || 0);
+      }
       item.unitCost = null;
       
       if (item.length && item.width && item.height) {
@@ -381,29 +418,62 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
           item.apWeight = 0;
       }
       
-      item.totalWeight = Number(((item.apWeight || 0) * (item.quantity || 0)).toFixed(2));
-      item.basicCost = Number(((item.totalWeight || 0) * (item.rate || 0)).toFixed(2));
+      item.totalWeight = Number(((Number(item.apWeight) || 0) * (Number(item.quantity) || 0)).toFixed(2));
+      item.basicCost = Number(((Number(item.totalWeight) || 0) * (Number(item.rate) || 0)).toFixed(2));
     }
     return item;
   };
 
   // --- Validate Row Data ---
   const validateRow = (row: Partial<ParsedBOMRow>, index: number): string | null => {
+    const rowNum = index + 1;
     if (!row.srNo || !row.srNo.toString().trim()) {
-      return `Row ${index + 1}: Sr No / Detail No is missing.`;
+      return `Row ${rowNum}: Sr No / Detail No is missing.`;
     }
-    if (!row.quantity || isNaN(row.quantity) || row.quantity <= 0) {
-      return `Row ${index + 1}: Quantity must be greater than 0.`;
+    if (!row.partName || !row.partName.toString().trim()) {
+      return `Row ${rowNum}: Part Name is required.`;
     }
-    // Bought-out / standard parts (e.g. LIFTER, MYP-25 X 130) don't need material —
-    // they are purchased by part name. Only require material if the item has RM dimensions.
-    if (!row.isBoughtOut && (!row.materialInput || !row.materialInput.toString().trim())) {
-      return `Row ${index + 1}: Material description is empty.`;
+    if (!row.quantity || isNaN(Number(row.quantity)) || Number(row.quantity) <= 0) {
+      return `Row ${rowNum}: Quantity must be greater than 0.`;
     }
-    // Even bought-out items must have a part name for identification
-    if (row.isBoughtOut && (!row.partName || !row.partName.toString().trim())) {
-      return `Row ${index + 1}: Part name is required for bought-out items.`;
+
+    if (row.isBoughtOut) {
+      // Standard Material / Bought-Out Item (STD)
+      const unitRate = row.rate !== undefined && row.rate !== null && !isNaN(Number(row.rate))
+        ? Number(row.rate)
+        : (row.unitCost !== undefined && row.unitCost !== null && !isNaN(Number(row.unitCost)) ? Number(row.unitCost) : null);
+
+      if (unitRate === null || unitRate <= 0) {
+        return `Row ${rowNum}: Unit Rate (₹/pc) is missing for standard item.`;
+      }
+      if (!row.basicCost || isNaN(Number(row.basicCost)) || Number(row.basicCost) <= 0) {
+        return `Row ${rowNum}: Total cost calculation is missing.`;
+      }
+    } else {
+      // Raw Material Item (RM)
+      const hasSelectedMaterial = !!(
+        row.matchedMaterialId || 
+        (row.materialInput && 
+         row.materialInput !== '-- Select Material --' && 
+         row.materialInput.toString().trim().length > 0 &&
+         allMaterials.some((m: any) => m.id === row.matchedMaterialId || `${m.materialCode} - ${m.materialGrade}`.toLowerCase() === row.materialInput?.toLowerCase())
+        )
+      );
+
+      if (!hasSelectedMaterial && !row.matchedMaterialId) {
+        return `Row ${rowNum}: Material grade is not selected from master data.`;
+      }
+      if (!row.length || !row.width || !row.height || row.length === '-' || row.width === '-' || row.height === '-') {
+        return `Row ${rowNum}: Raw material dimensions (L×W×H) are missing.`;
+      }
+      if (!row.rate || isNaN(Number(row.rate)) || Number(row.rate) <= 0) {
+        return `Row ${rowNum}: Material rate (₹/kg) is missing.`;
+      }
+      if (!row.basicCost || isNaN(Number(row.basicCost)) || Number(row.basicCost) <= 0) {
+        return `Row ${rowNum}: Total basic cost calculation is missing.`;
+      }
     }
+
     return null;
   };
 
@@ -600,21 +670,26 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
           if (!srVal && !nameVal && !rmVal && !catVal) continue; // Skip padding blank rows
 
-          // Determine if this is a bought-out / standard part:
-          // Items with a part name but no material (from MATERIAL column), no RM size, and no finish size
-          // are standard/bought-out items purchased as-is (e.g. LIFTER, MYP-25 X 130)
-          const isBoughtOut = !!(nameVal && !matVal && !rmVal && !finishVal);
-
-          // For non-bought-out items with no material but a part name and no RM size, 
-          // use part name as material fallback
-          if (!isBoughtOut && !matVal && nameVal && !rmVal) matVal = nameVal;
-
           // Resolve dimensions
           const dimensions = parseDimensions(rmVal);
           const fDimensions = parseDimensions(finishVal);
 
+          // If there is NO FINISH (L×W×H) and NO RM (L×W×H) in imported sheet -> consider it as standard material (STD)
+          const hasFinishDims = !!(finishVal && finishVal.trim() && finishVal !== '-' && fDimensions.isValid && fDimensions.length !== '-');
+          const hasRmDims = !!(rmVal && rmVal.trim() && rmVal !== '-' && dimensions.isValid && dimensions.length !== '-');
+
+          const isBoughtOut = !hasFinishDims && !hasRmDims;
+
+          // For standard material, add STD to selected material
+          let resolvedMaterial = matVal;
+          if (isBoughtOut) {
+            resolvedMaterial = matVal ? (matVal.toUpperCase().includes('STD') ? matVal : `${matVal} (STD)`) : 'STD';
+          } else if (!matVal && nameVal) {
+            resolvedMaterial = nameVal;
+          }
+
           const item: ParsedBOMRow = {
-            id: `row-${r}-${Date.now()}`,
+            id: `row-${r}-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
             toolNo: lastToolNo || docProjectNum || project?.projectNumber || '',
             srNo: srVal || (parsedItems.length + 1).toString(),
             partName: nameVal || project?.partName || project?.name || '',
@@ -625,7 +700,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             finishW: fDimensions.width as any,
             finishH: fDimensions.height as any,
             rawMaterialSize: rmVal,
-            materialInput: isBoughtOut ? nameVal : matVal,
+            materialInput: resolvedMaterial,
             catalogSize: catVal,
             stockSize: stockVal,
             length: dimensions.length as any,
@@ -683,7 +758,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     setValidationRun(true);
 
     if (errorCount > 0) {
-      error("Validation Errors", `Found ${errorCount} errors. Please resolve them before converting.`);
+      error("Validation Errors", `Found ${errorCount} incomplete rows. Please fill missing material, rate, or dimensions.`);
       setActivePreviewTab('errors');
     } else {
       success("Validation Successful", "All items are verified and ready for conversion.");
@@ -710,17 +785,64 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         updated.rawMaterialSize = `${updated.length}x${updated.width}x${updated.height}`;
       }
 
-      if (field === 'materialInput') {
+      if (field === 'matchedMaterialId') {
+        const matched = allMaterials.find((m: any) => m.id === val || m.materialCode === val);
+        if (matched) {
+          updated.matchedMaterialId = matched.id;
+          updated.matchedMaterialName = `${matched.materialCode} - ${matched.materialGrade || matched.materialName}`;
+          if (matched.materialCode === 'STD' || matched.materialCategory === 'STANDARD_PART') {
+            updated.isBoughtOut = true;
+            updated.materialInput = 'STD';
+          } else {
+            updated.isBoughtOut = false;
+            updated.materialInput = updated.matchedMaterialName;
+            updated.rate = Number(matched.standardCost || matched.ratePerKg || 0);
+            updated.density = Number(matched.density || 7.85);
+            updated.gstPercent = matched.gstPercent ? Number(matched.gstPercent) : 18;
+          }
+        } else {
+          updated.matchedMaterialId = null;
+          updated.matchedMaterialName = null;
+          updated.materialInput = '';
+          updated.rate = 0;
+        }
+        populateCalculations(updated);
+      } else if (field === 'isBoughtOut') {
+        updated.isBoughtOut = !!val;
+        if (val) {
+          const stdMat = allMaterials.find((m: any) => m.materialCode === 'STD');
+          if (stdMat) {
+            updated.matchedMaterialId = stdMat.id;
+            updated.matchedMaterialName = `${stdMat.materialCode} - ${stdMat.materialGrade}`;
+          }
+          if (!updated.materialInput || !updated.materialInput.toUpperCase().includes('STD')) {
+            updated.materialInput = updated.materialInput && updated.materialInput !== '-- Select Material --' 
+              ? `${updated.materialInput} (STD)` 
+              : 'STD';
+          }
+        } else {
+          updated.materialInput = (updated.materialInput || '').replace(/\s*\(STD\)/gi, '').replace(/^STD$/gi, '');
+        }
+        populateCalculations(updated);
+      } else if (field === 'materialInput') {
         populateCalculations(updated);
       } else if (field === 'rawMaterialSize' || field === 'length' || field === 'width' || field === 'height' || field === 'quantity') {
         populateCalculations(updated);
-      } else if (field === 'unitCost') {
-        // Bought-out item: recalculate basicCost = unitCost × qty
-        updated.basicCost = (updated.unitCost || 0) * (updated.quantity || 0);
-      } else if (field === 'apWeight' || field === 'rate' || field === 'gstPercent') {
-        // Manual override for RM items: Only recalculate downstream totals
-        updated.totalWeight = (updated.apWeight || 0) * (updated.quantity || 0);
-        updated.basicCost = (updated.totalWeight || 0) * (updated.rate || 0);
+      } else if (field === 'unitCost' || field === 'rate') {
+        const parsedVal = val === '' || isNaN(Number(val)) ? null : Number(val);
+        if (updated.isBoughtOut) {
+          updated.rate = parsedVal;
+          updated.unitCost = parsedVal;
+          updated.basicCost = parsedVal !== null ? Number((parsedVal * (Number(updated.quantity) || 1)).toFixed(2)) : null;
+        } else {
+          updated.rate = parsedVal;
+          updated.basicCost = Number(((Number(updated.totalWeight) || 0) * (Number(updated.rate) || 0)).toFixed(2));
+        }
+      } else if (field === 'apWeight' || field === 'gstPercent') {
+        if (!updated.isBoughtOut) {
+          updated.totalWeight = Number(((Number(updated.apWeight) || 0) * (Number(updated.quantity) || 0)).toFixed(2));
+          updated.basicCost = Number(((Number(updated.totalWeight) || 0) * (Number(updated.rate) || 0)).toFixed(2));
+        }
       }
 
       // Re-validate row
@@ -1129,7 +1251,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
               <div>
                 <p className="text-[10px] text-mute uppercase tracking-widest font-semibold">Validation Status</p>
                 <p className={`text-xl font-semibold font-mono mt-1 ${invalidRowsCount > 0 ? 'text-semantic-danger-dark' : 'text-semantic-success-dark'}`}>
-                  {invalidRowsCount > 0 ? `${invalidRowsCount} Errors` : '✓ All Clean'}
+                  {invalidRowsCount > 0 ? `${invalidRowsCount} Incomplete / Action Required` : '✓ All Clean'}
                 </p>
               </div>
               {invalidRowsCount > 0 ? (
@@ -1248,39 +1370,49 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                     <span>{isFullscreen ? 'Exit Details' : 'View Details'}</span>
                   </button>
 
-                  {activePreviewTab === 'all' && (
-                    <div className="flex bg-canvas p-0.5 rounded-[12px] border border-border-gray items-center">
-                      <button 
-                        onClick={() => setViewMode('tree')} 
-                        className={`px-3 py-1 text-xs font-semibold rounded-[12px] transition-all ${viewMode === 'tree' ? 'bg-white text-ink shadow-subtle border border-border-gray font-semibold' : 'text-mute hover:text-ink'}`}
-                      >
-                        Tree View
-                      </button>
-                      <button 
-                        onClick={() => setViewMode('grid')} 
-                        className={`px-3 py-1 text-xs font-semibold rounded-[12px] transition-all ${viewMode === 'grid' ? 'bg-white text-ink shadow-subtle border border-border-gray font-semibold' : 'text-mute hover:text-ink'}`}
-                      >
-                        Flat Grid
-                      </button>
-                    </div>
-                  )}
+                  {/* View Mode Toggle */}
+                  <div className="flex bg-canvas border border-border-gray rounded-[12px] p-0.5 shadow-subtle">
+                    <button
+                      onClick={() => setViewMode('tree')}
+                      className={`px-3 py-1 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
+                        viewMode === 'tree' ? 'bg-white text-ink shadow-subtle' : 'text-cool-gray hover:text-ink'
+                      }`}
+                    >
+                      Tree View
+                    </button>
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`px-3 py-1 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
+                        viewMode === 'grid' ? 'bg-white text-ink shadow-subtle' : 'text-cool-gray hover:text-ink'
+                      }`}
+                    >
+                      Flat Grid
+                    </button>
+                  </div>
 
-                  <div className="flex bg-canvas p-0.5 rounded-[12px] border border-border-gray items-center">
-                    <button 
-                      onClick={() => setActivePreviewTab('all')} 
-                      className={`px-3 py-1 text-xs transition-all ${activePreviewTab === 'all' ? 'bg-white text-ink font-semibold shadow-subtle rounded-[12px] border border-border-gray' : 'text-mute hover:text-ink font-semibold'}`}
+                  {/* Filter Pill Tabs */}
+                  <div className="flex bg-canvas border border-border-gray rounded-[12px] p-0.5 shadow-subtle">
+                    <button
+                      onClick={() => setActivePreviewTab('all')}
+                      className={`px-3 py-1 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
+                        activePreviewTab === 'all' ? 'bg-white text-ink shadow-subtle' : 'text-cool-gray hover:text-ink'
+                      }`}
                     >
                       All ({totalItemsCount})
                     </button>
-                    <button 
-                      onClick={() => setActivePreviewTab('errors')} 
-                      className={`px-3 py-1 text-xs transition-all ${activePreviewTab === 'errors' ? 'bg-semantic-danger-subtle text-semantic-danger-dark font-semibold shadow-subtle rounded-[12px] border border-semantic-danger/20' : 'text-mute hover:text-semantic-danger-dark font-semibold'}`}
+                    <button
+                      onClick={() => setActivePreviewTab('errors')}
+                      className={`px-3 py-1 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
+                        activePreviewTab === 'errors' ? 'bg-white text-semantic-danger-dark shadow-subtle' : 'text-cool-gray hover:text-semantic-danger'
+                      }`}
                     >
                       Errors ({invalidRowsCount})
                     </button>
-                    <button 
-                      onClick={() => setActivePreviewTab('valid')} 
-                      className={`px-3 py-1 text-xs transition-all ${activePreviewTab === 'valid' ? 'bg-semantic-success-subtle text-semantic-success-dark font-semibold shadow-subtle rounded-[12px] border border-semantic-success/20' : 'text-mute hover:text-semantic-success-dark font-semibold'}`}
+                    <button
+                      onClick={() => setActivePreviewTab('valid')}
+                      className={`px-3 py-1 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
+                        activePreviewTab === 'valid' ? 'bg-white text-semantic-success-dark shadow-subtle' : 'text-cool-gray hover:text-semantic-success'
+                      }`}
                     >
                       Valid ({validRowsCount})
                     </button>
@@ -1300,6 +1432,12 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         <>
                           <button 
                             onClick={() => {
+                              if (invalidRowsCount > 0) {
+                                error("Incomplete BOM", `Please resolve ${invalidRowsCount} missing material/rate/cost fields before saving.`);
+                                setValidationRun(true);
+                                setActivePreviewTab('errors');
+                                return;
+                              }
                               if (onSaveBOM) onSaveBOM(rows);
                             }} 
                             className="flex items-center space-x-1.5 bg-white hover:bg-canvas text-ink border border-border-gray font-semibold text-xs px-3.5 py-1.5 rounded-[12px] shadow-subtle transition-all cursor-pointer"
@@ -1310,6 +1448,12 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
                           <button 
                             onClick={() => {
+                              if (invalidRowsCount > 0) {
+                                error("Incomplete BOM", `Please resolve ${invalidRowsCount} missing material/rate/cost fields before proceeding to PO.`);
+                                setValidationRun(true);
+                                setActivePreviewTab('errors');
+                                return;
+                              }
                               if (onProceedToPO) {
                                 onProceedToPO(rows);
                               } else if (onSaveBOM) {
@@ -1325,235 +1469,227 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                       )}
                     </div>
                   )}
-
                 </div>
               </div>
 
           {/* Core Table Grid - 100% Fit Without Horizontal Scroll */}
-
           <div className="flex-1 overflow-y-auto min-h-0 border border-border-gray rounded-[12px] bg-white shadow-subtle">
             <table className="w-full text-left text-[11px] border-collapse">
-              <thead className="bg-canvas text-cool-gray font-semibold uppercase tracking-tighter sticky top-0 z-20 border-b border-border-gray text-[10px]">
+              <thead className="bg-canvas text-ink/70 font-semibold tracking-tight sticky top-0 z-20 border-b border-border-gray text-[10px]">
                 <tr>
-                  <th className="px-1 py-2 text-center w-7">SR</th>
-                  <th className="px-1 py-2 text-center w-14">TOOL NO</th>
-                  <th className="px-1 py-2 text-center w-10">DET NO</th>
-                  <th className="px-1 py-2 text-left w-20">PART NAME</th>
-                  <th className="px-1 py-2 text-center w-36">FINISH (L×W×H)</th>
-                  <th className="px-1 py-2 text-center w-36">RM (L×W×H)</th>
-                  <th className="px-1 py-2 text-left w-24">MATERIAL</th>
-                  <th className="px-1 py-2 text-center w-10">TYPE</th>
-                  <th className="px-1 py-2 text-center w-10">QTY</th>
-                  <th className="px-1 py-2 text-center w-16">AP WT / UNIT ₹</th>
-                  <th className="px-1 py-2 text-center w-14">TOT WT</th>
-                  <th className="px-1 py-2 text-center w-14">RATE</th>
-                  <th className="px-1 py-2 text-center w-16">BASIC</th>
-                  <th className="px-1 py-2 text-center w-12">GST</th>
-                  <th className="px-1 py-2 text-center w-16">TOTAL</th>
-                  <th className="px-1 py-2 text-center w-8"></th>
+                  <th className="px-1.5 py-2.5 text-center w-7 uppercase text-cool-gray">SR</th>
+                  <th className="px-1.5 py-2.5 text-center w-14 uppercase text-cool-gray">TOOL NO</th>
+                  <th className="px-1.5 py-2.5 text-center w-10 uppercase text-cool-gray">DET</th>
+                  <th className="px-2 py-2.5 text-left w-24 uppercase text-cool-gray">PART NAME</th>
+                  <th className="px-1.5 py-2.5 text-center w-36 uppercase text-cool-gray">FINISH <span className="text-[8.5px] font-normal lowercase text-cool-gray/60">(mm)</span></th>
+                  <th className="px-1.5 py-2.5 text-center w-36 uppercase text-cool-gray">RM SIZE <span className="text-[8.5px] font-normal lowercase text-cool-gray/60">(mm)</span></th>
+                  <th className="px-2 py-2.5 text-left w-28 uppercase text-cool-gray">MATERIAL</th>
+                  <th className="px-1 py-2.5 text-center w-10 uppercase text-cool-gray">TYPE</th>
+                  <th className="px-1.5 py-2.5 text-center w-10 uppercase text-cool-gray">QTY</th>
+                  <th className="px-1.5 py-2.5 text-center w-14 uppercase text-cool-gray whitespace-nowrap">UNIT WT <span className="text-[8.5px] font-normal lowercase text-cool-gray/60">(kg)</span></th>
+                  <th className="px-1.5 py-2.5 text-center w-14 uppercase text-cool-gray whitespace-nowrap">TOT WT <span className="text-[8.5px] font-normal lowercase text-cool-gray/60">(kg)</span></th>
+                  <th className="px-1.5 py-2.5 text-center w-16 uppercase text-cool-gray whitespace-nowrap">RATE <span className="text-[8.5px] font-normal text-cool-gray/60">₹</span></th>
+                  <th className="px-1.5 py-2.5 text-center w-14 uppercase text-cool-gray whitespace-nowrap">BASIC <span className="text-[8.5px] font-normal text-cool-gray/60">₹</span></th>
+                  <th className="px-1 py-2.5 text-center w-9 uppercase text-cool-gray">GST <span className="text-[8.5px] font-normal text-cool-gray/60">%</span></th>
+                  <th className="px-1.5 py-2.5 text-center w-14 uppercase text-cool-gray whitespace-nowrap">TOTAL <span className="text-[8.5px] font-normal text-cool-gray/60">₹</span></th>
+                  <th className="px-1 py-2.5 text-center w-6"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-gray/50">
+              <tbody className="divide-y divide-border-gray">
                 {(() => {
-                  const renderRow = (row: ParsedBOMRow, isTree: boolean, level: number = 0, hasChildren = false, isExpanded = false) => {
-                    const gstPctVal = (row.gstPercent === undefined || row.gstPercent === null || Number.isNaN(row.gstPercent)) ? 18 : row.gstPercent;
+                  const renderRow = (row: ParsedBOMRow, idxOrTree: number | boolean = false, level = 0, isParent = false, isExpanded = false) => {
+                    const isMissingMat = !row.isBoughtOut && !row.matchedMaterialId;
+                    const isMissingRate = (!row.rate || Number(row.rate) <= 0 || isNaN(Number(row.rate)));
+                    const isMissingBasic = (!row.basicCost || Number(row.basicCost) <= 0 || isNaN(Number(row.basicCost)));
+                    const gstPctVal = Number(row.gstPercent !== undefined && row.gstPercent !== null ? row.gstPercent : 18);
+
                     return (
                       <tr 
                         key={row.id} 
-                        className={`transition-colors ${
-                          row.validationError 
-                            ? 'bg-semantic-danger-subtle/20 hover:bg-semantic-danger-subtle/40' 
-                            : 'hover:bg-black/[0.02]'
+                        className={`hover:bg-slate-50 transition-colors ${
+                          row.validationError ? 'bg-rose-50/20' : ''
                         }`}
                       >
-                        {/* SR.NO */}
-                        <td className="px-1 py-1.5 font-mono font-semibold text-mute text-center">
-                          {isTree ? (
-                            <div className="flex items-center justify-center" style={{ paddingLeft: `${level * 8}px` }}>
-                              {hasChildren ? (
-                                <button 
-                                  onClick={() => toggleNodeExpanded(String(row.srNo).trim())}
-                                  className="mr-0.5 p-0.5 rounded hover:bg-black/5 transition-colors text-zinc-600 focus:outline-none shrink-0"
-                                >
-                                  {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                                </button>
-                              ) : null}
-                              <span className="text-zinc-800 font-semibold">{row.srNo}</span>
-                            </div>
-                          ) : (
-                            row.srNo
-                          )}
+                        {/* SR NO */}
+                        <td className="px-1 py-1.5 text-center font-mono text-cool-gray text-[10px]">
+                          {typeof idxOrTree === 'number' ? idxOrTree + 1 : row.srNo}
                         </td>
 
                         {/* TOOL NO */}
-                        <td className="px-1 py-1.5 font-mono text-zinc-600 text-center">
+                        <td className="px-1 py-1.5 text-center">
                           <input 
                             type="text" 
                             value={row.toolNo || ''} 
                             onChange={(e) => handleCellEdit(row.id, 'toolNo', e.target.value)}
-                            className="w-full bg-canvas border border-border-gray rounded px-1 py-0.5 text-center text-ink text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                         </td>
 
-                        {/* DET NO */}
-                        <td className="px-1 py-1.5 text-center">
-                          <input 
-                            type="text" 
-                            value={row.srNo} 
-                            onChange={(e) => handleCellEdit(row.id, 'srNo', e.target.value)}
-                            className="w-full bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
+                        {/* DET NO / TREE TOGGLE */}
+                        <td className="px-1 py-1.5 text-center font-mono text-ink font-semibold text-[10px]">
+                          <div className="flex items-center justify-center space-x-0.5">
+                            {isParent ? (
+                              <button 
+                                onClick={() => toggleNode(row.id)}
+                                className="p-0.5 text-primary hover:text-primary-hover focus:outline-none cursor-pointer"
+                                title={isExpanded ? "Collapse Assembly" : "Expand Assembly"}
+                              >
+                                {isExpanded ? <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" /> : <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />}
+                              </button>
+                            ) : level > 0 ? (
+                              <CornerDownRight className="w-3 h-3 text-cool-gray/50 shrink-0" />
+                            ) : null}
+                            <span>{row.srNo}</span>
+                          </div>
                         </td>
 
                         {/* PART NAME */}
-                        <td className="px-1 py-1.5">
+                        <td className="px-2 py-1.5 text-ink font-semibold text-[11px] truncate max-w-[130px]" title={row.partName}>
                           <input 
                             type="text" 
                             value={row.partName || ''} 
                             onChange={(e) => handleCellEdit(row.id, 'partName', e.target.value)}
-                            className="w-full bg-canvas border border-border-gray rounded px-1 py-0.5 text-[11px] text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            placeholder={project?.partName || project?.name || "Part..."}
+                            className="w-full bg-transparent border-b border-transparent hover:border-border-gray focus:border-blue-500 focus:bg-canvas rounded px-1 py-0.5 text-ink font-semibold text-[11px] focus:outline-none transition-colors"
                           />
                         </td>
 
-                        {/* Finish size dimension fields (Editable: Length, Width, Height) */}
+                        {/* FINISH (L x W x H) */}
                         <td className="px-1 py-1.5 text-center">
-                          <div className="grid grid-cols-3 gap-0.5 w-full">
-                            <input 
-                              type="text" 
-                              placeholder="L"
-                              value={row.finishL || ''} 
-                              onChange={(e) => handleCellEdit(row.id, 'finishL', e.target.value)}
-                              className="w-full bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                            <input 
-                              type="text" 
-                              placeholder="W"
-                              value={row.finishW || ''} 
-                              onChange={(e) => handleCellEdit(row.id, 'finishW', e.target.value)}
-                              className="w-full bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                            <input 
-                              type="text" 
-                              placeholder="H"
-                              value={row.finishH || ''} 
-                              onChange={(e) => handleCellEdit(row.id, 'finishH', e.target.value)}
-                              className="w-full bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
+                          {row.isBoughtOut ? (
+                            <span className="text-zinc-400 text-[10px] font-mono">-</span>
+                          ) : (
+                            <div className="flex items-center justify-center gap-0.5">
+                              <input 
+                                type="text" 
+                                value={row.finishL || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'finishL', e.target.value)}
+                                placeholder="L"
+                                className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <span className="text-cool-gray text-[9px]">×</span>
+                              <input 
+                                type="text" 
+                                value={row.finishW || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'finishW', e.target.value)}
+                                placeholder="W"
+                                className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <span className="text-cool-gray text-[9px]">×</span>
+                              <input 
+                                type="text" 
+                                value={row.finishH || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'finishH', e.target.value)}
+                                placeholder="H"
+                                className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
+                          )}
                         </td>
 
-                        {/* Raw size dimension fields (Editable: Length, Width, Height) */}
+                        {/* RM SIZE (L x W x H) */}
                         <td className="px-1 py-1.5 text-center">
-                          <div className="grid grid-cols-3 gap-0.5 w-full">
-                            <input 
-                              type="text" 
-                              placeholder="L"
-                              value={row.length || ''} 
-                              onChange={(e) => handleCellEdit(row.id, 'length', e.target.value)}
-                              className="w-full bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                            <input 
-                              type="number" 
-                              placeholder="W"
-                              value={row.width || ''} 
-                              onChange={(e) => handleCellEdit(row.id, 'width', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                              className="w-full bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                            <input 
-                              type="number" 
-                              placeholder="H"
-                              value={row.height || ''} 
-                              onChange={(e) => handleCellEdit(row.id, 'height', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                              className="w-full bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
+                          {row.isBoughtOut ? (
+                            <span className="text-zinc-400 text-[10px] font-mono">-</span>
+                          ) : (
+                            <div className="flex items-center justify-center gap-0.5">
+                              <input 
+                                type="text" 
+                                value={row.length || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'length', e.target.value)}
+                                placeholder="L"
+                                className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <span className="text-cool-gray text-[9px]">×</span>
+                              <input 
+                                type="text" 
+                                value={row.width || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'width', e.target.value)}
+                                placeholder="W"
+                                className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <span className="text-cool-gray text-[9px]">×</span>
+                              <input 
+                                type="text" 
+                                value={row.height || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'height', e.target.value)}
+                                placeholder="H"
+                                className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
+                          )}
                         </td>
 
-                        {/* MATERIAL (Explicit Master Data Dropdown Select) */}
-                        <td className="px-1 py-1.5">
+                        {/* MATERIAL */}
+                        <td className="px-1.5 py-1.5 text-left">
                           <select 
-                            value={
-                              row.matchedMaterialId || 
-                              allMaterials.find((m: any) => {
-                                const label = `${m.materialCode || ''} - ${m.materialGrade || m.materialName || ''}`.trim();
-                                return label.toLowerCase() === (row.materialInput || '').toLowerCase() ||
-                                       m.materialCode?.toLowerCase() === (row.materialInput || '').toLowerCase();
-                              })?.id || ''
-                            } 
+                            value={row.matchedMaterialId || ''} 
                             onChange={(e) => {
                               const selectedId = e.target.value;
-                              const matched = allMaterials.find((m: any) => m.id === selectedId);
-                              if (matched) {
-                                handleCellEdit(row.id, 'matchedMaterialId', matched.id);
-                                handleCellEdit(row.id, 'materialInput', `${matched.materialCode} - ${matched.materialGrade || matched.materialName}`);
-                              } else {
-                                handleCellEdit(row.id, 'matchedMaterialId', null);
-                                handleCellEdit(row.id, 'materialInput', selectedId);
+                              const selected = allMaterials.find((m: any) => m.id === selectedId);
+                              if (selected) {
+                                if (selected.materialCode === 'STD') {
+                                  row.isBoughtOut = true;
+                                  row.matchedMaterialId = selected.id;
+                                  row.matchedMaterialName = `${selected.materialCode} - ${selected.materialGrade || selected.materialName}`;
+                                  row.materialInput = 'STD';
+                                  row.rate = row.rate || row.unitCost || 0;
+                                  row.unitCost = row.rate;
+                                } else {
+                                  row.isBoughtOut = false;
+                                  row.matchedMaterialId = selected.id;
+                                  row.matchedMaterialName = `${selected.materialCode} - ${selected.materialGrade}`;
+                                  row.materialInput = `${selected.materialCode} - ${selected.materialGrade}`;
+                                }
+                                handleCellEdit(row.id, 'matchedMaterialId', selectedId);
                               }
                             }}
-                            className={`w-full bg-white border border-border-gray rounded px-1.5 py-1 text-[11px] font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-subtle ${
-                              row.isBoughtOut ? 'text-amber-600 italic' : 'text-ink font-semibold'
+                            className={`w-full text-[10px] rounded px-1 py-0.5 focus:outline-none font-medium cursor-pointer border ${
+                              row.isBoughtOut
+                                ? 'bg-amber-50/50 border-amber-300 text-amber-900 font-semibold'
+                                : isMissingMat 
+                                  ? 'bg-rose-50 border-rose-400 text-rose-700' 
+                                  : 'bg-canvas border-border-gray text-ink'
                             }`}
                           >
-                            <option value="">-- Select Material --</option>
-                            {allMaterials.map((m: any) => {
-                              const code = m.materialCode || '';
-                              const grade = m.materialGrade || m.materialName || '';
-                              const label = grade ? `${code} - ${grade}` : code;
-                              const rate = m.standardCost || m.ratePerKg ? ` (₹${m.standardCost || m.ratePerKg}/kg)` : '';
-                              return (
-                                <option key={m.id || code} value={m.id}>
-                                  {label}{rate}
-                                </option>
-                              );
-                            })}
+                            {!row.isBoughtOut && !row.matchedMaterialId && (
+                              <option value="">-- Select Material --</option>
+                            )}
+                            {allMaterials.map((m: any) => (
+                              <option key={m.id} value={m.id} className={m.materialCode === 'STD' ? 'font-semibold text-amber-700' : ''}>
+                                {m.materialCode} - {m.materialGrade || m.materialName}
+                              </option>
+                            ))}
                           </select>
                         </td>
 
-
-
-                        {/* TYPE (Bought-out / Raw Material) */}
+                        {/* TYPE */}
                         <td className="px-1 py-1.5 text-center">
-                          <button
-                            type="button"
+                          <span 
                             onClick={() => handleCellEdit(row.id, 'isBoughtOut', !row.isBoughtOut)}
-                            className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-semibold transition-all cursor-pointer select-none border ${
+                            className={`inline-block px-1.5 py-0.5 text-[9px] font-semibold rounded cursor-pointer select-none transition-all ${
                               row.isBoughtOut 
-                                ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
-                                : 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200'
+                                ? 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200' 
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
                             }`}
                             title="Click to toggle between RM (Raw Material) and STD (Standard Bought-out Item)"
                           >
                             {row.isBoughtOut ? 'STD' : 'RM'}
-                          </button>
+                          </span>
                         </td>
 
-                        {/* QTY (Editable) */}
+                        {/* QTY */}
                         <td className="px-1 py-1.5 text-center">
-                          <input 
-                            type="number" 
-                            value={Number.isNaN(row.quantity) ? '' : (row.quantity || '')} 
-                            onChange={(e) => handleCellEdit(row.id, 'quantity', e.target.value === '' ? '' : parseInt(e.target.value))}
-                            className="w-full bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
+                          <input type="number" value={Number.isNaN(row.quantity) ? '' : (row.quantity || '')} onChange={(e) => handleCellEdit(row.id, 'quantity', e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500" />
                         </td>
 
-                        {/* AP WT. / UNIT COST */}
+                        {/* AP WT */}
                         <td className="px-1 py-1.5 text-center">
                           {row.isBoughtOut ? (
-                            <input 
-                              type="number" 
-                              value={Number.isNaN(row.unitCost) ? '' : (row.unitCost || '')} 
-                              onChange={(e) => handleCellEdit(row.id, 'unitCost', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                              placeholder="Unit ₹"
-                              className="w-full bg-amber-50 border border-amber-200 rounded px-1 py-0.5 text-center font-mono text-amber-700 text-[11px] focus:outline-none focus:ring-1 focus:ring-amber-500"
-                              step="0.01"
-                            />
+                            <span className="text-zinc-400 text-[10px] font-mono">-</span>
                           ) : (
                             <input 
                               type="number" 
-                              value={Number.isNaN(row.apWeight) ? '' : (row.apWeight || '')} 
+                              value={Number.isNaN(row.apWeight) || row.apWeight === null ? '' : (row.apWeight || '')} 
                               onChange={(e) => handleCellEdit(row.id, 'apWeight', e.target.value === '' ? '' : parseFloat(e.target.value))}
                               className="w-full bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-emerald-600 text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500"
                               step="0.01"
@@ -1561,7 +1697,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           )}
                         </td>
 
-                        {/* TOTAL WT. */}
+                        {/* TOTAL WT */}
                         <td className="px-1 py-1.5 text-center font-mono text-emerald-600 font-semibold text-[10px]">
                           {row.isBoughtOut ? '-' : (row.totalWeight ? Number(row.totalWeight).toFixed(2) : '-')}
                         </td>
@@ -1569,46 +1705,62 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                         {/* RATE */}
                         <td className="px-1 py-1.5 text-center">
                           {row.isBoughtOut ? (
-                            <span className="text-zinc-400 text-[10px]">-</span>
+                            <input 
+                              type="number" 
+                              value={Number.isNaN(row.rate) || row.rate === null ? '' : (row.rate ?? '')} 
+                              onChange={(e) => handleCellEdit(row.id, 'rate', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                              placeholder="Req ₹/pc"
+                              className={`w-full rounded px-1 py-0.5 text-center font-mono text-[11px] focus:outline-none focus:ring-1 ${
+                                isMissingRate 
+                                  ? 'bg-rose-50 border border-rose-400 text-rose-700 placeholder:text-rose-400 focus:ring-rose-500' 
+                                  : 'bg-amber-50 border border-amber-300 text-amber-800 font-semibold focus:ring-amber-500'
+                              }`}
+                              step="0.01"
+                              title="Standard Item Unit Price per piece (₹/pc)"
+                            />
                           ) : (
                             <input 
                               type="number" 
-                              value={Number.isNaN(row.rate) ? '' : (row.rate || '')} 
+                              value={Number.isNaN(row.rate) || row.rate === null ? '' : (row.rate ?? '')} 
                               onChange={(e) => handleCellEdit(row.id, 'rate', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                              className="w-full bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              placeholder="₹/kg"
+                              className={`w-full rounded px-1 py-0.5 text-center font-mono text-[11px] focus:outline-none focus:ring-1 ${
+                                isMissingRate 
+                                  ? 'bg-rose-50 border border-rose-400 text-rose-700 placeholder:text-rose-400 focus:ring-rose-500' 
+                                  : 'bg-canvas border border-border-gray text-ink focus:ring-blue-500'
+                              }`}
                               step="0.01"
+                              title="Raw Material Rate (₹/kg)"
                             />
                           )}
                         </td>
 
                         {/* BASIC COST */}
-                        <td className="px-1 py-1.5 text-center font-mono text-primary font-semibold text-[10px]">
-                          {row.basicCost ? Number(row.basicCost).toFixed(2) : '-'}
+                        <td className="px-1 py-1.5 text-center font-mono font-semibold text-[10px]">
+                          {isMissingBasic ? (
+                            <span className="text-rose-500" title="Missing basic cost calculation">-</span>
+                          ) : (
+                            <span className="text-primary">{Number(row.basicCost).toFixed(2)}</span>
+                          )}
                         </td>
 
-                        {/* GST % */}
+                        {/* GST */}
                         <td className="px-1 py-1.5 text-center">
-                          <input 
-                            type="number" 
-                            value={Number.isNaN(row.gstPercent) ? '' : (row.gstPercent || '')} 
-                            onChange={(e) => handleCellEdit(row.id, 'gstPercent', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            className="w-full bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-zinc-600 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            step="1"
-                          />
+                          <input type="number" value={Number.isNaN(row.gstPercent) ? '' : (row.gstPercent || '')} onChange={(e) => handleCellEdit(row.id, 'gstPercent', e.target.value === '' ? '' : parseFloat(e.target.value))} className="w-full bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-zinc-600 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500" step="1" />
                         </td>
 
                         {/* TOTAL */}
-                        <td className="px-1 py-1.5 text-center font-mono text-ink font-semibold text-[10px]">
-                          {row.basicCost ? (Number(row.basicCost) * (1 + gstPctVal / 100)).toFixed(2) : '-'}
+                        <td className="px-1 py-1.5 text-center font-mono font-semibold text-[10px]">
+                          {isMissingBasic ? (
+                            <span className="text-rose-500" title="Missing total calculation">-</span>
+                          ) : (
+                            <span className="text-ink">{(Number(row.basicCost) * (1 + gstPctVal / 100)).toFixed(2)}</span>
+                          )}
                         </td>
 
-                        {/* Row Deletion Action */}
+                        {/* DELETE */}
                         <td className="px-1 py-1.5 text-center">
-                          <button 
-                            onClick={() => handleDeleteRow(row.id)}
-                            className="p-0.5 hover:bg-red-100 text-zinc-400 hover:text-red-500 rounded transition-colors"
-                            title="Delete Item"
-                          >
+                          <button onClick={() => handleDeleteRow(row.id)} className="p-0.5 hover:bg-red-100 text-zinc-400 hover:text-red-500 rounded transition-colors" title="Delete Item">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </td>

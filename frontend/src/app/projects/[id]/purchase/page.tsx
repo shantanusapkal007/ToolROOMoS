@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 import { useProject } from "@/hooks/useProjects";
 import { useQuery } from "@tanstack/react-query";
-import { ShoppingCart, Plus, Eye, PackageCheck, Edit3, Lock } from "lucide-react";
+import { ShoppingCart, Plus, Eye, PackageCheck, Edit3, Trash2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { SmartTable } from "@/components/ui/SmartTable";
 import { Modal } from "@/components/ui/Modal";
@@ -14,16 +14,38 @@ import { PurchaseOrderForm } from "@/components/purchase/PurchaseOrderForm";
 import { ReceiveGrnModal } from "@/components/purchase/ReceiveGrnModal";
 import { ProcurementService } from "@/services/procurement.service";
 import { AuthenticPoDocument } from "@/modules/procurement/AuthenticPoDocument";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ProjectPurchasePage() {
   const params = useParams();
   const id = params?.id as string;
   const { data: project, isLoading: isLoadingProject, refetch: refetchProject } = useProject(id);
   const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
+  const { success, error } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [previewPo, setPreviewPo] = useState<any | null>(null);
   const [grnTargetPo, setGrnTargetPo] = useState<any | null>(null);
   const [editingPo, setEditingPo] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  const handleDeletePo = async (po: any) => {
+    const poNum = po.poNumber || po.id;
+    if (!window.confirm(`Are you sure you want to delete Purchase Order "${poNum}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setIsDeleting(po.id || po.poNumber);
+      await ProcurementService.deletePurchaseOrder(id, po.id || po.poNumber);
+      success("Purchase Order Deleted", `PO ${poNum} has been permanently deleted.`);
+      refetchProject();
+      refetchPos();
+    } catch (err: any) {
+      error("Delete Failed", err?.response?.data?.message || err?.message || "Failed to delete purchase order.");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   // Fetch live purchase orders directly from procurement API
   const { data: poResponse, isLoading: isLoadingPos, refetch: refetchPos } = useQuery({
@@ -107,6 +129,31 @@ export default function ProjectPurchasePage() {
           deliveryTerms: custom.deliveryTerms || "Standard Delivery",
           items: items.map((i: any, idx: number) => {
             const itemCustom = (i.customFields as any) || {};
+            const qty = Number(i.orderedQty) || 1;
+            let apWt = Number(itemCustom.apWt ?? (i as any).calculatedWeight ?? 0);
+            let totalWt = Number(itemCustom.totalWt ?? 0);
+
+            if (apWt === 0 && totalWt === 0) {
+              const l = parseFloat(itemCustom.length || '');
+              const w = parseFloat(itemCustom.width || '');
+              const h = parseFloat(itemCustom.height || '');
+              if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
+                const density = Number(i.material?.density || 7.85);
+                apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
+                totalWt = Number((apWt * qty).toFixed(2));
+              }
+            } else if (totalWt === 0 && apWt > 0) {
+              totalWt = Number((apWt * qty).toFixed(2));
+            } else if (apWt === 0 && totalWt > 0 && qty > 0) {
+              apWt = Number((totalWt / qty).toFixed(2));
+            }
+
+            const rate = Number(i.agreedRate) || 0;
+            const basicValue = Number(i.basicValue) || Number((totalWt > 0 ? totalWt * rate : qty * rate).toFixed(2));
+            const gstPercent = Number(i.gstPercent || itemCustom.gstPercent || 18);
+            const gstAmount = Number(itemCustom.gstAmount) || Number((basicValue * (gstPercent / 100)).toFixed(2));
+            const lineTotal = Number((basicValue + gstAmount).toFixed(2));
+
             return {
               toolNo: itemCustom.toolNo || project?.projectNumber || 'TOOL',
               detNo: itemCustom.detNo || `${idx + 1}`,
@@ -115,13 +162,14 @@ export default function ProjectPurchasePage() {
               width: itemCustom.width || '',
               height: itemCustom.height || '',
               materialGrade: itemCustom.materialGrade || i.material?.materialGrade || 'MS',
-              orderedQty: Number(i.orderedQty) || 1,
-              apWt: Number(itemCustom.apWt) || 0,
-              totalWt: Number(itemCustom.totalWt) || 0,
-              agreedRate: Number(i.agreedRate) || 0,
-              basicValue: Number(i.basicValue) || Number(i.lineTotal) || 0,
-              gstAmount: Number(itemCustom.gstAmount) || 0,
-              lineTotal: Number(i.lineTotal) || 0,
+              orderedQty: qty,
+              apWt,
+              totalWt,
+              agreedRate: rate,
+              basicValue,
+              gstPercent,
+              gstAmount,
+              lineTotal,
               remarks: i.remarks || '',
             };
           })
@@ -157,6 +205,15 @@ export default function ProjectPurchasePage() {
                 >
                   <PackageCheck className="w-3.5 h-3.5" />
                   <span>Receive</span>
+                </button>
+                <button
+                  onClick={() => handleDeletePo(row)}
+                  disabled={isDeleting === (row.id || row.poNumber)}
+                  className="p-1.5 rounded-[12px] bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-600 border border-rose-200 transition-colors flex items-center gap-1 text-[10px] uppercase font-semibold cursor-pointer disabled:opacity-50"
+                  title="Delete Purchase Order"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{isDeleting === (row.id || row.poNumber) ? 'Deleting...' : 'Delete'}</span>
                 </button>
               </>
             )}

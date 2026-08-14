@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePoDto } from './dto/create-po.dto';
 import { CreateMultiPoDto } from './dto/create-multi-po.dto';
@@ -387,7 +387,15 @@ export class PurchaseOrdersService {
 
       let totalAmount = 0;
       for (const item of dto.items) {
-        totalAmount += round2(item.orderedQty * item.agreedRate);
+        const itemBasic = item.basicValue != null 
+          ? round2(Number(item.basicValue)) 
+          : round2((item.customFields?.totalWt || item.customFields?.apWt) 
+              ? (Number(item.customFields.totalWt || item.customFields.apWt) * item.agreedRate) 
+              : (item.orderedQty * item.agreedRate));
+        const itemGstPct = item.gstPercent != null ? Number(item.gstPercent) : 18;
+        const itemGst = round2(itemBasic * (itemGstPct / 100));
+        const itemTotal = round2(itemBasic + itemGst);
+        totalAmount += itemTotal;
       }
       totalAmount = round2(totalAmount);
 
@@ -410,7 +418,14 @@ export class PurchaseOrdersService {
 
       await Promise.all(
         dto.items.map((item) => {
-          const lineTotal = round2(item.orderedQty * item.agreedRate);
+          const itemBasic = item.basicValue != null 
+            ? round2(Number(item.basicValue)) 
+            : round2((item.customFields?.totalWt || item.customFields?.apWt) 
+                ? (Number(item.customFields.totalWt || item.customFields.apWt) * item.agreedRate) 
+                : (item.orderedQty * item.agreedRate));
+          const itemGstPct = item.gstPercent != null ? Number(item.gstPercent) : 18;
+          const itemGst = round2(itemBasic * (itemGstPct / 100));
+          const lineTotal = round2(itemBasic + itemGst);
           return tx.purchaseOrderItem.create({
             data: {
               poHeaderId: poHeader.id,
@@ -423,10 +438,11 @@ export class PurchaseOrdersService {
               gstPercent: item.gstPercent,
               uom: item.uom,
               discount: item.discount != null ? round2(Number(item.discount)) : null,
-              cgst: item.cgst != null ? round2(Number(item.cgst)) : null,
-              sgst: item.sgst != null ? round2(Number(item.sgst)) : null,
-              basicValue: item.basicValue != null ? round2(Number(item.basicValue)) : lineTotal,
+              cgst: round2(itemGst / 2),
+              sgst: round2(itemGst / 2),
+              basicValue: itemBasic,
               remarks: item.remarks,
+              customFields: item.customFields || {},
               createdBy: userId,
               updatedBy: userId,
             },
@@ -513,7 +529,15 @@ export class PurchaseOrdersService {
 
       let totalAmount = 0;
       for (const item of dto.items) {
-        totalAmount += round2(item.orderedQty * item.agreedRate);
+        const itemBasic = item.basicValue != null 
+          ? round2(Number(item.basicValue)) 
+          : round2((item.customFields?.totalWt || item.customFields?.apWt) 
+              ? (Number(item.customFields.totalWt || item.customFields.apWt) * item.agreedRate) 
+              : (item.orderedQty * item.agreedRate));
+        const itemGstPct = item.gstPercent != null ? Number(item.gstPercent) : 18;
+        const itemGst = round2(itemBasic * (itemGstPct / 100));
+        const itemTotal = round2(itemBasic + itemGst);
+        totalAmount += itemTotal;
       }
       totalAmount = round2(totalAmount);
 
@@ -537,7 +561,14 @@ export class PurchaseOrdersService {
 
       await Promise.all(
         dto.items.map((item) => {
-          const lineTotal = round2(item.orderedQty * item.agreedRate);
+          const itemBasic = item.basicValue != null 
+            ? round2(Number(item.basicValue)) 
+            : round2((item.customFields?.totalWt || item.customFields?.apWt) 
+                ? (Number(item.customFields.totalWt || item.customFields.apWt) * item.agreedRate) 
+                : (item.orderedQty * item.agreedRate));
+          const itemGstPct = item.gstPercent != null ? Number(item.gstPercent) : 18;
+          const itemGst = round2(itemBasic * (itemGstPct / 100));
+          const lineTotal = round2(itemBasic + itemGst);
           return tx.purchaseOrderItem.create({
             data: {
               poHeaderId: updatedPoHeader.id,
@@ -550,10 +581,11 @@ export class PurchaseOrdersService {
               gstPercent: item.gstPercent,
               uom: item.uom,
               discount: item.discount != null ? round2(Number(item.discount)) : null,
-              cgst: item.cgst != null ? round2(Number(item.cgst)) : null,
-              sgst: item.sgst != null ? round2(Number(item.sgst)) : null,
-              basicValue: item.basicValue != null ? round2(Number(item.basicValue)) : lineTotal,
+              cgst: round2(itemGst / 2),
+              sgst: round2(itemGst / 2),
+              basicValue: itemBasic,
               remarks: item.remarks,
+              customFields: item.customFields || {},
               createdBy: userId,
               updatedBy: userId,
             },
@@ -617,23 +649,65 @@ export class PurchaseOrdersService {
           ]
         }
       });
-      if (!project) return;
-      const targetProjectId = project.id;
+      const targetProjectId = project?.id;
 
-      const po = await tx.purchaseOrderHeader.findFirstOrThrow({
-        where: { id: poId, projectId: targetProjectId }
+      const whereClause: any = {
+        OR: [
+          { id: poId },
+          { poNumber: poId }
+        ]
+      };
+      if (targetProjectId) {
+        whereClause.projectId = targetProjectId;
+      }
+
+      const po = await tx.purchaseOrderHeader.findFirst({
+        where: whereClause
       });
+
+      if (!po) {
+        throw new NotFoundException(`Purchase Order '${poId}' not found.`);
+      }
       
       if (po.status === 'PARTIAL_RECEIPT' || po.status === 'CLOSED') {
         throw new BadRequestException('Cannot delete a purchase order that has been received or closed.');
       }
       
       await tx.purchaseOrderItem.deleteMany({
-        where: { poHeaderId: poId }
+        where: { poHeaderId: po.id }
       });
 
       return tx.purchaseOrderHeader.delete({
-        where: { id: poId }
+        where: { id: po.id }
+      });
+    });
+  }
+
+  async deleteGlobalPo(id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const po = await tx.purchaseOrderHeader.findFirst({
+        where: {
+          OR: [
+            { id },
+            { poNumber: id }
+          ]
+        }
+      });
+
+      if (!po) {
+        throw new NotFoundException(`Purchase Order '${id}' not found.`);
+      }
+
+      if (po.status === 'PARTIAL_RECEIPT' || po.status === 'CLOSED') {
+        throw new BadRequestException('Cannot delete a purchase order that has been received or closed.');
+      }
+
+      await tx.purchaseOrderItem.deleteMany({
+        where: { poHeaderId: po.id }
+      });
+
+      return tx.purchaseOrderHeader.delete({
+        where: { id: po.id }
       });
     });
   }

@@ -9,7 +9,8 @@ import {
   Eye, 
   TrendingUp, 
   AlertTriangle, 
-  RefreshCw 
+  RefreshCw,
+  Trash2
 } from 'lucide-react';
 import { ProcurementService } from '@/services/procurement.service';
 import { MultiProjectPoWizard } from './MultiProjectPoWizard';
@@ -24,7 +25,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export function GlobalPoModule() {
-  const { success } = useToast();
+  const { success, error } = useToast();
   const [activeTab, setActiveTab] = useState<'create' | 'history' | 'dead'>('create');
   const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [deadMaterials, setDeadMaterials] = useState<any[]>([]);
@@ -37,6 +38,21 @@ export function GlobalPoModule() {
     fetchGlobalOrders();
     fetchDeadMaterials();
   }, []);
+
+  const handleDeletePo = async (po: any) => {
+    const poNum = po.poNumber || po.id;
+    if (!window.confirm(`Are you sure you want to delete Purchase Order "${poNum}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await ProcurementService.deletePurchaseOrder('global', po.id || po.poNumber);
+      success("Purchase Order Deleted", `PO ${poNum} has been permanently deleted.`);
+      fetchGlobalOrders();
+    } catch (err: any) {
+      error("Delete Failed", err?.response?.data?.message || err?.message || "Failed to delete purchase order.");
+    }
+  };
 
   const fetchGlobalOrders = async () => {
     setIsLoading(true);
@@ -258,6 +274,14 @@ export function GlobalPoModule() {
                             onClick={() => exportPoToExcel(po)}
                           >
                             Excel
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                            onClick={() => handleDeletePo(po)}
+                          >
+                            Delete
                           </Button>
                         </div>
                       </td>

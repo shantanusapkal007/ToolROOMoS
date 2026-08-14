@@ -95,18 +95,19 @@ function BomWrapper({ project, materials, onClose, onSuccess, onError }: any) {
   
   const handleSaveBOM = async (rows: any[]) => {
     try {
+      const stdMatId = materials.find((m: any) => m.materialCode === 'STD')?.id;
       const items = rows.map(r => ({
-        materialId: r.matchedMaterialId || r.materialId,
-        requiredQty: r.quantity || r.requiredQty,
-        estimatedCost: r.basicCost || r.estimatedCost || 0,
+        materialId: r.matchedMaterialId || (r.isBoughtOut ? stdMatId : r.materialId),
+        requiredQty: Number(r.quantity) || 1,
+        estimatedCost: Number(r.basicCost) || 0,
         rawSize: r.rawMaterialSize || r.rawSize || '',
-        calculatedWeight: r.totalWeight || r.calculatedWeight || 0,
+        calculatedWeight: Number(r.totalWeight) || 0,
         dimensions: r.length && r.width && r.height ? `${r.length}x${r.width}x${r.height}` : undefined,
         hsnCode: r.hsnCode || undefined,
         gstPercent: r.gstPercent || undefined,
         customFields: {
           srNo: r.srNo,
-          partName: r.partName,
+          partName: r.partName || project?.partName || project?.name || '',
           finishSize: r.finishSize,
           rawMaterialSize: r.rawMaterialSize,
           length: r.length,
@@ -114,7 +115,11 @@ function BomWrapper({ project, materials, onClose, onSuccess, onError }: any) {
           height: r.height,
           apWeight: r.apWeight,
           totalWeight: r.totalWeight,
-          basicCost: r.basicCost
+          basicCost: r.basicCost,
+          isBoughtOut: r.isBoughtOut || false,
+          unitCost: r.unitCost || 0,
+          materialInput: r.materialInput || (r.isBoughtOut ? 'STD' : ''),
+          rate: r.rate
         }
       }));
       await updateBOMMutation.mutateAsync({ items });

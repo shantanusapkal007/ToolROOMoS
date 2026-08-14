@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -72,6 +73,15 @@ export class GlobalProcurementController {
       status: 'success',
       message: 'Multi-Project Purchase Order generated successfully.',
       data,
+    };
+  }
+
+  @Delete('purchase-orders/:id')
+  async deleteGlobalPo(@Param('id') id: string) {
+    await this.poService.deleteGlobalPo(id);
+    return {
+      status: 'success',
+      message: 'Purchase Order deleted successfully.',
     };
   }
 }
