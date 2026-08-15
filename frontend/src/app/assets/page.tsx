@@ -38,9 +38,6 @@ export default function GlobalAssetsPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
-  // Form Step State in Modal
-  const [formStep, setFormStep] = useState<1 | 2 | 3 | 4 | 5>(1);
-
   // Editing state
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
 
@@ -167,7 +164,6 @@ export default function GlobalAssetsPage() {
       ...defaultAssetForm,
       assetCode: `AST-${seqStr}`
     });
-    setFormStep(1);
     setIsAssetModalOpen(true);
   };
 
@@ -200,7 +196,6 @@ export default function GlobalAssetsPage() {
       imageUrl: asset.imageUrl || '',
       documentUrls: typeof asset.documentUrls === 'string' ? asset.documentUrls : JSON.stringify(asset.documentUrls || '')
     });
-    setFormStep(1);
     setIsAssetModalOpen(true);
   };
 
@@ -209,86 +204,6 @@ export default function GlobalAssetsPage() {
     const prefix = selectedCat?.categoryCode ? selectedCat.categoryCode.replace(/[^A-Z]/g, '').slice(0, 4) : 'AST';
     const seqStr = (assets.length + 1).toString().padStart(4, '0');
     setAssetForm(prev => ({ ...prev, assetCode: `${prefix}-${seqStr}` }));
-  };
-
-  const handleQuickPreset = (type: 'caliper' | 'drill' | 'height' | 'laptop' | 'vise') => {
-    const firstCatId = categories[0]?.id || '';
-    if (type === 'caliper') {
-      setAssetForm(prev => ({
-        ...prev,
-        name: 'Digital Vernier Caliper 300mm',
-        brand: 'Mitutoyo',
-        model: '500-196-30',
-        unit: 'NOS',
-        quantity: 5,
-        purchaseCost: 280,
-        condition: 'NEW',
-        subCategory: 'Precision Gauges',
-        categoryId: firstCatId,
-        requiresCalibration: true,
-        calibrationFrequencyDays: 180,
-        description: 'High precision digital caliper with IP67 protection for toolroom inspection.'
-      }));
-    } else if (type === 'drill') {
-      setAssetForm(prev => ({
-        ...prev,
-        name: 'Cordless Impact Driver 18V',
-        brand: 'Bosch Professional',
-        model: 'GDX 18V-200',
-        unit: 'NOS',
-        quantity: 3,
-        purchaseCost: 340,
-        condition: 'GOOD',
-        subCategory: 'Power Tools',
-        categoryId: firstCatId,
-        description: 'Heavy duty 18V brushless impact driver with dual tool holder.'
-      }));
-    } else if (type === 'height') {
-      setAssetForm(prev => ({
-        ...prev,
-        name: 'Linear Height Gauge 600mm',
-        brand: 'Mitutoyo',
-        model: 'LH-600E',
-        unit: 'NOS',
-        quantity: 1,
-        purchaseCost: 4500,
-        condition: 'EXCELLENT',
-        subCategory: 'Height Masters',
-        categoryId: firstCatId,
-        requiresCalibration: true,
-        calibrationFrequencyDays: 365,
-        description: '2D measurement height gauge for quality laboratory.'
-      }));
-    } else if (type === 'laptop') {
-      setAssetForm(prev => ({
-        ...prev,
-        name: 'Dell Precision CAD Workstation Laptop',
-        brand: 'Dell',
-        model: 'Precision 7680',
-        unit: 'NOS',
-        quantity: 2,
-        purchaseCost: 2900,
-        condition: 'EXCELLENT',
-        subCategory: 'IT Assets',
-        categoryId: firstCatId,
-        description: 'Intel i9 64GB RAM RTX 4000 Ada GPU workstation for CAD/CAM programming.'
-      }));
-    } else if (type === 'vise') {
-      setAssetForm(prev => ({
-        ...prev,
-        name: 'Precision Milling Machine Vise 6 Inch',
-        brand: 'Kurt',
-        model: 'DX6 Crossover',
-        unit: 'NOS',
-        quantity: 4,
-        purchaseCost: 850,
-        condition: 'GOOD',
-        subCategory: 'Workholding Fixtures',
-        categoryId: firstCatId,
-        description: 'Ultra precision CNC vise with stationary jaw body.'
-      }));
-    }
-    showToast('success', 'Form pre-filled with industry template!');
   };
 
   const handleSaveAsset = async (e: React.FormEvent) => {
@@ -726,476 +641,271 @@ export default function GlobalAssetsPage() {
               ))}
             </div>
           </div>
-        )}
+        )}        {/* COMPACT REGISTER / EDIT ASSET MODAL */}
+        <Modal
+          isOpen={isAssetModalOpen}
+          onClose={() => setIsAssetModalOpen(false)}
+          title={editingAssetId ? 'Edit Global Inventory Asset' : 'Register New Inventory Asset'}
+          subtitle="Add or modify tool, gauge, fixture, machinery, or equipment."
+          maxWidth="2xl"
+        >
+          <form onSubmit={handleSaveAsset} className="space-y-3.5 text-xs">
+            {/* Section 1: Identification */}
+            <div className="p-3 bg-canvas/70 border border-border-gray/70 rounded-[10px] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-ink uppercase tracking-wider">Asset Identification</span>
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-primary-subtle text-primary font-semibold">
+                  {assetForm.assetCode || 'NEW'}
+                </span>
+              </div>
 
-        {/* PROPER ENTERPRISE ASSET FORM DRAWER */}
-        <AnimatePresence>
-          {isAssetModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="w-full max-w-5xl bg-white border border-slate-200 rounded-md p-8 shadow-level-4 text-ink max-h-[94vh] flex flex-col"
-              >
-                {/* Header & Preset Bar */}
-                <div className="flex justify-between items-start pb-4 border-b border-slate-100">
-                  <div>
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="px-2.5 py-0.5 rounded-md bg-primary-subtle text-primary-dark border border-primary/20 font-mono text-xs font-semibold">
-                        {assetForm.assetCode || 'NEW-ASSET'}
-                      </span>
-                      <span className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Step {formStep} of 5</span>
-                    </div>
-                    <h3 className="text-2xl font-semibold text-ink">
-                      {editingAssetId ? 'Edit Global Inventory Asset' : 'Register New Global Inventory Asset'}
-                    </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[11px] font-semibold text-ink">
+                      Asset Code <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleAutoGenerateCode}
+                      className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <Zap className="w-3 h-3" /> Auto
+                    </button>
                   </div>
-
-                  <button onClick={() => setIsAssetModalOpen(false)} className="text-zinc-400 hover:text-ink p-2 rounded-md hover:bg-slate-100">
-                    <X className="w-5 h-5" />
-                  </button>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. AST-0001"
+                    value={assetForm.assetCode}
+                    onChange={(e) => setAssetForm({ ...assetForm, assetCode: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink font-mono rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                  />
                 </div>
 
-                {/* Industry Presets Quick-Bar */}
-                {!editingAssetId && (
-                  <div className="py-3 px-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-2 overflow-x-auto text-xs">
-                    <span className="font-semibold text-mute flex items-center gap-1.5 shrink-0">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                      Quick Templates:
-                    </span>
-                    <div className="flex items-center space-x-2 shrink-0">
-                      <button type="button" onClick={() => handleQuickPreset('caliper')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ“ Caliper 300mm</button>
-                      <button type="button" onClick={() => handleQuickPreset('drill')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ› ï¸ Impact Driver</button>
-                      <button type="button" onClick={() => handleQuickPreset('height')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ“ Height Gauge</button>
-                      <button type="button" onClick={() => handleQuickPreset('laptop')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ’» CAD Workstation</button>
-                      <button type="button" onClick={() => handleQuickPreset('vise')} className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-zinc-700 hover:border-primary hover:text-primary font-semibold transition-all">ðŸ§© CNC Vise 6"</button>
-                    </div>
-                  </div>
-                )}
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-semibold text-ink mb-1">
+                    Asset Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Digital Vernier Caliper 300mm"
+                    value={assetForm.name}
+                    onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                  />
+                </div>
+              </div>
 
-                {/* Wizard Step Navigation Tabs */}
-                <div className="flex items-center space-x-2 py-3 border-b border-slate-100 overflow-x-auto">
-                  {[
-                    { step: 1, label: '1. General & Specs', icon: Package },
-                    { step: 2, label: '2. Stock & Storage', icon: MapPin },
-                    { step: 3, label: '3. Valuation & Vendor', icon: DollarSign },
-                    { step: 4, label: '4. Quality & Calibration', icon: ShieldCheck },
-                    { step: 5, label: '5. Barcode & Media', icon: QrCode },
-                  ].map((s) => {
-                    const Icon = s.icon;
-                    const isActive = formStep === s.step;
-                    return (
-                      <button
-                        key={s.step}
-                        type="button"
-                        onClick={() => setFormStep(s.step as any)}
-                        className={`flex items-center space-x-2 px-3.5 py-2 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
-                          isActive
-                            ? 'bg-indigo-600 text-white shadow-level-1 shadow-indigo-500/20'
-                            : 'bg-slate-100 text-zinc-600 hover:text-ink hover:bg-slate-200'
-                        }`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                        <span>{s.label}</span>
-                      </button>
-                    );
-                  })}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[11px] font-semibold text-ink">
+                      Category <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                      className="text-[10px] text-primary font-semibold hover:underline cursor-pointer"
+                    >
+                      + Add
+                    </button>
+                  </div>
+                  <select
+                    required
+                    value={assetForm.categoryId}
+                    onChange={(e) => setAssetForm({ ...assetForm, categoryId: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+                  >
+                    <option value="">Select category...</option>
+                    {effectiveCategories.map((c: any) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Main Step Form Body */}
-                <form onSubmit={handleSaveAsset} className="flex-1 overflow-y-auto py-6 space-y-6 text-xs font-medium">
-                  {/* STEP 1: GENERAL IDENTIFICATION */}
-                  {formStep === 1 && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <div className="flex justify-between items-center mb-1">
-                            <label className="block text-zinc-700 font-semibold">Asset Code *</label>
-                            <button
-                              type="button"
-                              onClick={handleAutoGenerateCode}
-                              className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-1"
-                            >
-                              <Zap className="w-3 h-3" /> Auto-Gen
-                            </button>
-                          </div>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. AST-CAL-001"
-                            value={assetForm.assetCode}
-                            onChange={(e) => setAssetForm({ ...assetForm, assetCode: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono font-semibold focus:outline-none focus:border-primary"
-                          />
-                        </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">Brand / Make</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Mitutoyo / Bosch"
+                    value={assetForm.brand}
+                    onChange={(e) => setAssetForm({ ...assetForm, brand: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                  />
+                </div>
 
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Asset Name *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Digital Vernier Caliper 300mm"
-                            value={assetForm.name}
-                            onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Asset Status</label>
-                          <select
-                            value={assetForm.status}
-                            onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as any })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
-                          >
-                            <option value="AVAILABLE">AVAILABLE (In Stock)</option>
-                            <option value="ISSUED">ISSUED (On Loan)</option>
-                            <option value="MAINTENANCE">MAINTENANCE (In Repair)</option>
-                            <option value="RESERVED">RESERVED (Project Lock)</option>
-                            <option value="LOST">LOST (Missing)</option>
-                            <option value="SCRAPPED">SCRAPPED (Decommissioned)</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <div className="flex justify-between items-center mb-1">
-                            <label className="block text-zinc-700 font-semibold">Category *</label>
-                            <button
-                              type="button"
-                              onClick={() => setIsCategoryModalOpen(true)}
-                              className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-1"
-                            >
-                              + Quick Add Category
-                            </button>
-                          </div>
-                          <select
-                            required
-                            value={assetForm.categoryId}
-                            onChange={(e) => setAssetForm({ ...assetForm, categoryId: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
-                          >
-                            <option value="">Select Primary Category</option>
-                            {effectiveCategories.map((c: any) => (
-                              <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Subcategory / Family</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Precision Gauges / Cordless Drills"
-                            value={assetForm.subCategory}
-                            onChange={(e) => setAssetForm({ ...assetForm, subCategory: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Brand / Make</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Mitutoyo / Bosch"
-                            value={assetForm.brand}
-                            onChange={(e) => setAssetForm({ ...assetForm, brand: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Model Number</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. 500-196-30"
-                            value={assetForm.model}
-                            onChange={(e) => setAssetForm({ ...assetForm, model: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Serial Number</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. SN-998823"
-                            value={assetForm.serialNumber}
-                            onChange={(e) => setAssetForm({ ...assetForm, serialNumber: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Part Number</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. PN-MIT-001"
-                            value={assetForm.partNumber}
-                            onChange={(e) => setAssetForm({ ...assetForm, partNumber: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-zinc-700 font-semibold mb-1">Technical Specs & Notes</label>
-                        <textarea
-                          rows={3}
-                          placeholder="Detailed specifications, resolution, torque rating, accuracy tolerance..."
-                          value={assetForm.description}
-                          onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
-                          className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* STEP 2: STOCK & STORAGE LOCATION */}
-                  {formStep === 2 && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Owned Stock Quantity *</label>
-                          <input
-                            type="number"
-                            min={1}
-                            required
-                            value={assetForm.quantity}
-                            onChange={(e) => setAssetForm({ ...assetForm, quantity: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono font-semibold text-sm focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Unit of Measure (UOM)</label>
-                          <select
-                            value={assetForm.unit}
-                            onChange={(e) => setAssetForm({ ...assetForm, unit: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
-                          >
-                            {uomOptions.map(u => (
-                              <option key={u.id} value={u.code}>{u.label}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Min Stock Alert Level</label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={assetForm.minStockAlert}
-                            onChange={(e) => setAssetForm({ ...assetForm, minStockAlert: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Storage Building / Warehouse</label>
-                          <select
-                            value={assetForm.locationId}
-                            onChange={(e) => setAssetForm({ ...assetForm, locationId: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          >
-                            <option value="">Select Storage Location</option>
-                            {locations.map((l: any) => (
-                              <option key={l.id} value={l.id}>{l.locationName} ({l.building})</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Rack / Cabinet / Bin Ref</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Cabinet B-3 / Bin 12"
-                            value={assetForm.storageRack}
-                            onChange={(e) => setAssetForm({ ...assetForm, storageRack: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Physical Condition</label>
-                          <select
-                            value={assetForm.condition}
-                            onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-semibold focus:outline-none focus:border-primary"
-                          >
-                            {conditionOptions.map(c => (
-                              <option key={c.id} value={c.code}>{c.label}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                      </div>
-                    </div>
-                  )}
-
-                  {/* STEP 3: VALUATION & VENDOR */}
-                  {formStep === 3 && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Purchase Cost ($ / â‚¹)</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={assetForm.purchaseCost}
-                            onChange={(e) => setAssetForm({ ...assetForm, purchaseCost: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink font-mono font-semibold text-sm focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Purchase Date</label>
-                          <input
-                            type="date"
-                            value={assetForm.purchaseDate}
-                            onChange={(e) => setAssetForm({ ...assetForm, purchaseDate: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Supplier / Vendor</label>
-                          <input
-                            type="text"
-                            placeholder="Supplier / Vendor Company"
-                            value={assetForm.supplier}
-                            onChange={(e) => setAssetForm({ ...assetForm, supplier: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Warranty Expiry Date</label>
-                          <input
-                            type="date"
-                            value={assetForm.warrantyExpiry}
-                            onChange={(e) => setAssetForm({ ...assetForm, warrantyExpiry: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* STEP 4: QUALITY & CALIBRATION */}
-                  {formStep === 4 && (
-                    <div className="space-y-4 p-4 rounded-md bg-primary-subtle/50 border border-indigo-100">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-semibold text-indigo-900">Quality Calibration Settings</h4>
-                          <p className="text-xs text-primary">Enable automated calibration reminders & quality compliance for precision instruments.</p>
-                        </div>
-                        <label className="flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={assetForm.requiresCalibration}
-                            onChange={(e) => setAssetForm({ ...assetForm, requiresCalibration: e.target.checked })}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 relative"></div>
-                        </label>
-                      </div>
-
-                      {assetForm.requiresCalibration && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-indigo-100">
-                          <div>
-                            <label className="block text-zinc-700 font-semibold mb-1">Calibration Frequency (Days)</label>
-                            <input
-                              type="number"
-                              min={30}
-                              value={assetForm.calibrationFrequencyDays}
-                              onChange={(e) => setAssetForm({ ...assetForm, calibrationFrequencyDays: (e.target.value === '' ? ('' as any) : Number(e.target.value)) })}
-                              className="w-full p-3 rounded-md bg-white border border-slate-200 text-ink font-mono font-semibold focus:outline-none focus:border-primary"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-zinc-700 font-semibold mb-1">Last Calibration Date</label>
-                            <input
-                              type="date"
-                              value={assetForm.lastCalibrationDate}
-                              onChange={(e) => setAssetForm({ ...assetForm, lastCalibrationDate: e.target.value })}
-                              className="w-full p-3 rounded-md bg-white border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* STEP 5: BARCODE & MEDIA PREVIEW */}
-                  {formStep === 5 && (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Asset Image URL</label>
-                          <input
-                            type="url"
-                            placeholder="https://..."
-                            value={assetForm.imageUrl}
-                            onChange={(e) => setAssetForm({ ...assetForm, imageUrl: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-zinc-700 font-semibold mb-1">Document Attachment URL / Link</label>
-                          <input
-                            type="text"
-                            placeholder="Calibration MTC Certificate link..."
-                            value={assetForm.documentUrls}
-                            onChange={(e) => setAssetForm({ ...assetForm, documentUrls: e.target.value })}
-                            className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-ink focus:outline-none focus:border-primary"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Live Barcode & QR Code Card */}
-                      <div className="p-6 rounded-md bg-slate-50 border border-slate-200 text-center flex flex-col items-center justify-center">
-                        <span className="text-xs uppercase font-semibold text-mute tracking-wider mb-2">Live Real-time Barcode Preview</span>
-                        <div className="p-4 bg-white rounded-md shadow-level-1 border border-slate-200 inline-block mb-2">
-                          <QrCode className="w-24 h-24 text-ink mx-auto" />
-                          <p className="text-[10px] font-mono text-zinc-700 font-semibold mt-1">QR-{assetForm.assetCode}</p>
-                        </div>
-                        <p className="text-xs font-mono text-primary-dark font-semibold">BC-{assetForm.assetCode}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Form Footer Action Bar */}
-                  <div className="pt-4 flex justify-between items-center border-t border-slate-100">
-                    <div className="flex space-x-2">
-                      {formStep > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setFormStep(prev => Math.max(1, prev - 1) as any)}
-                          className="px-4 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold"
-                        >
-                          â† Previous Step
-                        </button>
-                      )}
-                      {formStep < 5 && (
-                        <button
-                          type="button"
-                          onClick={() => setFormStep(prev => Math.min(5, prev + 1) as any)}
-                          className="px-4 py-2 rounded-md bg-primary-subtle hover:bg-indigo-100 text-primary-dark font-semibold"
-                        >
-                          Next Step â†’
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex space-x-3">
-                      <button type="button" onClick={() => setIsAssetModalOpen(false)} className="px-5 py-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold cursor-pointer">Cancel</button>
-                      <button type="submit" className="px-6 py-2.5 rounded-md bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] text-white font-semibold text-xs border border-zinc-700/80 shadow-[0_1px_3px_rgba(0,0,0,0.12),_inset_0_1px_0_rgba(255,255,255,0.15)] cursor-pointer">
-                        {editingAssetId ? 'Update Inventory Asset' : 'Save Inventory Asset'}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </motion.div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">Model / Serial No</label>
+                  <input
+                    type="text"
+                    placeholder="Model / Serial"
+                    value={assetForm.model || assetForm.serialNumber}
+                    onChange={(e) => setAssetForm({ ...assetForm, model: e.target.value, serialNumber: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink font-mono rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                  />
+                </div>
+              </div>
             </div>
-          )}
-        </AnimatePresence>
+
+            {/* Section 2: Stock, Storage & Condition */}
+            <div className="p-3 bg-canvas/70 border border-border-gray/70 rounded-[10px] space-y-2.5">
+              <span className="text-[11px] font-bold text-ink uppercase tracking-wider block">Stock & Storage</span>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">
+                    Quantity <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    required
+                    value={assetForm.quantity}
+                    onChange={(e) => setAssetForm({ ...assetForm, quantity: e.target.value === '' ? ('' as any) : Number(e.target.value) })}
+                    className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink font-mono rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">Unit (UOM)</label>
+                  <select
+                    value={assetForm.unit}
+                    onChange={(e) => setAssetForm({ ...assetForm, unit: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+                  >
+                    {uomOptions.map(u => (
+                      <option key={u.id} value={u.code}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">Storage Location</label>
+                  <select
+                    value={assetForm.locationId}
+                    onChange={(e) => setAssetForm({ ...assetForm, locationId: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+                  >
+                    <option value="">Select location...</option>
+                    {locations.map((l: any) => (
+                      <option key={l.id} value={l.id}>{l.locationName}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">Rack / Bin Ref</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Rack-A / Bin-3"
+                    value={assetForm.storageRack}
+                    onChange={(e) => setAssetForm({ ...assetForm, storageRack: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">Condition</label>
+                  <select
+                    value={assetForm.condition}
+                    onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
+                    className="w-full h-9 bg-white border border-border-gray px-2 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+                  >
+                    {conditionOptions.map(c => (
+                      <option key={c.id} value={c.code}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">Status</label>
+                  <select
+                    value={assetForm.status}
+                    onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as any })}
+                    className="w-full h-9 bg-white border border-border-gray px-2 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+                  >
+                    <option value="AVAILABLE">AVAILABLE (In Stock)</option>
+                    <option value="ISSUED">ISSUED (On Loan)</option>
+                    <option value="MAINTENANCE">MAINTENANCE (In Repair)</option>
+                    <option value="RESERVED">RESERVED (Project Lock)</option>
+                    <option value="SCRAPPED">SCRAPPED</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink mb-1">Purchase Cost (₹ / $)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={assetForm.purchaseCost}
+                    onChange={(e) => setAssetForm({ ...assetForm, purchaseCost: e.target.value === '' ? ('' as any) : Number(e.target.value) })}
+                    className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink font-mono rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Calibration & Quality Requirements */}
+            <div className="p-3 bg-canvas/70 border border-border-gray/70 rounded-[10px] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-ink uppercase tracking-wider">Quality Calibration</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={assetForm.requiresCalibration}
+                    onChange={(e) => setAssetForm({ ...assetForm, requiresCalibration: e.target.checked })}
+                    className="h-4 w-4 rounded border-border-gray text-primary focus:ring-primary"
+                  />
+                  <span className="text-[11px] font-medium text-ink">Requires Periodic Calibration</span>
+                </label>
+              </div>
+
+              {assetForm.requiresCalibration && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border-gray/50">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-ink mb-1">Frequency (Days)</label>
+                    <input
+                      type="number"
+                      min={30}
+                      value={assetForm.calibrationFrequencyDays}
+                      onChange={(e) => setAssetForm({ ...assetForm, calibrationFrequencyDays: e.target.value === '' ? ('' as any) : Number(e.target.value) })}
+                      className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink font-mono rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-ink mb-1">Last Calibration Date</label>
+                    <input
+                      type="date"
+                      value={assetForm.lastCalibrationDate}
+                      onChange={(e) => setAssetForm({ ...assetForm, lastCalibrationDate: e.target.value })}
+                      className="w-full h-9 bg-white border border-border-gray px-2.5 text-xs text-ink rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-2 border-t border-border-gray flex items-center justify-end gap-2.5">
+              <Button type="button" variant="secondary" size="md" onClick={() => setIsAssetModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                isLoading={createAssetMutation.isPending || updateAssetMutation.isPending}
+              >
+                {editingAssetId ? 'Update Inventory Asset' : 'Register Asset in Inventory'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
 
         {/* ISSUE ASSET MODAL */}
         <Modal
