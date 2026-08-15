@@ -6,7 +6,8 @@ import { SequenceEngine } from '../../common/sequence.engine';
 const mockPrismaService = {
   $transaction: jest.fn(),
   project: {
-    findUniqueOrThrow: jest.fn(),
+    findUniqueOrThrow: jest.fn().mockResolvedValue({ id: 'proj-1', projectNumber: 'PRJ-1001' }),
+    findFirst: jest.fn().mockResolvedValue({ id: 'proj-1', projectNumber: 'PRJ-1001' }),
   },
   vendor: {
     findFirst: jest.fn(),

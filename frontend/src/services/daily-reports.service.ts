@@ -69,7 +69,7 @@ export interface GlobalDesignerLogPayload {
 
 export interface GlobalMsdrLogPayload {
   projectId: string;
-  machineId: string;
+  machineId?: string;
   employeeId: string;
   reportDate: string;
   productionSection?: string;

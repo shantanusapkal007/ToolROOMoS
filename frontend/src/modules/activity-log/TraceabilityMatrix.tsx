@@ -139,7 +139,7 @@ export function TraceabilityMatrix() {
             </span>
           </div>
           <p className="text-body-large text-mute mt-1">
-            Complete lineage: Who did what & when • Task delegation • Material & heat genealogy • Asset checkouts
+            Complete lineage: Who did what & when • Task delegation • Material genealogy • Asset checkouts
           </p>
         </div>
 
@@ -157,7 +157,7 @@ export function TraceabilityMatrix() {
         {[
           { id: 'AUDIT', label: 'System Audit Trail', icon: <Activity className="w-4 h-4" />, count: stats?.totalToday },
           { id: 'TASKS', label: 'Task & Work Assignments', icon: <UserCheck className="w-4 h-4" />, count: tasks.length },
-          { id: 'GENEALOGY', label: 'Material & Heat Genealogy', icon: <Box className="w-4 h-4" />, count: genealogyData.length || materialMovements.length },
+          { id: 'GENEALOGY', label: 'Material Genealogy', icon: <Box className="w-4 h-4" />, count: genealogyData.length || materialMovements.length },
           { id: 'ASSETS', label: 'Tool & Asset Issuance', icon: <Wrench className="w-4 h-4" />, count: assets.length },
         ].map((tab) => {
           const isActive = activeTab === tab.id;
@@ -351,17 +351,17 @@ export function TraceabilityMatrix() {
         </div>
       )}
 
-      {/* TAB 3: MATERIAL & HEAT GENEALOGY */}
+      {/* TAB 3: MATERIAL GENEALOGY */}
       {activeTab === 'GENEALOGY' && (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           
-          {/* Heat / Batch Search Header */}
+          {/* Batch Search Header */}
           <div className="glass p-5 rounded-[12px] flex items-center gap-4 mb-6 flex-shrink-0 border border-white/70 shadow-sm">
             <div className="flex-1 relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <input 
                 type="text" 
-                placeholder="Enter Batch Number or Heat Number (e.g. BATCH-101, HT-9022)..."
+                placeholder="Enter Batch Number (e.g. BATCH-101)..."
                 value={genealogyQuery}
                 onChange={(e) => setGenealogyQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleGenealogySearch()}
@@ -387,9 +387,6 @@ export function TraceabilityMatrix() {
                     <div>
                       <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold text-ink font-mono">{item.batchNumber}</h2>
-                        <span className="px-3 py-1 bg-purple-500/10 text-purple-700 border border-purple-500/20 text-xs font-semibold rounded-[12px] font-mono">
-                          Heat #: {item.heatNumber}
-                        </span>
                       </div>
                       <p className="text-sm text-mute mt-1">
                         Material: <strong className="text-zinc-800">{item.materialCode}</strong> ({item.materialGrade}) • Location: {item.rackLocation}
@@ -469,8 +466,8 @@ export function TraceabilityMatrix() {
             ) : (
               <div className="glass-panel p-8 text-center text-mute">
                 <Box className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
-                <p className="font-semibold text-zinc-800 text-lg">No Heat / Batch Record Selected</p>
-                <p className="text-sm text-mute mt-1">Enter a Batch or Heat Number above to inspect full multi-stage material pedigree.</p>
+                <p className="font-semibold text-zinc-800 text-lg">No Batch Record Selected</p>
+                <p className="text-sm text-mute mt-1">Enter a Batch Number above to inspect full multi-stage material pedigree.</p>
               </div>
             )}
           </div>

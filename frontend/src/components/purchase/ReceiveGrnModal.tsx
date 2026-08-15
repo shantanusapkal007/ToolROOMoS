@@ -42,7 +42,6 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
         remainingQty,
         acceptedQty: remainingQty > 0 ? remainingQty : 0,
         rejectedQty: 0,
-        heatNumber: "HEAT-" + Math.floor(1000 + Math.random() * 9000),
         actualRate,
         toolNo: custom.toolNo || "TOOL",
         detNo: custom.detNo || "",
@@ -106,7 +105,6 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
           receivedQty: i.acceptedQty + i.rejectedQty,
           acceptedQty: i.acceptedQty,
           rejectedQty: i.rejectedQty,
-          heatNumber: i.heatNumber,
           actualRate: i.actualRate,
           toolNo: i.toolNo,
           detNo: i.detNo,
@@ -217,7 +215,6 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
                         <th className="px-3 py-2.5">Material</th>
                         <th className="px-3 py-2.5 text-center">Pending Qty</th>
                         <th className="px-3 py-2.5">Receive Qty</th>
-                        <th className="px-3 py-2.5">Heat Number *</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100 bg-white">
@@ -244,16 +241,6 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
                                 value={item.acceptedQty}
                                 onChange={(e) => updateItem(idx, 'acceptedQty', Number(e.target.value))}
                                 className="w-24 bg-white border border-border-gray rounded-[12px] px-2 py-1.5 text-sm font-semibold text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                              />
-                            </td>
-                            <td className="px-3 py-3">
-                              <input
-                                type="text"
-                                required
-                                value={item.heatNumber}
-                                onChange={(e) => updateItem(idx, 'heatNumber', e.target.value)}
-                                placeholder="Mill Test Cert No."
-                                className="w-32 bg-white border border-border-gray rounded-[12px] px-2 py-1.5 text-sm font-mono text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                               />
                             </td>
                           </tr>

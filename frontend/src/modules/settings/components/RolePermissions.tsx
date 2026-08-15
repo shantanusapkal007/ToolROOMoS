@@ -5,19 +5,47 @@ import {
   Shield, 
   AlertTriangle, 
   Save, 
-  Zap, 
   Search, 
-  Lock,
-  Layers,
+  Lock, 
+  Layers, 
+  Wrench, 
+  Package, 
+  CheckCircle2, 
+  ShoppingCart, 
+  CreditCard, 
+  Briefcase, 
+  Cpu, 
+  Check, 
+  Minus,
   Sparkles
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useAllPermissions, useModules, useUpdatePermissions, useRolesSummary, useApplyPreset } from '../../../hooks/useRbac';
 import { RolePermission } from '../../../services/rbac.service';
 import { Modal } from '../../../components/ui/Modal';
-import { motion, AnimatePresence } from 'framer-motion';
 
-export const RolePermissions = () => {
+const ROLE_ICONS: Record<string, any> = {
+  ADMIN: Shield,
+  PRODUCTION: Wrench,
+  STORES: Package,
+  ENGINEERING: Layers,
+  QUALITY: CheckCircle2,
+  PURCHASE: ShoppingCart,
+  FINANCE: CreditCard,
+  SALES: Briefcase,
+  SALES_ENGINEER: Cpu,
+};
+
+const ACTIONS: { key: keyof RolePermission; label: string; desc: string }[] = [
+  { key: 'canView', label: 'View', desc: 'Read access' },
+  { key: 'canCreate', label: 'Create', desc: 'Add new records' },
+  { key: 'canEdit', label: 'Edit', desc: 'Modify entries' },
+  { key: 'canDelete', label: 'Delete', desc: 'Archive or purge' },
+  { key: 'canApprove', label: 'Approve', desc: 'Authorize workflows' },
+  { key: 'canExport', label: 'Export', desc: 'Download reports' },
+];
+
+export const RolePermissions: React.FC = () => {
   const { data: permissionsData, isLoading: isPermissionsLoading } = useAllPermissions();
   const { data: modulesData, isLoading: isModulesLoading } = useModules();
   const { data: rolesSummary, isLoading: isSummaryLoading } = useRolesSummary();
@@ -59,6 +87,16 @@ export const RolePermissions = () => {
   const roles = rolesSummary || [];
   const modules = modulesData || [];
 
+  const handleRoleSelect = (roleName: string) => {
+    if (roleName === activeRole) return;
+    if (hasChanges) {
+      setPendingRole(roleName);
+      setShowConfirmDiscard(true);
+    } else {
+      setActiveRole(roleName);
+    }
+  };
+
   const handleToggle = (moduleId: string, action: keyof RolePermission) => {
     if (activeRole === 'ADMIN') return;
     setLocalPermissions(prev => {
@@ -93,6 +131,27 @@ export const RolePermissions = () => {
     setHasChanges(true);
   };
 
+  const handleColumnToggle = (action: keyof RolePermission) => {
+    if (activeRole === 'ADMIN') return;
+    const allCurrentlyEnabled = filteredModules.every(mod => {
+      const perm = localPermissions.find(p => p.module === mod.id);
+      return perm && perm[action] === true;
+    });
+
+    const targetValue = !allCurrentlyEnabled;
+
+    setLocalPermissions(prev => {
+      return prev.map(p => {
+        const isModuleInFiltered = filteredModules.some(m => m.id === p.module);
+        if (isModuleInFiltered) {
+          return { ...p, [action]: targetValue };
+        }
+        return p;
+      });
+    });
+    setHasChanges(true);
+  };
+
   const handleApplyPreset = async (preset: 'FULL' | 'READ_ONLY' | 'SUPERVISOR' | 'CLEAR') => {
     if (activeRole === 'ADMIN') return;
     try {
@@ -106,10 +165,39 @@ export const RolePermissions = () => {
     try {
       await updatePermissionsMutation.mutateAsync({
         role: activeRole,
-        permissions: localPermissions
+        permissions: localPermissions.map(p => ({
+          module: p.module!,
+          canView: !!p.canView,
+          canCreate: !!p.canCreate,
+          canEdit: !!p.canEdit,
+          canDelete: !!p.canDelete,
+          canApprove: !!p.canApprove,
+          canExport: !!p.canExport
+        }))
       });
       setHasChanges(false);
     } catch (err) {}
+  };
+
+  const handleDiscard = () => {
+    if (permissionsData?.permissions && modulesData) {
+      const rolePerms = permissionsData.permissions.filter(p => p.role === activeRole);
+      const initializedPerms = modulesData.map(mod => {
+        const existing = rolePerms.find(p => p.module === mod.id);
+        return existing || {
+          role: activeRole,
+          module: mod.id,
+          canView: false,
+          canCreate: false,
+          canEdit: false,
+          canDelete: false,
+          canApprove: false,
+          canExport: false
+        };
+      });
+      setLocalPermissions(initializedPerms);
+      setHasChanges(false);
+    }
   };
 
   const filteredModules = modules.filter(m => 
@@ -117,276 +205,241 @@ export const RolePermissions = () => {
     m.description.toLowerCase().includes(searchModule.toLowerCase())
   );
 
-  const activeRoleSummary = roles.find(r => r.role === activeRole);
-
   return (
-    <div className="h-full flex flex-col relative min-h-0">
-      
-      {/* Header Bar */}
-      <div className="flex items-center justify-between p-5 border-b border-border-gray shrink-0 bg-white">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-[10px] bg-primary-subtle text-primary flex items-center justify-center border border-primary/20 shadow-subtle">
-            <Shield className="w-5 h-5" />
-          </div>
+    <div className="h-full flex flex-col min-h-0 bg-white">
+      {/* 1. Sleek Horizontal Role Selector Strip */}
+      <div className="p-4 border-b border-border-gray bg-white shrink-0">
+        <div className="flex items-center justify-between gap-4 mb-3">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-section-heading font-bold text-ink tracking-tight">Role-Based Access Control (RBAC)</h2>
-              <span className="px-2 py-0.5 bg-primary-subtle text-primary text-[10px] font-semibold rounded-full border border-primary/20">
-                Security Matrix
-              </span>
-            </div>
-            <p className="text-caption text-silver-blue">Manage granular permissions across 6 security vectors per operational module.</p>
+            <h2 className="text-sm font-bold text-ink">Role-Based Access Control</h2>
+            <p className="text-[11px] text-cool-gray">
+              Configure read, create, edit, delete, approval, and export permissions per system role.
+            </p>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <AnimatePresence>
-            {hasChanges && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <Button 
-                  variant="primary" 
-                  size="md"
-                  onClick={handleSave}
-                  isLoading={updatePermissionsMutation.isPending}
-                >
-                  <Save className="w-4 h-4 mr-1.5" />
-                  <span>Save Permissions Matrix</span>
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
 
-      <div className="flex flex-1 overflow-hidden min-h-0 gap-0">
-        
-        {/* Role Selector Sidebar */}
-        <div className="w-64 shrink-0 border-r border-border-gray bg-[#fbfbfd] overflow-y-auto p-3 space-y-1.5 hide-scrollbar">
-          <span className="text-micro font-semibold uppercase tracking-wider text-silver-blue px-2 py-1 mb-1 block">
-            System Roles ({roles.length})
-          </span>
+          {activeRole === 'ADMIN' && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold rounded-full shrink-0">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+              Admin role holds unrestrictable global access
+            </span>
+          )}
+        </div>
 
+        {/* Horizontal Role Pill Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
           {isLoading ? (
-            <div className="text-center p-4 text-silver-blue animate-pulse text-caption">Loading roles...</div>
+            <div className="text-xs text-cool-gray py-2">Loading roles...</div>
           ) : (
             roles.map(r => {
               const isSelected = activeRole === r.role;
+              const Icon = ROLE_ICONS[r.role] || Shield;
               return (
                 <button
                   key={r.role}
-                  onClick={() => {
-                    if (hasChanges) {
-                      setPendingRole(r.role);
-                      setShowConfirmDiscard(true);
-                    } else {
-                      setActiveRole(r.role);
-                    }
-                  }}
-                  className={`w-full text-left p-3 rounded-[10px] transition-all flex flex-col gap-0.5 border cursor-pointer ${
-                    isSelected 
-                      ? 'bg-white shadow-subtle border-primary text-ink' 
-                      : 'border-transparent text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)]'
+                  onClick={() => handleRoleSelect(r.role)}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-[8px] text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-primary text-white shadow-subtle'
+                      : 'bg-canvas hover:bg-slate-100 text-cool-gray hover:text-ink border border-border-gray/70'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-caption text-ink">{r.name}</span>
-                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
-                      r.isSystemAdmin 
-                        ? 'bg-[rgba(245,158,11,0.12)] text-[#b45309]' 
-                        : 'bg-primary-subtle text-primary'
-                    }`}>
-                      {r.userCount} Users
-                    </span>
-                  </div>
-                  <p className="text-small text-silver-blue line-clamp-1">{r.description}</p>
+                  <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-primary'}`} />
+                  <span>{r.name}</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-cool-gray'
+                  }`}>
+                    {r.userCount}
+                  </span>
                 </button>
               );
             })
           )}
-          
-          <div className="mt-4 p-3 rounded-[10px] bg-[rgba(245,158,11,0.08)] border border-amber-200 text-[#b45309] space-y-1">
-            <div className="flex items-center gap-1.5 font-semibold text-caption">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>Admin Security Rule</span>
-            </div>
-            <p className="text-small text-amber-900/80 leading-relaxed">
-              ADMIN role implicitly holds unrestrictable global access across all modules.
-            </p>
-          </div>
-        </div>
-
-        {/* Matrix Area */}
-        <div className="flex-1 overflow-y-auto p-5 relative hide-scrollbar flex flex-col min-h-0 bg-white space-y-4">
-          
-          {/* Active Role Info & Presets */}
-          <div className="p-4 rounded-[12px] border border-border-gray bg-[#fbfbfd] shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h3 className="text-body font-bold text-ink">{activeRoleSummary?.name || activeRole} Role Matrix</h3>
-                <span className="px-2.5 py-0.5 bg-primary-subtle text-primary font-semibold text-[11px] rounded-full border border-primary/20">
-                  {activeRoleSummary?.userCount || 0} Active Accounts
-                </span>
-              </div>
-              <p className="text-caption text-silver-blue mt-0.5">{activeRoleSummary?.description}</p>
-            </div>
-
-            {/* Quick 1-Click Preset Templates */}
-            {activeRole !== 'ADMIN' && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-micro font-semibold text-silver-blue uppercase tracking-wider">Presets:</span>
-                <button
-                  onClick={() => handleApplyPreset('FULL')}
-                  disabled={applyPresetMutation.isPending}
-                  className="px-2.5 py-1 bg-white hover:bg-[rgba(20,158,97,0.08)] text-[#026b3f] border border-emerald-200 rounded-[8px] text-caption font-medium transition-colors flex items-center gap-1 cursor-pointer shadow-subtle"
-                >
-                  <Zap className="w-3 h-3 text-accent-green" /> Full Access
-                </button>
-                <button
-                  onClick={() => handleApplyPreset('SUPERVISOR')}
-                  disabled={applyPresetMutation.isPending}
-                  className="px-2.5 py-1 bg-white hover:bg-primary-subtle text-primary border border-primary/20 rounded-[8px] text-caption font-medium transition-colors flex items-center gap-1 cursor-pointer shadow-subtle"
-                >
-                  <Layers className="w-3 h-3 text-primary" /> Supervisor
-                </button>
-                <button
-                  onClick={() => handleApplyPreset('READ_ONLY')}
-                  disabled={applyPresetMutation.isPending}
-                  className="px-2.5 py-1 bg-white hover:bg-[rgba(245,158,11,0.08)] text-[#b45309] border border-amber-200 rounded-[8px] text-caption font-medium transition-colors flex items-center gap-1 cursor-pointer shadow-subtle"
-                >
-                  <Lock className="w-3 h-3 text-amber-500" /> Read Only
-                </button>
-                <button
-                  onClick={() => handleApplyPreset('CLEAR')}
-                  disabled={applyPresetMutation.isPending}
-                  className="px-2.5 py-1 bg-white hover:bg-[rgba(239,68,68,0.08)] text-[#b91c1c] border border-rose-200 rounded-[8px] text-caption font-medium transition-colors cursor-pointer shadow-subtle"
-                >
-                  Clear All
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative shrink-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-blue" />
-            <input 
-              type="text" 
-              placeholder="Search modules..."
-              value={searchModule}
-              onChange={(e) => setSearchModule(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-border-gray rounded-[10px] text-caption text-ink placeholder:text-silver-blue focus:outline-none focus:border-primary shadow-subtle"
-            />
-          </div>
-
-          {/* Permissions Table */}
-          <div className="flex-1 overflow-y-auto border border-border-gray rounded-[12px] shadow-subtle bg-white min-h-0">
-            <table className="w-full text-left text-caption whitespace-nowrap">
-              <thead className="bg-[#fbfbfd] sticky top-0 z-10 border-b border-border-gray text-silver-blue font-semibold text-micro uppercase tracking-wider">
-                <tr>
-                  <th className="px-5 py-3">Module Name</th>
-                  <th className="px-3 py-3 text-center">View</th>
-                  <th className="px-3 py-3 text-center">Create</th>
-                  <th className="px-3 py-3 text-center">Edit</th>
-                  <th className="px-3 py-3 text-center">Delete</th>
-                  <th className="px-3 py-3 text-center">Approve</th>
-                  <th className="px-3 py-3 text-center">Export</th>
-                  <th className="px-4 py-3 text-right">Row Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-gray text-caption">
-                {filteredModules.map((mod) => {
-                  const perm = localPermissions.find(p => p.module === mod.id) || {} as Partial<RolePermission>;
-                  const actions: (keyof RolePermission)[] = ['canView', 'canCreate', 'canEdit', 'canDelete', 'canApprove', 'canExport'];
-                  const allActive = actions.every(a => perm[a] === true);
-
-                  return (
-                    <tr key={mod.id} className="hover:bg-[#fbfbfd] transition-colors">
-                      <td className="px-5 py-3">
-                        <div className="font-semibold text-ink">{mod.name}</div>
-                        <div className="text-small text-silver-blue">{mod.description}</div>
-                      </td>
-                      
-                      {actions.map(action => (
-                        <td key={action} className="px-3 py-3 text-center">
-                          <button
-                            onClick={() => handleToggle(mod.id, action)}
-                            disabled={activeRole === 'ADMIN'}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out ${
-                              activeRole === 'ADMIN' || perm[action] ? 'bg-primary' : 'bg-[#dedee5]'
-                            } ${activeRole === 'ADMIN' ? 'opacity-80 cursor-not-allowed' : ''}`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-subtle transition duration-200 ease-in-out ${
-                                activeRole === 'ADMIN' || perm[action] ? 'translate-x-2' : '-translate-x-2'
-                              }`}
-                            />
-                          </button>
-                        </td>
-                      ))}
-
-                      <td className="px-4 py-3 text-right">
-                        {activeRole !== 'ADMIN' && (
-                          <button
-                            onClick={() => handleRowToggle(mod.id, !allActive)}
-                            className="text-caption text-primary font-medium hover:underline cursor-pointer"
-                          >
-                            {allActive ? 'Disable All' : 'Enable All'}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
         </div>
       </div>
+
+      {/* 2. Unified Clean Filter & Presets Toolbar */}
+      <div className="px-5 py-3 border-b border-border-gray/80 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <div className="relative w-full sm:w-72">
+          <Search className="w-3.5 h-3.5 text-cool-gray absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Filter modules..."
+            value={searchModule}
+            onChange={(e) => setSearchModule(e.target.value)}
+            className="w-full h-8 pl-8 pr-3 bg-white border border-border-gray rounded-[6px] text-xs text-ink placeholder:text-cool-gray focus:outline-none focus:border-primary"
+          />
+        </div>
+
+        {/* Quick Presets & Save Actions */}
+        <div className="flex items-center gap-3 justify-between sm:justify-end">
+          {activeRole !== 'ADMIN' && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-cool-gray mr-1">Presets:</span>
+              <button
+                onClick={() => handleApplyPreset('FULL')}
+                disabled={applyPresetMutation.isPending}
+                className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-800 border border-border-gray rounded-[6px] text-xs font-semibold transition-colors cursor-pointer shadow-subtle"
+              >
+                Full Access
+              </button>
+              <button
+                onClick={() => handleApplyPreset('SUPERVISOR')}
+                disabled={applyPresetMutation.isPending}
+                className="px-2.5 py-1 bg-white hover:bg-slate-100 text-primary border border-border-gray rounded-[6px] text-xs font-semibold transition-colors cursor-pointer shadow-subtle"
+              >
+                Supervisor
+              </button>
+              <button
+                onClick={() => handleApplyPreset('READ_ONLY')}
+                disabled={applyPresetMutation.isPending}
+                className="px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-800 border border-border-gray rounded-[6px] text-xs font-semibold transition-colors cursor-pointer shadow-subtle"
+              >
+                Read Only
+              </button>
+              <button
+                onClick={() => handleApplyPreset('CLEAR')}
+                disabled={applyPresetMutation.isPending}
+                className="px-2 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-border-gray rounded-[6px] text-xs font-semibold transition-colors cursor-pointer shadow-subtle"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
+          {hasChanges && (
+            <div className="flex items-center gap-1.5 ml-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDiscard}
+                className="h-8 text-xs text-cool-gray hover:text-ink"
+              >
+                Discard
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSave}
+                isLoading={updatePermissionsMutation.isPending}
+                className="h-8 px-3 text-xs font-semibold"
+              >
+                <Save className="w-3.5 h-3.5 mr-1" /> Save Matrix
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Spacious, Modern Interactive Permission Tiles Table */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-white">
+        <table className="w-full text-left text-xs whitespace-nowrap">
+          <thead className="bg-slate-50/80 sticky top-0 z-10 border-b border-border-gray text-cool-gray font-bold text-[11px] uppercase tracking-wider select-none">
+            <tr>
+              <th className="px-6 py-3 min-w-[240px]">Module</th>
+              {ACTIONS.map(action => (
+                <th key={action.key} className="px-3 py-3 text-center w-20">
+                  <button
+                    type="button"
+                    onClick={() => handleColumnToggle(action.key)}
+                    disabled={activeRole === 'ADMIN'}
+                    className={`inline-flex items-center gap-1 font-bold text-[11px] uppercase transition-colors ${
+                      activeRole === 'ADMIN' ? 'cursor-default text-cool-gray' : 'hover:text-primary cursor-pointer'
+                    }`}
+                    title={`Click to toggle ${action.label} for all modules`}
+                  >
+                    <span>{action.label}</span>
+                  </button>
+                </th>
+              ))}
+              <th className="px-6 py-3 text-right w-28">Quick Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-gray/50">
+            {filteredModules.map((mod) => {
+              const perm = localPermissions.find(p => p.module === mod.id) || {} as Partial<RolePermission>;
+              const allActive = ACTIONS.every(a => perm[a.key] === true);
+
+              return (
+                <tr key={mod.id} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="px-6 py-3.5">
+                    <div className="font-bold text-xs text-ink">{mod.name}</div>
+                    <div className="text-[11px] text-cool-gray mt-0.5">{mod.description}</div>
+                  </td>
+                  
+                  {ACTIONS.map(action => {
+                    const isGranted = activeRole === 'ADMIN' || perm[action.key] === true;
+
+                    return (
+                      <td key={action.key} className="px-3 py-3.5 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleToggle(mod.id, action.key)}
+                          disabled={activeRole === 'ADMIN'}
+                          className={`w-7 h-7 mx-auto rounded-[6px] flex items-center justify-center transition-all cursor-pointer ${
+                            isGranted
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-subtle ring-1 ring-emerald-600/30'
+                              : 'bg-canvas hover:bg-white text-slate-400 hover:text-ink border border-border-gray hover:border-slate-400'
+                          } ${activeRole === 'ADMIN' ? 'opacity-85 cursor-not-allowed' : 'active:scale-95'}`}
+                          title={`${isGranted ? 'Revoke' : 'Grant'} ${action.label} on ${mod.name}`}
+                        >
+                          {isGranted ? (
+                            <Check className="w-4 h-4 stroke-[3]" />
+                          ) : (
+                            <Minus className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />
+                          )}
+                        </button>
+                      </td>
+                    );
+                  })}
+
+                  <td className="px-6 py-3.5 text-right">
+                    {activeRole !== 'ADMIN' && (
+                      <button
+                        type="button"
+                        onClick={() => handleRowToggle(mod.id, !allActive)}
+                        className={`text-xs font-semibold transition-colors cursor-pointer ${
+                          allActive
+                            ? 'text-cool-gray hover:text-rose-600'
+                            : 'text-primary hover:text-primary-hover'
+                        }`}
+                      >
+                        {allActive ? 'Disable All' : 'Enable All'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
       <Modal
         isOpen={showConfirmDiscard}
-        onClose={() => {
-          setShowConfirmDiscard(false);
-          setPendingRole(null);
-        }}
+        onClose={() => setShowConfirmDiscard(false)}
         title="Unsaved Changes"
-        subtitle="You have unsaved modifications to the permissions registry."
-        maxWidth="sm"
-        footer={
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="white"
-              size="sm"
-              onClick={() => {
-                setShowConfirmDiscard(false);
-                setPendingRole(null);
-              }}
-            >
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-cool-gray leading-relaxed">
+            You have unsaved permission modifications on the current role. Discard changes and switch roles?
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowConfirmDiscard(false)}>
               Cancel
             </Button>
             <Button
               variant="danger"
               size="sm"
               onClick={() => {
+                if (pendingRole) setActiveRole(pendingRole);
                 setShowConfirmDiscard(false);
-                if (pendingRole) {
-                  setActiveRole(pendingRole);
-                  setPendingRole(null);
-                }
+                setHasChanges(false);
               }}
             >
               Discard Changes
             </Button>
           </div>
-        }
-      >
-        <p className="text-cool-gray text-caption leading-relaxed">
-          Switching roles will discard your unsaved permission assignments. Are you sure you want to proceed?
-        </p>
+        </div>
       </Modal>
     </div>
   );

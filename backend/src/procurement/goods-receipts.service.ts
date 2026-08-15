@@ -118,11 +118,6 @@ export class GoodsReceiptsService {
 
       // 5. Process each GRN Item
       for (const item of activeItems) {
-        if (!item.heatNumber || item.heatNumber.trim() === '') {
-          throw new BadRequestException(
-            `GRN Gate Failed: Heat Number (Mill Test Certificate) is strictly required for material traceability.`
-          );
-        }
 
         let poItem = await tx.purchaseOrderItem.findFirst({
           where: { id: item.poItemId, poHeaderId: po.id },

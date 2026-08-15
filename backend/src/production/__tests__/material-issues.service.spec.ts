@@ -7,6 +7,7 @@ const mockPrismaService = {
   $transaction: jest.fn(),
   project: {
     findUniqueOrThrow: jest.fn(),
+    findFirst: jest.fn(),
     update: jest.fn(),
   },
   inventoryBatch: {
@@ -91,6 +92,10 @@ describe('MaterialIssuesService', () => {
       });
 
       mockPrismaService.project.findUniqueOrThrow.mockResolvedValue({
+        id: 'proj-1',
+        currentStage: 'PRODUCTION',
+      });
+      mockPrismaService.project.findFirst.mockResolvedValue({
         id: 'proj-1',
         currentStage: 'PRODUCTION',
       });

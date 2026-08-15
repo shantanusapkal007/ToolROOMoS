@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useRef, useMemo } from 'react';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Edit2, Trash2, AlertCircle, History, Download } from 'lucide-react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button } from './Button';
 
 export interface Column<T> {
@@ -8,6 +11,7 @@ export interface Column<T> {
   label?: string;
   render?: (val: any, row: T) => React.ReactNode;
   sortable?: boolean;
+  width?: string | number;
 }
 
 export interface SmartTableProps<T> {
@@ -22,11 +26,16 @@ export interface SmartTableProps<T> {
   emptyMessage?: string;
   exportable?: boolean;
   exportFilename?: string;
+  pageSize?: number;
+  virtualized?: boolean;
+  maxHeight?: string;
 }
 
 /**
- * SmartTable Component matching Design_System.md (Kraken theme):
- * - bg white, border border-gray (#dedee5), rounded 12px, shadow subtle
+ * SmartTable Component matching ToolRoomOS Enterprise Design System:
+ * - bg white / dark canvas, border border-gray, rounded 12px, shadow subtle
+ * - High-contrast text-ink and text-cool-gray
+ * - Built-in sorting, pagination, CSV export, and optional high-performance virtualization
  */
 export function SmartTable<T extends { id?: string | number }>({
   title,
@@ -40,11 +49,15 @@ export function SmartTable<T extends { id?: string | number }>({
   emptyMessage = 'No records found.',
   exportable,
   exportFilename = 'export',
+  pageSize = 15,
+  virtualized = false,
+  maxHeight = '600px',
 }: SmartTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 15;
+
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -55,7 +68,7 @@ export function SmartTable<T extends { id?: string | number }>({
     }
   };
 
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     if (!sortKey) return data;
     return [...data].sort((a: any, b: any) => {
       const aVal = a[sortKey];
@@ -69,18 +82,34 @@ export function SmartTable<T extends { id?: string | number }>({
   }, [data, sortKey, sortOrder]);
 
   const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
-  const paginatedData = sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const isVirtual = virtualized && sortedData.length > 50;
 
-  const hasActions = onEdit || onDelete || onHistory;
+  const displayData = useMemo(() => {
+    if (isVirtual) {
+      return sortedData;
+    }
+    return sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [sortedData, isVirtual, currentPage, pageSize]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: isVirtual ? sortedData.length : 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48,
+    overscan: 10,
+  });
+
+  const hasActions = Boolean(onEdit || onDelete || onHistory);
 
   const handleExportCSV = () => {
     if (!data.length) return;
-    const headerRow = columns.map(c => c.header || c.label || c.key).join(',');
-    const rows = data.map(item =>
-      columns.map(c => {
-        const val = (item as any)[c.key];
-        return typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val ?? '';
-      }).join(',')
+    const headerRow = columns.map((c) => c.header || c.label || c.key).join(',');
+    const rows = data.map((item) =>
+      columns
+        .map((c) => {
+          const val = (item as any)[c.key];
+          return typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val ?? '';
+        })
+        .join(','),
     );
     const csvContent = 'data:text/csv;charset=utf-8,' + [headerRow, ...rows].join('\n');
     const link = document.createElement('a');
@@ -91,6 +120,17 @@ export function SmartTable<T extends { id?: string | number }>({
     document.body.removeChild(link);
   };
 
+  const renderCellContent = (col: Column<T>, row: T) => {
+    const cellVal = (row as any)[col.key];
+    if (col.render) {
+      return col.render(cellVal, row);
+    }
+    if (cellVal !== null && cellVal !== undefined && typeof cellVal === 'object' && !React.isValidElement(cellVal)) {
+      return cellVal.name || cellVal.departmentName || cellVal.plantName || cellVal.shiftName || cellVal.companyName || cellVal.label || JSON.stringify(cellVal);
+    }
+    return cellVal ?? '—';
+  };
+
   return (
     <div className="bg-white border border-border-gray rounded-[12px] shadow-subtle overflow-hidden flex flex-col">
       {(title || exportable) && (
@@ -98,20 +138,25 @@ export function SmartTable<T extends { id?: string | number }>({
           {title && <h3 className="text-feature-title font-semibold text-ink">{title}</h3>}
           {exportable && (
             <Button variant="white" size="sm" onClick={handleExportCSV}>
-              <Download className="w-4 h-4 mr-1.5 text-silver-blue" /> Export CSV
+              <Download className="w-4 h-4 mr-1.5 text-cool-gray" /> Export CSV
             </Button>
           )}
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <div
+        ref={parentRef}
+        className="overflow-x-auto overflow-y-auto"
+        style={isVirtual ? { maxHeight } : undefined}
+      >
         <table className="w-full text-left border-collapse text-body-sm">
-          <thead>
+          <thead className={isVirtual ? 'sticky top-0 z-10 bg-canvas' : ''}>
             <tr className="bg-[rgba(148,151,169,0.05)] border-b border-border-gray text-caption font-semibold text-cool-gray">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   onClick={() => col.sortable && handleSort(col.key)}
+                  style={{ width: col.width }}
                   className={`py-3.5 px-4 select-none ${
                     col.sortable ? 'cursor-pointer hover:text-ink' : ''
                   }`}
@@ -119,7 +164,7 @@ export function SmartTable<T extends { id?: string | number }>({
                   <div className="flex items-center gap-1.5">
                     <span>{col.header || col.label}</span>
                     {col.sortable && (
-                      <span className="text-silver-blue">
+                      <span className="text-cool-gray">
                         {sortKey === col.key ? (
                           sortOrder === 'asc' ? (
                             <ChevronUp className="w-3.5 h-3.5 text-primary" />
@@ -140,24 +185,92 @@ export function SmartTable<T extends { id?: string | number }>({
           <tbody className="divide-y divide-border-gray">
             {isLoading ? (
               <tr>
-                <td colSpan={columns.length + (hasActions ? 1 : 0)} className="py-12 text-center text-silver-blue">
+                <td colSpan={columns.length + (hasActions ? 1 : 0)} className="py-12 text-center text-cool-gray">
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     <span>Loading data...</span>
                   </div>
                 </td>
               </tr>
-            ) : paginatedData.length === 0 ? (
+            ) : displayData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (hasActions ? 1 : 0)} className="py-12 text-center text-silver-blue">
+                <td colSpan={columns.length + (hasActions ? 1 : 0)} className="py-12 text-center text-cool-gray">
                   <div className="flex flex-col items-center justify-center gap-1.5">
-                    <AlertCircle className="w-6 h-6 text-silver-blue/60" />
+                    <AlertCircle className="w-6 h-6 text-cool-gray/60" />
                     <span className="font-medium text-ink">{emptyMessage}</span>
                   </div>
                 </td>
               </tr>
+            ) : isVirtual ? (
+              // Virtualized row rendering
+              <>
+                <tr style={{ height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px` }} />
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const row = sortedData[virtualRow.index];
+                  return (
+                    <tr
+                      key={row.id || virtualRow.index}
+                      onClick={() => onView && onView(row)}
+                      className={`transition-colors text-ink border-l-2 border-l-transparent ${
+                        onView
+                          ? 'cursor-pointer hover:bg-[rgba(148,151,169,0.06)] hover:border-l-primary'
+                          : 'hover:bg-[rgba(148,151,169,0.06)]'
+                      }`}
+                    >
+                      {columns.map((col) => (
+                        <td key={col.key} className="py-3.5 px-4">
+                          {renderCellContent(col, row)}
+                        </td>
+                      ))}
+                      {hasActions && (
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            {onHistory && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onHistory(row);
+                                }}
+                                className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
+                                title="Audit History"
+                              >
+                                <History className="w-4 h-4" />
+                              </button>
+                            )}
+                            {onEdit && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEdit(row);
+                                }}
+                                className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
+                                title="Edit Record"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            {onDelete && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDelete(row);
+                                }}
+                                className="p-1.5 text-cool-gray hover:text-accent-red hover:bg-red-50 rounded-[8px] transition-colors"
+                                title="Delete Record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </>
             ) : (
-              paginatedData.map((row, idx) => (
+              // Standard paginated row rendering
+              displayData.map((row, idx) => (
                 <tr
                   key={row.id || idx}
                   onClick={() => onView && onView(row)}
@@ -167,29 +280,20 @@ export function SmartTable<T extends { id?: string | number }>({
                       : 'hover:bg-[rgba(148,151,169,0.06)]'
                   }`}
                 >
-                  {columns.map((col) => {
-                      const cellVal = (row as any)[col.key];
-                      let display: React.ReactNode;
-                      if (col.render) {
-                        display = col.render(cellVal, row);
-                      } else if (cellVal !== null && cellVal !== undefined && typeof cellVal === 'object' && !React.isValidElement(cellVal)) {
-                        // Safety: extract a readable label from nested relation objects
-                        display = cellVal.name || cellVal.departmentName || cellVal.plantName || cellVal.shiftName || cellVal.companyName || cellVal.label || JSON.stringify(cellVal);
-                      } else {
-                        display = cellVal ?? '—';
-                      }
-                      return (
-                        <td key={col.key} className="py-3.5 px-4">
-                          {display}
-                        </td>
-                      );
-                    })}
+                  {columns.map((col) => (
+                    <td key={col.key} className="py-3.5 px-4">
+                      {renderCellContent(col, row)}
+                    </td>
+                  ))}
                   {hasActions && (
                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1">
                         {onHistory && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); onHistory(row); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onHistory(row);
+                            }}
                             className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
                             title="Audit History"
                           >
@@ -198,7 +302,10 @@ export function SmartTable<T extends { id?: string | number }>({
                         )}
                         {onEdit && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); onEdit(row); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit(row);
+                            }}
                             className="p-1.5 text-cool-gray hover:text-primary hover:bg-primary-subtle/50 rounded-[8px] transition-colors"
                             title="Edit Record"
                           >
@@ -207,7 +314,10 @@ export function SmartTable<T extends { id?: string | number }>({
                         )}
                         {onDelete && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); onDelete(row); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(row);
+                            }}
                             className="p-1.5 text-cool-gray hover:text-accent-red hover:bg-red-50 rounded-[8px] transition-colors"
                             title="Delete Record"
                           >
@@ -225,7 +335,7 @@ export function SmartTable<T extends { id?: string | number }>({
       </div>
 
       {/* Pagination Footer */}
-      {totalPages > 1 && (
+      {!isVirtual && totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-border-gray bg-[rgba(148,151,169,0.04)] text-caption text-cool-gray">
           <span>
             Showing {(currentPage - 1) * pageSize + 1} to{' '}

@@ -13,6 +13,7 @@ describe('BomsService', () => {
     }),
     project: {
       findUniqueOrThrow: jest.fn(),
+      findFirst: jest.fn(),
     },
     projectCostSummary: {
       update: jest.fn(),
@@ -72,7 +73,13 @@ describe('BomsService', () => {
     
     mockPrismaService.project.findUniqueOrThrow.mockResolvedValue({
       id: 'proj-1',
-      plantId: 'plant-1'
+      plantId: 'plant-1',
+      plant: { company: { companyName: 'Test Corp' } },
+    });
+    mockPrismaService.project.findFirst.mockResolvedValue({
+      id: 'proj-1',
+      plantId: 'plant-1',
+      plant: { company: { companyName: 'Test Corp' } },
     });
 
     // Mock the BOM header and items (because it uses findFirstOrThrow with include: { items: { include: { material: true } } })

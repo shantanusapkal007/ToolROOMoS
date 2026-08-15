@@ -27,6 +27,7 @@ import {
 } from '../../hooks/useDailyReports';
 import { useMasterLookups } from '../../hooks/useMasterLookups';
 import { UnifiedSheetEntry } from '../../components/reports/UnifiedSheetEntry';
+import { ProjectToolMatrix } from '../../components/reports/ProjectToolMatrix';
 import { InterSectionTransferModal } from '../../components/production/InterSectionTransferModal';
 
 export default function EmployeeDailyReportPage() {
@@ -230,86 +231,7 @@ export default function EmployeeDailyReportPage() {
           <UnifiedSheetEntry onComplete={() => refetch()} />
         ) : activeTab === 'MATRIX' ? (
           /* Project-Tool Matrix View */
-          <div className="rounded-[12px] bg-white border border-border-gray shadow-subtle p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-border-gray pb-4">
-              <div>
-                <h3 className="text-display-xs font-semibold text-ink flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-primary" /> Currently Running Projects & Tool Allocation Matrix
-                </h3>
-                <p className="text-body-sm text-silver-blue mt-0.5">
-                  Overview of active projects, assigned tooling, machines in operation, and logged hours today.
-                </p>
-              </div>
-              <span className="text-caption px-2.5 py-1 rounded-[8px] bg-primary-subtle text-primary font-medium border border-primary/20">
-                {runningProjects.length} Active Toolroom Projects
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {runningProjects.map((project) => {
-                const projectLogs = reports.filter((r) => r.projectId === project.id);
-                const designHrs = projectLogs
-                  .filter((r) => r.type === 'DESIGNER')
-                  .reduce((sum, r) => sum + r.hoursSpent, 0);
-                const msdrHrs = projectLogs
-                  .filter((r) => r.type === 'MSDR')
-                  .reduce((sum, r) => sum + r.hoursSpent, 0);
-
-                return (
-                  <div
-                    key={project.id}
-                    className="p-5 rounded-[12px] bg-white border border-border-gray shadow-subtle hover:border-cool-gray/50 transition-colors space-y-3"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-caption font-medium font-mono px-2 py-0.5 rounded-[6px] bg-neutral-100/60 border border-border-gray text-ink">
-                          {project.projectCode}
-                        </span>
-                        <h4 className="text-body-sm font-semibold text-ink mt-1.5">
-                          {project.name}
-                        </h4>
-                      </div>
-                      <Link
-                        href={`/projects/${project.id}`}
-                        className="p-1.5 text-silver-blue hover:text-ink transition-colors"
-                        title="View Project Workspace"
-                      >
-                        <ArrowUpRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-
-                    <div className="text-body-sm text-silver-blue space-y-1">
-                      <p>
-                        <span className="font-medium text-ink">Tool Name:</span>{' '}
-                        {project.toolName || 'Custom Die / Mold Tooling'}
-                      </p>
-                      <p>
-                        <span className="font-medium text-ink">Stage:</span>{' '}
-                        <span className="px-2 py-0.5 text-caption rounded-[6px] bg-primary-subtle text-primary font-medium">
-                          {project.currentStage}
-                        </span>
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-border-gray flex items-center justify-between text-body-sm">
-                      <div>
-                        <span className="text-silver-blue block text-caption">Designer Hrs</span>
-                        <span className="font-semibold text-primary font-mono">{designHrs.toFixed(1)} hrs</span>
-                      </div>
-                      <div>
-                        <span className="text-silver-blue block text-caption">MSDR Hrs</span>
-                        <span className="font-semibold text-semantic-success font-mono">{msdrHrs.toFixed(1)} hrs</span>
-                      </div>
-                      <div>
-                        <span className="text-silver-blue block text-caption">Logs Today</span>
-                        <span className="font-semibold text-primary font-mono">{projectLogs.length}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <ProjectToolMatrix onOpenTransferModal={() => setIsTransferModalOpen(true)} />
         ) : (
           /* Main Unified / Tabbed Table View */
           <div className="rounded-[12px] bg-white border border-border-gray shadow-subtle overflow-hidden">

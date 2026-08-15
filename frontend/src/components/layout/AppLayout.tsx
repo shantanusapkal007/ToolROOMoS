@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useSidebarStore } from '../../store/useSidebarStore';
@@ -24,10 +23,10 @@ export function AppLayout({
   return (
     <div className="flex h-screen w-screen overflow-hidden text-ink font-sans bg-canvas">
       <Sidebar />
-      <motion.div 
-        className="flex-1 h-full flex flex-col relative min-w-0 overflow-hidden"
-        animate={{ paddingLeft: isExpanded ? 240 : 68 }}
-        transition={{ type: 'spring' as const, stiffness: 300, damping: 30, mass: 0.8 }}
+      <div 
+        className={`flex-1 h-full flex flex-col relative min-w-0 overflow-hidden transition-[padding] duration-200 ease-out ${
+          isExpanded ? 'pl-[240px]' : 'pl-[68px]'
+        }`}
       >
         <TopBar />
         <main className={`flex-1 h-full overflow-y-auto min-h-0 ${noPadding ? '' : 'p-6'} ${className}`}>
@@ -35,8 +34,7 @@ export function AppLayout({
             {children}
           </div>
         </main>
-      </motion.div>
+      </div>
     </div>
   );
 }
-

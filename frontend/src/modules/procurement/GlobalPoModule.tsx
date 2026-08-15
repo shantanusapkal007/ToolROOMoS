@@ -93,7 +93,6 @@ export function GlobalPoModule() {
     const q = searchQuery.toLowerCase();
     return (
       item.batchNumber?.toLowerCase().includes(q) ||
-      item.heatNumber?.toLowerCase().includes(q) ||
       item.toolNo?.toLowerCase().includes(q) ||
       item.materialGrade?.toLowerCase().includes(q) ||
       item.grnNumber?.toLowerCase().includes(q)
@@ -312,7 +311,7 @@ export function GlobalPoModule() {
 
             <SearchInput
               context="local"
-              placeholder="Search batch #, heat #, grade..."
+              placeholder="Search batch #, grade..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onClear={() => setSearchQuery('')}

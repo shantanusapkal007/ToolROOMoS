@@ -154,116 +154,189 @@ export class ProjectsService {
     };
   }
 
-  async getDashboardMetrics() {
-    const totalProjects = await this.prisma.project.count();
-    
-    // 1. Financial Pulse (MTD Revenue & Open Invoices)
+  async getDashboardMetrics(plantId?: string) {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    // MTD Revenue - Sum of all InvoiceHeaders created this month
-    const mtdInvoices = await this.prisma.invoiceHeader.findMany({
-      where: { createdAt: { gte: firstDayOfMonth } }
-    });
-    const mtdRevenue = mtdInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const mtdSalesWithoutGst = mtdInvoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
+    const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const elevenMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 10, 1);
 
-    // User-configured Annual Target from preferences (or default 15 Cr)
-    const annualSetting = await this.prisma.systemSetting.findUnique({
-      where: { settingKey: 'estimated_revenue_target' }
-    });
-    const annualTarget = annualSetting && !isNaN(Number(annualSetting.settingValue)) 
-      ? Number(annualSetting.settingValue) 
+    const projectFilter = plantId ? { plantId } : undefined;
+
+    const [
+      totalProjects,
+      mtdInvoicesAgg,
+      annualSetting,
+      activePipelineAgg,
+      ytdInvoicesAgg,
+      openInvoicesAgg,
+      activeJobs,
+      totalMachines,
+      delayedProjectsCount,
+      recentProjects,
+      olderProjects,
+      historyInvoices,
+      grnItemsAgg,
+      grnTotalReceiptsCount,
+    ] = await Promise.all([
+      // Total Projects count
+      this.prisma.project.count({ where: projectFilter }),
+
+      // MTD Invoices (Sum subtotal & totalAmount)
+      this.prisma.invoiceHeader.aggregate({
+        where: {
+          createdAt: { gte: firstDayOfMonth },
+          ...(plantId ? { project: { plantId } } : {}),
+        },
+        _sum: { totalAmount: true, subtotal: true },
+      }),
+
+      // Annual target preference
+      this.prisma.systemSetting.findUnique({
+        where: { settingKey: 'estimated_revenue_target' },
+      }),
+
+      // Active Pipeline Estimated Value
+      this.prisma.projectCostSummary.aggregate({
+        where: {
+          project: {
+            currentStage: { notIn: ['CANCELLED', 'CLOSED'] },
+            ...(plantId ? { plantId } : {}),
+          },
+        },
+        _sum: { estimatedMaterialCost: true, revenue: true },
+      }),
+
+      // YTD Revenue
+      this.prisma.invoiceHeader.aggregate({
+        where: {
+          createdAt: { gte: firstDayOfYear },
+          ...(plantId ? { project: { plantId } } : {}),
+        },
+        _sum: { totalAmount: true },
+      }),
+
+      // Open (Unpaid) Invoices
+      this.prisma.invoiceHeader.aggregate({
+        where: {
+          paymentStatus: { not: 'PAID' },
+          ...(plantId ? { project: { plantId } } : {}),
+        },
+        _sum: { totalAmount: true },
+      }),
+
+      // Active Distinct Machines in use
+      this.prisma.jobCard.findMany({
+        where: {
+          status: 'IN_PROGRESS',
+          ...(plantId ? { project: { plantId } } : {}),
+        },
+        select: { machineId: true },
+        distinct: ['machineId'],
+      }),
+
+      // Total machines count
+      this.prisma.machine.count({ where: plantId ? { plantId } : undefined }),
+
+      // Delayed projects count
+      this.prisma.project.count({
+        where: {
+          targetDeliveryDate: { lt: now },
+          currentStage: { not: 'CLOSED' },
+          ...(plantId ? { plantId } : {}),
+        },
+      }),
+
+      // Trends (Last 30 vs 30-60 days)
+      this.prisma.project.count({
+        where: {
+          createdAt: { gte: thirtyDaysAgo },
+          ...(plantId ? { plantId } : {}),
+        },
+      }),
+      this.prisma.project.count({
+        where: {
+          createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
+          ...(plantId ? { plantId } : {}),
+        },
+      }),
+
+      // Revenue History for last 11 months (minimal field projection)
+      this.prisma.invoiceHeader.findMany({
+        where: {
+          createdAt: { gte: elevenMonthsAgo },
+          ...(plantId ? { project: { plantId } } : {}),
+        },
+        select: { invoiceDate: true, totalAmount: true },
+      }),
+
+      // Total GRN Purchase Value
+      this.prisma.goodsReceiptItem.aggregate({
+        where: plantId ? { grnHeader: { project: { plantId } } } : undefined,
+        _sum: { total: true, actualMaterialCost: true, basicCost: true },
+        _count: { id: true },
+      }),
+
+      // Total GRN headers count
+      this.prisma.goodsReceiptHeader.count({
+        where: plantId ? { project: { plantId } } : undefined,
+      }),
+    ]);
+
+    const mtdRevenue = Number(mtdInvoicesAgg._sum.totalAmount || 0);
+    const mtdSalesWithoutGst = Number(mtdInvoicesAgg._sum.subtotal || 0);
+
+    const annualTarget = annualSetting && !isNaN(Number(annualSetting.settingValue))
+      ? Number(annualSetting.settingValue)
       : 150000000;
 
-    // Monthly Target dynamically derived as Annual Target / 12
     const monthlyTarget = Math.round(annualTarget / 12);
     const monthlyRemaining = Math.max(0, monthlyTarget - mtdRevenue);
-    
-    // Dynamic Yearly Projected Revenue (YTD actual revenue + open pipeline estimated value)
-    const activeProjectSummaries = await this.prisma.projectCostSummary.findMany({
-      where: { project: { currentStage: { notIn: ['CANCELLED', 'CLOSED'] } } }
-    });
-    const totalPipelineEstimatedValue = activeProjectSummaries.reduce(
-      (sum, s) => sum + Number(s.estimatedMaterialCost || 0) + Number(s.revenue || 0), 
-      0
-    );
-    
-    // Dynamic Yearly Projected Revenue (YTD actual revenue + open pipeline estimated value)
-    const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
-    const ytdInvoices = await this.prisma.invoiceHeader.findMany({
-      where: { createdAt: { gte: firstDayOfYear } }
-    });
-    const ytdRevenue = ytdInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+
+    const totalPipelineEstimatedValue =
+      Number(activePipelineAgg._sum.estimatedMaterialCost || 0) +
+      Number(activePipelineAgg._sum.revenue || 0);
+
+    const ytdRevenue = Number(ytdInvoicesAgg._sum.totalAmount || 0);
     const yearlyProjectedRevenue = ytdRevenue + totalPipelineEstimatedValue;
-    
-    // Open Invoices - Sum of all unpaid InvoiceHeaders
-    const openInvoicesList = await this.prisma.invoiceHeader.findMany({
-      where: { paymentStatus: { not: 'PAID' } }
-    });
-    const openInvoices = openInvoicesList.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const openInvoices = Number(openInvoicesAgg._sum.totalAmount || 0);
 
-    // 2. Live Machine Load
-    const activeJobs = await this.prisma.jobCard.findMany({
-      where: { status: 'IN_PROGRESS' },
-      select: { machineId: true },
-      distinct: ['machineId']
-    });
-    const activeMachines = activeJobs.filter(j => j.machineId).length;
-    const totalMachines = await this.prisma.machine.count();
+    const activeMachines = activeJobs.filter((j) => j.machineId).length;
     const machineLoad = totalMachines > 0 ? Math.round((activeMachines / totalMachines) * 100) : 0;
-    
-    // 3. Overall Yield (OTD) - Calculate based on delayed projects vs total projects
-    const delayedProjectsCount = await this.prisma.project.count({
-      where: { targetDeliveryDate: { lt: new Date() }, currentStage: { not: 'CLOSED' } }
-    });
-    const overallYield = totalProjects > 0 ? Math.max(0, 100 - Math.round((delayedProjectsCount / totalProjects) * 100)) : 0;
-    
-    // Trends (Compare this month to last month)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
-    const recentProjects = await this.prisma.project.count({ where: { createdAt: { gte: thirtyDaysAgo } } });
-    const olderProjects = await this.prisma.project.count({ where: { createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } });
-    
-    // We'll use project volume growth as a proxy for yield/revenue trend
-    const yieldTrend = olderProjects > 0 ? Number((((recentProjects - olderProjects) / olderProjects) * 10).toFixed(1)) : 0;
-    const revenueTrend = olderProjects > 0 ? Number((((recentProjects - olderProjects) / olderProjects) * 100).toFixed(1)) : 0;
-    
-    // 4. Revenue History - group by month for the last 11 months
-    const allInvoices = await this.prisma.invoiceHeader.findMany({
-      select: { invoiceDate: true, totalAmount: true }
-    });
+    const overallYield =
+      totalProjects > 0
+        ? Math.max(0, 100 - Math.round((delayedProjectsCount / totalProjects) * 100))
+        : 0;
+
+    const yieldTrend =
+      olderProjects > 0
+        ? Number((((recentProjects - olderProjects) / olderProjects) * 10).toFixed(1))
+        : 0;
+    const revenueTrend =
+      olderProjects > 0
+        ? Number((((recentProjects - olderProjects) / olderProjects) * 100).toFixed(1))
+        : 0;
+
     const revenueHistory = new Array(11).fill(0);
-    allInvoices.forEach(inv => {
+    historyInvoices.forEach((inv) => {
       if (inv.invoiceDate) {
-        const monthDiff = (new Date().getFullYear() - inv.invoiceDate.getFullYear()) * 12 + (new Date().getMonth() - inv.invoiceDate.getMonth());
+        const monthDiff =
+          (now.getFullYear() - inv.invoiceDate.getFullYear()) * 12 +
+          (now.getMonth() - inv.invoiceDate.getMonth());
         if (monthDiff >= 0 && monthDiff < 11) {
-           revenueHistory[10 - monthDiff] += Number(inv.totalAmount || 0) / 1000; // in thousands
+          revenueHistory[10 - monthDiff] += Number(inv.totalAmount || 0) / 1000; // in thousands
         }
       }
     });
 
-    // 5. Total Purchase Value based on GRN Materials across ALL projects
-    const grnItems = await this.prisma.goodsReceiptItem.findMany({
-      include: {
-        grnHeader: {
-          select: { projectId: true, grnNumber: true }
-        }
-      }
-    });
+    const totalGrnPurchaseValue =
+      Number(grnItemsAgg._sum.total || 0) ||
+      Number(grnItemsAgg._sum.actualMaterialCost || 0) ||
+      Number(grnItemsAgg._sum.basicCost || 0);
 
-    const totalGrnPurchaseValue = grnItems.reduce((sum, item) => {
-      const basic = Number(item.total || item.basicCost || 0);
-      const calculated = Number(item.actualMaterialCost || 0) || (Number(item.acceptedQty || 0) * Number(item.actualRate || 0));
-      const val = basic > 0 ? basic : calculated;
-      return sum + val;
-    }, 0);
-
-    const grnMaterialCount = grnItems.length;
-    const grnTotalReceiptsCount = await this.prisma.goodsReceiptHeader.count();
+    const grnMaterialCount = Number(grnItemsAgg._count.id || 0);
 
     return {
       totalProjects,

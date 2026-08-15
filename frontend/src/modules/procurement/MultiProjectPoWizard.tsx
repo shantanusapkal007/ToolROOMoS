@@ -28,6 +28,8 @@ import { Button } from '@/components/ui/Button';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Select } from '@/components/ui/Select';
 
+import { parseDimension, calculateMaterialWeight } from '@/utils/dimensionParser';
+
 export interface WizardItem {
   id: string;
   projectId: string;
@@ -59,35 +61,14 @@ export function parseLwh(dimStr?: string, length?: string, width?: string, heigh
     };
   }
 
-  let lVal = "-";
-  let wVal = "-";
-  let hVal = "-";
-  if (!dimStr) return { lVal, wVal, hVal };
+  if (!dimStr) return { lVal: "-", wVal: "-", hVal: "-" };
 
-  const str = dimStr.trim();
-
-  // Cylindrical / round bar format (e.g. "Ø 40 x 120", "Ø 50 x 105", "Ø 20 x 110")
-  if (str.includes('Ø') || str.toLowerCase().includes('dia')) {
-    const cleaned = str.replace(/dia/i, '').trim();
-    const parts = cleaned.split(/x|\*/i).map(s => s.trim());
-    const diaVal = parts[0].replace('Ø', '').trim();
-    const lenVal = parts[1] || "-";
-    return {
-      lVal: "Ø",
-      wVal: diaVal || "-",
-      hVal: lenVal || "-"
-    };
-  }
-
-  // Rectangular plate / block format (e.g. "450 x 400 x 50", "300 x 250 x 50", "550 x 500")
-  const parts = str.split(/x|\*/i).map(s => s.trim());
-  if (parts.length >= 3) {
-    return { lVal: parts[0], wVal: parts[1], hVal: parts[2] };
-  } else if (parts.length === 2) {
-    return { lVal: parts[0], wVal: parts[1], hVal: "*" };
-  }
-
-  return { lVal: str, wVal: "-", hVal: "-" };
+  const parsed = parseDimension(dimStr);
+  return {
+    lVal: String(parsed.displayL),
+    wVal: String(parsed.displayW),
+    hVal: String(parsed.displayH)
+  };
 }
 
 interface MultiProjectPoWizardProps {

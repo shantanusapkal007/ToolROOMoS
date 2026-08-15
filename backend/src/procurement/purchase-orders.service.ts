@@ -15,15 +15,20 @@ export class PurchaseOrdersService {
   /**
    * Fetch all active projects and their BOM items across the system for global PO creation
    */
-  async getAllProjectBomItems() {
-    // 1. Fetch projects in the database with customer, POs, GRNs and latest BOM header
+  async getAllProjectBomItems(plantId?: string) {
+    // 1. Fetch active projects in the database with customer, POs, GRNs and latest BOM header
     const projects = await this.prisma.project.findMany({
+      where: {
+        currentStage: { notIn: ['CLOSED', 'CANCELLED'] },
+        status: 'ACTIVE',
+        ...(plantId ? { plantId } : {}),
+      },
       include: {
         customer: true,
         purchaseOrderHeaders: {
           include: {
             items: true,
-          }
+          },
         },
         goodsReceiptHeaders: true,
         billOfMaterialHeaders: {
@@ -32,13 +37,13 @@ export class PurchaseOrdersService {
           include: {
             items: {
               include: {
-                material: true
-              }
-            }
-          }
-        }
+                material: true,
+              },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     const resultItems: any[] = [];

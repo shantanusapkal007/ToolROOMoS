@@ -24,7 +24,6 @@ export function FabricationSection({ data, materialIssues = [], isLoading, onMar
     { key: 'issueNumber', label: 'Issue #' },
     { key: 'materialName', label: 'Material' },
     { key: 'batchNumber', label: 'Batch #' },
-    { key: 'heatNumber', label: 'Heat #' },
     { key: 'issuedQty', label: 'Issued Qty' },
     { key: 'date', label: 'Date' },
     { key: 'remarks', label: 'Remarks' },

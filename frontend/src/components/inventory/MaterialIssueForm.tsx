@@ -379,7 +379,7 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                                   const label = partName ? `${partName} (${matName})` : matName;
                                   return (
                                     <option key={b.id} value={b.id}>
-                                      {label} — {b.availableQty} avail (Heat: {b.heatNumber || 'N/A'})
+                                      {label} — {b.availableQty} avail ({b.batchNumber})
                                     </option>
                                   );
                                 })}

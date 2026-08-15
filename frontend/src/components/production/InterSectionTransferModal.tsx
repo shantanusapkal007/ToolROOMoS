@@ -25,7 +25,6 @@ export interface MaterialTransferRecord {
   partName: string;
   materialName?: string;
   batchNumber?: string;
-  heatNumber?: string;
   sourceSection: string;
   targetSection: string;
   quantity: number;
@@ -39,7 +38,6 @@ interface AvailableSectionStockItem {
   partName: string;
   materialName: string;
   batchNumber: string;
-  heatNumber: string;
   totalIssued: number;
   transferredOut: number;
   transferredIn: number;
@@ -101,7 +99,6 @@ export function InterSectionTransferModal({
         partName: issue.remarks && issue.remarks !== '-' ? issue.remarks : issue.materialName,
         materialName: issue.materialName || 'Raw Material',
         batchNumber: issue.batchNumber || '-',
-        heatNumber: issue.heatNumber || '-',
         totalIssued: 0,
         transferredOut: 0,
         transferredIn: 0,
@@ -129,7 +126,6 @@ export function InterSectionTransferModal({
         partName: trf.partName,
         materialName: trf.materialName || trf.partName,
         batchNumber: trf.batchNumber || '-',
-        heatNumber: trf.heatNumber || '-',
         totalIssued: 0,
         transferredOut: 0,
         transferredIn: 0,
@@ -202,7 +198,6 @@ export function InterSectionTransferModal({
       partName: selectedStockItem.partName,
       materialName: selectedStockItem.materialName,
       batchNumber: selectedStockItem.batchNumber,
-      heatNumber: selectedStockItem.heatNumber,
       sourceSection,
       targetSection,
       quantity,
@@ -344,7 +339,6 @@ export function InterSectionTransferModal({
                 {selectedStockItem && (
                   <div className="p-3 rounded-[10px] bg-[rgba(148,151,169,0.04)] border border-border-gray flex flex-wrap items-center justify-between gap-2 text-[11px] text-cool-gray font-mono">
                     <span>Batch: <strong className="text-ink">{selectedStockItem.batchNumber}</strong></span>
-                    <span>Heat #: <strong className="text-ink">{selectedStockItem.heatNumber}</strong></span>
                     <span>Current WIP in Section: <strong className="text-primary">{selectedStockItem.availableQty} pcs</strong></span>
                   </div>
                 )}

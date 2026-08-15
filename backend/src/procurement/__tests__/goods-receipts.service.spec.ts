@@ -10,6 +10,7 @@ describe('GoodsReceiptsService - Partial GRN Workflow', () => {
     $transaction: jest.fn(),
     project: {
       findUniqueOrThrow: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
     warehouse: {
@@ -19,10 +20,12 @@ describe('GoodsReceiptsService - Partial GRN Workflow', () => {
     },
     purchaseOrderHeader: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
     purchaseOrderItem: {
       findUniqueOrThrow: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
     },
@@ -105,6 +108,13 @@ describe('GoodsReceiptsService - Partial GRN Workflow', () => {
         return cb(mockPrismaService);
       });
       mockPrismaService.project.findUniqueOrThrow.mockResolvedValue({ id: projectId });
+      mockPrismaService.project.findFirst.mockResolvedValue({ id: projectId });
+      mockPrismaService.purchaseOrderHeader.findFirst.mockImplementation(() =>
+        mockPrismaService.purchaseOrderHeader.findUnique()
+      );
+      mockPrismaService.purchaseOrderItem.findFirst.mockImplementation(() =>
+        mockPrismaService.purchaseOrderItem.findUniqueOrThrow()
+      );
       mockPrismaService.warehouse.findUnique.mockResolvedValue({ id: warehouseId, warehouseCode: 'WH-001' });
       mockPrismaService.warehouse.findUniqueOrThrow.mockResolvedValue({ id: warehouseId, warehouseCode: 'WH-001' });
       mockPrismaService.warehouse.findFirst.mockResolvedValue({ id: warehouseId, warehouseCode: 'WH-001' });

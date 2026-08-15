@@ -102,7 +102,7 @@ export function AuthenticMaterialIssueDocument({ data, onBack }: AuthenticMateri
                 <th className="p-2 border-r border-zinc-400 text-center w-16">L</th>
                 <th className="p-2 border-r border-zinc-400 text-center w-16">W</th>
                 <th className="p-2 border-r border-zinc-400 text-center w-16">H</th>
-                <th className="p-2 border-r border-zinc-400 text-center w-24">BATCH / HEAT</th>
+                <th className="p-2 border-r border-zinc-400 text-center w-24">BATCH NO</th>
                 <th className="p-2 border-r border-zinc-400 text-center w-16">ISSUED QTY</th>
                 <th className="p-2 text-left w-32">REMARKS</th>
               </tr>
@@ -137,8 +137,7 @@ export function AuthenticMaterialIssueDocument({ data, onBack }: AuthenticMateri
                       {hVal}
                     </td>
                     <td className="p-2 border-r border-border-gray text-center font-mono text-[9px] font-semibold text-zinc-600">
-                      {batch.batchNumber ? batch.batchNumber.slice(-8) : '-'} <br/>
-                      {batch.heatNumber ? `HT:${batch.heatNumber}` : ''}
+                      {batch.batchNumber || '-'}
                     </td>
                     <td className="p-2 border-r border-border-gray text-center font-semibold text-ink font-mono text-sm">
                       {Number(item.issuedQty)}

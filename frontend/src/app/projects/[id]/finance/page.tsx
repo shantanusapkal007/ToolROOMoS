@@ -65,7 +65,7 @@ export default function ProjectFinancePage() {
   }
 
   const costEvents = Array.isArray(costEventsRes) ? costEventsRes : (costEventsRes?.data || []);
-  const costSummary = project.projectCostSummary || {};
+  const costSummary: any = project.projectCostSummary || {};
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();

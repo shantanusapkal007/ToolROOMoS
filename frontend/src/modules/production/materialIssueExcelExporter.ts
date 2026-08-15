@@ -9,7 +9,6 @@ export interface MaterialIssueExportData {
   items: Array<{
     materialName: string;
     batchNumber: string;
-    heatNumber: string;
     length?: string;
     width?: string;
     height?: string;
@@ -85,7 +84,7 @@ export async function exportMaterialIssueToExcel(data: MaterialIssueExportData) 
 
   // Table Headers
   const headers = [
-    'SR.NO', 'MATERIAL', 'BATCH NO', 'HEAT NO', 'L', 'W', 'H',
+    'SR.NO', 'MATERIAL', 'BATCH NO', 'L', 'W', 'H',
     'ISSUED QTY', 'UNIT COST (₹)', 'TOTAL VALUE (₹)', 'REMARKS'
   ];
 
@@ -114,7 +113,6 @@ export async function exportMaterialIssueToExcel(data: MaterialIssueExportData) 
       idx + 1,
       item.materialName || 'Raw Material',
       item.batchNumber || '',
-      item.heatNumber || '',
       item.length || '',
       item.width || '',
       item.height || '',
@@ -183,7 +181,6 @@ export async function exportMaterialIssueToExcel(data: MaterialIssueExportData) 
     { width: 8 },   // SR.NO
     { width: 24 },  // MATERIAL
     { width: 18 },  // BATCH NO
-    { width: 14 },  // HEAT NO
     { width: 8 },   // L
     { width: 8 },   // W
     { width: 8 },   // H

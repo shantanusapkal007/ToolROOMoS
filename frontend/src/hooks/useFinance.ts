@@ -114,3 +114,22 @@ export function useMonthlyPayroll(monthYear?: string) {
     staleTime: 30_000,
   });
 }
+
+export function useUpsertMonthlySalary() {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: (data: { employeeId: string; monthYear: string; actualSalary: number; remarks?: string }) =>
+      FinanceService.upsertMonthlySalary(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.monthlyPayroll(variables.monthYear) });
+      queryClient.invalidateQueries({ queryKey: financeKeys.reconciliation(variables.monthYear) });
+      queryClient.invalidateQueries({ queryKey: financeKeys.dashboard() });
+      success('Salary Adjusted', 'Employee actual salary updated successfully.');
+    },
+    onError: (err: any) => {
+      error('Update Failed', err?.message || 'Failed to update salary.');
+    },
+  });
+}

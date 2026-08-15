@@ -7,8 +7,11 @@ import { CreateMaintenanceDto, CompleteMaintenanceDto } from './dto/create-maint
 import { CreateCategoryDto, CreateLocationDto } from './dto/create-category-location.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ModuleScope } from '../auth/decorators/module-scope.decorator';
 
 @Controller('api/v1/assets')
+@ModuleScope('assets')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
@@ -24,6 +27,7 @@ export class AssetsController {
   }
 
   @Post('categories')
+  @Roles('ADMIN', 'PRODUCTION')
   createCategory(@Body() dto: CreateCategoryDto, @Request() req: any) {
     return this.assetsService.createCategory(dto, req.user?.id || req.user?.email);
   }
@@ -34,6 +38,7 @@ export class AssetsController {
   }
 
   @Post('locations')
+  @Roles('ADMIN', 'PRODUCTION')
   createLocation(@Body() dto: CreateLocationDto, @Request() req: any) {
     return this.assetsService.createLocation(dto, req.user?.id || req.user?.email);
   }
@@ -44,6 +49,7 @@ export class AssetsController {
   }
 
   @Post('issues')
+  @Roles('ADMIN', 'PRODUCTION', 'STORES')
   issueAsset(@Body() dto: IssueAssetDto, @Request() req: any) {
     return this.assetsService.issueAsset(dto, req.user?.id || req.user?.email);
   }
@@ -54,6 +60,7 @@ export class AssetsController {
   }
 
   @Post('returns')
+  @Roles('ADMIN', 'PRODUCTION', 'STORES')
   returnAsset(@Body() dto: ReturnAssetDto, @Request() req: any) {
     return this.assetsService.returnAsset(dto, req.user?.id || req.user?.email);
   }
@@ -64,11 +71,13 @@ export class AssetsController {
   }
 
   @Post('maintenance')
+  @Roles('ADMIN', 'PRODUCTION')
   createMaintenance(@Body() dto: CreateMaintenanceDto, @Request() req: any) {
     return this.assetsService.createMaintenance(dto, req.user?.id || req.user?.email);
   }
 
   @Put('maintenance/:id/complete')
+  @Roles('ADMIN', 'PRODUCTION')
   completeMaintenance(@Param('id') id: string, @Body() dto: CompleteMaintenanceDto, @Request() req: any) {
     return this.assetsService.completeMaintenance(id, dto, req.user?.id || req.user?.email);
   }
@@ -89,11 +98,13 @@ export class AssetsController {
   }
 
   @Post()
+  @Roles('ADMIN', 'PRODUCTION', 'STORES')
   createAsset(@Body() dto: CreateAssetDto, @Request() req: any) {
     return this.assetsService.createAsset(dto, req.user?.id || req.user?.email);
   }
 
   @Put(':id')
+  @Roles('ADMIN', 'PRODUCTION', 'STORES')
   updateAsset(@Param('id') id: string, @Body() dto: UpdateAssetDto, @Request() req: any) {
     return this.assetsService.updateAsset(id, dto, req.user?.id || req.user?.email);
   }

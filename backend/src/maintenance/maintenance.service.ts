@@ -72,6 +72,7 @@ export class MaintenanceService {
         category: createDto.category || null,
         assignedToId: createDto.assignedToId || null,
         downtimeStartedAt: createDto.downtimeStartedAt ? new Date(createDto.downtimeStartedAt) : null,
+        lotoApplied: Boolean(createDto.lotoApplied),
         reportedById: userId,
         status: 'OPEN',
       },

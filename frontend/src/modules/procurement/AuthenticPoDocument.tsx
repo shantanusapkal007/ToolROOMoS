@@ -50,13 +50,23 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
         apWt = 0;
         totalWt = 0;
       } else if (apWt === 0 && totalWt === 0) {
-        const l = parseFloat(lVal);
-        const w = parseFloat(wVal);
-        const h = parseFloat(hVal);
-        if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
-          const density = Number((item as any).material?.density || 7.85);
-          apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
-          totalWt = Number((apWt * qty).toFixed(2));
+        const density = Number((item as any).material?.density || 7.85);
+        if (lVal === 'Ø' || lVal.startsWith('Ø')) {
+          const d = parseFloat(wVal);
+          const l = parseFloat(hVal);
+          if (!isNaN(d) && !isNaN(l) && d > 0 && l > 0) {
+            const vol = Math.PI * Math.pow(d / 2, 2) * l;
+            apWt = Number(((vol * density) / 1000000).toFixed(2));
+            totalWt = Number((apWt * qty).toFixed(2));
+          }
+        } else {
+          const l = parseFloat(lVal);
+          const w = parseFloat(wVal);
+          const h = parseFloat(hVal);
+          if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
+            apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
+            totalWt = Number((apWt * qty).toFixed(2));
+          }
         }
       } else if (totalWt === 0 && apWt > 0) {
         totalWt = Number((qty * apWt).toFixed(2));
@@ -266,13 +276,23 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
                       );
 
                       if (apWt === 0 && totalWt === 0) {
-                        const l = parseFloat(lVal);
-                        const w = parseFloat(wVal);
-                        const h = parseFloat(hVal);
-                        if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
-                          const density = Number((item as any).material?.density || 7.85);
-                          apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
-                          totalWt = Number((apWt * qty).toFixed(2));
+                        const density = Number((item as any).material?.density || 7.85);
+                        if (lVal === 'Ø' || lVal.startsWith('Ø')) {
+                          const d = parseFloat(wVal);
+                          const l = parseFloat(hVal);
+                          if (!isNaN(d) && !isNaN(l) && d > 0 && l > 0) {
+                            const vol = Math.PI * Math.pow(d / 2, 2) * l;
+                            apWt = Number(((vol * density) / 1000000).toFixed(2));
+                            totalWt = Number((apWt * qty).toFixed(2));
+                          }
+                        } else {
+                          const l = parseFloat(lVal);
+                          const w = parseFloat(wVal);
+                          const h = parseFloat(hVal);
+                          if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
+                            apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
+                            totalWt = Number((apWt * qty).toFixed(2));
+                          }
                         }
                       } else if (totalWt === 0 && apWt > 0) {
                         totalWt = Number((qty * apWt).toFixed(2));

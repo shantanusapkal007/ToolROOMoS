@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { parseDimension } from './dimensionParser';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Premium Palette
@@ -281,10 +282,17 @@ export async function exportPremiumRMSlip(po: any) {
     sheet.getRow(row).height = 24;
 
     const dimStr = item.rawSize || item.dimensions || item.description || '';
-    const dimParts = dimStr.replace(/[\s]*mm/gi, '').split(/[\s]*[xX×\*][\s]*/);
-    const parsedL = grnItem?.length || dimParts[0] || '-';
-    const parsedW = grnItem?.width || dimParts[1] || '-';
-    const parsedH = grnItem?.height || dimParts[2] || '-';
+    const cf = item.customFields || {};
+    let parsedL: any = grnItem?.length || cf.length || '-';
+    let parsedW: any = grnItem?.width || cf.width || '-';
+    let parsedH: any = grnItem?.height || cf.height || '-';
+
+    if ((parsedL === '-' || parsedL === '') && dimStr) {
+      const pDim = parseDimension(dimStr);
+      parsedL = pDim.displayL;
+      parsedW = pDim.displayW;
+      parsedH = pDim.displayH;
+    }
 
     const cols = [
       { col: 'B', val: idx + 1, fmt: undefined, align: 'center' as const },
