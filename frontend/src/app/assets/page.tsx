@@ -55,17 +55,33 @@ export default function GlobalAssetsPage() {
   const [qrCodeModalData, setQrCodeModalData] = useState<{ name: string; qr: string; barcode: string; code: string } | null>(null);
 
   // Data Hooks
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useAssetsDashboardStats();
-  const { data: assets = [], isLoading: assetsLoading, refetch: refetchAssets } = useAssets({ search: searchQuery, categoryId: selectedCategory, status: selectedStatus });
-  const { data: categories = [], refetch: refetchCategories } = useAssetCategories();
+  const { data: statsRaw, isLoading: statsLoading, refetch: refetchStats } = useAssetsDashboardStats();
+  const stats = (statsRaw as any)?.data !== undefined ? (statsRaw as any).data : statsRaw || {};
 
+  const { data: rawAssets = [], isLoading: assetsLoading, refetch: refetchAssets } = useAssets({ search: searchQuery, categoryId: selectedCategory, status: selectedStatus });
+  const assets: any[] = Array.isArray(rawAssets) ? rawAssets : Array.isArray((rawAssets as any)?.data) ? (rawAssets as any).data : [];
+
+  const { data: rawCategories = [], refetch: refetchCategories } = useAssetCategories();
+  const categories: any[] = Array.isArray(rawCategories) ? rawCategories : Array.isArray((rawCategories as any)?.data) ? (rawCategories as any).data : [];
   const effectiveCategories = categories;
-  const { data: locations = [], refetch: refetchLocations } = useAssetLocations();
-  const { data: issues = [], refetch: refetchIssues } = useAssetIssues();
-  const { data: returns = [], refetch: refetchReturns } = useAssetReturns();
-  const { data: maintenanceList = [], refetch: refetchMaintenance } = useAssetMaintenance();
-  const { data: employees = [] } = useMasterData('employees');
-  const { data: detailedAsset } = useAsset(viewingAssetId || '');
+
+  const { data: rawLocations = [], refetch: refetchLocations } = useAssetLocations();
+  const locations: any[] = Array.isArray(rawLocations) ? rawLocations : Array.isArray((rawLocations as any)?.data) ? (rawLocations as any).data : [];
+
+  const { data: rawIssues = [], refetch: refetchIssues } = useAssetIssues();
+  const issues: any[] = Array.isArray(rawIssues) ? rawIssues : Array.isArray((rawIssues as any)?.data) ? (rawIssues as any).data : [];
+
+  const { data: rawReturns = [], refetch: refetchReturns } = useAssetReturns();
+  const returns: any[] = Array.isArray(rawReturns) ? rawReturns : Array.isArray((rawReturns as any)?.data) ? (rawReturns as any).data : [];
+
+  const { data: rawMaintenanceList = [], refetch: refetchMaintenance } = useAssetMaintenance();
+  const maintenanceList: any[] = Array.isArray(rawMaintenanceList) ? rawMaintenanceList : Array.isArray((rawMaintenanceList as any)?.data) ? (rawMaintenanceList as any).data : [];
+
+  const { data: rawEmployees = [] } = useMasterData('employees');
+  const employees: any[] = Array.isArray(rawEmployees) ? rawEmployees : Array.isArray((rawEmployees as any)?.data) ? (rawEmployees as any).data : [];
+
+  const { data: detailedAssetRaw } = useAsset(viewingAssetId || '');
+  const detailedAsset = (detailedAssetRaw as any)?.data !== undefined ? (detailedAssetRaw as any).data : detailedAssetRaw;
 
   // Mutations
   const createAssetMutation = useCreateAsset();
