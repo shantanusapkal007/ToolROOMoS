@@ -9,7 +9,7 @@ import {
   Activity,
   Plus,
   Trash2,
-  Sparkles,
+  Sliders,
   Tag,
   Search,
   CheckCircle2,
@@ -88,7 +88,7 @@ export function MasterLookupSettings() {
       <div className="p-5 border-b border-border-gray shrink-0 bg-white flex items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-10 h-10 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-subtle shrink-0">
-            <Sparkles className="w-5 h-5" />
+            <Sliders className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-sub-heading font-bold text-ink tracking-tight">Master Options & Sources Configurator</h2>

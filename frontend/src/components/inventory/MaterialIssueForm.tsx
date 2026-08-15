@@ -9,7 +9,6 @@ import {
   Building2, 
   User, 
   Hash, 
-  Sparkles,
   AlertCircle,
   FileText,
   Boxes,
@@ -217,7 +216,7 @@ export function MaterialIssueForm({ projectId, onClose, onSuccess }: MaterialIss
                 Requisition Parameters
               </span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-primary-subtle text-primary border border-primary/20">
-                <Sparkles className="w-3 h-3" />
+                <Hash className="w-3 h-3" />
                 Project: {projectId}
               </span>
             </div>

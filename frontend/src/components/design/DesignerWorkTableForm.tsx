@@ -11,7 +11,6 @@ import {
   Download,
   Upload,
   Layers,
-  Sparkles,
   FileText,
   CheckCircle2,
   Timer,
@@ -371,7 +370,7 @@ export function DesignerWorkTableForm({ projectId, onClose, onSuccess, initialLo
           <div className="absolute -top-12 -left-12 w-48 h-48 bg-primary-subtle0/20 rounded-full blur-3xl pointer-events-none"></div>
           <div className="relative flex items-center gap-4">
             <div className="w-12 h-12 rounded-[12px] bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-subtle shadow-blue-500/20 border border-white/20">
-              <Sparkles className="w-6 h-6 text-white" />
+              <Layers className="w-6 h-6 text-white" />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-3">

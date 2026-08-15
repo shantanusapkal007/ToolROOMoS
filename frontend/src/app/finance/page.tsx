@@ -7,7 +7,7 @@ import {
   Clock, PieChart as PieChartIcon, BarChart3, ArrowUpRight,
   ArrowDownRight, Search, Filter, Calendar, Layers,
   CreditCard, Building2, Activity, AlertCircle, CheckCircle2,
-  ChevronRight, Download, Sparkles, Edit2, Eye, X, Save
+  ChevronRight, Download, Edit2, Eye, X, Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {

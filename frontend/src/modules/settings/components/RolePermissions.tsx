@@ -16,8 +16,7 @@ import {
   Briefcase, 
   Cpu, 
   Check, 
-  Minus,
-  Sparkles
+  Minus
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useAllPermissions, useModules, useUpdatePermissions, useRolesSummary, useApplyPreset } from '../../../hooks/useRbac';

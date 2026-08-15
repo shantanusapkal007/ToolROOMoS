@@ -13,7 +13,7 @@ import {
   ShieldCheck, FileText, QrCode, Tag, MapPin, Building, ChevronRight,
   TrendingUp, BarChart3, PieChart, Layers, Download, Check, AlertCircle, X,
   Edit, Eye, Image as ImageIcon, Link as LinkIcon, DollarSign, Archive, History,
-  Sparkles, Sliders, Shield, Zap, Boxes
+  Sliders, Shield, Boxes
 } from 'lucide-react';
 import { 
   useAssetsDashboardStats, useAssets, useAsset, useCreateAsset, 
@@ -668,9 +668,9 @@ export default function GlobalAssetsPage() {
                     <button
                       type="button"
                       onClick={handleAutoGenerateCode}
-                      className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
+                      className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <Zap className="w-3 h-3" /> Auto
+                      <RefreshCw className="w-2.5 h-2.5" /> Auto
                     </button>
                   </div>
                   <input

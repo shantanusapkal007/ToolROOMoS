@@ -16,8 +16,7 @@ import {
   ShieldCheck,
   User,
   Layers,
-  Sparkles,
-  Zap,
+  Tag,
   CheckCircle2,
   Info,
 } from 'lucide-react';
@@ -375,7 +374,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
         {/* 7. Quick Symptom Chips */}
         <div>
           <label className="block text-[11px] font-semibold text-cool-gray mb-1.5 uppercase tracking-wider flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-primary" /> Quick Symptom Tags
+            <Tag className="w-3 h-3 text-cool-gray" /> Quick Symptom Tags
           </label>
           <div className="flex flex-wrap gap-1.5">
             {QUICK_SYMPTOMS.map((symptom) => (

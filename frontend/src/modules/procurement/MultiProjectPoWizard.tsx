@@ -10,7 +10,6 @@ import {
   ArrowRight, 
   ArrowLeft, 
   Search, 
-  Sparkles,
   FileText,
   FileCheck,
   PackageCheck,

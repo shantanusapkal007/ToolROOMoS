@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { X, Wrench, Clock, Settings, Play, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { X, Wrench, Clock, Settings, Play, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useActiveRunningProjects, useCreateGlobalMsdrLog } from '../../hooks/useDailyReports';
 
 import { useMasterData } from '../../hooks/useMasterData';
@@ -326,7 +326,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   <span>Saving MSDR...</span>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" /> Save MSDR Log
+                    <CheckCircle2 className="w-4 h-4" /> Save MSDR Log
                   </>
                 )}
               </button>

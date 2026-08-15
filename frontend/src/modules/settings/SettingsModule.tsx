@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Building2, UserCog, Settings as SettingsIcon, Layout, Shield, Hash, Sparkles, Lock } from 'lucide-react';
+import { Building2, UserCog, Settings as SettingsIcon, Layout, Shield, Hash, Sliders, Lock } from 'lucide-react';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { CompanyProfile } from './components/CompanyProfile';
@@ -21,7 +21,7 @@ export const SettingsModule: React.FC = () => {
   const navigation = [
     { id: 'roles', label: 'Role Permissions (RBAC)', icon: Shield, desc: 'Granular module access', show: isAdmin },
     { id: 'sequences', label: 'Document Numbering', icon: Hash, desc: 'Prefix & serial formats', show: isAdmin },
-    { id: 'lookups', label: 'Master Options & Sources', icon: Sparkles, desc: 'Dynamic dropdown values', show: isAdmin },
+    { id: 'lookups', label: 'Master Options & Sources', icon: Sliders, desc: 'Dynamic dropdown values', show: isAdmin },
     { id: 'users', label: 'User Governance', icon: UserCog, desc: 'Staff accounts & roles', show: isAdmin },
     { id: 'company', label: 'Company Profile', icon: Building2, desc: 'Organization & tax details', show: isAdmin },
     { id: 'system', label: 'System Preferences', icon: SettingsIcon, desc: 'Global OS configuration', show: isAdmin },

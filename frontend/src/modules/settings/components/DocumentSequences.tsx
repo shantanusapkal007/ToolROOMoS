@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Hash, Save, Sparkles, Briefcase, FileText, CheckCircle2 } from 'lucide-react';
+import { Hash, Save, Briefcase, FileText, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
 import { motion } from 'framer-motion';
@@ -176,7 +176,7 @@ export const DocumentSequences: React.FC = () => {
             {/* Live Preview Box */}
             <div className="p-3 bg-slate-50 rounded-[10px] border border-border-gray text-center shadow-subtle">
               <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-cool-gray uppercase tracking-wider">
-                <Sparkles className="w-3 h-3 text-primary" />
+                <Hash className="w-3 h-3 text-primary" />
                 Live Generated Preview
               </div>
               <div className="text-sm font-bold font-mono text-primary mt-0.5">
@@ -259,7 +259,7 @@ export const DocumentSequences: React.FC = () => {
                   {/* Live Preview Box */}
                   <div className="p-2 bg-slate-50 rounded-[8px] border border-border-gray min-w-[160px] text-center shadow-subtle">
                     <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-cool-gray uppercase tracking-wider">
-                      <Sparkles className="w-3 h-3 text-primary" />
+                      <Hash className="w-3 h-3 text-primary" />
                       Next Generated Code
                     </div>
                     <div className="text-xs font-bold font-mono text-primary mt-0.5">

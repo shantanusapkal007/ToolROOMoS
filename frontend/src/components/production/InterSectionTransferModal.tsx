@@ -12,8 +12,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRight,
-  Boxes,
-  Sparkles
+  Boxes
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import { useMasterData } from '@/hooks/useMasterData';
@@ -258,7 +257,7 @@ export function InterSectionTransferModal({
                 Transfer Workflow Route
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-primary-subtle text-primary border border-primary/20">
-                <Sparkles className="w-3 h-3" />
+                <Layers className="w-3 h-3" />
                 Project: {projectCode}
               </span>
             </div>

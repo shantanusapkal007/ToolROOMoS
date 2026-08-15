@@ -9,7 +9,6 @@ import {
   Save,
   Download,
   Upload,
-  Sparkles,
   Clock,
   Wrench,
   Layers,
