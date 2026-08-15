@@ -5,6 +5,7 @@ import { AppLayout } from '../../components/layout/AppLayout';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/StatusBadge';
+import { Modal } from '../../components/ui/Modal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Package, Wrench, RefreshCw, Plus, Search, Filter, Calendar, User, 
@@ -387,32 +388,32 @@ export default function GlobalAssetsPage() {
             icon={<Package />}
             breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Global Inventory' }]}
             actions={
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
                 <Button
-                  variant="white"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setIsIssueModalOpen(true)}
+                  leftIcon={<ArrowUpRight className="w-3.5 h-3.5 text-primary" />}
                 >
-                  <ArrowUpRight className="w-3.5 h-3.5 mr-1.5 text-primary" />
-                  <span>Issue Asset</span>
+                  Issue Asset
                 </Button>
 
                 <Button
-                  variant="white"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setIsReturnModalOpen(true)}
+                  leftIcon={<ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" />}
                 >
-                  <ArrowDownLeft className="w-3.5 h-3.5 mr-1.5 text-green" />
-                  <span>Return Asset</span>
+                  Return Asset
                 </Button>
 
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={handleOpenAddAsset}
+                  leftIcon={<Plus className="w-4 h-4" />}
                 >
-                  <Plus className="w-4 h-4 mr-1.5" />
-                  <span>Register New Asset</span>
+                  Register New Asset
                 </Button>
               </div>
             }
@@ -1168,7 +1169,7 @@ export default function GlobalAssetsPage() {
                     </div>
 
                     <div className="flex space-x-3">
-                      <button type="button" onClick={() => setIsAssetModalOpen(false)} className="px-5 py-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold">Cancel</button>
+                      <button type="button" onClick={() => setIsAssetModalOpen(false)} className="px-5 py-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold cursor-pointer">Cancel</button>
                       <button type="submit" className="px-6 py-2.5 rounded-md bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] text-white font-semibold text-xs border border-zinc-700/80 shadow-[0_1px_3px_rgba(0,0,0,0.12),_inset_0_1px_0_rgba(255,255,255,0.15)] cursor-pointer">
                         {editingAssetId ? 'Update Inventory Asset' : 'Save Inventory Asset'}
                       </button>
@@ -1179,6 +1180,413 @@ export default function GlobalAssetsPage() {
             </div>
           )}
         </AnimatePresence>
+
+        {/* ISSUE ASSET MODAL */}
+        <Modal
+          isOpen={isIssueModalOpen}
+          onClose={() => setIsIssueModalOpen(false)}
+          title="Issue Asset to Employee"
+          subtitle="Check out tools, gauges, fixtures, or equipment from shopfloor stores."
+          maxWidth="lg"
+        >
+          <form onSubmit={handleIssueAsset} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                Select Asset to Issue <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={issueForm.assetId}
+                onChange={(e) => {
+                  setIssueForm({ ...issueForm, assetId: e.target.value, quantity: 1 });
+                }}
+                required
+                className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+              >
+                <option value="">Select an available inventory asset...</option>
+                {assets
+                  .filter((a: any) => (a.availableQty !== undefined ? a.availableQty : a.quantity) > 0)
+                  .map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      [{a.assetCode}] {a.name} — Available: {a.availableQty !== undefined ? a.availableQty : a.quantity} {a.unit || 'NOS'}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Assignee Employee / Operator <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={issueForm.employeeId}
+                  onChange={(e) => setIssueForm({ ...issueForm, employeeId: e.target.value })}
+                  required
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+                >
+                  <option value="">Select employee...</option>
+                  {employees.map((emp: any) => (
+                    <option key={emp.id} value={emp.id}>
+                      [{emp.employeeCode}] {emp.name} ({emp.department?.departmentName || emp.designation || 'Staff'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Quantity to Issue <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max={assets.find((a: any) => a.id === issueForm.assetId)?.availableQty || 999}
+                  value={issueForm.quantity}
+                  onChange={(e) => setIssueForm({ ...issueForm, quantity: Number(e.target.value) })}
+                  required
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Expected Return Date
+                </label>
+                <input
+                  type="date"
+                  value={issueForm.expectedReturnDate}
+                  onChange={(e) => setIssueForm({ ...issueForm, expectedReturnDate: e.target.value })}
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Condition Before Issue
+                </label>
+                <select
+                  value={issueForm.conditionBeforeIssue}
+                  onChange={(e) => setIssueForm({ ...issueForm, conditionBeforeIssue: e.target.value })}
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+                >
+                  <option value="NEW">New (Brand New)</option>
+                  <option value="EXCELLENT">Excellent (Like New)</option>
+                  <option value="GOOD">Good (Operational)</option>
+                  <option value="FAIR">Fair (Minor Wear)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                Purpose / Tooling Project Reference / Remarks
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Die Assembly Job KTD-164, CNC Setup VMC-01, Trial Tryout..."
+                value={issueForm.remarks}
+                onChange={(e) => setIssueForm({ ...issueForm, remarks: e.target.value })}
+                className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-border-gray flex items-center justify-end gap-2.5">
+              <Button type="button" variant="secondary" size="md" onClick={() => setIsIssueModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" size="md" isLoading={issueAssetMutation.isPending}>
+                {issueAssetMutation.isPending ? 'Issuing...' : 'Issue Asset to Operator'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* RETURN ASSET MODAL */}
+        <Modal
+          isOpen={isReturnModalOpen}
+          onClose={() => setIsReturnModalOpen(false)}
+          title="Return Issued Asset"
+          subtitle="Record check-in of borrowed tool, gauge, or equipment back to inventory."
+          maxWidth="lg"
+        >
+          <form onSubmit={handleReturnAsset} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                Select Issued Asset Transaction <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={returnForm.issueTransactionId}
+                onChange={(e) => {
+                  const selectedIssue = issues.find((i: any) => i.id === e.target.value);
+                  setReturnForm({
+                    ...returnForm,
+                    issueTransactionId: e.target.value,
+                    returnedQty: selectedIssue?.quantity || 1,
+                  });
+                }}
+                required
+                className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+              >
+                <option value="">Select active issued item...</option>
+                {issues
+                  .filter((i: any) => i.status === 'ISSUED' || i.status === 'OVERDUE' || !i.status)
+                  .map((i: any) => (
+                    <option key={i.id} value={i.id}>
+                      [{i.issueCode || 'ISS'}] {i.asset?.name || 'Asset'} — Issued to {i.employee?.name || 'Operator'} (Qty: {i.quantity})
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Quantity Returned <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max={issues.find((i: any) => i.id === returnForm.issueTransactionId)?.quantity || 999}
+                  value={returnForm.returnedQty}
+                  onChange={(e) => setReturnForm({ ...returnForm, returnedQty: Number(e.target.value) })}
+                  required
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Condition After Return
+                </label>
+                <select
+                  value={returnForm.conditionAfterReturn}
+                  onChange={(e) => setReturnForm({ ...returnForm, conditionAfterReturn: e.target.value })}
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle cursor-pointer"
+                >
+                  <option value="GOOD">Good (Operational)</option>
+                  <option value="FAIR">Fair (Minor Wear)</option>
+                  <option value="POOR">Poor (Needs Maintenance / Calibration)</option>
+                  <option value="DAMAGED">Damaged / Broken</option>
+                  <option value="SCRAP">Scrap</option>
+                </select>
+              </div>
+            </div>
+
+            {(returnForm.conditionAfterReturn === 'DAMAGED' || returnForm.conditionAfterReturn === 'POOR') && (
+              <div>
+                <label className="block text-xs font-semibold text-rose-600 mb-1 uppercase tracking-wider">
+                  Damage / Defect Details
+                </label>
+                <textarea
+                  rows={2}
+                  value={returnForm.damageDetails}
+                  onChange={(e) => setReturnForm({ ...returnForm, damageDetails: e.target.value })}
+                  placeholder="Describe tool wear, calibration deviation, chipped inserts, or mechanical issues..."
+                  className="w-full bg-canvas border border-border-gray rounded-[10px] p-3 text-xs text-ink placeholder:text-mute focus:outline-none focus:ring-1 focus:ring-rose-500 shadow-subtle resize-none"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                Return Remarks
+              </label>
+              <input
+                type="text"
+                placeholder="Returned in good condition, cleaned and placed in rack..."
+                value={returnForm.remarks}
+                onChange={(e) => setReturnForm({ ...returnForm, remarks: e.target.value })}
+                className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-border-gray flex items-center justify-end gap-2.5">
+              <Button type="button" variant="secondary" size="md" onClick={() => setIsReturnModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" size="md" isLoading={returnAssetMutation.isPending}>
+                {returnAssetMutation.isPending ? 'Processing Return...' : 'Accept Return into Inventory'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* CREATE CATEGORY MODAL */}
+        <Modal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          title="Add New Asset Category"
+          subtitle="Define asset classification group (e.g. Cutting Tools, Gauges, Power Tools)."
+          maxWidth="md"
+        >
+          <form onSubmit={handleCreateCategory} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                Category Code <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. CUT-TOOL, GAUGE, PWR-TOOL"
+                value={categoryForm.categoryCode}
+                onChange={(e) => setCategoryForm({ ...categoryForm, categoryCode: e.target.value.toUpperCase() })}
+                className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                Category Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. CNC Cutting Tools & Holders"
+                value={categoryForm.name}
+                onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                Description
+              </label>
+              <input
+                type="text"
+                placeholder="Brief category description..."
+                value={categoryForm.description}
+                onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-border-gray flex items-center justify-end gap-2.5">
+              <Button type="button" variant="secondary" size="md" onClick={() => setIsCategoryModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" size="md" isLoading={createCategoryMutation.isPending}>
+                Create Category
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* CREATE LOCATION MODAL */}
+        <Modal
+          isOpen={isLocationModalOpen}
+          onClose={() => setIsLocationModalOpen(false)}
+          title="Add Storage Location"
+          subtitle="Register warehouse rack, tool crib, or shopfloor cabinet."
+          maxWidth="md"
+        >
+          <form onSubmit={handleCreateLocation} className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Location Code <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. CRIB-A1"
+                  value={locationForm.locationCode}
+                  onChange={(e) => setLocationForm({ ...locationForm, locationCode: e.target.value.toUpperCase() })}
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Location Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Main Tool Crib Shelf A"
+                  value={locationForm.locationName}
+                  onChange={(e) => setLocationForm({ ...locationForm, locationName: e.target.value })}
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Building / Section
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Plant 1 / Machine Shop"
+                  value={locationForm.building}
+                  onChange={(e) => setLocationForm({ ...locationForm, building: e.target.value })}
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
+                  Rack / Bin Number
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Rack-04 / Bin-12"
+                  value={locationForm.rackBin}
+                  onChange={(e) => setLocationForm({ ...locationForm, rackBin: e.target.value })}
+                  className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-border-gray flex items-center justify-end gap-2.5">
+              <Button type="button" variant="secondary" size="md" onClick={() => setIsLocationModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" size="md" isLoading={createLocationMutation.isPending}>
+                Create Location
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* QR CODE & BARCODE MODAL */}
+        {qrCodeModalData && (
+          <Modal
+            isOpen={!!qrCodeModalData}
+            onClose={() => setQrCodeModalData(null)}
+            title="Asset Tag — QR Code & Barcode"
+            subtitle={`Printable label tag for ${qrCodeModalData.name}`}
+            maxWidth="sm"
+          >
+            <div className="space-y-4 text-center text-xs">
+              <div className="p-6 bg-white border border-border-gray rounded-[12px] shadow-subtle flex flex-col items-center justify-center space-y-3">
+                <div className="p-3 bg-canvas border border-border-gray rounded-[10px]">
+                  <QrCode className="w-24 h-24 text-ink" />
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-ink">{qrCodeModalData.name}</p>
+                  <p className="text-xs font-mono text-primary font-semibold">{qrCodeModalData.code}</p>
+                </div>
+                <div className="pt-2 border-t border-border-gray w-full flex flex-col items-center">
+                  <span className="text-[10px] uppercase font-semibold text-mute tracking-wider">Barcode Identification</span>
+                  <span className="font-mono text-xs text-ink font-bold tracking-widest">{qrCodeModalData.barcode}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-center gap-2">
+                <Button type="button" variant="secondary" size="sm" onClick={() => setQrCodeModalData(null)}>
+                  Close
+                </Button>
+                <Button type="button" variant="primary" size="sm" onClick={() => window.print()}>
+                  Print Label Tag
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
       </div>
     </AppLayout>
   );

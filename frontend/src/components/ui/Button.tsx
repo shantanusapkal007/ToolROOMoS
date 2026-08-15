@@ -62,7 +62,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     // Base styles: 8pt alignment, robust focus-visible ring, disabled states
     const baseStyles =
-      'inline-flex items-center justify-center font-medium transition-all duration-150 ease-in-out ' +
+      'inline-flex items-center justify-center font-medium whitespace-nowrap shrink-0 transition-all duration-150 ease-in-out ' +
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ' +
       'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none select-none cursor-pointer rounded-[10px]';
 
