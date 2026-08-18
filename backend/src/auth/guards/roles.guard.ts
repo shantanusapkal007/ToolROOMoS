@@ -22,13 +22,35 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    
-    if (!requiredRoles && !moduleScope) {
+
+    const request = context.switchToHttp ? context.switchToHttp().getRequest() : null;
+    const path = request?.route?.path || request?.url || '';
+
+    // Deduce module: prefer explicit @ModuleScope, fallback to URL path inspection
+    let module = moduleScope || '';
+    if (!module && path) {
+      if (path.includes('/projects')) module = 'projects';
+      else if (path.includes('/master-data')) module = 'master_data';
+      else if (path.includes('/procurement')) module = 'procurement';
+      else if (path.includes('/production')) module = 'production';
+      else if (path.includes('/quality')) module = 'quality';
+      else if (path.includes('/inventory')) module = 'inventory';
+      else if (path.includes('/engineering')) module = 'engineering';
+      else if (path.includes('/finance') || path.includes('/logistics-finance')) module = 'finance';
+      else if (path.includes('/reports')) module = 'reports';
+      else if (path.includes('/maintenance')) module = 'maintenance';
+      else if (path.includes('/assets')) module = 'assets';
+      else if (path.includes('/subcontracting')) module = 'production';
+      else if (path.includes('/users') || path.includes('/settings')) module = 'settings';
+      else if (path.includes('/hr')) module = 'hr';
+      else if (path.includes('/audit-logs')) module = 'activity_log';
+    }
+
+    if (!requiredRoles && !module) {
       return true; // No roles or module restricted
     }
     
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const user = request?.user;
     
     if (!user) {
       return false; // Not authenticated
@@ -40,26 +62,6 @@ export class RolesGuard implements CanActivate {
     // Admin can do anything
     if (userRoles.includes('ADMIN')) {
       return true;
-    }
-
-    // Deduce module: prefer explicit @ModuleScope, fallback to URL path inspection
-    let module = moduleScope || '';
-    if (!module) {
-      const path = request.route?.path || request.url || '';
-      if (path.includes('/projects')) module = 'projects';
-      else if (path.includes('/master-data')) module = 'master_data';
-      else if (path.includes('/procurement')) module = 'procurement';
-      else if (path.includes('/production')) module = 'production';
-      else if (path.includes('/quality')) module = 'quality';
-      else if (path.includes('/inventory')) module = 'inventory';
-      else if (path.includes('/engineering')) module = 'engineering';
-      else if (path.includes('/logistics-finance')) module = 'finance';
-      else if (path.includes('/reports')) module = 'reports';
-      else if (path.includes('/maintenance')) module = 'maintenance';
-      else if (path.includes('/assets')) module = 'assets';
-      else if (path.includes('/subcontracting')) module = 'production';
-      else if (path.includes('/users') || path.includes('/settings')) module = 'settings';
-      else if (path.includes('/hr')) module = 'hr';
     }
 
     if (module) {
@@ -91,6 +93,13 @@ export class RolesGuard implements CanActivate {
         if (hasAccess) return true;
         return false;
       }
+
+      // If module is restricted but no specific rolePermission record exists,
+      // fallback to requiredRoles check if present, otherwise deny access (Fail-Closed).
+      if (requiredRoles && requiredRoles.length > 0) {
+        return requiredRoles.some((r) => userRoles.includes(r));
+      }
+      return false;
     }
 
     // Fallback to hardcoded roles check if present

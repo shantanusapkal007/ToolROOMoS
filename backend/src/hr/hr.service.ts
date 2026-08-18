@@ -311,8 +311,9 @@ export class HrService {
       const totalHours = Math.round(workData.totalHours * 100) / 100;
       
       const standardHours = 160;
+      const isActiveInternal = emp.status === 'ACTIVE' && emp.employeeType === 'INTERNAL';
       const baseSalaryCalculated = hourlyRate > 0 
-        ? (totalHours > 0 ? totalHours * hourlyRate : standardHours * hourlyRate) 
+        ? (totalHours > 0 ? totalHours * hourlyRate : (isActiveInternal ? standardHours * hourlyRate : 0)) 
         : 0;
 
       const saved = salaryMap.get(emp.id);

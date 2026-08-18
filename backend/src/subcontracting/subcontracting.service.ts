@@ -197,11 +197,64 @@ export class SubcontractingService {
         },
       });
 
-      // Update Order Status
+      // Update Order Status based on cumulative fulfillment across all receipts
+      const allReceiptItems = await tx.subcontractReceiptItem.findMany({
+        where: { orderItem: { subcontractOrderId: dto.subcontractOrderId } },
+        select: { orderItemId: true, acceptedQty: true, receivedQty: true },
+      });
+
+      const totalReceivedByOrderItem = new Map<string, number>();
+      for (const ri of allReceiptItems) {
+        totalReceivedByOrderItem.set(
+          ri.orderItemId,
+          (totalReceivedByOrderItem.get(ri.orderItemId) || 0) + Number(ri.receivedQty || ri.acceptedQty || 0)
+        );
+      }
+
+      const allFulfilled = order.items.every((oi: any) => {
+        const received = totalReceivedByOrderItem.get(oi.id) || 0;
+        return received >= Number(oi.sentQty);
+      });
+
+      const anyReceived = order.items.some((oi: any) => {
+        const received = totalReceivedByOrderItem.get(oi.id) || 0;
+        return received > 0;
+      });
+
+      const orderStatus = allFulfilled ? 'CLOSED' : anyReceived ? 'PARTIAL_RECEIPT' : 'ISSUED';
+
       await tx.subcontractOrder.update({
         where: { id: dto.subcontractOrderId },
-        data: { status: 'CLOSED' },
+        data: { status: orderStatus },
       });
+
+      // Synchronize inventoryStock ledger for inward return batches
+      const defaultWh = await tx.warehouse.findFirst({ where: { status: 'ACTIVE' } }) || await tx.warehouse.findFirst();
+      if (defaultWh) {
+        for (const item of dto.items) {
+          const orderItem = order.items.find((i: any) => i.id === item.orderItemId);
+          if (orderItem?.inventoryBatch?.materialId && item.acceptedQty > 0) {
+            await tx.inventoryStock.upsert({
+              where: {
+                materialId_warehouseId: {
+                  materialId: orderItem.inventoryBatch.materialId,
+                  warehouseId: defaultWh.id,
+                }
+              },
+              create: {
+                materialId: orderItem.inventoryBatch.materialId,
+                warehouseId: defaultWh.id,
+                currentQuantity: item.acceptedQty,
+                availableQuantity: item.acceptedQty,
+              },
+              update: {
+                currentQuantity: { increment: item.acceptedQty },
+                availableQuantity: { increment: item.acceptedQty },
+              }
+            });
+          }
+        }
+      }
 
       // Costing Event
       await tx.projectCostEvent.create({

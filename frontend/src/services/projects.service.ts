@@ -39,7 +39,7 @@ export const ProjectsService = {
   },
 
   completeProject: async (id: string, remarks?: string): Promise<Project> => {
-    const res: any = await api.post(`projects/${id}/complete`, { remarks });
+    const res: any = await api.post(`projects/${id}/complete-project`, { remarks });
     return (res?.data !== undefined ? res.data : res) as Project;
   },
 };

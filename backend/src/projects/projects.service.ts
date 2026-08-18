@@ -1106,13 +1106,17 @@ export class ProjectsService {
       // 4. Shopfloor Jobs, MSDRs, Assembly & Trials
       await tx.jobCardTimeLog.deleteMany({ where: { jobCard: { projectId: targetProjectId } } });
       await tx.jobCard.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.msdrOperation.deleteMany({ where: { msdrHeader: { projectId: targetProjectId } } });
+      await tx.msdrHeader.deleteMany({ where: { projectId: targetProjectId } });
       await tx.machineShopDailyReport.deleteMany({ where: { projectId: targetProjectId } });
       await tx.designWorkLog.deleteMany({ where: { projectId: targetProjectId } });
       await tx.projectTrial.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.assemblyComponent.deleteMany({ where: { assemblyHeader: { projectId: targetProjectId } } });
       await tx.assemblyHeader.deleteMany({ where: { projectId: targetProjectId } });
       await tx.maintenanceTicket.deleteMany({ where: { projectId: targetProjectId } });
       await tx.wipLedger.deleteMany({ where: { projectId: targetProjectId } });
       await tx.productionSchedule.deleteMany({ where: { projectId: targetProjectId } });
+      await tx.productionOperation.deleteMany({ where: { productionBatch: { projectId: targetProjectId } } });
       await tx.productionBatch.deleteMany({ where: { projectId: targetProjectId } });
 
       // 5. Material Issues & Inventory Transactions

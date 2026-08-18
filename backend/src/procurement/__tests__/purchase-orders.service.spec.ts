@@ -106,5 +106,20 @@ describe('PurchaseOrdersService', () => {
         })
       );
     });
+
+    it('getAllGlobalPurchaseOrders should return all purchase orders without filtering out fulfilled/closed POs (BUG-013 Regression)', async () => {
+      const allPos = [
+        { id: 'po-1', poNumber: 'PO-1001', status: 'PENDING_APPROVAL', items: [{ receivedQty: 0, orderedQty: 10 }] },
+        { id: 'po-2', poNumber: 'PO-1002', status: 'APPROVED', items: [{ receivedQty: 5, orderedQty: 10 }] },
+        { id: 'po-3', poNumber: 'PO-1003', status: 'CLOSED', items: [{ receivedQty: 10, orderedQty: 10 }] },
+      ];
+
+      (mockPrismaService.purchaseOrderHeader as any).findMany = jest.fn().mockResolvedValue(allPos);
+
+      const result = await service.getAllGlobalPurchaseOrders();
+
+      expect(result).toHaveLength(3);
+      expect(result.map((p: any) => p.poNumber)).toEqual(['PO-1001', 'PO-1002', 'PO-1003']);
+    });
   });
 });

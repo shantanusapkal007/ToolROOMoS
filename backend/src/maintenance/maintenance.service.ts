@@ -221,6 +221,62 @@ export class MaintenanceService {
         await this.logFinancialCost(tx, ticketId, totalMaterialCost, `Spare Part: ${sparePartDto.quantityConsumed}x ${material.materialCode}`);
       }
 
+      // Decrement inventory stock for consumed maintenance spare parts
+      const warehouse = await tx.warehouse.findFirst({ where: { status: 'ACTIVE' } }) || await tx.warehouse.findFirst();
+      if (warehouse) {
+        const stock = await tx.inventoryStock.findUnique({
+          where: {
+            materialId_warehouseId: {
+              materialId: sparePartDto.materialId,
+              warehouseId: warehouse.id,
+            }
+          }
+        });
+
+        if (stock) {
+          await tx.inventoryStock.update({
+            where: {
+              materialId_warehouseId: {
+                materialId: sparePartDto.materialId,
+                warehouseId: warehouse.id,
+              }
+            },
+            data: {
+              currentQuantity: { decrement: sparePartDto.quantityConsumed },
+              availableQuantity: { decrement: sparePartDto.quantityConsumed },
+            }
+          });
+        }
+      }
+
+      // Decrement inventory batches via FIFO and log transaction
+      const batches = await tx.inventoryBatch.findMany({
+        where: { materialId: sparePartDto.materialId, currentQty: { gt: 0 } },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      let remainingToDeduct = sparePartDto.quantityConsumed;
+      for (const batch of batches) {
+        if (remainingToDeduct <= 0) break;
+        const deduct = Math.min(Number(batch.currentQty), remainingToDeduct);
+        await tx.inventoryBatch.update({
+          where: { id: batch.id },
+          data: {
+            currentQty: { decrement: deduct },
+            availableQty: { decrement: deduct },
+          }
+        });
+        await tx.inventoryTransaction.create({
+          data: {
+            inventoryBatchId: batch.id,
+            movementType: 'MATERIAL_ISSUE',
+            quantity: deduct,
+            remarks: `Maintenance Spare Part for Ticket`,
+          }
+        });
+        remainingToDeduct -= deduct;
+      }
+
       return sparePart;
     });
   }

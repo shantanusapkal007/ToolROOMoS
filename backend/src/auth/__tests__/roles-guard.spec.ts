@@ -67,4 +67,75 @@ describe('RolesGuard', () => {
     const result = await guard.canActivate(mockContext);
     expect(result).toBe(true);
   });
+
+  it('should deny access (Fail-Closed) if non-admin user has no permissions in requested module (BUG-004 Regression)', async () => {
+    jest.spyOn(reflector, 'getAllAndOverride').mockImplementation((key) => {
+      if (key === 'module_scope') return 'finance';
+      return null;
+    });
+
+    (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue([]); // No permissions configured
+
+    const mockContext = {
+      getHandler: () => ({}),
+      getClass: () => ({}),
+      switchToHttp: () => ({
+        getRequest: () => ({
+          method: 'GET',
+          user: { role: 'PRODUCTION' },
+          route: { path: '/api/v1/finance/dashboard' },
+        }),
+      }),
+    } as unknown as ExecutionContext;
+
+    const result = await guard.canActivate(mockContext);
+    expect(result).toBe(false);
+  });
+
+  it('should allow access if role has canView permission on GET request for module', async () => {
+    jest.spyOn(reflector, 'getAllAndOverride').mockImplementation((key) => {
+      if (key === 'module_scope') return 'finance';
+      return null;
+    });
+
+    (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue([
+      { role: 'FINANCE', module: 'finance', canView: true, canCreate: true },
+    ]);
+
+    const mockContext = {
+      getHandler: () => ({}),
+      getClass: () => ({}),
+      switchToHttp: () => ({
+        getRequest: () => ({
+          method: 'GET',
+          user: { role: 'FINANCE' },
+          route: { path: '/api/v1/finance/dashboard' },
+        }),
+      }),
+    } as unknown as ExecutionContext;
+
+    const result = await guard.canActivate(mockContext);
+    expect(result).toBe(true);
+  });
+
+  it('should deduce finance module from URL path /api/v1/finance and enforce fail-closed check', async () => {
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(null); // No explicit @ModuleScope
+
+    (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue([]); // No permissions
+
+    const mockContext = {
+      getHandler: () => ({}),
+      getClass: () => ({}),
+      switchToHttp: () => ({
+        getRequest: () => ({
+          method: 'GET',
+          user: { role: 'MAINTENANCE' },
+          route: { path: '/api/v1/finance/dashboard' },
+        }),
+      }),
+    } as unknown as ExecutionContext;
+
+    const result = await guard.canActivate(mockContext);
+    expect(result).toBe(false);
+  });
 });

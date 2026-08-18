@@ -278,5 +278,48 @@ describe('GoodsReceiptsService - Partial GRN Workflow', () => {
         new BadRequestException('Receive quantity cannot exceed pending quantity.')
       );
     });
+
+    it('Scenario 6 (BUG-001 Regression): GRN referencing PO Number resolves UUID and updates PO Header using po.id', async () => {
+      setupMocksForTransaction();
+
+      const poNumber = 'PO-2026-9999';
+      const resolvedPoUuid = 'po-uuid-resolved-123';
+
+      mockPrismaService.purchaseOrderHeader.findFirst.mockResolvedValue({
+        id: resolvedPoUuid,
+        poNumber: poNumber,
+        status: 'ISSUED',
+        items: [{ id: 'po-item-1', orderedQty: 100, receivedQty: 0 }],
+      });
+
+      mockPrismaService.purchaseOrderItem.findUniqueOrThrow.mockResolvedValue({
+        id: 'po-item-1',
+        materialId: 'mat-1',
+        orderedQty: 100,
+        receivedQty: 0,
+      });
+
+      mockPrismaService.purchaseOrderItem.findMany.mockResolvedValue([
+        { id: 'po-item-1', orderedQty: 100, receivedQty: 100 },
+      ]);
+
+      const dtoWithPoNumber = {
+        ...baseDto,
+        poHeaderId: poNumber, // PO Number passed instead of UUID
+        items: [{ ...baseDto.items[0], acceptedQty: 100, receivedQty: 100 }],
+      };
+
+      await service.createGrn(projectId, dtoWithPoNumber, 'user-1');
+
+      // Verify that findMany and update used the resolved UUID (resolvedPoUuid), NOT the string PO number
+      expect(mockPrismaService.purchaseOrderItem.findMany).toHaveBeenCalledWith({
+        where: { poHeaderId: resolvedPoUuid },
+      });
+
+      expect(mockPrismaService.purchaseOrderHeader.update).toHaveBeenCalledWith({
+        where: { id: resolvedPoUuid },
+        data: { status: 'CLOSED' },
+      });
+    });
   });
 });

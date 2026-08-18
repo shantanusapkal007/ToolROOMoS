@@ -1,9 +1,12 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { ModuleScope } from '../auth/decorators/module-scope.decorator';
 import { FinanceDashboardService } from './finance-dashboard.service';
 
 @Controller('api/v1/finance')
-@UseGuards(JwtAuthGuard)
+@ModuleScope('finance')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class FinanceDashboardController {
   constructor(private readonly financeDashboardService: FinanceDashboardService) {}
 

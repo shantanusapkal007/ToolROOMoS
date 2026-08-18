@@ -24,7 +24,10 @@ export class FinanceDashboardService {
 
     for (const cs of costSummaries) {
       totalRevenue += Number(cs.revenue || 0);
-      totalMaterialCost += Number(cs.materialConsumptionCost || 0) + Number(cs.actualMaterialCost || 0);
+      const matCost = Number(cs.materialConsumptionCost || 0) > 0 
+        ? Number(cs.materialConsumptionCost) 
+        : Number(cs.actualMaterialCost || 0);
+      totalMaterialCost += matCost;
       totalLabourCost += Number(cs.labourCost || 0);
       totalMachineCost += Number(cs.machineCost || 0);
       totalOutsideProcessCost += Number(cs.outsideProcessCost || 0);
@@ -117,15 +120,41 @@ export class FinanceDashboardService {
       },
     });
 
-    // Aggregate by department
+    // Aggregate by department from MSDR reports
     const employees = await this.prisma.employee.findMany({
       include: { department: true },
     });
     const deptLabourMap = new Map<string, { name: string; labourCost: number; machineHours: number }>();
     for (const emp of employees) {
-      const deptName = emp.department?.departmentName || 'Unassigned';
+      const deptName = emp.department?.departmentName || 'Shopfloor';
       if (!deptLabourMap.has(deptName)) {
         deptLabourMap.set(deptName, { name: deptName, labourCost: 0, machineHours: 0 });
+      }
+    }
+
+    const msdrHeaders = await this.prisma.msdrHeader.findMany({
+      where: {
+        createdAt: { gte: start, lte: end },
+      },
+      include: {
+        employee: {
+          include: { department: true },
+        },
+        operations: true,
+      },
+    });
+
+    for (const header of msdrHeaders) {
+      const deptName = header.employee?.department?.departmentName || 'Shopfloor';
+      if (!deptLabourMap.has(deptName)) {
+        deptLabourMap.set(deptName, { name: deptName, labourCost: 0, machineHours: 0 });
+      }
+      const dept = deptLabourMap.get(deptName)!;
+      const empRate = Number((header.employee as any)?.hourlyRate || 0);
+      for (const op of header.operations) {
+        const hrs = Number(op.runningHours || 0);
+        dept.machineHours += hrs;
+        dept.labourCost += hrs * empRate;
       }
     }
 
@@ -157,7 +186,11 @@ export class FinanceDashboardService {
       labourEventCount: labourEvents.length,
       machineEventCount: machineEvents.length,
       dailyTrend: Array.from(dailyTrend.values()).sort((a, b) => a.date.localeCompare(b.date)),
-      departmentBreakdown: Array.from(deptLabourMap.values()),
+      departmentBreakdown: Array.from(deptLabourMap.values()).map(d => ({
+        name: d.name,
+        labourCost: Math.round(d.labourCost * 100) / 100,
+        machineHours: Math.round(d.machineHours * 100) / 100,
+      })),
     };
   }
 
@@ -184,7 +217,11 @@ export class FinanceDashboardService {
       const cs = p.projectCostSummary;
       const revenue = cs ? Number(cs.revenue || 0) : 0;
       const totalCost = cs ? Number(cs.totalCost || 0) : 0;
-      const materialCost = cs ? Number(cs.materialConsumptionCost || 0) + Number(cs.actualMaterialCost || 0) : 0;
+      const materialCost = cs 
+        ? (Number(cs.materialConsumptionCost || 0) > 0 
+            ? Number(cs.materialConsumptionCost) 
+            : Number(cs.actualMaterialCost || 0)) 
+        : 0;
       const labourCost = cs ? Number(cs.labourCost || 0) : 0;
       const machineCost = cs ? Number(cs.machineCost || 0) : 0;
       const outsideProcessCost = cs ? Number(cs.outsideProcessCost || 0) : 0;
@@ -298,7 +335,10 @@ export class FinanceDashboardService {
     let dispatch = 0;
 
     for (const cs of summaries) {
-      material += Number(cs.materialConsumptionCost || 0) + Number(cs.actualMaterialCost || 0);
+      const matCost = Number(cs.materialConsumptionCost || 0) > 0 
+        ? Number(cs.materialConsumptionCost) 
+        : Number(cs.actualMaterialCost || 0);
+      material += matCost;
       labour += Number(cs.labourCost || 0);
       machine += Number(cs.machineCost || 0);
       outsideProcess += Number(cs.outsideProcessCost || 0);
