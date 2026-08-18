@@ -30,20 +30,17 @@ interface CreateTicketModalProps {
 }
 
 const FALLBACK_MACHINES = [
-  { id: 'mch-vmc-01', machineCode: 'VMC-01', machineName: 'BFW VMC Milling Center (3-Axis)', department: 'MACHINE_SHOP' },
-  { id: 'mch-vmc-02', machineCode: 'VMC-02', machineName: 'AMS Sparkle VMC 5-Axis', department: 'MACHINE_SHOP' },
-  { id: 'mch-cnc-01', machineCode: 'CNC-01', machineName: 'Ace Micromatic CNC Lathe', department: 'MACHINE_SHOP' },
-  { id: 'mch-edm-01', machineCode: 'EDM-01', machineName: 'Electronica Die Sinker EDM', department: 'WIRE_CUT' },
-  { id: 'mch-wire-01', machineCode: 'WIRE-01', machineName: 'Mitsubishi Wire-Cut EDM FA-20', department: 'WIRE_CUT' },
-  { id: 'mch-grind-01', machineCode: 'GRIND-01', machineName: 'Surface Grinder Precision 600', department: 'LATHE_GRINDING' },
-  { id: 'mch-press-01', machineCode: 'PRESS-01', machineName: 'Hydraulic Tryout Press 250T', department: 'TOOL_ROOM_FITTING' },
+  { id: '8e1f1982-00cb-480c-848b-1fa172a2bc91', machineCode: 'MCH-VMC-01', machineName: 'HAAS VF-4SS 5-Axis High Speed VMC', department: 'MACHINE_SHOP' },
+  { id: '9bc03a85-704f-434f-851d-af9c67c3f55b', machineCode: 'MCH-CNCT-01', machineName: 'DMG MORI NLX 2500 Live Tool CNC Lathe', department: 'MACHINE_SHOP' },
+  { id: '41bc6c4b-c259-494d-a373-5f4ef41c2e3e', machineCode: 'MCH-CMM-01', machineName: 'Zeiss ACCURA 3D Coordinate Measuring Machine', department: 'QUALITY' },
+  { id: 'd8c43fb2-f18a-408d-aeec-cfe88c224e35', machineCode: 'MCH-RDRILL-01', machineName: 'Kao Ming KMR-2000D Heavy Radial Drill', department: 'PRODUCTION' },
+  { id: 'b612eedb-8950-48ed-ab45-3c822d4e1c74', machineCode: 'MCH-TPRESS-01', machineName: 'AIDA 100-Ton Hydraulic Die Spotting Press', department: 'FITTING' },
 ];
 
 const FALLBACK_TECHNICIANS = [
-  { id: 'tech-01', name: 'Suresh Patil', role: 'Lead Mechanical Technician' },
-  { id: 'tech-02', name: 'Rajesh Sharma', role: 'Electrical & Drive Specialist' },
-  { id: 'tech-03', name: 'Amit Verma', role: 'CNC & Hydraulics Maintenance' },
-  { id: 'tech-04', name: 'Dinesh Kumar', role: 'Pneumatics & Toolroom Fitter' },
+  { id: '307be3c5-ef3c-47da-8229-21d64d63beb6', name: 'System Admin', role: 'Lead Maintenance Engineer' },
+  { id: 'bae7d3dc-1102-412c-8c11-8bc1d74dfd18', name: 'Production Operator', role: 'Operator / Machinist' },
+  { id: '3fb1e78e-dc2c-4388-89ef-b6af65088351', name: 'Purchase Officer', role: 'Spare Parts Procurement' },
 ];
 
 const BREAKDOWN_CATEGORIES = [

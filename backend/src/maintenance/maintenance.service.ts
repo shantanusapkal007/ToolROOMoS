@@ -58,6 +58,16 @@ export class MaintenanceService {
     const machine = await this.prisma.machine.findUnique({ where: { id: createDto.machineId }});
     if (!machine) throw new NotFoundException('Machine not found');
 
+    if (createDto.projectId) {
+      const project = await this.prisma.project.findUnique({ where: { id: createDto.projectId } });
+      if (!project) throw new NotFoundException('Project not found');
+    }
+
+    if (createDto.assignedToId) {
+      const assignedUser = await this.prisma.user.findUnique({ where: { id: createDto.assignedToId } });
+      if (!assignedUser) throw new NotFoundException('Assigned technician not found');
+    }
+
     const count = await this.prisma.maintenanceTicket.count();
     const ticketNumber = `MT-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
 
