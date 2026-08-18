@@ -28,9 +28,16 @@ export class TransformInterceptor<T> implements NestInterceptor<T, StandardApiRe
           };
         }
 
-        // If the controller already returned an envelope with status/data
-        if (typeof res === 'object' && ('status' in res || 'success' in res || 'data' in res)) {
-          const success = res.status === 'success' || res.success === true || (res.status === undefined && res.success === undefined);
+        // If the controller already returned an envelope wrapper
+        const isEnvelope = typeof res === 'object' && res !== null && (
+          typeof res.success === 'boolean' || 
+          res.status === 'success' || 
+          res.status === 'error' ||
+          (res.data !== undefined && res.message !== undefined && !('id' in res))
+        );
+
+        if (isEnvelope) {
+          const success = res.success !== undefined ? res.success : (res.status === 'success');
           const data = res.data !== undefined ? res.data : res;
           const meta = res.meta || res.pagination || (res.total !== undefined ? { total: res.total, page: res.page, limit: res.limit, totalPages: res.totalPages } : undefined);
           const message = res.message || 'Operation completed successfully';
