@@ -36,25 +36,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  minio:
-    image: minio/minio
-    container_name: toolroomos-minio
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: adminpassword
-    ports:
-      - "9000:9000" # API Port
-      - "9001:9001" # Console Port
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
   # -----------------------------------------------------
   # 2. APPLICATION LAYER (DEVELOPMENT MODE)
   # -----------------------------------------------------
@@ -69,10 +50,6 @@ services:
     environment:
       - DATABASE_URL=postgresql://root:rootpassword@postgres:5432/toolroomos?schema=public
       - REDIS_URL=redis://redis:6379
-      - MINIO_ENDPOINT=minio
-      - MINIO_PORT=9000
-      - MINIO_ACCESS_KEY=admin
-      - MINIO_SECRET_KEY=adminpassword
       - JWT_SECRET=toolroomos-dev-super-secret
       - PORT=4000
       - NODE_ENV=development
@@ -106,4 +83,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
+

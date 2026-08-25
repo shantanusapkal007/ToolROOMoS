@@ -1,44 +1,54 @@
-# ToolRoom ERP – Architecture & Technical Reference
+# ToolRoomOS – Architecture & Technical Reference
 
-This document provides a comprehensive overview of the actual, implemented architecture and core systems powering the ToolRoom ERP platform today.
+This document provides a comprehensive overview of the actual, implemented architecture and core systems powering the ToolRoomOS platform today.
 
 ## 1. Core Architecture
 
-ToolRoom ERP is currently built as a highly robust **Modular Monolith**.
+ToolRoomOS is built as a **Modular Monolith** with clear domain boundaries.
 
 ### 1.1 Technology Stack
-*   **Frontend:** Next.js 14, React, Tailwind CSS
-*   **Backend:** Go (Golang) using standard REST APIs and Domain-Driven design concepts.
-*   **Primary Database:** PostgreSQL 16+ (managing all relational business data).
-*   **Caching:** Redis (currently utilized exclusively for ultra-fast, secure JWT Auth Session management).
-*   **Infrastructure:** Dockerized containers orchestrated via Docker Compose for rapid deployment.
+*   **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS
+*   **Backend:** NestJS 11, TypeScript, REST APIs with Domain-Driven module boundaries.
+*   **Primary Database:** PostgreSQL 15 (managing all relational business data).
+*   **ORM:** Prisma (type-safe queries, schema migrations).
+*   **Caching:** Redis (session cache, temporary data).
+*   **Infrastructure:** Dockerized containers (PostgreSQL, Redis) orchestrated via Docker Compose.
 
 ### 1.2 Modular Monolith Design
-The backend is logically separated into distinct business domains (`internal/analytics`, `audit`, `crm`, `inventory`, `production`, `quality`, etc.). While they run within a single Go process for maximum performance and simplicity, they maintain strict module boundaries.
+The backend is logically separated into distinct business domains (`master-data/`, `engineering/`, `procurement/`, `production/`, `subcontracting/`, `logistics-finance/`, `hr/`, `maintenance/`, `assets/`, etc.). While they run within a single NestJS process for maximum performance and simplicity, they maintain strict module boundaries via NestJS modules.
 
 ## 2. Enterprise Core Systems
 
-### 2.1 Multi-Tenant & Multi-Company Isolation
-The platform securely serves large organizations through a strict Multi-Tenant hierarchy.
-*   **Logical Isolation:** Every relevant table in the PostgreSQL database contains a `tenant_id` (and often a `company_id`). 
-*   **Middleware Enforcement:** The Go backend utilizes a `TenantResolution` middleware that automatically extracts the Tenant ID from the authenticated user's JWT claims and injects it into the request context. This ensures that users can never accidentally query data belonging to another tenant.
+### 2.1 Role-Based Access Control (RBAC)
+The platform enforces access through a strict RBAC system.
+*   **Roles:** ADMIN, MANAGER, OPERATOR, VIEWER.
+*   **Guard Enforcement:** The NestJS backend uses global `JwtAuthGuard` and `RolesGuard` that automatically extract user identity and role from the authenticated JWT and enforce access on every request.
+*   **Permissions:** Fine-grained module-level permissions configurable per role via the RBAC settings UI.
 
-### 2.2 Global Audit Trail & Production Timeline
-One of the most advanced features currently implemented in the system is the **Global Audit Engine**.
+### 2.2 Global Audit Trail & Activity Timeline
+One of the most critical features is the **Audit Engine**.
 
-*   **Change Tracking:** Every significant mutation in the system generates an `audit_log` entry. The database securely tracks the `resource` (e.g., Work Order, Machine), the exact `user_id`, the timestamp, and a JSON diff of the `old_value` and `new_value`.
-*   **Null-Safe Processing:** The backend Go service safely handles complex `NULL` JSON database values using `*json.RawMessage` pointers, ensuring the system never crashes during data extraction.
-*   **Live Production Timeline:** The frontend Dashboard (e.g., the Production page) dynamically fetches these audit logs via the `/api/v1/audit/logs` REST endpoint. This allows managers to see a chronological, verifiable timeline of exactly what is happening on the shop floor without relying on hardcoded mock data.
+*   **Change Tracking:** Every significant mutation generates an `audit_log` entry. The database tracks the entity type, entity ID, action, user, timestamp, and a JSON diff of old vs. new values.
+*   **Live Production Timeline:** The frontend Dashboard dynamically fetches audit logs via the `/api/v1/audit-logs` REST endpoint, allowing managers to see a verifiable chronological timeline of shop floor activity.
 
 ## 3. Security & Authentication
 
-*   **Stateless JWT:** The API relies on secure JSON Web Tokens for authentication.
-*   **Redis Session Store:** To ensure JWTs can be immediately revoked (e.g., during a security breach or manual logout), active sessions are cached in Redis. The system checks Redis first before falling back to PostgreSQL, providing sub-millisecond session validation.
+*   **Stateless JWT:** The API relies on secure JSON Web Tokens (Access + Refresh) for authentication.
+*   **Password Hashing:** bcrypt with salt rounds.
+*   **Security Headers:** Helmet middleware enforces CSP, HSTS, X-Frame-Options, etc.
+*   **Rate Limiting:** ThrottlerGuard limits requests to 100 per 60 seconds per IP.
+*   **CORS:** Configurable allowed origins (defaults to localhost:3000 in development).
 
-## 4. Future Architectural Roadmap
+## 4. File Handling
 
-While the foundation is solid, the following enterprise patterns are planned for future implementation to transition from a Monolith to an Event-Driven Distributed System:
-*   *Planned:* RabbitMQ / Kafka for Event-Driven Architecture (EDA).
-*   *Planned:* Transactional Outbox patterns for guaranteed message delivery.
+Files (Excel, CSV) are parsed directly in the browser using PapaParse and xlsx libraries. The parsed structured data is sent to the API as JSON. Reports and exports are generated in-memory and streamed to the browser for download.
+
+No external object storage service is currently in use. File/document storage (e.g., S3) can be added in the future when document/drawing upload features are needed.
+
+## 5. Future Architectural Roadmap
+
+While the foundation is solid, the following patterns are planned for future implementation:
 *   *Planned:* WebSockets for live push-notifications (replacing REST API polling).
+*   *Planned:* Object Storage (S3 or equivalent) for document and drawing uploads.
+*   *Planned:* Background job processing for long-running operations (Excel imports, PDF generation).
 *   *Planned:* Live mathematical engines for OEE calculations, Manufacturing Cost Rollups, and FEFO inventory allocation.
