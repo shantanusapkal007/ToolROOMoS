@@ -21,7 +21,6 @@ import {
   ArrowRight,
   BadgeCheck,
   AlertTriangle,
-  Sparkles,
   Lock,
 } from "lucide-react";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
@@ -695,7 +694,7 @@ export default function ProjectDispatchPage() {
                 <span>Processing...</span>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
+                  <CheckCircle2 className="w-4 h-4" />
                   <span>Confirm & Complete Project</span>
                 </>
               )}

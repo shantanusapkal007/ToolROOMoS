@@ -180,15 +180,20 @@ export async function exportPremiumBOM(project: any, bomItems: any[], materials:
   let totalCost = 0;
 
   bomItems.forEach((item, idx) => {
-    const mat = materials?.find((m: any) => m.id === item.materialId);
-    const matName = mat ? `${mat.materialName} (${mat.materialGrade || ''})` : "Steel";
+    const mat = materials?.find((m: any) => m.id === (item.materialId || item.matchedMaterialId));
+    let matName = item.materialInput || item.materialGrade || '';
+    if (mat) {
+      matName = mat.materialName ? `${mat.materialName} (${mat.materialGrade || ''})` : (mat.materialGrade || matName);
+    }
+    if (!matName) matName = 'Steel';
     
-    const finishSizes = item.dimensions || item.finishSize || "-";
-    const stockSizes = item.rawSize || item.rawStockSize || "-";
-    const weightNum = Number(item.calculatedWeight || 0);
-    const costNum = Number(item.estimatedCost || 0);
+    const finishSizes = item.finishSize || item.dimensions || '-';
+    const stockSizes = item.rawMaterialSize || item.rawSize || item.rawStockSize || finishSizes || '-';
+    const qty = Number(item.quantity ?? item.requiredQty ?? 1);
+    const weightNum = Number(item.totalWeight ?? item.calculatedWeight ?? (Number(item.unitWeight || 0) * qty));
+    const costNum = Number(item.basicCost ?? item.estimatedCost ?? item.lineTotal ?? 0);
 
-    totalParts += Number(item.requiredQty || 1);
+    totalParts += qty;
     totalWeight += weightNum;
     totalCost += costNum;
 
@@ -197,9 +202,9 @@ export async function exportPremiumBOM(project: any, bomItems: any[], materials:
     const bgColor = isAlt ? C.totalBg : C.white;
 
     const cols = [
-      { col: 'B', val: idx + 1, align: 'center' as const, isMono: true },
-      { col: 'C', val: item.customFields?.partName || item.partName || '-', align: 'left' as const, isMono: false },
-      { col: 'D', val: Number(item.requiredQty || 1), align: 'center' as const, isMono: true },
+      { col: 'B', val: item.srNo || idx + 1, align: 'center' as const, isMono: true },
+      { col: 'C', val: item.partName || item.description || item.customFields?.partName || '-', align: 'left' as const, isMono: false },
+      { col: 'D', val: qty, align: 'center' as const, isMono: true },
       { col: 'E', val: stockSizes, align: 'center' as const, isMono: true },
       { col: 'F', val: finishSizes, align: 'center' as const, isMono: true },
       { col: 'G', val: matName, align: 'left' as const, isMono: false },

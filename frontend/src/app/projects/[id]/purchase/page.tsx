@@ -134,13 +134,24 @@ export default function ProjectPurchasePage() {
             let totalWt = Number(itemCustom.totalWt ?? 0);
 
             if (apWt === 0 && totalWt === 0) {
-              const l = parseFloat(itemCustom.length || '');
-              const w = parseFloat(itemCustom.width || '');
-              const h = parseFloat(itemCustom.height || '');
-              if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
-                const density = Number(i.material?.density || 7.85);
-                apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
-                totalWt = Number((apWt * qty).toFixed(2));
+              const density = Number(i.material?.density || 7.85);
+              const lStr = String(itemCustom.length || '');
+              if (lStr === 'Ø' || lStr.startsWith('Ø')) {
+                const d = parseFloat(itemCustom.width || '');
+                const l = parseFloat(itemCustom.height || '');
+                if (!isNaN(d) && !isNaN(l) && d > 0 && l > 0) {
+                  const vol = Math.PI * Math.pow(d / 2, 2) * l;
+                  apWt = Number(((vol * density) / 1000000).toFixed(2));
+                  totalWt = Number((apWt * qty).toFixed(2));
+                }
+              } else {
+                const l = parseFloat(lStr);
+                const w = parseFloat(itemCustom.width || '');
+                const h = parseFloat(itemCustom.height || '');
+                if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
+                  apWt = Number(((l * w * h * density) / 1000000).toFixed(2));
+                  totalWt = Number((apWt * qty).toFixed(2));
+                }
               }
             } else if (totalWt === 0 && apWt > 0) {
               totalWt = Number((apWt * qty).toFixed(2));

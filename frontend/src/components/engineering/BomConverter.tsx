@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx-js-style';
 import ExcelJS from 'exceljs';
 import { applyKrupaHeader } from '@/utils/excelHeaderTemplate';
 import { exportPremiumBOM } from '@/utils/exportPremiumBOM';
+import { parseDimension, calculateMaterialWeight, formatCanonicalDimension } from '@/utils/dimensionParser';
 import { 
   Upload, 
   FileSpreadsheet, 
@@ -12,19 +13,26 @@ import {
   AlertCircle, 
   Download, 
   Trash2, 
-  Eye,
-  Sliders,
-  X,
-  Maximize,
-  ShoppingCart,
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  Lock
+  Eye, 
+  Sliders, 
+  X, 
+  Maximize, 
+  ShoppingCart, 
+  ChevronDown, 
+  ChevronRight, 
+  Plus, 
+  Lock, 
+  Tag, 
+  RefreshCw, 
+  Layers, 
+  Check, 
+  RotateCcw 
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../ui/Toast';
 import { useProjectBOM } from '@/hooks/useEngineering';
-import { useMasterData } from '@/hooks/useMasterData';
+import { useMasterData, masterDataKeys } from '@/hooks/useMasterData';
+import { MasterDataService } from '@/services/master-data.service';
 
 interface BomConverterProps {
   projectId: string;
@@ -34,6 +42,20 @@ interface BomConverterProps {
   onProceedToPO?: (rows: any[]) => void;
 }
 
+export interface ConfirmedMaterialRate {
+  materialName: string;
+  matchedMaterialId: string | null;
+  matchedMaterialName: string | null;
+  masterRate: number | null;
+  currentRate: number | null;
+  defaultUom: string;
+  density: number;
+  gstPercent: number;
+  hsnCode?: string | null;
+  isNew: boolean;
+  status: 'VALID' | 'CHANGED' | 'NEW' | 'MISSING';
+  isConfirmed: boolean;
+}
 
 export interface ParsedBOMRow {
   id: string;
@@ -69,6 +91,7 @@ export interface ParsedBOMRow {
 }
 
 export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, materials = [], onSaveBOM, onProceedToPO }) => {
+  const queryClient = useQueryClient();
   const { success, error, warning } = useToast();
   const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
 
@@ -88,6 +111,30 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
   const [viewMode, setViewMode] = useState<'grid' | 'tree'>('tree');
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
 
+  // Material Rate Confirmation State
+  const [materialRates, setMaterialRates] = useState<Record<string, ConfirmedMaterialRate>>({});
+  const [isRatesConfirmed, setIsRatesConfirmed] = useState<boolean>(false);
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [newMaterialForm, setNewMaterialForm] = useState<{
+    materialCode: string;
+    materialGrade: string;
+    standardCost: number | '';
+    defaultUom: string;
+    density: number;
+    gstPercent: number;
+    hsnCode: string;
+    isSaving: boolean;
+  }>({
+    materialCode: '',
+    materialGrade: '',
+    standardCost: '',
+    defaultUom: 'KG',
+    density: 7.85,
+    gstPercent: 18,
+    hsnCode: '',
+    isSaving: false,
+  });
+
   // Sign-off / Approval fields
   const [verifiedByDesigner, setVerifiedByDesigner] = useState<string>('');
   const [preparedBy, setPreparedBy] = useState<string>('DESIGN TEAM');
@@ -97,13 +144,103 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
   const { data: existingBom } = useProjectBOM(projectId);
   const { data: masterMaterialsRes = [] } = useMasterData('materials');
   
-  const masterMaterials = Array.isArray(masterMaterialsRes) ? masterMaterialsRes : (masterMaterialsRes as any)?.data || [];
-  const allMaterials = masterMaterials.length > 0 ? masterMaterials : (materials || []);
+  const allMaterials = useMemo(() => {
+    const mm = Array.isArray(masterMaterialsRes) ? masterMaterialsRes : (masterMaterialsRes as any)?.data || [];
+    return mm.length > 0 ? mm : (materials || []);
+  }, [masterMaterialsRes, materials]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const uniqueMaterialsKey = useMemo(() => {
+    return rows.map(r => (r.materialInput || '').trim()).filter(Boolean).sort().join(':::');
+  }, [rows]);
+
+  // Synchronize Material Rate Confirmation with Unique Materials from Active BOM rows
+  useEffect(() => {
+    const uniqueMats = Array.from(
+      new Set(rows.map(r => (r.materialInput || '').trim()).filter(Boolean))
+    );
+
+    if (uniqueMats.length === 0) {
+      setMaterialRates(prev => (Object.keys(prev).length === 0 ? prev : {}));
+      setIsRatesConfirmed(false);
+      return;
+    }
+
+    setMaterialRates(prev => {
+      let changed = false;
+      const next: Record<string, ConfirmedMaterialRate> = {};
+
+      uniqueMats.forEach(matName => {
+        const prevEntry = prev[matName];
+        const search = matName.toLowerCase();
+
+        // Match against allMaterials
+        const matchedMat = allMaterials.find((m: any) => 
+          (prevEntry?.matchedMaterialId && m.id === prevEntry.matchedMaterialId) ||
+          `${m.materialCode || ''} - ${m.materialGrade || m.materialName || ''}`.toLowerCase() === search ||
+          m.materialCode?.toLowerCase() === search || 
+          m.materialGrade?.toLowerCase() === search ||
+          m.materialCode?.toLowerCase().includes(search) || 
+          m.materialGrade?.toLowerCase().includes(search) ||
+          (m.materialCode && search.includes(m.materialCode.toLowerCase()))
+        ) || null;
+
+        const masterRate = matchedMat && matchedMat.standardCost !== undefined && matchedMat.standardCost !== null
+          ? Number(matchedMat.standardCost)
+          : null;
+
+        let currentRate: number | null = null;
+        if (prevEntry && prevEntry.currentRate !== undefined && prevEntry.currentRate !== null && !isNaN(prevEntry.currentRate)) {
+          currentRate = prevEntry.currentRate;
+        } else if (masterRate !== null) {
+          currentRate = masterRate;
+        }
+
+        const isNew = !matchedMat;
+        let status: 'VALID' | 'CHANGED' | 'NEW' | 'MISSING' = 'VALID';
+
+        if (currentRate === null || currentRate <= 0 || isNaN(currentRate)) {
+          status = 'MISSING';
+        } else if (isNew) {
+          status = 'NEW';
+        } else if (masterRate !== null && currentRate !== masterRate) {
+          status = 'CHANGED';
+        } else {
+          status = 'VALID';
+        }
+
+        const entry: ConfirmedMaterialRate = {
+          materialName: matName,
+          matchedMaterialId: matchedMat ? matchedMat.id : (prevEntry?.matchedMaterialId || null),
+          matchedMaterialName: matchedMat ? `${matchedMat.materialCode} - ${matchedMat.materialGrade}` : null,
+          masterRate,
+          currentRate,
+          defaultUom: matchedMat?.defaultUom || prevEntry?.defaultUom || 'KG',
+          density: matchedMat?.density ? Number(matchedMat.density) : (prevEntry?.density || 7.85),
+          gstPercent: matchedMat?.gstPercent ? Number(matchedMat.gstPercent) : (prevEntry?.gstPercent || 18),
+          hsnCode: matchedMat?.hsnCode || prevEntry?.hsnCode || null,
+          isNew,
+          status,
+          isConfirmed: prevEntry?.isConfirmed || false,
+        };
+
+        next[matName] = entry;
+
+        if (!prevEntry || prevEntry.currentRate !== entry.currentRate || prevEntry.status !== entry.status || prevEntry.matchedMaterialId !== entry.matchedMaterialId) {
+          changed = true;
+        }
+      });
+
+      if (Object.keys(prev).length !== Object.keys(next).length) {
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+  }, [uniqueMaterialsKey, allMaterials]);
 
   useEffect(() => {
     if (existingBom?.items && existingBom.items.length > 0 && rows.length === 0 && !isConverted) {
@@ -111,8 +248,8 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         const cf = item.customFields || {};
         const rmVal = item.rawSize || cf.rawMaterialSize || item.dimensions || '';
         const finishVal = cf.finishSize || '';
-        const dimensions = parseDimensions(rmVal);
-        const fDimensions = parseDimensions(finishVal);
+        const dimensions = parseDimension(rmVal);
+        const fDimensions = parseDimension(finishVal);
         const defaultPartName = project?.partName || project?.name || '';
         const nameVal = cf.partName || item.partName || defaultPartName;
 
@@ -142,17 +279,17 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
           partName: nameVal,
           description: item.remarks || cf.description || '',
           quantity: Number(item.requiredQty) || 1,
-          finishSize: finishVal,
-          finishL: fDimensions.length as any,
-          finishW: fDimensions.width as any,
-          finishH: fDimensions.height as any,
-          rawMaterialSize: rmVal,
+          finishSize: fDimensions.isValid ? fDimensions.formatted : finishVal,
+          finishL: fDimensions.displayL as any,
+          finishW: fDimensions.displayW as any,
+          finishH: fDimensions.displayH as any,
+          rawMaterialSize: dimensions.isValid ? dimensions.formatted : rmVal,
           materialInput: materialDisplay,
           catalogSize: item.catalogSize || cf.catalogSize || '',
           stockSize: item.stockSize || cf.stockSize || '',
-          length: cf.length || dimensions.length as any,
-          width: cf.width || dimensions.width as any,
-          height: cf.height || dimensions.height as any,
+          length: cf.length || (dimensions.displayL as any),
+          width: cf.width || (dimensions.displayW as any),
+          height: cf.height || (dimensions.displayH as any),
           matchedMaterialId: isBoughtOut ? null : (item.materialId || null),
           matchedMaterialName: isBoughtOut ? 'STD - Standard Bought-out Component' : (item.material ? `${item.material.materialCode} - ${item.material.materialGrade}` : null),
           density: isBoughtOut ? null : (cf.density || null),
@@ -305,49 +442,13 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     }));
   };
 
-  // --- Size Parser ---
+  // --- Size Parser (Canonical Wrapper) ---
   const parseDimensions = (sizeStr: string) => {
-    if (!sizeStr) return { length: '-', width: '-', height: '-', isValid: true };
-    let cleaned = sizeStr.toString().trim();
-    
-    // Check for round bar
-    const isRound = /^[Ø0O\s]*dia/i.test(cleaned) || /^Ø/i.test(cleaned);
-    
-    if (isRound) {
-       cleaned = cleaned.replace(/^[Ø0O\s]*dia/i, '').replace(/^Ø/i, '').trim();
-       const parts = cleaned.split(/[\s]*[xX×\*][\s]*/);
-       const dMatch = parts[0]?.match(/([\d\.]+)/);
-       const lMatch = parts[1]?.match(/([\d\.]+)/);
-       
-       const d = dMatch ? parseFloat(dMatch[1]) : NaN;
-       const l = lMatch ? parseFloat(lMatch[1]) : NaN;
-       const isValid = !isNaN(d) && !isNaN(l) && d > 0 && l > 0;
-       
-       if (!isValid) return { length: '-', width: '-', height: '-', isValid: true };
-       return { length: 'Ø', width: d, height: l, isValid: true };
-    }
-
-    const parts = cleaned.split(/[\s]*[xX×\*][\s]*/);
-    if (parts.length < 3) {
-      return { length: '-', width: '-', height: '-', isValid: true };
-    }
-    
-    const lMatch = parts[0]?.match(/([\d\.]+)/);
-    const wMatch = parts[1]?.match(/([\d\.]+)/);
-    const hMatch = parts[2]?.match(/([\d\.]+)/);
-
-    const l = lMatch ? parseFloat(lMatch[1]) : NaN;
-    const w = wMatch ? parseFloat(wMatch[1]) : NaN;
-    const h = hMatch ? parseFloat(hMatch[1]) : NaN;
-
-    const isValid = !isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0;
-    if (!isValid) return { length: '-', width: '-', height: '-', isValid: true };
-    
-    return { length: l, width: w, height: h, isValid: true };
+    return parseDimension(sizeStr);
   };
 
   // --- Calculations ---
-  const populateCalculations = (item: ParsedBOMRow): ParsedBOMRow => {
+  const populateCalculations = (item: ParsedBOMRow, confirmedRateMap?: Record<string, ConfirmedMaterialRate>): ParsedBOMRow => {
     let matchedMat = null;
     if (item.materialInput && !item.isBoughtOut) {
        const search = item.materialInput.toLowerCase();
@@ -361,15 +462,18 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
        ) || null;
     }
 
-    item.matchedMaterialId = matchedMat ? matchedMat.id : (item.matchedMaterialId || null);
-    item.matchedMaterialName = matchedMat ? `${matchedMat.materialCode} - ${matchedMat.materialGrade}` : null;
-    item.hsnCode = matchedMat?.hsnCode || null;
-    item.gstPercent = matchedMat?.gstPercent ? Number(matchedMat.gstPercent) : 18; // Default GST 18% if not set
+    const rateMap = confirmedRateMap || materialRates;
+    const conf = item.materialInput ? rateMap[item.materialInput.trim()] : undefined;
+
+    item.matchedMaterialId = conf?.matchedMaterialId || (matchedMat ? matchedMat.id : (item.matchedMaterialId || null));
+    item.matchedMaterialName = conf?.matchedMaterialName || (matchedMat ? `${matchedMat.materialCode} - ${matchedMat.materialGrade}` : (item.matchedMaterialName || null));
+    item.hsnCode = conf?.hsnCode || matchedMat?.hsnCode || item.hsnCode || null;
+    item.gstPercent = conf?.gstPercent || (matchedMat?.gstPercent ? Number(matchedMat.gstPercent) : (item.gstPercent || 18));
     
     if (item.isBoughtOut) {
       // Standard Bought-out items: Unit Rate (₹/pc) × Quantity model
       const stdMat = allMaterials.find((m: any) => m.materialCode === 'STD');
-      if (stdMat) {
+      if (stdMat && !item.matchedMaterialId) {
         item.matchedMaterialId = stdMat.id;
         item.matchedMaterialName = `${stdMat.materialCode} - ${stdMat.materialGrade || stdMat.materialName}`;
       }
@@ -377,49 +481,52 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
       item.apWeight = null;
       item.totalWeight = null;
 
-      const effectiveRate = item.rate !== undefined && item.rate !== null && !isNaN(Number(item.rate)) && item.rate !== ('' as any)
-        ? Number(item.rate)
-        : (item.unitCost !== undefined && item.unitCost !== null && !isNaN(Number(item.unitCost)) && item.unitCost !== ('' as any) ? Number(item.unitCost) : null);
+      const effectiveRate = conf?.currentRate !== undefined && conf?.currentRate !== null
+        ? conf.currentRate
+        : (item.rate !== undefined && item.rate !== null && !isNaN(Number(item.rate)) && item.rate !== ('' as any)
+            ? Number(item.rate)
+            : (item.unitCost !== undefined && item.unitCost !== null && !isNaN(Number(item.unitCost)) && item.unitCost !== ('' as any) ? Number(item.unitCost) : null));
 
       item.rate = effectiveRate;
       item.unitCost = effectiveRate;
       item.basicCost = effectiveRate !== null ? Number((effectiveRate * (Number(item.quantity) || 1)).toFixed(2)) : null;
 
-      // Auto-tag STD in material description if not present
       if (!item.materialInput || !item.materialInput.trim()) {
         item.materialInput = 'STD';
-      } else if (!item.materialInput.toUpperCase().includes('STD')) {
-        item.materialInput = `${item.materialInput} (STD)`;
       }
     } else {
       // Raw Material items: Weight × Rate model
-      item.density = matchedMat ? Number(matchedMat.density || 7.85) : (item.density || 7.85);
-      if (matchedMat && (!item.rate || Number(item.rate) === 0)) {
-        item.rate = Number(matchedMat.standardCost || matchedMat.ratePerKg || 0);
-      }
+      const effectiveDensity = conf?.density || (matchedMat ? Number(matchedMat.density || 7.85) : (item.density || 7.85));
+      item.density = effectiveDensity;
+      
+      const effectiveRate = conf?.currentRate !== undefined && conf?.currentRate !== null
+        ? conf.currentRate
+        : (item.rate !== undefined && item.rate !== null && !isNaN(Number(item.rate)) && Number(item.rate) > 0
+            ? Number(item.rate)
+            : (matchedMat ? Number(matchedMat.standardCost || matchedMat.ratePerKg || 0) : null));
+
+      item.rate = effectiveRate;
       item.unitCost = null;
       
-      if (item.length && item.width && item.height) {
-          if (item.length === 'Ø') {
-             const d = Number(item.width);
-             const l = Number(item.height);
-             const vol = Math.PI * Math.pow(d / 2, 2) * l;
-             item.apWeight = Number(((vol * 0.785) / 100000).toFixed(2));
-          } else if (item.length !== '-' && item.width !== '-' && item.height !== '-') {
-             const l = Number(item.length);
-             const w = Number(item.width);
-             const h = Number(item.height);
-             const vol = l * w * h;
-             item.apWeight = Number(((vol * 0.785) / 100000).toFixed(2));
-          } else {
-             item.apWeight = 0;
-          }
+      // Resolve canonical dimension from rawMaterialSize or length/width/height
+      let dimObj = null;
+      if (item.length === 'Ø' && item.width && item.height && item.width !== '-' && item.height !== '-') {
+        dimObj = parseDimension(`Ø${item.width}X${item.height}`);
+      } else if (item.rawMaterialSize && item.rawMaterialSize !== '-') {
+        dimObj = parseDimension(item.rawMaterialSize);
+      } else if (item.length && item.width && item.height && item.length !== '-' && item.width !== '-' && item.height !== '-') {
+        dimObj = parseDimension(`${item.length}X${item.width}X${item.height}`);
+      }
+
+      if (dimObj && dimObj.isValid) {
+        const { unitWeight } = calculateMaterialWeight(dimObj, effectiveDensity, 1);
+        item.apWeight = unitWeight;
       } else {
-          item.apWeight = 0;
+        item.apWeight = 0;
       }
       
       item.totalWeight = Number(((Number(item.apWeight) || 0) * (Number(item.quantity) || 0)).toFixed(2));
-      item.basicCost = Number(((Number(item.totalWeight) || 0) * (Number(item.rate) || 0)).toFixed(2));
+      item.basicCost = effectiveRate !== null ? Number(((Number(item.totalWeight) || 0) * effectiveRate).toFixed(2)) : null;
     }
     return item;
   };
@@ -451,23 +558,14 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
       }
     } else {
       // Raw Material Item (RM)
-      const hasSelectedMaterial = !!(
-        row.matchedMaterialId || 
-        (row.materialInput && 
-         row.materialInput !== '-- Select Material --' && 
-         row.materialInput.toString().trim().length > 0 &&
-         allMaterials.some((m: any) => m.id === row.matchedMaterialId || `${m.materialCode} - ${m.materialGrade}`.toLowerCase() === row.materialInput?.toLowerCase())
-        )
-      );
-
-      if (!hasSelectedMaterial && !row.matchedMaterialId) {
-        return `Row ${rowNum}: Material grade is not selected from master data.`;
+      if (!row.materialInput || !row.materialInput.toString().trim()) {
+        return `Row ${rowNum}: Material description is missing.`;
       }
       if (!row.length || !row.width || !row.height || row.length === '-' || row.width === '-' || row.height === '-') {
         return `Row ${rowNum}: Raw material dimensions (L×W×H) are missing.`;
       }
-      if (!row.rate || isNaN(Number(row.rate)) || Number(row.rate) <= 0) {
-        return `Row ${rowNum}: Material rate (₹/kg) is missing.`;
+      if (row.rate === null || row.rate === undefined || isNaN(Number(row.rate)) || Number(row.rate) <= 0) {
+        return `Row ${rowNum}: Material rate (₹/kg) is missing. Verify in Rate Confirmation.`;
       }
       if (!row.basicCost || isNaN(Number(row.basicCost)) || Number(row.basicCost) <= 0) {
         return `Row ${rowNum}: Total basic cost calculation is missing.`;
@@ -475,6 +573,199 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     }
 
     return null;
+  };
+
+  // --- Material Rate Confirmation Handlers ---
+  const handleMaterialRateChange = (matName: string, rateVal: string | number) => {
+    const parsed = rateVal === '' || isNaN(Number(rateVal)) ? null : Number(rateVal);
+
+    setMaterialRates(prev => {
+      const entry = prev[matName];
+      if (!entry) return prev;
+
+      let status: 'VALID' | 'CHANGED' | 'NEW' | 'MISSING' = 'VALID';
+      if (parsed === null || parsed <= 0) {
+        status = 'MISSING';
+      } else if (entry.isNew) {
+        status = 'NEW';
+      } else if (entry.masterRate !== null && parsed !== entry.masterRate) {
+        status = 'CHANGED';
+      } else {
+        status = 'VALID';
+      }
+
+      return {
+        ...prev,
+        [matName]: {
+          ...entry,
+          currentRate: parsed,
+          status,
+          isConfirmed: false,
+        },
+      };
+    });
+  };
+
+  const handleResetRateToMaster = (matName: string) => {
+    setMaterialRates(prev => {
+      const entry = prev[matName];
+      if (!entry || entry.masterRate === null) return prev;
+
+      return {
+        ...prev,
+        [matName]: {
+          ...entry,
+          currentRate: entry.masterRate,
+          status: 'VALID',
+          isConfirmed: false,
+        }
+      };
+    });
+  };
+
+  const handleConfirmRatesAndContinue = () => {
+    const rateEntries = Object.values(materialRates);
+    const missing = rateEntries.filter(r => r.currentRate === null || r.currentRate <= 0 || isNaN(r.currentRate));
+
+    if (missing.length > 0) {
+      error(
+        "Missing Rates",
+        `Please enter a valid rate for: ${missing.map(m => m.materialName).join(', ')}`
+      );
+      return;
+    }
+
+    // Apply confirmed rates across all active BOM rows
+    setRows(prevRows => {
+      return prevRows.map((row, idx) => {
+        const matName = (row.materialInput || '').trim();
+        const conf = materialRates[matName];
+        if (!conf) return row;
+
+        const updatedRow: ParsedBOMRow = {
+          ...row,
+          rate: conf.currentRate,
+          unitCost: row.isBoughtOut ? conf.currentRate : null,
+          matchedMaterialId: conf.matchedMaterialId || row.matchedMaterialId,
+          matchedMaterialName: conf.matchedMaterialName || row.matchedMaterialName,
+          density: row.isBoughtOut ? null : conf.density,
+          gstPercent: conf.gstPercent,
+          hsnCode: conf.hsnCode || row.hsnCode,
+        };
+
+        const recalculated = populateCalculations(updatedRow, materialRates);
+        recalculated.validationError = validateRow(recalculated, idx);
+        return recalculated;
+      });
+    });
+
+    setMaterialRates(prev => {
+      const confirmed: Record<string, ConfirmedMaterialRate> = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        confirmed[k] = { ...v, isConfirmed: true };
+      });
+      return confirmed;
+    });
+
+    setIsRatesConfirmed(true);
+    success("Rates Confirmed", "Current BOM rates applied successfully to all items.");
+  };
+
+  const handleOpenAddMaterialModal = (matName: string, currentRateVal?: number | null) => {
+    setNewMaterialForm({
+      materialCode: matName,
+      materialGrade: matName,
+      standardCost: currentRateVal && currentRateVal > 0 ? currentRateVal : '',
+      defaultUom: 'KG',
+      density: 7.85,
+      gstPercent: 18,
+      hsnCode: '',
+      isSaving: false,
+    });
+    setShowAddModal(true);
+  };
+
+  const handleSaveNewMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMaterialForm.materialCode.trim() || !newMaterialForm.materialGrade.trim()) {
+      error("Missing Fields", "Material Code and Grade are required.");
+      return;
+    }
+
+    const rateNum = Number(newMaterialForm.standardCost) || 0;
+    if (rateNum <= 0) {
+      error("Invalid Rate", "Please enter a valid standard rate (> 0).");
+      return;
+    }
+
+    setNewMaterialForm(prev => ({ ...prev, isSaving: true }));
+
+    try {
+      const payload = {
+        materialCode: newMaterialForm.materialCode.trim(),
+        materialGrade: newMaterialForm.materialGrade.trim(),
+        materialCategory: 'RAW_MATERIAL',
+        standardCost: rateNum,
+        defaultUom: newMaterialForm.defaultUom,
+        density: Number(newMaterialForm.density) || 7.85,
+        gstPercent: Number(newMaterialForm.gstPercent) || 18,
+        hsnCode: newMaterialForm.hsnCode.trim() || undefined,
+        status: 'ACTIVE',
+      };
+
+      const created = await MasterDataService.createItem<any>('materials', payload);
+      
+      // Invalidate master data query cache to refresh allMaterials
+      await queryClient.invalidateQueries({ queryKey: masterDataKeys.registry('materials') });
+
+      // Update local material rate state
+      const matKey = newMaterialForm.materialCode.trim();
+      setMaterialRates(prev => ({
+        ...prev,
+        [matKey]: {
+          materialName: matKey,
+          matchedMaterialId: created?.id || null,
+          matchedMaterialName: `${created?.materialCode || matKey} - ${created?.materialGrade || matKey}`,
+          masterRate: rateNum,
+          currentRate: rateNum,
+          defaultUom: newMaterialForm.defaultUom,
+          density: Number(newMaterialForm.density) || 7.85,
+          gstPercent: Number(newMaterialForm.gstPercent) || 18,
+          hsnCode: newMaterialForm.hsnCode.trim() || null,
+          isNew: false,
+          status: 'VALID',
+          isConfirmed: true,
+        }
+      }));
+
+      // Update any matching rows in the current BOM
+      setRows(prevRows => {
+        return prevRows.map((row, idx) => {
+          if ((row.materialInput || '').trim().toLowerCase() === matKey.toLowerCase()) {
+            const updatedRow: ParsedBOMRow = {
+              ...row,
+              matchedMaterialId: created?.id || row.matchedMaterialId,
+              matchedMaterialName: `${created?.materialCode || matKey} - ${created?.materialGrade || matKey}`,
+              rate: rateNum,
+              density: Number(newMaterialForm.density) || 7.85,
+              gstPercent: Number(newMaterialForm.gstPercent) || 18,
+              hsnCode: newMaterialForm.hsnCode.trim() || row.hsnCode,
+            };
+            const recalc = populateCalculations(updatedRow);
+            recalc.validationError = validateRow(recalc, idx);
+            return recalc;
+          }
+          return row;
+        });
+      });
+
+      setShowAddModal(false);
+      success("Material Saved", `Created ${payload.materialCode} in Material Master with standard rate ₹${rateNum}/${payload.defaultUom}.`);
+    } catch (err: any) {
+      error("Save Failed", err.message || "Failed to save new material to master data.");
+    } finally {
+      setNewMaterialForm(prev => ({ ...prev, isSaving: false }));
+    }
   };
 
   // --- Handle Excel Parsing ---
@@ -671,22 +962,17 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
           if (!srVal && !nameVal && !rmVal && !catVal) continue; // Skip padding blank rows
 
           // Resolve dimensions
-          const dimensions = parseDimensions(rmVal);
-          const fDimensions = parseDimensions(finishVal);
+          const dimensions = parseDimension(rmVal);
+          const fDimensions = parseDimension(finishVal);
 
-          // If there is NO FINISH (L×W×H) and NO RM (L×W×H) in imported sheet -> consider it as standard material (STD)
-          const hasFinishDims = !!(finishVal && finishVal.trim() && finishVal !== '-' && fDimensions.isValid && fDimensions.length !== '-');
-          const hasRmDims = !!(rmVal && rmVal.trim() && rmVal !== '-' && dimensions.isValid && dimensions.length !== '-');
+          // If there is NO FINISH (L×W×H or ØD×L) and NO RM in imported sheet -> consider it as standard material (STD)
+          const hasFinishDims = !!(finishVal && finishVal.trim() && finishVal !== '-' && fDimensions.isValid);
+          const hasRmDims = !!(rmVal && rmVal.trim() && rmVal !== '-' && dimensions.isValid);
 
           const isBoughtOut = !hasFinishDims && !hasRmDims;
 
-          // For standard material, add STD to selected material
-          let resolvedMaterial = matVal;
-          if (isBoughtOut) {
-            resolvedMaterial = matVal ? (matVal.toUpperCase().includes('STD') ? matVal : `${matVal} (STD)`) : 'STD';
-          } else if (!matVal && nameVal) {
-            resolvedMaterial = nameVal;
-          }
+          // Preserve exact material value as written in Excel without renaming or appending (STD)
+          let resolvedMaterial = matVal || nameVal || (isBoughtOut ? 'STD' : '');
 
           const item: ParsedBOMRow = {
             id: `row-${r}-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -695,17 +981,17 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             partName: nameVal || project?.partName || project?.name || '',
             description: descVal,
             quantity: qtyVal,
-            finishSize: finishVal,
-            finishL: fDimensions.length as any,
-            finishW: fDimensions.width as any,
-            finishH: fDimensions.height as any,
-            rawMaterialSize: rmVal,
+            finishSize: fDimensions.isValid ? fDimensions.formatted : finishVal,
+            finishL: fDimensions.displayL as any,
+            finishW: fDimensions.displayW as any,
+            finishH: fDimensions.displayH as any,
+            rawMaterialSize: dimensions.isValid ? dimensions.formatted : rmVal,
             materialInput: resolvedMaterial,
             catalogSize: catVal,
             stockSize: stockVal,
-            length: dimensions.length as any,
-            width: dimensions.width as any,
-            height: dimensions.height as any,
+            length: dimensions.displayL as any,
+            width: dimensions.displayW as any,
+            height: dimensions.displayH as any,
             matchedMaterialId: null,
             matchedMaterialName: null,
             density: null,
@@ -766,7 +1052,53 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
     }
   };
 
-  // --- Inline Grid Edits ---
+  // --- Inline Grid Edits & Shape Toggles ---
+
+  const toggleFinishShape = (rowId: string) => {
+    setRows(prev => prev.map((row) => {
+      if (row.id !== rowId) return row;
+      const isCurrentlyRound = row.finishL === 'Ø' || String(row.finishSize).startsWith('Ø');
+      const updated = { ...row };
+      if (isCurrentlyRound) {
+        // Toggle to Rectangular
+        updated.finishL = row.finishW && row.finishW !== '-' ? row.finishW : '50';
+        updated.finishW = row.finishH && row.finishH !== '-' ? row.finishH : '25';
+        updated.finishH = '10';
+        updated.finishSize = `${updated.finishL}X${updated.finishW}X${updated.finishH}`;
+      } else {
+        // Toggle to Round
+        updated.finishL = 'Ø';
+        updated.finishW = row.finishW && row.finishW !== '-' ? row.finishW : (row.finishL && row.finishL !== '-' ? row.finishL : '25');
+        updated.finishH = row.finishH && row.finishH !== '-' ? row.finishH : '50';
+        updated.finishSize = `Ø${updated.finishW}X${updated.finishH}`;
+      }
+      return updated;
+    }));
+  };
+
+  const toggleRmShape = (rowId: string) => {
+    setRows(prev => prev.map((row, idx) => {
+      if (row.id !== rowId) return row;
+      const isCurrentlyRound = row.length === 'Ø' || String(row.rawMaterialSize).startsWith('Ø');
+      const updated = { ...row };
+      if (isCurrentlyRound) {
+        // Toggle to Rectangular
+        updated.length = row.width && row.width !== '-' ? row.width : '50';
+        updated.width = row.height && row.height !== '-' ? row.height : '25';
+        updated.height = '10';
+        updated.rawMaterialSize = `${updated.length}X${updated.width}X${updated.height}`;
+      } else {
+        // Toggle to Round
+        updated.length = 'Ø';
+        updated.width = row.width && row.width !== '-' ? row.width : (row.length && row.length !== '-' ? row.length : '25');
+        updated.height = row.height && row.height !== '-' ? row.height : '50';
+        updated.rawMaterialSize = `Ø${updated.width}X${updated.height}`;
+      }
+      populateCalculations(updated);
+      updated.validationError = validateRow(updated, idx);
+      return updated;
+    }));
+  };
 
   const handleCellEdit = (rowId: string, field: keyof ParsedBOMRow, val: any) => {
     setRows(prev => prev.map((row, idx) => {
@@ -774,15 +1106,40 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
       const updated = { ...row, [field]: val };
 
+      if (field === 'finishSize') {
+        const dims = parseDimension(val);
+        updated.finishL = dims.displayL as any;
+        updated.finishW = dims.displayW as any;
+        updated.finishH = dims.displayH as any;
+        if (dims.isValid) {
+          updated.finishSize = dims.formatted;
+        }
+      }
+
+      if (field === 'finishL' || field === 'finishW' || field === 'finishH') {
+        if (updated.finishL === 'Ø') {
+          updated.finishSize = `Ø${updated.finishW}X${updated.finishH}`;
+        } else {
+          updated.finishSize = `${updated.finishL}X${updated.finishW}X${updated.finishH}`;
+        }
+      }
+
       if (field === 'rawMaterialSize') {
-        const dims = parseDimensions(val);
-        updated.length = dims.length as any;
-        updated.width = dims.width as any;
-        updated.height = dims.height as any;
+        const dims = parseDimension(val);
+        updated.length = dims.displayL as any;
+        updated.width = dims.displayW as any;
+        updated.height = dims.displayH as any;
+        if (dims.isValid) {
+          updated.rawMaterialSize = dims.formatted;
+        }
       }
 
       if (field === 'length' || field === 'width' || field === 'height') {
-        updated.rawMaterialSize = `${updated.length}x${updated.width}x${updated.height}`;
+        if (updated.length === 'Ø') {
+          updated.rawMaterialSize = `Ø${updated.width}X${updated.height}`;
+        } else {
+          updated.rawMaterialSize = `${updated.length}X${updated.width}X${updated.height}`;
+        }
       }
 
       if (field === 'matchedMaterialId') {
@@ -1339,6 +1696,201 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
         </div>
       )}
 
+      {/* ── MATERIAL RATE CONFIRMATION SECTION ── */}
+      {rows.length > 0 && Object.keys(materialRates).length > 0 && (
+        <div className="bg-white border border-border-gray rounded-[12px] shadow-subtle p-5 space-y-4 shrink-0 transition-all">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-gray">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-[8px] bg-primary/10 text-primary">
+                  <Tag className="w-4 h-4" />
+                </span>
+                <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
+                  Material Rate Confirmation
+                </h3>
+                {isRatesConfirmed && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <CheckCircle2 className="w-3 h-3" /> Rates Confirmed
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-mute mt-0.5">
+                Verify current material rates before calculating the BOM
+              </p>
+            </div>
+
+            {/* Summary Badges */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="px-2.5 py-1 rounded-[8px] bg-canvas border border-border-gray text-cool-gray font-medium text-[11px]">
+                {Object.keys(materialRates).length} Unique Materials
+              </span>
+              {Object.values(materialRates).filter(r => r.status === 'CHANGED').length > 0 && (
+                <span className="px-2.5 py-1 rounded-[8px] bg-amber-50 border border-amber-200 text-amber-800 font-semibold text-[11px]">
+                  {Object.values(materialRates).filter(r => r.status === 'CHANGED').length} Changed
+                </span>
+              )}
+              {Object.values(materialRates).filter(r => r.status === 'NEW').length > 0 && (
+                <span className="px-2.5 py-1 rounded-[8px] bg-blue-50 border border-blue-200 text-blue-800 font-semibold text-[11px]">
+                  {Object.values(materialRates).filter(r => r.status === 'NEW').length} New Material
+                </span>
+              )}
+              {Object.values(materialRates).filter(r => r.status === 'MISSING').length > 0 && (
+                <span className="px-2.5 py-1 rounded-[8px] bg-rose-50 border border-rose-200 text-rose-800 font-semibold text-[11px]">
+                  {Object.values(materialRates).filter(r => r.status === 'MISSING').length} Rate Missing
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Rates Table */}
+          <div className="overflow-x-auto border border-border-gray rounded-[10px] bg-white">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-canvas text-ink/70 font-semibold text-[10px] uppercase tracking-wider border-b border-border-gray">
+                <tr>
+                  <th className="px-4 py-2.5">Material</th>
+                  <th className="px-4 py-2.5 text-center">Master Rate</th>
+                  <th className="px-4 py-2.5 text-center">Current BOM Rate</th>
+                  <th className="px-3 py-2.5 text-center">Unit</th>
+                  <th className="px-3 py-2.5 text-center">Status</th>
+                  <th className="px-4 py-2.5 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-gray">
+                {Object.values(materialRates).map(rateItem => {
+                  const isMissing = rateItem.status === 'MISSING';
+                  const isChanged = rateItem.status === 'CHANGED';
+                  const isNew = rateItem.status === 'NEW';
+                  const isValid = rateItem.status === 'VALID';
+
+                  return (
+                    <tr key={rateItem.materialName} className="hover:bg-slate-50/70 transition-colors">
+                      {/* Material Name */}
+                      <td className="px-4 py-2.5 font-semibold text-ink font-mono text-[11px]">
+                        <div className="flex items-center gap-1.5">
+                          <span>{rateItem.materialName}</span>
+                          {rateItem.matchedMaterialName && rateItem.matchedMaterialName !== rateItem.materialName && (
+                            <span className="text-[9px] text-mute font-sans font-normal">
+                              ({rateItem.matchedMaterialName})
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Master Reference Rate */}
+                      <td className="px-4 py-2.5 text-center font-mono text-[11px] text-cool-gray">
+                        {rateItem.masterRate !== null ? (
+                          <span>₹{rateItem.masterRate.toFixed(2)} / {rateItem.defaultUom}</span>
+                        ) : (
+                          <span className="text-mute italic text-[10px]">Not Found</span>
+                        )}
+                      </td>
+
+                      {/* Current BOM Rate (Editable) */}
+                      <td className="px-4 py-2.5 text-center">
+                        <div className="inline-flex items-center gap-1 max-w-[150px] mx-auto">
+                          <span className="text-cool-gray text-xs">₹</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={rateItem.currentRate !== null && rateItem.currentRate !== undefined ? rateItem.currentRate : ''}
+                            onChange={(e) => handleMaterialRateChange(rateItem.materialName, e.target.value)}
+                            placeholder="Enter Rate"
+                            className={`w-28 text-center font-mono font-semibold text-xs rounded-[8px] px-2 py-1 transition-all focus:outline-none focus:ring-1 ${
+                              isMissing
+                                ? 'bg-rose-50 border border-rose-400 text-rose-700 placeholder:text-rose-400 focus:ring-rose-500'
+                                : isChanged
+                                ? 'bg-amber-50 border border-amber-300 text-amber-900 focus:ring-amber-500'
+                                : 'bg-canvas border border-border-gray text-ink focus:ring-primary'
+                            }`}
+                          />
+                        </div>
+                      </td>
+
+                      {/* Base Unit */}
+                      <td className="px-3 py-2.5 text-center font-mono text-[11px] text-cool-gray">
+                        {rateItem.defaultUom}
+                      </td>
+
+                      {/* Status Badge */}
+                      <td className="px-3 py-2.5 text-center">
+                        {isValid && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" /> Valid
+                          </span>
+                        )}
+                        {isChanged && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200" title="Custom rate applied for this BOM transaction">
+                            <RefreshCw className="w-3 h-3" /> Changed
+                          </span>
+                        )}
+                        {isNew && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                            <Plus className="w-3 h-3" /> New Material
+                          </span>
+                        )}
+                        {isMissing && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
+                            <AlertCircle className="w-3 h-3" /> Rate Missing
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Action */}
+                      <td className="px-4 py-2.5 text-center">
+                        {isNew ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAddMaterialModal(rateItem.materialName, rateItem.currentRate)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[8px] bg-primary hover:bg-primary-hover text-white text-[11px] font-semibold transition-all shadow-subtle cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Add Material</span>
+                          </button>
+                        ) : isChanged ? (
+                          <button
+                            type="button"
+                            onClick={() => handleResetRateToMaster(rateItem.materialName)}
+                            className="text-[10px] font-medium text-cool-gray hover:text-ink underline transition-colors cursor-pointer"
+                            title="Reset to Master Reference Rate"
+                          >
+                            Reset to Master
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-mute">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Form Action Footer */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-1.5 text-[11px] text-cool-gray">
+              <Lock className="w-3.5 h-3.5 text-cool-gray shrink-0" />
+              <span>
+                Confirmed rates are applied directly to this BOM/PO. Master Data reference standard costs are preserved.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleConfirmRatesAndContinue}
+              className={`inline-flex items-center gap-2 px-5 py-2 rounded-[12px] font-semibold text-xs shadow-subtle transition-all cursor-pointer ${
+                Object.values(materialRates).some(r => r.currentRate === null || r.currentRate <= 0)
+                  ? 'bg-canvas border border-border-gray text-mute cursor-not-allowed opacity-70'
+                  : 'bg-primary hover:bg-primary-hover active:scale-[0.98] text-white'
+              }`}
+            >
+              <Check className="w-4 h-4" />
+              <span>Confirm Rates & Continue</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Preview & Correction Workspace */}
       {rows.length > 0 && (
         (() => {
@@ -1504,7 +2056,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
               <tbody className="divide-y divide-border-gray">
                 {(() => {
                   const renderRow = (row: ParsedBOMRow, idxOrTree: number | boolean = false, level = 0, isParent = false, isExpanded = false) => {
-                    const isMissingMat = !row.isBoughtOut && !row.matchedMaterialId;
+                    const isMissingMat = !row.materialInput || !row.materialInput.trim();
                     const isMissingRate = (!row.rate || Number(row.rate) <= 0 || isNaN(Number(row.rate)));
                     const isMissingBasic = (!row.basicCost || Number(row.basicCost) <= 0 || isNaN(Number(row.basicCost)));
                     const gstPctVal = Number(row.gstPercent !== undefined && row.gstPercent !== null ? row.gstPercent : 18);
@@ -1559,17 +2111,53 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           />
                         </td>
 
-                        {/* FINISH (L x W x H) */}
+                        {/* FINISH (L x W x H or Ø Dia x Len) */}
                         <td className="px-1 py-1.5 text-center">
                           {row.isBoughtOut ? (
                             <span className="text-zinc-400 text-[10px] font-mono">-</span>
+                          ) : row.finishL === 'Ø' || String(row.finishSize).startsWith('Ø') ? (
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => toggleFinishShape(row.id)}
+                                className="px-1.5 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 font-bold font-mono text-[10px] cursor-pointer transition-colors shadow-xs"
+                                title="Cylindrical Round Bar (Ø Dia × Len). Click to switch to Rectangular (L × W × H)"
+                              >
+                                Ø
+                              </button>
+                              <input 
+                                type="text" 
+                                value={row.finishW || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'finishW', e.target.value)}
+                                placeholder="Dia"
+                                title="Finished Diameter (mm)"
+                                className="w-11 bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <span className="text-cool-gray text-[9px] font-semibold">×</span>
+                              <input 
+                                type="text" 
+                                value={row.finishH || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'finishH', e.target.value)}
+                                placeholder="Len"
+                                title="Finished Length (mm)"
+                                className="w-11 bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
                           ) : (
                             <div className="flex items-center justify-center gap-0.5">
                               <input 
                                 type="text" 
                                 value={row.finishL || ''} 
-                                onChange={(e) => handleCellEdit(row.id, 'finishL', e.target.value)}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === 'Ø' || val.toLowerCase() === 'dia') {
+                                    handleCellEdit(row.id, 'finishL', 'Ø');
+                                  } else {
+                                    handleCellEdit(row.id, 'finishL', val);
+                                  }
+                                }}
                                 placeholder="L"
+                                title="Finished Length (mm) — or type Ø for Round"
                                 className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                               <span className="text-cool-gray text-[9px]">×</span>
@@ -1578,6 +2166,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                                 value={row.finishW || ''} 
                                 onChange={(e) => handleCellEdit(row.id, 'finishW', e.target.value)}
                                 placeholder="W"
+                                title="Finished Width (mm)"
                                 className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                               <span className="text-cool-gray text-[9px]">×</span>
@@ -1586,23 +2175,60 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                                 value={row.finishH || ''} 
                                 onChange={(e) => handleCellEdit(row.id, 'finishH', e.target.value)}
                                 placeholder="H"
+                                title="Finished Height / Thickness (mm)"
                                 className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                             </div>
                           )}
                         </td>
 
-                        {/* RM SIZE (L x W x H) */}
+                        {/* RM SIZE (L x W x H or Ø Dia x Len) */}
                         <td className="px-1 py-1.5 text-center">
                           {row.isBoughtOut ? (
                             <span className="text-zinc-400 text-[10px] font-mono">-</span>
+                          ) : row.length === 'Ø' || String(row.rawMaterialSize).startsWith('Ø') ? (
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => toggleRmShape(row.id)}
+                                className="px-1.5 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 font-bold font-mono text-[10px] cursor-pointer transition-colors shadow-xs"
+                                title="Cylindrical Round Bar (Ø Dia × Len). Click to switch to Rectangular (L × W × H)"
+                              >
+                                Ø
+                              </button>
+                              <input 
+                                type="text" 
+                                value={row.width || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'width', e.target.value)}
+                                placeholder="Dia"
+                                title="Raw Material Diameter (mm)"
+                                className="w-11 bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <span className="text-cool-gray text-[9px] font-semibold">×</span>
+                              <input 
+                                type="text" 
+                                value={row.height || ''} 
+                                onChange={(e) => handleCellEdit(row.id, 'height', e.target.value)}
+                                placeholder="Len"
+                                title="Raw Material Length (mm)"
+                                className="w-11 bg-canvas border border-border-gray rounded px-1 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
                           ) : (
                             <div className="flex items-center justify-center gap-0.5">
                               <input 
                                 type="text" 
                                 value={row.length || ''} 
-                                onChange={(e) => handleCellEdit(row.id, 'length', e.target.value)}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === 'Ø' || val.toLowerCase() === 'dia') {
+                                    handleCellEdit(row.id, 'length', 'Ø');
+                                  } else {
+                                    handleCellEdit(row.id, 'length', val);
+                                  }
+                                }}
                                 placeholder="L"
+                                title="Raw Material Length (mm) — or type Ø for Round"
                                 className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                               <span className="text-cool-gray text-[9px]">×</span>
@@ -1611,6 +2237,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                                 value={row.width || ''} 
                                 onChange={(e) => handleCellEdit(row.id, 'width', e.target.value)}
                                 placeholder="W"
+                                title="Raw Material Width (mm)"
                                 className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                               <span className="text-cool-gray text-[9px]">×</span>
@@ -1619,6 +2246,7 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                                 value={row.height || ''} 
                                 onChange={(e) => handleCellEdit(row.id, 'height', e.target.value)}
                                 placeholder="H"
+                                title="Raw Material Height / Thickness (mm)"
                                 className="w-9 bg-canvas border border-border-gray rounded px-0.5 py-0.5 text-center font-mono text-ink text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                             </div>
@@ -1627,45 +2255,20 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
 
                         {/* MATERIAL */}
                         <td className="px-1.5 py-1.5 text-left">
-                          <select 
-                            value={row.matchedMaterialId || ''} 
-                            onChange={(e) => {
-                              const selectedId = e.target.value;
-                              const selected = allMaterials.find((m: any) => m.id === selectedId);
-                              if (selected) {
-                                if (selected.materialCode === 'STD') {
-                                  row.isBoughtOut = true;
-                                  row.matchedMaterialId = selected.id;
-                                  row.matchedMaterialName = `${selected.materialCode} - ${selected.materialGrade || selected.materialName}`;
-                                  row.materialInput = 'STD';
-                                  row.rate = row.rate || row.unitCost || 0;
-                                  row.unitCost = row.rate;
-                                } else {
-                                  row.isBoughtOut = false;
-                                  row.matchedMaterialId = selected.id;
-                                  row.matchedMaterialName = `${selected.materialCode} - ${selected.materialGrade}`;
-                                  row.materialInput = `${selected.materialCode} - ${selected.materialGrade}`;
-                                }
-                                handleCellEdit(row.id, 'matchedMaterialId', selectedId);
-                              }
-                            }}
-                            className={`w-full text-[10px] rounded px-1 py-0.5 focus:outline-none font-medium cursor-pointer border ${
+                          <input 
+                            type="text" 
+                            value={row.materialInput || ''} 
+                            onChange={(e) => handleCellEdit(row.id, 'materialInput', e.target.value)}
+                            placeholder="Material from Excel"
+                            className={`w-full text-[10px] rounded px-1.5 py-0.5 focus:outline-none font-medium border font-mono ${
                               row.isBoughtOut
                                 ? 'bg-amber-50/50 border-amber-300 text-amber-900 font-semibold'
                                 : isMissingMat 
-                                  ? 'bg-rose-50 border-rose-400 text-rose-700' 
-                                  : 'bg-canvas border-border-gray text-ink'
+                                  ? 'bg-rose-50 border-rose-400 text-rose-700 placeholder:text-rose-400' 
+                                  : 'bg-canvas border-border-gray text-ink focus:ring-1 focus:ring-primary'
                             }`}
-                          >
-                            {!row.isBoughtOut && !row.matchedMaterialId && (
-                              <option value="">-- Select Material --</option>
-                            )}
-                            {allMaterials.map((m: any) => (
-                              <option key={m.id} value={m.id} className={m.materialCode === 'STD' ? 'font-semibold text-amber-700' : ''}>
-                                {m.materialCode} - {m.materialGrade || m.materialName}
-                              </option>
-                            ))}
-                          </select>
+                            title={row.matchedMaterialName ? `Matched Master: ${row.matchedMaterialName}` : (row.materialInput || 'Enter material')}
+                          />
                         </td>
 
                         {/* TYPE */}
@@ -1822,6 +2425,153 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
           }
           return content;
         })()
+      )}
+
+      {/* ── QUICK ADD NEW MATERIAL MODAL ── */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white border border-border-gray rounded-[16px] shadow-2xl max-w-md w-full p-6 space-y-4 relative animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-border-gray pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-[8px] bg-primary/10 text-primary">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-ink uppercase tracking-wide">ADD NEW MATERIAL</h3>
+                  <p className="text-[11px] text-cool-gray">Register material in Material Master & confirm BOM rate</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="p-1 text-cool-gray hover:text-ink rounded-lg hover:bg-canvas transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNewMaterial} className="space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-cool-gray tracking-wider uppercase">
+                    Material Code / Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newMaterialForm.materialCode}
+                    onChange={(e) => setNewMaterialForm(prev => ({ ...prev, materialCode: e.target.value }))}
+                    placeholder="e.g. SPECIAL-XYZ"
+                    className="w-full bg-canvas border border-border-gray rounded-[10px] px-3 py-1.5 text-xs text-ink font-mono focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-cool-gray tracking-wider uppercase">
+                    Material Grade *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newMaterialForm.materialGrade}
+                    onChange={(e) => setNewMaterialForm(prev => ({ ...prev, materialGrade: e.target.value }))}
+                    placeholder="e.g. Special Tool Steel"
+                    className="w-full bg-canvas border border-border-gray rounded-[10px] px-3 py-1.5 text-xs text-ink focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-cool-gray tracking-wider uppercase">
+                    Rate (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={newMaterialForm.standardCost}
+                    onChange={(e) => setNewMaterialForm(prev => ({ ...prev, standardCost: e.target.value === '' ? '' : parseFloat(e.target.value) }))}
+                    placeholder="e.g. 350"
+                    className="w-full bg-canvas border border-border-gray rounded-[10px] px-3 py-1.5 text-xs text-ink font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-cool-gray tracking-wider uppercase">
+                    Base Unit (UOM) *
+                  </label>
+                  <select
+                    value={newMaterialForm.defaultUom}
+                    onChange={(e) => setNewMaterialForm(prev => ({ ...prev, defaultUom: e.target.value }))}
+                    className="w-full bg-canvas border border-border-gray rounded-[10px] px-3 py-1.5 text-xs text-ink font-medium focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+                  >
+                    <option value="KG">Kilograms (KG)</option>
+                    <option value="NOS">Numbers (NOS)</option>
+                    <option value="MTR">Meters (MTR)</option>
+                    <option value="LTR">Liters (LTR)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-cool-gray tracking-wider uppercase">
+                    Density (g/cm³)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newMaterialForm.density}
+                    onChange={(e) => setNewMaterialForm(prev => ({ ...prev, density: parseFloat(e.target.value) || 7.85 }))}
+                    placeholder="7.85"
+                    className="w-full bg-canvas border border-border-gray rounded-[10px] px-3 py-1.5 text-xs text-ink font-mono focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-cool-gray tracking-wider uppercase">
+                    GST %
+                  </label>
+                  <input
+                    type="number"
+                    value={newMaterialForm.gstPercent}
+                    onChange={(e) => setNewMaterialForm(prev => ({ ...prev, gstPercent: parseFloat(e.target.value) || 18 }))}
+                    placeholder="18"
+                    className="w-full bg-canvas border border-border-gray rounded-[10px] px-3 py-1.5 text-xs text-ink font-mono focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-cool-gray tracking-wider uppercase">
+                    HSN Code
+                  </label>
+                  <input
+                    type="text"
+                    value={newMaterialForm.hsnCode}
+                    onChange={(e) => setNewMaterialForm(prev => ({ ...prev, hsnCode: e.target.value }))}
+                    placeholder="e.g. 7228"
+                    className="w-full bg-canvas border border-border-gray rounded-[10px] px-3 py-1.5 text-xs text-ink font-mono focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-gray">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 rounded-[10px] bg-canvas hover:bg-slate-100 border border-border-gray text-xs font-semibold text-cool-gray transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={newMaterialForm.isSaving}
+                  className="px-4.5 py-2 rounded-[10px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  {newMaterialForm.isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Save Material</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
     </div>

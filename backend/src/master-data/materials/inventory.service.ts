@@ -58,6 +58,7 @@ export class InventoryService {
     currentQty: number;
     unitCost?: number;
     locationId?: string;
+    warehouseId?: string;
   }) {
     const batchNumber = data.batchNumber || `BAT-MAN-${Date.now()}`;
     const newBatch = await this.prisma.inventoryBatch.create({
@@ -85,6 +86,41 @@ export class InventoryService {
         remarks: 'Manual Stock Intake',
       }
     });
+
+    // Resolve warehouse and synchronize inventoryStock ledger
+    let targetWarehouseId = data.warehouseId;
+    if (!targetWarehouseId && data.locationId) {
+      const loc = await this.prisma.storageLocation.findUnique({
+        where: { id: data.locationId },
+        select: { warehouseId: true }
+      });
+      targetWarehouseId = loc?.warehouseId;
+    }
+    if (!targetWarehouseId) {
+      const defaultWh = await this.prisma.warehouse.findFirst({ where: { status: 'ACTIVE' } }) || await this.prisma.warehouse.findFirst();
+      targetWarehouseId = defaultWh?.id;
+    }
+
+    if (targetWarehouseId) {
+      await this.prisma.inventoryStock.upsert({
+        where: {
+          materialId_warehouseId: {
+            materialId: data.materialId,
+            warehouseId: targetWarehouseId,
+          }
+        },
+        create: {
+          materialId: data.materialId,
+          warehouseId: targetWarehouseId,
+          currentQuantity: data.currentQty,
+          availableQuantity: data.currentQty,
+        },
+        update: {
+          currentQuantity: { increment: data.currentQty },
+          availableQuantity: { increment: data.currentQty },
+        }
+      });
+    }
 
     return newBatch;
   }

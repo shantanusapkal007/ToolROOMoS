@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { RefreshCw, ArrowRight, Package, CheckCircle2, Plus, Sparkles, Filter, Search } from "lucide-react";
+import { RefreshCw, ArrowRight, Package, CheckCircle2, Plus, Filter, Search } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { InterSectionTransferModal, MaterialTransferRecord } from "../InterSectionTransferModal";
 
@@ -133,7 +133,7 @@ export function TransfersSection({ projectCode = "KTD-433", materialIssues = [],
             </span>
           </div>
           <div className="w-9 h-9 rounded-[10px] bg-semantic-success-subtle text-semantic-success-dark flex items-center justify-center">
-            <Sparkles className="w-4.5 h-4.5" />
+            <CheckCircle2 className="w-4.5 h-4.5" />
           </div>
         </div>
       </div>

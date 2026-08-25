@@ -58,6 +58,16 @@ export class MaintenanceService {
     const machine = await this.prisma.machine.findUnique({ where: { id: createDto.machineId }});
     if (!machine) throw new NotFoundException('Machine not found');
 
+    if (createDto.projectId) {
+      const project = await this.prisma.project.findUnique({ where: { id: createDto.projectId } });
+      if (!project) throw new NotFoundException('Project not found');
+    }
+
+    if (createDto.assignedToId) {
+      const assignedUser = await this.prisma.user.findUnique({ where: { id: createDto.assignedToId } });
+      if (!assignedUser) throw new NotFoundException('Assigned technician not found');
+    }
+
     const count = await this.prisma.maintenanceTicket.count();
     const ticketNumber = `MT-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
 
@@ -72,6 +82,7 @@ export class MaintenanceService {
         category: createDto.category || null,
         assignedToId: createDto.assignedToId || null,
         downtimeStartedAt: createDto.downtimeStartedAt ? new Date(createDto.downtimeStartedAt) : null,
+        lotoApplied: Boolean(createDto.lotoApplied),
         reportedById: userId,
         status: 'OPEN',
       },
@@ -218,6 +229,62 @@ export class MaintenanceService {
 
       if (totalMaterialCost > 0) {
         await this.logFinancialCost(tx, ticketId, totalMaterialCost, `Spare Part: ${sparePartDto.quantityConsumed}x ${material.materialCode}`);
+      }
+
+      // Decrement inventory stock for consumed maintenance spare parts
+      const warehouse = await tx.warehouse.findFirst({ where: { status: 'ACTIVE' } }) || await tx.warehouse.findFirst();
+      if (warehouse) {
+        const stock = await tx.inventoryStock.findUnique({
+          where: {
+            materialId_warehouseId: {
+              materialId: sparePartDto.materialId,
+              warehouseId: warehouse.id,
+            }
+          }
+        });
+
+        if (stock) {
+          await tx.inventoryStock.update({
+            where: {
+              materialId_warehouseId: {
+                materialId: sparePartDto.materialId,
+                warehouseId: warehouse.id,
+              }
+            },
+            data: {
+              currentQuantity: { decrement: sparePartDto.quantityConsumed },
+              availableQuantity: { decrement: sparePartDto.quantityConsumed },
+            }
+          });
+        }
+      }
+
+      // Decrement inventory batches via FIFO and log transaction
+      const batches = await tx.inventoryBatch.findMany({
+        where: { materialId: sparePartDto.materialId, currentQty: { gt: 0 } },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      let remainingToDeduct = sparePartDto.quantityConsumed;
+      for (const batch of batches) {
+        if (remainingToDeduct <= 0) break;
+        const deduct = Math.min(Number(batch.currentQty), remainingToDeduct);
+        await tx.inventoryBatch.update({
+          where: { id: batch.id },
+          data: {
+            currentQty: { decrement: deduct },
+            availableQty: { decrement: deduct },
+          }
+        });
+        await tx.inventoryTransaction.create({
+          data: {
+            inventoryBatchId: batch.id,
+            movementType: 'MATERIAL_ISSUE',
+            quantity: deduct,
+            remarks: `Maintenance Spare Part for Ticket`,
+          }
+        });
+        remainingToDeduct -= deduct;
       }
 
       return sparePart;

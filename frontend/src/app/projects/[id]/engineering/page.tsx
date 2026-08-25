@@ -23,32 +23,39 @@ export default function ProjectEngineeringPage() {
   const handleSaveBOM = async (rows: any[]) => {
     try {
       const stdMatId = rawMaterials.find((m: any) => m.materialCode === 'STD')?.id;
-      const items = rows.map(r => ({
-        materialId: r.matchedMaterialId || (r.isBoughtOut ? stdMatId : r.materialId),
-        requiredQty: Number(r.quantity) || 1,
-        estimatedCost: Number(r.basicCost) || 0,
-        rawSize: r.rawMaterialSize || r.rawSize || '',
-        calculatedWeight: Number(r.totalWeight) || 0,
-        dimensions: r.length && r.width && r.height ? `${r.length}x${r.width}x${r.height}` : undefined,
-        hsnCode: r.hsnCode || undefined,
-        gstPercent: r.gstPercent || undefined,
-        customFields: {
-          srNo: r.srNo,
-          partName: r.partName || project?.partName || project?.name || '',
-          finishSize: r.finishSize,
-          rawMaterialSize: r.rawMaterialSize,
-          length: r.length,
-          width: r.width,
-          height: r.height,
-          apWeight: r.apWeight,
-          totalWeight: r.totalWeight,
-          basicCost: r.basicCost,
-          isBoughtOut: r.isBoughtOut || false,
-          unitCost: r.unitCost || 0,
-          materialInput: r.materialInput || (r.isBoughtOut ? 'STD' : ''),
-          rate: r.rate
-        }
-      }));
+      const items = rows.map(r => {
+        const canonicalDim = r.length === 'Ø'
+          ? `Ø${r.width}X${r.height}`
+          : (r.length && r.width && r.height && r.length !== '-' ? `${r.length}X${r.width}X${r.height}` : undefined);
+        const resolvedRawSize = r.rawMaterialSize || canonicalDim || '';
+
+        return {
+          materialId: r.matchedMaterialId || (r.isBoughtOut ? stdMatId : r.materialId),
+          requiredQty: Number(r.quantity) || 1,
+          estimatedCost: Number(r.basicCost) || 0,
+          rawSize: resolvedRawSize,
+          calculatedWeight: Number(r.totalWeight) || 0,
+          dimensions: resolvedRawSize || canonicalDim,
+          hsnCode: r.hsnCode || undefined,
+          gstPercent: r.gstPercent || undefined,
+          customFields: {
+            srNo: r.srNo,
+            partName: r.partName || project?.partName || project?.name || '',
+            finishSize: r.finishSize,
+            rawMaterialSize: resolvedRawSize,
+            length: r.length,
+            width: r.width,
+            height: r.height,
+            apWeight: r.apWeight,
+            totalWeight: r.totalWeight,
+            basicCost: r.basicCost,
+            isBoughtOut: r.isBoughtOut || false,
+            unitCost: r.unitCost || 0,
+            materialInput: r.materialInput || (r.isBoughtOut ? 'STD' : ''),
+            rate: r.rate
+          }
+        };
+      });
       await updateBOMMutation.mutateAsync({ items });
       success("BOM Saved", "Bill of Materials saved successfully.");
     } catch (err: any) {
@@ -63,28 +70,35 @@ export default function ProjectEngineeringPage() {
       await handleSaveBOM(rows);
 
       // 2. Automatically generate Purchase Order in database
-      const poItems = rows.map((r, idx) => ({
-        materialId: r.matchedMaterialId || undefined,
-        orderedQty: Number(r.quantity) || 1,
-        agreedRate: Number(r.rate) || 0,
-        basicValue: Number(r.basicCost) || 0,
-        dimensions: r.rawMaterialSize || (r.length && r.width && r.height ? `${r.length} x ${r.width} x ${r.height}` : ''),
-        hsnCode: r.hsnCode || '',
-        gstPercent: Number(r.gstPercent) || 18,
-        remarks: r.partName || r.description || `BOM Item #${r.srNo || idx + 1}`,
-        customFields: {
-          toolNo: r.toolNo || project?.projectNumber || 'PRJ-TOOL',
-          detNo: String(r.srNo || idx + 1),
-          length: String(r.length || ''),
-          width: String(r.width || ''),
-          height: String(r.height || ''),
-          materialGrade: r.materialInput || 'MS',
-          apWt: Number(r.apWeight) || 0,
-          totalWt: Number(r.totalWeight) || 0,
-          gstAmount: Number(r.basicCost ? r.basicCost * 0.18 : 0),
-          lineTotal: Number(r.basicCost ? r.basicCost * 1.18 : 0)
-        }
-      }));
+      const poItems = rows.map((r, idx) => {
+        const canonicalDim = r.length === 'Ø'
+          ? `Ø${r.width}X${r.height}`
+          : (r.length && r.width && r.height && r.length !== '-' ? `${r.length}X${r.width}X${r.height}` : '');
+        const resolvedDim = r.rawMaterialSize || canonicalDim || '';
+
+        return {
+          materialId: r.matchedMaterialId || undefined,
+          orderedQty: Number(r.quantity) || 1,
+          agreedRate: Number(r.rate) || 0,
+          basicValue: Number(r.basicCost) || 0,
+          dimensions: resolvedDim,
+          hsnCode: r.hsnCode || '',
+          gstPercent: Number(r.gstPercent) || 18,
+          remarks: r.partName || r.description || `BOM Item #${r.srNo || idx + 1}`,
+          customFields: {
+            toolNo: r.toolNo || project?.projectNumber || 'PRJ-TOOL',
+            detNo: String(r.srNo || idx + 1),
+            length: String(r.length || ''),
+            width: String(r.width || ''),
+            height: String(r.height || ''),
+            materialGrade: r.materialInput || 'MS',
+            apWt: Number(r.apWeight) || 0,
+            totalWt: Number(r.totalWeight) || 0,
+            gstAmount: Number(r.basicCost ? r.basicCost * 0.18 : 0),
+            lineTotal: Number(r.basicCost ? r.basicCost * 1.18 : 0)
+          }
+        };
+      });
 
       const generatedPoNum = `PO/${project?.projectNumber || 'TOOL'}/${Date.now().toString().slice(-4)}`;
 

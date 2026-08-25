@@ -71,7 +71,6 @@ export default function ProjectProductionPage() {
       section: header.productionSection,
       materialName: item.inventoryBatch?.material?.materialName || item.inventoryBatch?.material?.materialGrade || 'Raw Material',
       batchNumber: item.inventoryBatch?.batchNumber || '-',
-      heatNumber: item.inventoryBatch?.heatNumber || '-',
       issuedQty: Number(item.issuedQty || 0),
       date: new Date(header.createdAt).toLocaleDateString('en-GB'),
       remarks: item.remarks || header.remarks || '-',

@@ -49,7 +49,6 @@ export default function InventoryPage() {
   const [stockForm, setStockForm] = useState({
     materialId: '',
     batchNumber: '',
-    heatNumber: '',
     currentQty: 1,
     unitCost: 0,
   });
@@ -110,7 +109,7 @@ export default function InventoryPage() {
       await InventoryService.createBatch(stockForm);
       showToast('success', 'Stock batch added to Inventory Ledger!');
       setIsAddStockOpen(false);
-      setStockForm({ materialId: '', batchNumber: '', heatNumber: '', currentQty: 1, unitCost: 0 });
+      setStockForm({ materialId: '', batchNumber: '', currentQty: 1, unitCost: 0 });
       refetchLedger();
     } catch (err: any) {
       showToast('error', err.response?.data?.message || 'Failed to add stock batch.');
@@ -203,7 +202,6 @@ export default function InventoryPage() {
         receivedQty: Number(item.receivedQty || 1),
         acceptedQty: Number(item.acceptedQty || 1),
         rejectedQty: Number(item.rejectedQty || 0),
-        heatNumber: item.heatNumber || 'HT-001',
         rate: Number(item.actualRate || 0),
         basicCost: Number(item.basicCost || 0),
         gst: Number(item.gst || 0),
@@ -222,7 +220,6 @@ export default function InventoryPage() {
       items: (rawIssue.items || []).map((item: any) => ({
         materialName: item.inventoryBatch?.material?.materialName || item.inventoryBatch?.material?.materialGrade || 'Raw Material',
         batchNumber: item.inventoryBatch?.batchNumber || '',
-        heatNumber: item.inventoryBatch?.heatNumber || '',
         issuedQty: Number(item.issuedQty || 1),
         unitCost: Number(item.inventoryBatch?.unitCost || 0),
         totalValue: Number(item.materialValue || 0),
@@ -239,7 +236,6 @@ export default function InventoryPage() {
       batch.material?.materialCode?.toLowerCase().includes(term) ||
       batch.material?.materialGrade?.toLowerCase().includes(term) ||
       batch.batchNumber?.toLowerCase().includes(term) ||
-      batch.heatNumber?.toLowerCase().includes(term) ||
       batch.location?.warehouse?.warehouseName?.toLowerCase().includes(term)
     );
   });
@@ -446,10 +442,10 @@ export default function InventoryPage() {
               type="text" 
               placeholder={
                 activeTab === 'grn' 
-                  ? "Search by GRN #, PO #, Project, Heat # or Supplier..." 
+                  ? "Search by GRN #, PO #, Project, or Supplier..." 
                   : activeTab === 'issues' 
-                  ? "Search by Issue #, Project, Section, or Recipient..." 
-                  : "Search by material code, grade, heat # or batch..."
+                  ? "Search by Issue #, Project, Section, or Material..." 
+                  : "Search by material code, grade, or batch..."
               }
               className="w-full bg-canvas border border-border-gray rounded-[10px] pl-10 pr-4 py-2 text-xs text-ink placeholder:text-silver-blue focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               value={searchTerm}
@@ -590,7 +586,6 @@ export default function InventoryPage() {
                                 </div>
                                 <div className="text-[10px] text-zinc-400 font-mono uppercase flex items-center gap-1.5 mt-0.5">
                                   <span className="font-bold text-zinc-600">{batch.batchNumber}</span>
-                                  {batch.heatNumber && <span>· Heat: {batch.heatNumber}</span>}
                                   <span>· {formatDate(batch.createdAt)}</span>
                                 </div>
                               </div>
@@ -772,7 +767,6 @@ export default function InventoryPage() {
                       <th className="p-2">DET</th>
                       <th className="p-2">Item Description</th>
                       <th className="p-2 text-center">Dimensions (mm)</th>
-                      <th className="p-2 text-center">Heat #</th>
                       <th className="p-2 text-right">Recv Qty</th>
                       <th className="p-2 text-right">Total Wt (kg)</th>
                       <th className="p-2 text-right">Rate</th>
@@ -786,9 +780,10 @@ export default function InventoryPage() {
                         <td className="p-2 text-center font-bold text-ink">{item.detNo || idx + 1}</td>
                         <td className="p-2 font-sans font-semibold text-ink">{item.remarks || item.poItem?.material?.materialGrade || 'Raw Material'}</td>
                         <td className="p-2 text-center text-zinc-600">
-                          {item.length && item.width && item.height ? `${item.length}×${item.width}×${item.height}` : '-'}
+                          {String(item.length || '').startsWith('Ø') || item.length === 'Ø'
+                            ? `Ø${item.width}×${item.height}`
+                            : (item.length && item.width && item.height ? `${item.length}×${item.width}×${item.height}` : '-')}
                         </td>
-                        <td className="p-2 text-center font-bold text-amber-700">{item.heatNumber || '-'}</td>
                         <td className="p-2 text-right font-bold text-ink">{item.receivedQty}</td>
                         <td className="p-2 text-right text-emerald-700">{item.totalWeight ? Number(item.totalWeight).toFixed(2) : '-'}</td>
                         <td className="p-2 text-right text-zinc-700">{item.actualRate ? Number(item.actualRate).toFixed(2) : '-'}</td>
@@ -835,7 +830,6 @@ export default function InventoryPage() {
                 items: (printIssueData.items || []).map((i: any) => ({
                   materialName: i.inventoryBatch?.material?.materialName || i.inventoryBatch?.material?.materialGrade || "Raw Steel",
                   batchNumber: i.inventoryBatch?.batchNumber || "BATCH-001",
-                  heatNumber: i.inventoryBatch?.heatNumber || "HT-001",
                   issuedQty: Number(i.issuedQty || 1),
                   unitCost: Number(i.inventoryBatch?.unitCost || 0),
                   totalValue: Number(i.materialValue || 0),
@@ -897,16 +891,6 @@ export default function InventoryPage() {
                       placeholder="e.g. BATCH-2026-01"
                       value={stockForm.batchNumber}
                       onChange={(e) => setStockForm({ ...stockForm, batchNumber: e.target.value })}
-                      className="w-full border border-border-gray rounded-[10px] px-3.5 py-2 text-xs font-mono focus:ring-1 focus:ring-primary focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Heat Number</label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. HEAT-9942"
-                      value={stockForm.heatNumber}
-                      onChange={(e) => setStockForm({ ...stockForm, heatNumber: e.target.value })}
                       className="w-full border border-border-gray rounded-[10px] px-3.5 py-2 text-xs font-mono focus:ring-1 focus:ring-primary focus:outline-none"
                     />
                   </div>

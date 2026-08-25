@@ -11,13 +11,19 @@ import { CreateTicketModal } from './components/CreateTicketModal';
 import { Button } from '../../components/ui/Button';
 
 export default function MaintenancePage() {
-  const { data: tickets, isLoading } = useMaintenanceTickets();
+  const { data: rawTickets, isLoading } = useMaintenanceTickets();
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const openTickets = tickets?.filter((t: any) => t.status === 'OPEN' || t.status === 'IN_PROGRESS') || [];
-  const resolvedTickets = tickets?.filter((t: any) => t.status === 'RESOLVED') || [];
-  const activeLoto = tickets?.filter((t: any) => t.lotoApplied && t.status !== 'RESOLVED' && t.status !== 'CLOSED')?.length || 0;
+  const tickets = Array.isArray(rawTickets)
+    ? rawTickets
+    : Array.isArray((rawTickets as any)?.data)
+    ? (rawTickets as any).data
+    : [];
+
+  const openTickets = tickets.filter((t: any) => t.status === 'OPEN' || t.status === 'IN_PROGRESS');
+  const resolvedTickets = tickets.filter((t: any) => t.status === 'RESOLVED');
+  const activeLoto = tickets.filter((t: any) => t.lotoApplied && t.status !== 'RESOLVED' && t.status !== 'CLOSED').length;
 
   return (
     <AppLayout>

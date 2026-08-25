@@ -19,7 +19,6 @@ export interface GrnExportData {
     receivedQty: number;
     acceptedQty: number;
     rejectedQty: number;
-    heatNumber: string;
     rate: number;
     basicCost: number;
     gst: number;
@@ -114,7 +113,7 @@ export async function exportGrnToExcel(data: GrnExportData) {
   const headers = [
     'SR.NO', 'TOOL NO', 'DET NO', 'L', 'W', 'H', 'MATERIAL',
     'QTY ORDERED', 'QTY RECEIVED', 'QTY ACCEPTED', 'QTY REJECTED',
-    'HEAT NUMBER', 'RATE (₹)', 'BASIC COST (₹)', 'GST (₹)', 'TOTAL (₹)', 'REMARKS'
+    'RATE (₹)', 'BASIC COST (₹)', 'GST (₹)', 'TOTAL (₹)', 'REMARKS'
   ];
 
   sheet.getRow(r).height = 24;
@@ -166,7 +165,6 @@ export async function exportGrnToExcel(data: GrnExportData) {
       rec,
       acc,
       rej,
-      item.heatNumber || '',
       item.rate || 0,
       basic,
       gst,
@@ -253,7 +251,6 @@ export async function exportGrnToExcel(data: GrnExportData) {
     { width: 14 },  // QTY RECEIVED
     { width: 14 },  // QTY ACCEPTED
     { width: 14 },  // QTY REJECTED
-    { width: 16 },  // HEAT NUMBER
     { width: 12 },  // RATE
     { width: 15 },  // BASIC COST
     { width: 12 },  // GST

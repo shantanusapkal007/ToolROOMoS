@@ -199,19 +199,6 @@ export class InvoicesService {
         }
       });
 
-      // Log financial audit event for payment received
-      await tx.projectCostEvent.create({
-        data: {
-          projectId: targetProjectId,
-          costType: 'REVENUE',
-          description: `Customer payment received for Invoice ${invoice.invoiceNumber}. Ref: ${dto.paymentReference || 'N/A'}. Amount: ₹${Number(paymentAmount).toLocaleString('en-IN')}`,
-          amount: paymentAmount,
-          referenceDocType: 'INVOICE_PAYMENT',
-          referenceDocId: dto.invoiceId,
-          createdBy: userId,
-        },
-      });
-
       // Update project stage to PAYMENT_PENDING if it was INVOICED
       // (Assuming PAYMENT_PENDING means we are actively collecting, but if it's PAID, we can just move to CLOSED or let user close it)
       const project = await tx.project.findUnique({ where: { id: targetProjectId } });

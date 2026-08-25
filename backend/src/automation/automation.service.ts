@@ -93,13 +93,16 @@ export class AutomationService {
       
       for (const machine of machines) {
         // 2. Fetch today's MSDRs for this machine
-        const msdrs = await this.prisma.machineShopDailyReport.findMany({
+        const msdrs = await this.prisma.msdrHeader.findMany({
           where: {
             machineId: machine.id,
             reportDate: {
               gte: today,
               lt: tomorrow
             }
+          },
+          include: {
+            operations: true,
           }
         });
 
@@ -110,12 +113,13 @@ export class AutomationService {
         let goodParts = 0;
 
         for (const msdr of msdrs) {
-          const cutTime = msdr.cuttingTime ? Number(msdr.cuttingTime) : 0;
-          const setupTime = msdr.setupTime ? Number(msdr.setupTime) : 0;
-          
-          operatingTime += cutTime + setupTime;
-          totalParts += (Number(msdr.producedQty) + Number(msdr.scrapQty));
-          goodParts += Number(msdr.producedQty);
+          for (const op of msdr.operations) {
+            const runTime = Number(op.runningHours || 0);
+            const qty = Number(op.producedQty || 0);
+            operatingTime += runTime;
+            totalParts += qty;
+            goodParts += qty;
+          }
         }
 
         const plannedTime = 8; // Standard 8-hour shift fallback. A more robust implementation would fetch the machine calendar.

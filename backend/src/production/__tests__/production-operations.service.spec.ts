@@ -5,6 +5,11 @@ import { WipService } from '../wip.service';
 
 const mockPrismaService = {
   $transaction: jest.fn(),
+  project: {
+    findUniqueOrThrow: jest.fn().mockResolvedValue({ id: 'proj-1', currentStage: 'PRODUCTION' }),
+    findFirst: jest.fn().mockResolvedValue({ id: 'proj-1', currentStage: 'PRODUCTION' }),
+    update: jest.fn(),
+  },
   machine: {
     findUniqueOrThrow: jest.fn(),
   },

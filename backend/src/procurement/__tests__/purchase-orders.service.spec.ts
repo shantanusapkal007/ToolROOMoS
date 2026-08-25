@@ -6,7 +6,8 @@ import { SequenceEngine } from '../../common/sequence.engine';
 const mockPrismaService = {
   $transaction: jest.fn(),
   project: {
-    findUniqueOrThrow: jest.fn(),
+    findUniqueOrThrow: jest.fn().mockResolvedValue({ id: 'proj-1', projectNumber: 'PRJ-1001' }),
+    findFirst: jest.fn().mockResolvedValue({ id: 'proj-1', projectNumber: 'PRJ-1001' }),
   },
   vendor: {
     findFirst: jest.fn(),
@@ -104,6 +105,21 @@ describe('PurchaseOrdersService', () => {
           })
         })
       );
+    });
+
+    it('getAllGlobalPurchaseOrders should return all purchase orders without filtering out fulfilled/closed POs (BUG-013 Regression)', async () => {
+      const allPos = [
+        { id: 'po-1', poNumber: 'PO-1001', status: 'PENDING_APPROVAL', items: [{ receivedQty: 0, orderedQty: 10 }] },
+        { id: 'po-2', poNumber: 'PO-1002', status: 'APPROVED', items: [{ receivedQty: 5, orderedQty: 10 }] },
+        { id: 'po-3', poNumber: 'PO-1003', status: 'CLOSED', items: [{ receivedQty: 10, orderedQty: 10 }] },
+      ];
+
+      (mockPrismaService.purchaseOrderHeader as any).findMany = jest.fn().mockResolvedValue(allPos);
+
+      const result = await service.getAllGlobalPurchaseOrders();
+
+      expect(result).toHaveLength(3);
+      expect(result.map((p: any) => p.poNumber)).toEqual(['PO-1001', 'PO-1002', 'PO-1003']);
     });
   });
 });

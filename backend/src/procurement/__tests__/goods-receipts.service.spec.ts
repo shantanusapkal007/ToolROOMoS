@@ -10,6 +10,7 @@ describe('GoodsReceiptsService - Partial GRN Workflow', () => {
     $transaction: jest.fn(),
     project: {
       findUniqueOrThrow: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
     warehouse: {
@@ -19,10 +20,12 @@ describe('GoodsReceiptsService - Partial GRN Workflow', () => {
     },
     purchaseOrderHeader: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
     purchaseOrderItem: {
       findUniqueOrThrow: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
     },
@@ -105,6 +108,13 @@ describe('GoodsReceiptsService - Partial GRN Workflow', () => {
         return cb(mockPrismaService);
       });
       mockPrismaService.project.findUniqueOrThrow.mockResolvedValue({ id: projectId });
+      mockPrismaService.project.findFirst.mockResolvedValue({ id: projectId });
+      mockPrismaService.purchaseOrderHeader.findFirst.mockImplementation(() =>
+        mockPrismaService.purchaseOrderHeader.findUnique()
+      );
+      mockPrismaService.purchaseOrderItem.findFirst.mockImplementation(() =>
+        mockPrismaService.purchaseOrderItem.findUniqueOrThrow()
+      );
       mockPrismaService.warehouse.findUnique.mockResolvedValue({ id: warehouseId, warehouseCode: 'WH-001' });
       mockPrismaService.warehouse.findUniqueOrThrow.mockResolvedValue({ id: warehouseId, warehouseCode: 'WH-001' });
       mockPrismaService.warehouse.findFirst.mockResolvedValue({ id: warehouseId, warehouseCode: 'WH-001' });
@@ -267,6 +277,49 @@ describe('GoodsReceiptsService - Partial GRN Workflow', () => {
       await expect(service.createGrn(projectId, dtoOverQty, 'user-1')).rejects.toThrow(
         new BadRequestException('Receive quantity cannot exceed pending quantity.')
       );
+    });
+
+    it('Scenario 6 (BUG-001 Regression): GRN referencing PO Number resolves UUID and updates PO Header using po.id', async () => {
+      setupMocksForTransaction();
+
+      const poNumber = 'PO-2026-9999';
+      const resolvedPoUuid = 'po-uuid-resolved-123';
+
+      mockPrismaService.purchaseOrderHeader.findFirst.mockResolvedValue({
+        id: resolvedPoUuid,
+        poNumber: poNumber,
+        status: 'ISSUED',
+        items: [{ id: 'po-item-1', orderedQty: 100, receivedQty: 0 }],
+      });
+
+      mockPrismaService.purchaseOrderItem.findUniqueOrThrow.mockResolvedValue({
+        id: 'po-item-1',
+        materialId: 'mat-1',
+        orderedQty: 100,
+        receivedQty: 0,
+      });
+
+      mockPrismaService.purchaseOrderItem.findMany.mockResolvedValue([
+        { id: 'po-item-1', orderedQty: 100, receivedQty: 100 },
+      ]);
+
+      const dtoWithPoNumber = {
+        ...baseDto,
+        poHeaderId: poNumber, // PO Number passed instead of UUID
+        items: [{ ...baseDto.items[0], acceptedQty: 100, receivedQty: 100 }],
+      };
+
+      await service.createGrn(projectId, dtoWithPoNumber, 'user-1');
+
+      // Verify that findMany and update used the resolved UUID (resolvedPoUuid), NOT the string PO number
+      expect(mockPrismaService.purchaseOrderItem.findMany).toHaveBeenCalledWith({
+        where: { poHeaderId: resolvedPoUuid },
+      });
+
+      expect(mockPrismaService.purchaseOrderHeader.update).toHaveBeenCalledWith({
+        where: { id: resolvedPoUuid },
+        data: { status: 'CLOSED' },
+      });
     });
   });
 });

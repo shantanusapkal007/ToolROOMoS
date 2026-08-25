@@ -468,6 +468,10 @@ model Project {
   maintenanceTickets     MaintenanceTicket[]
   designWorkLogs         DesignWorkLog[]
 
+  @@index([plantId, status])
+  @@index([currentStage])
+  @@index([customerId])
+  @@index([createdAt])
   @@map("projects")
 }
 
@@ -553,6 +557,8 @@ model BillOfMaterialItem {
   bomHeader BillOfMaterialHeader @relation(fields: [bomHeaderId], references: [id], onDelete: Cascade)
   material  Material             @relation(fields: [materialId], references: [id])
 
+  @@index([bomHeaderId])
+  @@index([materialId])
   @@map("bill_of_material_items")
 }
 
@@ -655,6 +661,8 @@ model PurchaseOrderHeader {
   hsnCode String?
   customFields Json?
 
+  @@index([projectId, status])
+  @@index([vendorId])
   @@map("purchase_order_headers")
 }
 
@@ -690,6 +698,8 @@ model PurchaseOrderItem {
   igst Decimal?
   basicValue Decimal?
 
+  @@index([poHeaderId])
+  @@index([materialId])
   @@map("purchase_order_items")
 }
 
@@ -716,6 +726,8 @@ model GoodsReceiptHeader {
   invoiceDate  DateTime?
   customFields Json?
 
+  @@index([projectId])
+  @@index([poHeaderId])
   @@map("goods_receipt_headers")
 }
 
@@ -758,6 +770,8 @@ model GoodsReceiptItem {
   gst Decimal?
   total Decimal?
 
+  @@index([grnHeaderId])
+  @@index([poItemId])
   @@map("goods_receipt_items")
 }
 
@@ -934,6 +948,8 @@ model InvoiceHeader {
   items          InvoiceItem[]
   payments       InvoicePayment[]
 
+  @@index([projectId])
+  @@index([paymentStatus])
   @@map("invoice_headers")
 }
 
@@ -1037,6 +1053,8 @@ model InventoryTransaction {
   inventoryBatch   InventoryBatch        @relation(fields: [inventoryBatchId], references: [id])
   project          Project?              @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  @@index([projectId])
+  @@index([inventoryBatchId])
   @@map("inventory_transactions")
 }
 
@@ -1391,12 +1409,14 @@ model ProjectTask {
 }
 
 model dynamic_forms {
-  id        String   @id
+  id        String   @id @default(uuid())
   formId    String   @unique
   name      String
   schema    Json
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
+
+  @@map("dynamic_forms")
 }
 
 // --- SPRINT 3 ENTERPRISE MODELS ---
@@ -2396,6 +2416,22 @@ model MasterCategoryOption {
 
   @@unique([category, code])
   @@map("master_category_options")
+}
+
+model IdempotencyRecord {
+  id             String    @id @default(uuid())
+  key            String    @unique
+  path           String
+  method         String
+  requestHash    String?
+  responseStatus Int
+  responseBody   Json
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime
+
+  @@index([key])
+  @@index([expiresAt])
+  @@map("idempotency_records")
 }
 
 

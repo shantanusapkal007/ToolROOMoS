@@ -71,7 +71,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
         <Popover.Content
           align="start"
           sideOffset={4}
-          className="z-[100] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-[12px] border border-border-gray bg-canvas shadow-subtle animate-in fade-in-0 zoom-in-95"
+          className="z-[1050] w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-[12px] border border-border-gray bg-white shadow-level-4 animate-in fade-in-0 zoom-in-95"
         >
           <div className="flex items-center border-b border-border-gray px-3 py-2 bg-canvas">
             <Search className="mr-2 h-4 w-4 shrink-0 text-mute" />

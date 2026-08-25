@@ -27,4 +27,7 @@ export class CreateTicketDto {
 
   @IsOptional()
   downtimeStartedAt?: Date | string;
+
+  @IsOptional()
+  lotoApplied?: boolean;
 }

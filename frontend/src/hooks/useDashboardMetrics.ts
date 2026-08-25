@@ -5,8 +5,8 @@ export const useDashboardMetrics = () => {
   return useQuery({
     queryKey: ['dashboardMetrics'],
     queryFn: async () => {
-      const res = await api.get('/projects/dashboard-metrics');
-      return res.data;
+      const res: any = await api.get('/projects/dashboard-metrics');
+      return res?.data !== undefined ? res.data : res;
     },
     staleTime: 60000,
   });

@@ -3,8 +3,12 @@ import { AssemblyService } from './assembly.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { ModuleScope } from '../auth/decorators/module-scope.decorator';
+import { CreateAssemblyOrderDto, AssemblyComponentDto } from './dto/create-assembly-order.dto';
+import { CreateProjectTrialDto } from './dto/create-project-trial.dto';
 
 @Controller('api/v1/projects/:projectId/assembly')
+@ModuleScope('production')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AssemblyController {
   constructor(private readonly assemblyService: AssemblyService) {}
@@ -16,7 +20,7 @@ export class AssemblyController {
 
   @Post('orders')
   @Roles('ADMIN', 'PRODUCTION')
-  async createOrder(@Param('projectId') projectId: string, @Body() data: any) {
+  async createOrder(@Param('projectId') projectId: string, @Body() data: CreateAssemblyOrderDto) {
     return this.assemblyService.createAssemblyHeader(projectId, data);
   }
 
@@ -28,7 +32,7 @@ export class AssemblyController {
 
   @Post('orders/:id/components')
   @Roles('ADMIN', 'PRODUCTION')
-  async addComponent(@Param('id') id: string, @Body() data: any) {
+  async addComponent(@Param('id') id: string, @Body() data: AssemblyComponentDto) {
     return this.assemblyService.addAssemblyComponent(id, data);
   }
 
@@ -45,7 +49,7 @@ export class AssemblyController {
 
   @Post('trials')
   @Roles('ADMIN', 'PRODUCTION', 'QUALITY')
-  async createTrial(@Param('projectId') projectId: string, @Body() data: any) {
+  async createTrial(@Param('projectId') projectId: string, @Body() data: CreateProjectTrialDto) {
     return this.assemblyService.createProjectTrial(projectId, data);
   }
 
@@ -62,7 +66,6 @@ export class AssemblyController {
   @Put('trials/:id/signoff')
   @Roles('ADMIN', 'QUALITY')
   async signOffTrial(@Param('id') id: string, @Req() req: any) {
-    // Assuming req.user is populated by AuthGuard. If not, fallback to 'SYSTEM'
     const user = req.user?.name || 'Authorized Signatory';
     return this.assemblyService.signOffTrial(id, user);
   }

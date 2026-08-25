@@ -83,7 +83,7 @@ export function ProjectMaterialInventoryTab() {
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search material grade, batch #, heat #, location, project..."
+              placeholder="Search material grade, batch #, location, project..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 text-caption rounded-[12px] border border-border-gray bg-canvas/50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all text-ink"
@@ -153,7 +153,7 @@ export function ProjectMaterialInventoryTab() {
               <tr className="bg-zinc-100/60 border-b border-border-gray text-mute font-semibold text-[11px] uppercase tracking-wider">
                 <th className="p-3">Project</th>
                 <th className="p-3">Material Grade & Description</th>
-                <th className="p-3">Batch & Heat #</th>
+                <th className="p-3">Batch #</th>
                 <th className="p-3 text-right">Quantity</th>
                 <th className="p-3">Current Stored Location</th>
                 <th className="p-3 text-right">Material Value</th>
@@ -200,10 +200,9 @@ export function ProjectMaterialInventoryTab() {
                         <div className="text-[11px] font-mono text-zinc-400">{item.materialCode}</div>
                       </td>
 
-                      {/* Batch & Heat # */}
+                      {/* Batch # */}
                       <td className="p-3">
                         <div className="font-mono font-medium text-zinc-700">{item.batchNumber}</div>
-                        <div className="text-[10px] text-zinc-400">Heat: <span className="font-mono text-zinc-600">{item.heatNumber}</span></div>
                       </td>
 
                       {/* Quantity & Weight-Based Rate */}

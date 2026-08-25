@@ -118,11 +118,6 @@ export class GoodsReceiptsService {
 
       // 5. Process each GRN Item
       for (const item of activeItems) {
-        if (!item.heatNumber || item.heatNumber.trim() === '') {
-          throw new BadRequestException(
-            `GRN Gate Failed: Heat Number (Mill Test Certificate) is strictly required for material traceability.`
-          );
-        }
 
         let poItem = await tx.purchaseOrderItem.findFirst({
           where: { id: item.poItemId, poHeaderId: po.id },
@@ -255,7 +250,7 @@ export class GoodsReceiptsService {
 
       // 5.1 Update PO Header Status based on overall fulfillment across all items
       const updatedPoItems = await tx.purchaseOrderItem.findMany({
-        where: { poHeaderId: dto.poHeaderId },
+        where: { poHeaderId: po.id },
       });
 
       const allFulfilled = updatedPoItems.every(
@@ -270,7 +265,7 @@ export class GoodsReceiptsService {
         : 'ISSUED';
 
       await tx.purchaseOrderHeader.update({
-        where: { id: dto.poHeaderId },
+        where: { id: po.id },
         data: { status: finalPoStatus },
       });
 

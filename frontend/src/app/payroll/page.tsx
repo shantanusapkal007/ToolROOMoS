@@ -24,7 +24,6 @@ import {
   Info, 
   FileText,
   Building2,
-  Sparkles,
   ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

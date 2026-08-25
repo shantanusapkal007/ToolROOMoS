@@ -21,7 +21,6 @@ import {
   ShoppingCart,
   ChevronRight,
   CheckSquare,
-  Sparkles,
   Factory,
   Trash2,
   BadgeCheck

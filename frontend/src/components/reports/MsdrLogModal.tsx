@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { X, Wrench, Clock, Settings, Play, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { X, Wrench, Clock, Settings, Play, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useActiveRunningProjects, useCreateGlobalMsdrLog } from '../../hooks/useDailyReports';
 
 import { useMasterData } from '../../hooks/useMasterData';
@@ -171,29 +171,31 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
             </div>
 
             {/* Machine / Tool & Operator / Employee */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Machine / Equipment <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.machineId}
-                  onChange={(e) => setFormData({ ...formData, machineId: e.target.value })}
-                  className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
-                >
-                  <option value="">-- Select Tool / Machine --</option>
-                  {machines.map((m: any) => (
-                    <option key={m.id} value={m.id}>
-                      [{m.machineCode}] {m.machineName} ({m.machineType || 'Tool'})
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className={`grid ${formData.productionSection === 'TOOL_ROOM_FITTING' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'} gap-4`}>
+              {formData.productionSection !== 'TOOL_ROOM_FITTING' && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Machine / Equipment <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    required={formData.productionSection !== 'TOOL_ROOM_FITTING'}
+                    value={formData.machineId}
+                    onChange={(e) => setFormData({ ...formData, machineId: e.target.value })}
+                    className="w-full h-10 px-3.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                  >
+                    <option value="">-- Select Tool / Machine --</option>
+                    {machines.map((m: any) => (
+                      <option key={m.id} value={m.id}>
+                        [{m.machineCode}] {m.machineName} ({m.machineType || 'Tool'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Operator / Machinist <span className="text-rose-500">*</span>
+                  {formData.productionSection === 'TOOL_ROOM_FITTING' ? 'Fitter / Operator' : 'Operator / Machinist'} <span className="text-rose-500">*</span>
                 </label>
                 <select
                   required
@@ -324,7 +326,7 @@ export function MsdrLogModal({ isOpen, onClose }: MsdrLogModalProps) {
                   <span>Saving MSDR...</span>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" /> Save MSDR Log
+                    <CheckCircle2 className="w-4 h-4" /> Save MSDR Log
                   </>
                 )}
               </button>

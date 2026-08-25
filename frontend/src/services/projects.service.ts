@@ -1,71 +1,45 @@
-import { api, ApiResponse } from '../lib/api';
+import { api } from '../lib/api';
+import { Project } from '../types/domain';
 
-export interface Project {
-  id: string;
-  projectNumber: string;
-  partName: string;
-  currentStage: string;
-  status: string;
-  customer?: { companyName: string };
-  targetDeliveryDate?: string;
-  deliveryDate?: string;
-  dispatchNotes?: any[];
-  projectCostSummary?: any;
-  drawings?: any[];
-  inspectionHeaders?: any[];
-  purchaseOrderHeaders?: any[];
-  projectActivities?: any[];
-  goodsReceiptHeaders?: any[];
-  materialIssueHeaders?: any[];
-  inventoryTransactions?: any[];
-  invoiceHeaders?: any[];
-  createdAt: string;
-  [key: string]: any;
-}
+export type { Project };
 
 export const ProjectsService = {
   getAllProjects: async (): Promise<Project[]> => {
-    const res = await api.get<any>('projects');
-    const body = res?.data;
-    if (Array.isArray(body)) return body;
-    if (body && Array.isArray(body.data)) return body.data;
-    if (body && body.data && Array.isArray(body.data.data)) return body.data.data;
+    const res: any = await api.get('projects');
+    const data = res?.data !== undefined ? res.data : res;
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.data)) return data.data;
     return [];
   },
 
   getProjectById: async (id: string): Promise<Project> => {
-    const res = await api.get<any>(`projects/${id}`);
-    const body = res?.data;
-    if (body && body.data) return body.data;
-    return body as Project;
+    const res: any = await api.get(`projects/${id}`);
+    const data = res?.data !== undefined ? res.data : res;
+    return data as Project;
   },
 
   createProject: async (data: Partial<Project>): Promise<Project> => {
-    const res = await api.post<Project>('projects', data);
-    return res.data as unknown as Project;
+    const res: any = await api.post('projects', data);
+    return (res?.data !== undefined ? res.data : res) as Project;
   },
 
   getReopenImpact: async (id: string): Promise<any> => {
-    const res = await api.get<any>(`projects/${id}/reopen-impact`);
-    return res.data;
+    const res: any = await api.get(`projects/${id}/reopen-impact`);
+    return res?.data !== undefined ? res.data : res;
   },
 
   reopenEngineering: async (id: string): Promise<any> => {
-    const res = await api.patch<any>(`projects/${id}/reopen-engineering`);
-    return res.data;
+    const res: any = await api.patch(`projects/${id}/reopen-engineering`);
+    return res?.data !== undefined ? res.data : res;
   },
 
   completeProduction: async (id: string, remarks?: string): Promise<Project> => {
-    const res = await api.post<any>(`projects/${id}/complete-production`, { remarks });
-    const body = res?.data;
-    if (body && body.data) return body.data;
-    return body as Project;
+    const res: any = await api.post(`projects/${id}/complete-production`, { remarks });
+    return (res?.data !== undefined ? res.data : res) as Project;
   },
 
   completeProject: async (id: string, remarks?: string): Promise<Project> => {
-    const res = await api.post<any>(`projects/${id}/complete-project`, { remarks });
-    const body = res?.data;
-    if (body && body.data) return body.data;
-    return body as Project;
-  }
+    const res: any = await api.post(`projects/${id}/complete-project`, { remarks });
+    return (res?.data !== undefined ? res.data : res) as Project;
+  },
 };

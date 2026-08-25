@@ -3,8 +3,11 @@ import { api } from '../lib/api';
 import { useToast } from '../components/ui/Toast';
 
 const fetchTickets = async () => {
-  const res = await api.get('/maintenance');
-  return res as any;
+  const res: any = await api.get('/maintenance');
+  const data = res?.data !== undefined ? res.data : res;
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.data)) return data.data;
+  return [];
 };
 
 const createTicket = async (data: any) => {

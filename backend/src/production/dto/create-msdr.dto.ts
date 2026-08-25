@@ -4,6 +4,10 @@ import { Type } from 'class-transformer';
 export class CreateMsdrItemDto {
   @IsString()
   @IsOptional()
+  operationId?: string;
+
+  @IsString()
+  @IsOptional()
   toolNo?: string;
 
   @IsString()

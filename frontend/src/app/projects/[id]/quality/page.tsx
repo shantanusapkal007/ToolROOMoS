@@ -14,7 +14,6 @@ import {
   Scale,
   Sliders,
   AlertCircle,
-  Sparkles,
   BadgeCheck,
   Layers,
   ArrowRight,

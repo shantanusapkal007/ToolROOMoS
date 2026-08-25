@@ -23,7 +23,6 @@ import {
   CheckSquare,
   FileSpreadsheet,
   Gauge,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";

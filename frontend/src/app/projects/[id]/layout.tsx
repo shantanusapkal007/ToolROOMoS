@@ -51,7 +51,7 @@ export default function ProjectDetailLayout({
 
   const rawOwner = (typeof project?.projectOwner === 'string' && project.projectOwner.trim())
     ? project.projectOwner
-    : (project?.projectOwner?.name || project?.manager?.name || (typeof project?.manager === 'string' && project.manager.trim() ? project.manager : ""));
+    : ((project?.projectOwner as any)?.name || (project?.manager as any)?.name || (typeof project?.manager === 'string' && project.manager.trim() ? project.manager : ""));
 
   const ownerDisplay = rawOwner.trim() ? rawOwner.trim() : "Unassigned";
 

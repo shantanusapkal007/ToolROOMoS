@@ -5,8 +5,11 @@ export const useAssemblyOrders = (projectId: string) => {
   return useQuery({
     queryKey: ['assemblyOrders', projectId],
     queryFn: async () => {
-      const data = await api.get(`/projects/${projectId}/assembly/orders`);
-      return data as any;
+      const res: any = await api.get(`/projects/${projectId}/assembly/orders`);
+      const data = res?.data !== undefined ? res.data : res;
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data.data)) return data.data;
+      return [];
     },
     enabled: !!projectId
   });
@@ -42,8 +45,11 @@ export const useProjectTrials = (projectId: string) => {
   return useQuery({
     queryKey: ['projectTrials', projectId],
     queryFn: async () => {
-      const data = await api.get(`/projects/${projectId}/assembly/trials`);
-      return data as any;
+      const res: any = await api.get(`/projects/${projectId}/assembly/trials`);
+      const data = res?.data !== undefined ? res.data : res;
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data.data)) return data.data;
+      return [];
     },
     enabled: !!projectId
   });

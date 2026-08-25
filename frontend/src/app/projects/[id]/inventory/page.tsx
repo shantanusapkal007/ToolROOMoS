@@ -43,7 +43,6 @@ export default function ProjectInventoryPage() {
         receivedQty: Number(item.receivedQty || 1),
         acceptedQty: Number(item.acceptedQty || 1),
         rejectedQty: Number(item.rejectedQty || 0),
-        heatNumber: item.heatNumber || 'HT-001',
         rate: Number(item.actualRate || 0),
         basicCost: Number(item.basicCost || 0),
         gst: Number(item.gst || 0),
@@ -63,7 +62,6 @@ export default function ProjectInventoryPage() {
       items: (rawIssue.items || []).map((item: any) => ({
         materialName: item.inventoryBatch?.material?.materialName || item.inventoryBatch?.material?.materialGrade || 'Raw Material',
         batchNumber: item.inventoryBatch?.batchNumber || '',
-        heatNumber: item.inventoryBatch?.heatNumber || '',
         issuedQty: Number(item.issuedQty || 1),
         unitCost: Number(item.inventoryBatch?.unitCost || 0),
         totalValue: Number(item.materialValue || 0),
@@ -374,7 +372,6 @@ export default function ProjectInventoryPage() {
                       <th className="p-2.5">Det #</th>
                       <th className="p-2.5">Tool #</th>
                       <th className="p-2.5">Material</th>
-                      <th className="p-2.5">Heat #</th>
                       <th className="p-2.5 text-right">Ordered</th>
                       <th className="p-2.5 text-right">Received</th>
                       <th className="p-2.5 text-right">Accepted</th>
@@ -389,7 +386,6 @@ export default function ProjectInventoryPage() {
                         <td className="p-2.5 font-semibold text-ink">{item.detNo || idx + 1}</td>
                         <td className="p-2.5">{item.toolNo || project?.projectNumber || 'TOOL'}</td>
                         <td className="p-2.5 font-sans font-medium text-ink">{item.poItem?.material?.materialGrade || item.poItem?.material?.materialName || 'Raw Material'}</td>
-                        <td className="p-2.5">{item.heatNumber || '-'}</td>
                         <td className="p-2.5 text-right">{item.poItem?.orderedQty || item.receivedQty || 0}</td>
                         <td className="p-2.5 text-right font-semibold text-primary-dark">{item.receivedQty || 0}</td>
                         <td className="p-2.5 text-right font-semibold text-semantic-success-dark">{item.acceptedQty || 0}</td>

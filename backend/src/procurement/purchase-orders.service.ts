@@ -15,15 +15,20 @@ export class PurchaseOrdersService {
   /**
    * Fetch all active projects and their BOM items across the system for global PO creation
    */
-  async getAllProjectBomItems() {
-    // 1. Fetch projects in the database with customer, POs, GRNs and latest BOM header
+  async getAllProjectBomItems(plantId?: string) {
+    // 1. Fetch active projects in the database with customer, POs, GRNs and latest BOM header
     const projects = await this.prisma.project.findMany({
+      where: {
+        currentStage: { notIn: ['CLOSED', 'CANCELLED'] },
+        status: 'ACTIVE',
+        ...(plantId ? { plantId } : {}),
+      },
       include: {
         customer: true,
         purchaseOrderHeaders: {
           include: {
             items: true,
-          }
+          },
         },
         goodsReceiptHeaders: true,
         billOfMaterialHeaders: {
@@ -32,13 +37,13 @@ export class PurchaseOrdersService {
           include: {
             items: {
               include: {
-                material: true
-              }
-            }
-          }
-        }
+                material: true,
+              },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     const resultItems: any[] = [];
@@ -338,13 +343,10 @@ export class PurchaseOrdersService {
   }
 
   /**
-   * Get all Purchase Orders globally with full relations
+   * Get all Purchase Orders globally with full relations (PO Register)
    */
   async getAllGlobalPurchaseOrders() {
-    const pos = await this.prisma.purchaseOrderHeader.findMany({
-      where: {
-        status: { notIn: [PurchaseOrderStatus.CLOSED, PurchaseOrderStatus.CANCELLED] }
-      },
+    return this.prisma.purchaseOrderHeader.findMany({
       include: {
         vendor: true,
         project: true,
@@ -357,17 +359,6 @@ export class PurchaseOrdersService {
         goodsReceiptHeaders: true
       },
       orderBy: { createdAt: 'desc' }
-    });
-
-    return pos.filter((po: any) => {
-      if (po.status === PurchaseOrderStatus.CLOSED || po.status === PurchaseOrderStatus.CANCELLED) {
-        return false;
-      }
-      if (po.items && po.items.length > 0) {
-        const isFullyReceived = po.items.every((i: any) => Number(i.receivedQty || 0) >= Number(i.orderedQty || 1));
-        if (isFullyReceived) return false;
-      }
-      return true;
     });
   }
 

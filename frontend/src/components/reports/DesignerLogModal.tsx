@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { X, Cpu, Clock, CheckCircle, FileText, Play, Sparkles } from 'lucide-react';
+import { X, Cpu, Clock, CheckCircle, FileText, Play } from 'lucide-react';
 import { useActiveRunningProjects, useCreateGlobalDesignerLog } from '../../hooks/useDailyReports';
 
 import { useMasterData } from '../../hooks/useMasterData';
@@ -310,7 +310,7 @@ export function DesignerLogModal({ isOpen, onClose }: DesignerLogModalProps) {
                   <span>Saving...</span>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" /> Save Designer Log
+                    <CheckCircle className="w-4 h-4" /> Save Designer Log
                   </>
                 )}
               </button>

@@ -80,20 +80,22 @@ export class ReportsService {
     const costTrends = Object.values(monthlyCosts);
 
     // 6. Machine Utilization
-    const msdrs = await this.prisma.machineShopDailyReport.findMany({
-      select: {
+    const msdrHeaders = await this.prisma.msdrHeader.findMany({
+      include: {
         machine: { select: { machineType: true } },
-        actualMachineHours: true
+        operations: { select: { runningHours: true } },
       }
     });
 
     const utilizationMap: Record<string, any> = {};
-    for (const report of msdrs) {
+    for (const report of msdrHeaders) {
       const type = report.machine?.machineType || 'OTHER';
       if (!utilizationMap[type]) {
         utilizationMap[type] = { type, hours: 0 };
       }
-      utilizationMap[type].hours += Number(report.actualMachineHours) || 0;
+      for (const op of report.operations) {
+        utilizationMap[type].hours += Number(op.runningHours) || 0;
+      }
     }
     
     // Assume 160 hours standard per machine per month

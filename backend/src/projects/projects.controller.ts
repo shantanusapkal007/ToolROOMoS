@@ -14,6 +14,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { ModuleScope } from '../auth/decorators/module-scope.decorator';
 import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -21,11 +22,14 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { CreateProjectTaskDto } from './dto/create-project-task.dto';
 import { UpdateProjectTaskDto } from './dto/update-project-task.dto';
 import { CreateDesignLogDto, UpdateDesignLogDto } from './dto/create-design-log.dto';
+import { CreateDispatchNoteDto } from './dto/create-dispatch-note.dto';
+import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { ProjectStatus } from '@prisma/client';
 
 import { WorkflowOrchestratorService } from './workflow-orchestrator.service';
 
 @Controller('api/v1/projects')
+@ModuleScope('projects')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectsController {
   constructor(
@@ -310,7 +314,7 @@ export class ProjectsController {
   @Roles('ADMIN', 'STORES', 'PRODUCTION', 'SALES_ENGINEER')
   async createDispatchNote(
     @Param('id') id: string,
-    @Body() dto: any,
+    @Body() dto: CreateDispatchNoteDto,
     @CurrentUser() user?: any,
   ) {
     const data = await this.projectsService.createDispatchNote(id, dto, user?.userId);
@@ -325,7 +329,7 @@ export class ProjectsController {
   @Roles('ADMIN', 'FINANCE', 'SALES_ENGINEER')
   async createInvoice(
     @Param('id') id: string,
-    @Body() dto: any,
+    @Body() dto: CreateInvoiceDto,
     @CurrentUser() user?: any,
   ) {
     const data = await this.projectsService.createInvoice(id, dto, user?.userId);

@@ -1,8 +1,11 @@
 import { PrismaClient, VendorType } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 import * as bcrypt from 'bcrypt';
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -1082,7 +1085,6 @@ async function main() {
             receivedQty: 2,
             acceptedQty: 2,
             rejectedQty: 0,
-            heatNumber: `HT-${project.projectNumber}-99`,
             actualRate: def.cost.estimatedMaterialCost / 2,
             actualMaterialCost: def.cost.estimatedMaterialCost,
             remarks: 'Passed inspection',
@@ -1097,7 +1099,6 @@ async function main() {
             materialId: material.id,
             grnItemId: grnItem.id,
             batchNumber: `BATCH-${project.projectNumber}`,
-            heatNumber: `HT-${project.projectNumber}-99`,
             locationId: location.id,
             receivedQty: 2,
             currentQty: project.currentStage === 'MATERIAL_AVAILABLE' ? 2 : 0,

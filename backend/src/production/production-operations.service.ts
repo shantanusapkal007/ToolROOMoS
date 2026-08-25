@@ -52,8 +52,25 @@ export class ProductionOperationsService {
 
       // 3. Create MSDR Operations
       for (const item of dto.items || []) {
-        // Find dummy operation if not provided
-        let opId = (await tx.operation.findFirst())?.id;
+        // Resolve operation: check if operationId/operationCode is specified, fallback to default
+        let opId = item.operationId;
+        if (opId) {
+          const matchedOp = await tx.operation.findFirst({
+            where: {
+              OR: [
+                { id: opId },
+                { operationCode: opId },
+                { operationName: opId },
+              ]
+            }
+          });
+          if (matchedOp) {
+            opId = matchedOp.id;
+          }
+        }
+        if (!opId) {
+          opId = (await tx.operation.findFirst())?.id;
+        }
         if (!opId) throw new BadRequestException('No operations exist in the system.');
 
         let startTime = item.startTime ? new Date(dto.reportDate + 'T' + item.startTime + ':00Z') : new Date();
