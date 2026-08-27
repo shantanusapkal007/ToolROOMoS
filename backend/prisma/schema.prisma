@@ -119,6 +119,7 @@ model Customer {
   company         Company        @relation(fields: [companyId], references: [id])
   dispatchNotes   DispatchNote[]
   projects        Project[]
+  rfqHeaders      RfqHeader[]
 
   @@map("customers")
 }
@@ -465,8 +466,12 @@ model Project {
   accountEntries         AccountEntry[]
   assemblyHeaders        AssemblyHeader[]
   projectTrials          ProjectTrial[]
+  reworkOrders           PartReworkOrder[]
   maintenanceTickets     MaintenanceTicket[]
   designWorkLogs         DesignWorkLog[]
+  rfqHeaderId            String?
+  rfqHeader              RfqHeader?               @relation("PrimaryProjectRfq", fields: [rfqHeaderId], references: [id])
+  rfqHeaders             RfqHeader[]              @relation("ProjectRfqList")
 
   @@index([plantId, status])
   @@index([currentStage])
@@ -628,7 +633,8 @@ model MaterialRequirement {
 }
 
 model PurchaseOrderHeader {
-  purchaseRequestId String?
+  purchaseRequestId    String?
+  purchaseRequest      PurchaseRequestHeader? @relation(fields: [purchaseRequestId], references: [id])
   id                   String               @id @default(uuid())
   projectId            String
   vendorId             String
@@ -1700,16 +1706,30 @@ model PlanningRecommendationItem {
 }
 
 model PurchaseRequestHeader {
-  id        String                @id @default(uuid())
-  projectId String
-  prNumber  String                @unique
-  status    String                @default("DRAFT")
-  createdAt DateTime              @default(now())
-  updatedAt DateTime              @updatedAt
-  createdBy String?
-  updatedBy String?
-  project   Project               @relation(fields: [projectId], references: [id])
-  items     PurchaseRequestItem[]
+  id                   String                @id @default(uuid())
+  projectId            String?
+  prNumber             String                @unique
+  department           String?
+  requestedBy          String?
+  requiredDate         DateTime?
+  priority             String                @default("NORMAL")
+  category             String                @default("RAW_MATERIAL")
+  status               String                @default("DRAFT")
+  approvalStatus       ApprovalStatus        @default(PENDING)
+  approvedBy           String?
+  approvedAt           DateTime?
+  rejectionReason      String?
+  purpose              String?
+  remarks              String?
+  estimatedTotalAmount Decimal               @default(0)
+  customFields         Json?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  createdBy            String?
+  updatedBy            String?
+  project              Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  items                PurchaseRequestItem[]
+  purchaseOrders       PurchaseOrderHeader[]
 
   @@map("purchase_request_headers")
 }
@@ -1717,12 +1737,26 @@ model PurchaseRequestHeader {
 model PurchaseRequestItem {
   id               String                @id @default(uuid())
   prHeaderId       String
-  materialId       String
+  materialId       String?
+  itemCode         String?
+  itemName         String?
+  materialGrade    String?
+  dimensions       String?
+  rawSize          String?
   requiredQuantity Decimal
+  orderedQty       Decimal               @default(0)
+  uom              String                @default("PCS")
+  estimatedRate    Decimal               @default(0)
+  estimatedTotal   Decimal               @default(0)
+  detNo            String?
+  suggestedVendor  String?
+  status           String                @default("PENDING")
+  remarks          String?
+  customFields     Json?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
-  prHeader         PurchaseRequestHeader @relation(fields: [prHeaderId], references: [id])
-  material         Material              @relation(fields: [materialId], references: [id])
+  prHeader         PurchaseRequestHeader @relation(fields: [prHeaderId], references: [id], onDelete: Cascade)
+  material         Material?             @relation(fields: [materialId], references: [id])
 
   @@map("purchase_request_items")
 }
@@ -1925,21 +1959,70 @@ model AssemblyHeader {
 }
 
 model ProjectTrial {
-  id              String   @id @default(uuid())
+  id              String            @id @default(uuid())
   projectId       String
   trialNumber     String
   trialDate       DateTime?
-  status          String   @default("PENDING") // PENDING, PASSED, FAILED, PASSED_WITH_DEVIATION
+  trialStage      String?           @default("T0") // T0, T1, T2, T3, FINAL_BUYOFF, CUSTOMER_SAMPLE
+  machineName     String?
+  pressTonnage    String?
+  spmRate         String?
+  bolsterHeight   String?
+  cushionPressure String?
+  sampleQty       Int?              @default(10)
+  result          String?           @default("PASS") // PASS, FAIL, REWORK_REQUIRED, PASSED_WITH_DEVIATION
+  status          String            @default("PENDING") // PENDING, PASSED, FAILED, PASSED_WITH_DEVIATION
   remarks         String?
-  customerSignoff Boolean  @default(false)
+  defectLog       String?
+  customerSignoff Boolean           @default(false)
   signoffDate     DateTime?
   signoffBy       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  inspectorName   String?
+  reportUrl       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reworkOrders    PartReworkOrder[]
   
   @@map("project_trials")
+}
+
+model PartReworkOrder {
+  id               String        @id @default(uuid())
+  projectId        String
+  reworkNumber     String        @unique
+  partName         String
+  partNumber       String?
+  bomItemId        String?
+  sourceStage      String        @default("MACHINING") // ENGINEERING, MACHINING, FITTING, ASSEMBLY, TRIAL, QUALITY_INSPECTION, CUSTOMER_BUYOFF
+  reworkType       String        @default("CORRECTIVE_MACHINING") // CORRECTIVE_MACHINING, WELD_AND_REMILL, EDM_EROSION, WIRE_CUT, GRINDING_POLISHING, HEAT_TREATMENT_STRESS_RELIEF, FITTING_DEBURR, REBORE_ALIGN, SHIM_ADJUSTMENT, OTHER
+  defectReason     String        @default("DIMENSION_DEVIATION") // DIMENSION_OVERSIZE, DIMENSION_UNDERSIZE, SURFACE_DEFECT, CLEARANCE_TIGHT, WARPAGE_DISTORTION, HOLE_MISALIGNMENT, BURR_IN_TRIAL, TOOL_MARK, HARDENING_DEVIATION, OTHER
+  description      String
+  quantity         Int           @default(1)
+  severity         String        @default("NORMAL") // NORMAL, URGENT, CRITICAL
+  status           String        @default("REQUESTED") // REQUESTED, IN_REWORK, RE_INSPECTION, COMPLETED, REJECTED_SCRAPPED
+  targetDepartment String        @default("MACHINE_SHOP") // MACHINE_SHOP, TOOL_ROOM_FITTING, EDM_SECTION, GRINDING_SECTION, WELDING_SECTION, SUBCONTRACTOR
+  assignedTo       String?
+  machineId        String?
+  estimatedHours   Decimal       @default(0)
+  actualHours      Decimal       @default(0)
+  costImpact       Decimal       @default(0)
+  inspectionResult String?       @default("PENDING") // PENDING, PASSED, FAILED_SCRAP
+  resolutionNotes  String?
+  trialId          String?
+  ncrId            String?
+  requestedBy      String?
+  completedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  project          Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  trial            ProjectTrial? @relation(fields: [trialId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, status])
+  @@index([sourceStage])
+  @@map("part_rework_orders")
 }
 
 model AssemblyComponent {
@@ -2107,7 +2190,14 @@ model WorkflowStepInstance {
 model MaintenanceTicket {
   id               String   @id @default(uuid())
   ticketNumber     String   @unique
-  machineId        String
+  targetType       String   @default("MACHINE") // MACHINE or DIE_TOOL
+  machineId        String?
+  dieToolName      String?
+  toolNumber       String?
+  brokenComponent  String?
+  strokeCountAtFailure Int?
+  failureMode      String?
+  actionRequired   String?
   issueDescription String
   priority         String   @default("NORMAL") // LOW, NORMAL, HIGH, CRITICAL
   status           String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
@@ -2116,23 +2206,25 @@ model MaintenanceTicket {
   reportedById     String
   assignedToId     String?
   projectId        String?
-  plantId          String
+  plantId          String?
   totalCost        Decimal  @default(0)
-  category         String?  // MECHANICAL, ELECTRICAL, HYDRAULIC, PNEUMATIC, SOFTWARE
+  category         String?  // MECHANICAL, ELECTRICAL, HYDRAULIC, PNEUMATIC, SOFTWARE, DIE_TOOLING, etc.
   downtimeStartedAt DateTime?
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   resolvedAt       DateTime?
 
-  machine          Machine  @relation(fields: [machineId], references: [id])
+  machine          Machine? @relation(fields: [machineId], references: [id])
   project          Project? @relation(fields: [projectId], references: [id])
-  plant            Plant    @relation(fields: [plantId], references: [id])
+  plant            Plant?   @relation(fields: [plantId], references: [id])
   reportedBy       User     @relation("ReportedTickets", fields: [reportedById], references: [id])
   assignedTo       User?    @relation("AssignedTickets", fields: [assignedToId], references: [id])
   logs             MaintenanceLog[]
   spareParts       MaintenanceSparePart[]
 
+  @@index([targetType])
+  @@index([status])
   @@map("maintenance_tickets")
 }
 
@@ -2434,4 +2526,144 @@ model IdempotencyRecord {
   @@map("idempotency_records")
 }
 
+// =========================================================
+// RFQ & QUOTATION SYSTEM (PRE-SALES PIPELINE)
+// =========================================================
 
+enum RfqStatus {
+  NEW
+  ESTIMATION
+  QUOTED
+  REVISION
+  WON
+  LOST
+  CANCELLED
+}
+
+model RfqHeader {
+  id                   String        @id @default(uuid())
+  rfqNumber            String        @unique
+  customerId           String
+  contactPerson        String?
+  contactEmail         String?
+  contactPhone         String?
+  subject              String
+  description          String?
+  expectedDeliveryDate DateTime?
+  receivedDate         DateTime      @default(now())
+  status               RfqStatus     @default(NEW)
+  projectId            String?
+  lostReason           String?
+  remarks              String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  createdBy            String?
+  updatedBy            String?
+
+  customer             Customer      @relation(fields: [customerId], references: [id])
+  project              Project?      @relation("ProjectRfqList", fields: [projectId], references: [id])
+  primaryProjects      Project[]     @relation("PrimaryProjectRfq")
+  items                RfqItem[]
+  quotations           Quotation[]
+
+  @@index([customerId])
+  @@index([projectId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("rfq_headers")
+}
+
+model RfqItem {
+  id               String           @id @default(uuid())
+  rfqHeaderId      String
+  partName         String
+  partDescription  String?
+  quantity         Decimal          @default(1)
+  uom              String           @default("NOS")
+  specifications   String?
+  drawingReference String?
+  targetPrice      Decimal?
+  remarks          String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  createdBy        String?
+  updatedBy        String?
+
+  rfqHeader        RfqHeader        @relation(fields: [rfqHeaderId], references: [id], onDelete: Cascade)
+  costEstimate     RfqCostEstimate?
+  quotationItems   QuotationItem[]
+
+  @@index([rfqHeaderId])
+  @@map("rfq_items")
+}
+
+model RfqCostEstimate {
+  id                 String   @id @default(uuid())
+  rfqItemId          String   @unique
+  materialCost       Decimal  @default(0)
+  machiningHours     Decimal  @default(0)
+  machiningCost      Decimal  @default(0)
+  labourHours        Decimal  @default(0)
+  labourCost         Decimal  @default(0)
+  subcontractCost    Decimal  @default(0)
+  overheadPercent    Decimal  @default(10)
+  overheadCost       Decimal  @default(0)
+  totalEstimatedCost Decimal  @default(0)
+  remarks            String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  createdBy          String?
+  updatedBy          String?
+
+  rfqItem            RfqItem  @relation(fields: [rfqItemId], references: [id], onDelete: Cascade)
+
+  @@map("rfq_cost_estimates")
+}
+
+model Quotation {
+  id                 String          @id @default(uuid())
+  quotationNumber    String          @unique
+  rfqHeaderId        String
+  revision           Int             @default(1)
+  markupPercent      Decimal         @default(15)
+  subtotal           Decimal         @default(0)
+  taxPercent         Decimal         @default(18)
+  taxAmount          Decimal         @default(0)
+  totalAmount        Decimal         @default(0)
+  validityDays       Int             @default(30)
+  validUntil         DateTime?
+  termsAndConditions String?
+  status             String          @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED
+  remarks            String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  createdBy          String?
+  updatedBy          String?
+
+  rfqHeader          RfqHeader       @relation(fields: [rfqHeaderId], references: [id], onDelete: Cascade)
+  items              QuotationItem[]
+
+  @@index([rfqHeaderId])
+  @@index([status])
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id              String    @id @default(uuid())
+  quotationId     String
+  rfqItemId       String?
+  description     String
+  quantity        Decimal   @default(1)
+  uom             String    @default("NOS")
+  unitPrice       Decimal   @default(0)
+  lineTotal       Decimal   @default(0)
+  remarks         String?
+  createdAt       DateTime  @default(now())
+  createdBy       String?
+
+  quotation       Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  rfqItem         RfqItem?  @relation(fields: [rfqItemId], references: [id])
+
+  @@index([quotationId])
+  @@map("quotation_items")
+}

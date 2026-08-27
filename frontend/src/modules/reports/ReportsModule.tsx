@@ -46,10 +46,10 @@ export const ReportsModule = () => {
 
         {/* Analytical KPI Summary Strips */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Realized Revenue" value={`₹${(metrics.totalRevenue / 100000).toFixed(1)} L`} change="Realized Sales" icon={<IndianRupee className="w-4 h-4" />} trend="up" />
-          <StatCard title="Overall Yield Rate" value={`${metrics.productionYield}%`} change="Factory Efficiency" icon={<Activity className="w-4 h-4" />} trend={Number(metrics.productionYield) >= 90 ? 'up' : 'down'} />
-          <StatCard title="Active Projects" value={`${metrics.activeProjectsCount}`} change="Executing Missions" icon={<Package className="w-4 h-4" />} trend="neutral" />
-          <StatCard title="Monthly Target Met" value={`${Math.round((metrics.totalRevenue / (metrics.monthlyTarget || 15000000)) * 100)}%`} change="Monthly Goal" icon={<TrendingUp className="w-4 h-4" />} trend="up" />
+          <StatCard title="Total Realized Revenue" value={`₹${((metrics.totalRevenue || 0) / 100000).toFixed(1)} L`} change="Realized Sales" icon={<IndianRupee className="w-4 h-4" />} trend="up" />
+          <StatCard title="Overall Yield Rate" value={`${metrics.productionYield ?? 0}%`} change="Factory Efficiency" icon={<Activity className="w-4 h-4" />} trend={Number(metrics.productionYield) >= 90 ? 'up' : 'down'} />
+          <StatCard title="Active Projects" value={`${metrics.activeProjectsCount ?? 0}`} change="Executing Missions" icon={<Package className="w-4 h-4" />} trend="neutral" />
+          <StatCard title="Monthly Target Met" value={`${Math.round(((metrics.totalRevenue || 0) / (metrics.monthlyTarget || 15000000)) * 100)}%`} change="Monthly Goal" icon={<TrendingUp className="w-4 h-4" />} trend="up" />
         </div>
 
         {/* Charts & Analytics Grids */}

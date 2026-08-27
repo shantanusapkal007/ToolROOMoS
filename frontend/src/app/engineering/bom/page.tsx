@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Layers, ChevronRight } from "lucide-react";
+import { Layers, ChevronRight, FileText } from "lucide-react";
+import Link from 'next/link';
+import { Button } from "@/components/ui/Button";
 import { SmartTable } from "@/components/ui/SmartTable";
 import { PremiumDrawer } from "@/components/ui/PremiumDrawer";
 import { useProjects } from "@/hooks/useProjects";
@@ -54,6 +56,12 @@ export default function GlobalBomPage() {
             Manage material requirements across all active projects
           </p>
         </div>
+
+        <Link href="/purchase-requisitions">
+          <Button variant="secondary" size="sm" leftIcon={<FileText className="w-4 h-4 text-primary" />}>
+            Purchase Requisitions (PRN)
+          </Button>
+        </Link>
       </div>
 
       <div className="bg-black/5 border border-hairline/60 rounded-md overflow-hidden backdrop-blur-xl">

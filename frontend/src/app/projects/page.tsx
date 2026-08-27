@@ -15,6 +15,8 @@ import { Modal } from "../../components/ui/Modal";
 import { SmartTable } from "../../components/ui/SmartTable";
 import { formatDate } from "../../lib/formatters";
 import { api } from "../../lib/api";
+import { RfqService } from "@/services/rfq.service";
+import { FileText } from "lucide-react";
 
 export default function ProjectsPage() {
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
@@ -38,6 +40,8 @@ export default function ProjectsPage() {
   const [newTargetDeliveryDate, setNewTargetDeliveryDate] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [newProjectOwner, setNewProjectOwner] = useState("");
+  const [availableRfqs, setAvailableRfqs] = useState<any[]>([]);
+  const [selectedRfqId, setSelectedRfqId] = useState("");
 
   const computeNextProjectNumber = (currentProjects: any[], prefix: string, startingNum: number) => {
     const cleanPrefix = prefix.endsWith('-') ? prefix : `${prefix}-`;
@@ -93,9 +97,41 @@ export default function ProjectsPage() {
         }
       }
       initProjectNumber();
+
+      // Fetch active RFQs for association
+      RfqService.listRfqs().then((data: any) => {
+        if (isMounted && Array.isArray(data)) {
+          setAvailableRfqs(data.filter((r: any) => r.status === 'WON' || r.status === 'QUOTED' || r.status === 'NEW'));
+        }
+      }).catch(() => {});
+
       return () => { isMounted = false; };
     }
   }, [showNewProjectModal, projects, customers]);
+
+  const handleSelectRfq = (rfqId: string) => {
+    setSelectedRfqId(rfqId);
+    if (!rfqId) return;
+
+    const rfq = availableRfqs.find((r) => r.id === rfqId);
+    if (rfq) {
+      if (rfq.items?.[0]?.partName) {
+        setNewPartName(rfq.items.length === 1 ? rfq.items[0].partName : `${rfq.subject} (${rfq.items.length} parts)`);
+      } else if (rfq.subject) {
+        setNewPartName(rfq.subject);
+      }
+      if (rfq.customerId) {
+        setSelectedCustomerId(rfq.customerId);
+      }
+      if (rfq.expectedDeliveryDate) {
+        setNewTargetDeliveryDate(rfq.expectedDeliveryDate.slice(0, 10));
+      }
+      const quote = rfq.quotations?.[0];
+      if (quote?.totalAmount) {
+        setNewRevenue(String(quote.totalAmount));
+      }
+    }
+  };
 
   const handleProjectNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
@@ -120,6 +156,7 @@ export default function ProjectsPage() {
         targetDeliveryDate: newTargetDeliveryDate ? new Date(newTargetDeliveryDate).toISOString() : undefined,
         projectOwner: newProjectOwner,
         manager: newProjectOwner,
+        rfqHeaderId: selectedRfqId || undefined,
       } as any);
 
       // Auto update next starting project counter in settings
@@ -140,6 +177,7 @@ export default function ProjectsPage() {
       setNewCustomerPo("");
       setNewRevenue("");
       setNewTargetDeliveryDate("");
+      setSelectedRfqId("");
     } catch (err: any) {}
   };
 
@@ -306,6 +344,30 @@ export default function ProjectsPage() {
         subtitle="Set up project number, part name, and customer PO assignment."
       >
         <form onSubmit={handleCreateProject} className="space-y-4">
+          {availableRfqs.length > 0 && (
+            <div className="bg-primary-subtle/40 border border-primary/20 rounded-[10px] p-3 space-y-1">
+              <label className="block text-caption font-semibold text-primary flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5" />
+                Initialize from Won RFQ / Quotation (Optional)
+              </label>
+              <select
+                value={selectedRfqId}
+                onChange={(e) => handleSelectRfq(e.target.value)}
+                className="w-full px-3 py-1.5 border border-primary/30 rounded-md text-caption text-ink bg-white font-medium"
+              >
+                <option value="">-- Create Standalone Project --</option>
+                {availableRfqs.map((r: any) => (
+                  <option key={r.id} value={r.id}>
+                    {r.rfqNumber} — {r.subject} ({r.customer?.companyName || "No Customer"}) [{r.status}]
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-mute">
+                Selecting an approved RFQ will auto-populate customer, component name, agreed quote value, and target dates.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="block text-caption font-semibold text-ink mb-1">Project Number / Code *</label>
             <input 

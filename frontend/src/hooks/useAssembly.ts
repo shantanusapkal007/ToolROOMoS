@@ -71,12 +71,13 @@ export const useCreateProjectTrial = (projectId: string) => {
 export const useUpdateTrialStatus = (projectId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status, remarks }: { id: string; status: string; remarks: string }) => {
-      const data = await api.put(`/projects/${projectId}/assembly/trials/${id}/status`, { status, remarks });
+    mutationFn: async ({ id, ...payload }: { id: string; [key: string]: any }) => {
+      const data = await api.put(`/projects/${projectId}/assembly/trials/${id}/status`, payload);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectTrials', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
     }
   });
 };

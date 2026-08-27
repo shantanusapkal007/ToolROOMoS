@@ -33,6 +33,8 @@ export interface Customer {
   id: string;
   companyName: string;
   contactPerson?: string;
+  contactEmail?: string;
+  contactPhone?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -114,6 +116,8 @@ export interface Project {
   invoiceHeaders?: any[];
   inventoryTransactions?: any[];
   projectTasks?: any[];
+  rfqHeader?: any;
+  rfqHeaders?: any[];
   [key: string]: any;
 }
 

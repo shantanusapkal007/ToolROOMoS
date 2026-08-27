@@ -24,9 +24,13 @@ import {
   FileSpreadsheet,
   Gauge,
   ArrowRight,
+  RotateCcw,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { Modal } from "@/components/ui/Modal";
+import { ReworkPartModal } from "@/components/modals/ReworkPartModal";
 
 type AssemblyTab = "KITTING" | "SUB_ASSEMBLIES" | "TRIALS" | "FITTER_LOGS";
 
@@ -35,6 +39,14 @@ export default function ProjectAssemblyPage() {
   const id = params?.id as string;
 
   const [activeTab, setActiveTab] = useState<AssemblyTab>("KITTING");
+
+  // Part Rework Modal State
+  const [reworkModalOpen, setReworkModalOpen] = useState(false);
+  const [reworkTargetPart, setReworkTargetPart] = useState<{
+    partName?: string;
+    partNumber?: string;
+    description?: string;
+  } | null>(null);
 
   // Modals
   const [showTrialModal, setShowTrialModal] = useState(false);
@@ -435,16 +447,35 @@ export default function ProjectAssemblyPage() {
 
       {/* Tab 3: Press Tryouts */}
       {activeTab === "TRIALS" && (
-        <div className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden space-y-4">
-          <div className="p-4 border-b border-border-gray flex items-center justify-between">
+        <div className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden space-y-4 p-4">
+          <div className="bg-primary/5 border border-primary/20 rounded-[12px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-ink">Press Tryout Performance Register</h3>
-              <p className="text-xs text-mute">Official log of T0 (Initial), T1 (Post-Mod), T2 (Final) press tryouts</p>
+              <div className="flex items-center gap-2">
+                <Gauge className="w-4 h-4 text-primary" />
+                <h4 className="text-xs font-bold text-ink uppercase tracking-wider">Dedicated Toolroom Trials & Tryouts Workspace Available</h4>
+              </div>
+              <p className="text-xs text-cool-gray mt-0.5">
+                Access full press parameters (SPM, tonnage, bolster/shut height, cushion pressure), sample defect logs, and customer buyoff in the primary Trials section.
+              </p>
+            </div>
+            <Link
+              href={`/projects/${id}/trials`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors shrink-0"
+            >
+              <span>Go to Trials Workspace</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="flex items-center justify-between border-b border-border-gray pb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">Press Trial Log & Iterations</h3>
+              <p className="text-xs text-mute">T0 to T3 press tryout iterations, stamping samples, and signoff history</p>
             </div>
             {!isProjectClosed && (
               <button
                 onClick={() => setShowTrialModal(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
               >
                 <Gauge className="w-4 h-4" />
                 <span>Record Trial Run</span>
@@ -460,7 +491,7 @@ export default function ProjectAssemblyPage() {
                   <th className="p-3">Press Machine & Tonnage</th>
                   <th className="p-3">Trial Verdict</th>
                   <th className="p-3">Observations / Remarks</th>
-                  <th className="p-3 text-right">Sign-off Status</th>
+                  <th className="p-3 text-right">Sign-off & Rework</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-gray">
@@ -478,18 +509,33 @@ export default function ProjectAssemblyPage() {
                       </td>
                       <td className="p-3 text-cool-gray">{t.remarks}</td>
                       <td className="p-3 text-right">
-                        {t.status === "APPROVED" || isProjectClosed ? (
-                          <span className="text-semantic-success-dark font-semibold flex items-center justify-end gap-1 text-[11px]">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Signed Off
-                          </span>
-                        ) : (
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => signOffMutation.mutate(t.id)}
-                            className="px-2.5 py-1 text-[10px] font-semibold text-white bg-primary hover:bg-primary-hover rounded-[12px] shadow-subtle transition-colors"
+                            onClick={() => {
+                              setReworkTargetPart({
+                                partName: `${project?.partName || 'Component'} - Tryout Defect`,
+                                description: `Rework requested from Trial ${t.trialNumber}. ${t.remarks || ''}`.trim(),
+                              });
+                              setReworkModalOpen(true);
+                            }}
+                            className="px-2 py-1 text-[10px] font-semibold text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 rounded-[8px] transition-colors"
                           >
-                            Sign Off
+                            Rework Part
                           </button>
-                        )}
+
+                          {t.status === "APPROVED" || t.customerSignoff || isProjectClosed ? (
+                            <span className="text-semantic-success-dark font-semibold flex items-center gap-1 text-[11px]">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Signed Off
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => signOffMutation.mutate(t.id)}
+                              className="px-2.5 py-1 text-[10px] font-semibold text-white bg-primary hover:bg-primary-hover rounded-[10px] shadow-subtle transition-colors"
+                            >
+                              Sign Off
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -737,6 +783,22 @@ export default function ProjectAssemblyPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Part Rework Modal */}
+      {reworkModalOpen && (
+        <ReworkPartModal
+          isOpen={reworkModalOpen}
+          onClose={() => {
+            setReworkModalOpen(false);
+            setReworkTargetPart(null);
+          }}
+          projectId={id}
+          initialPartName={reworkTargetPart?.partName || project?.partName}
+          initialPartNumber={reworkTargetPart?.partNumber}
+          initialSourceStage="FITTING"
+          initialDescription={reworkTargetPart?.description}
+        />
+      )}
     </div>
   );
 }

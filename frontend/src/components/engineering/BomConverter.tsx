@@ -33,6 +33,7 @@ import { useToast } from '../ui/Toast';
 import { useProjectBOM } from '@/hooks/useEngineering';
 import { useMasterData, masterDataKeys } from '@/hooks/useMasterData';
 import { MasterDataService } from '@/services/master-data.service';
+import { ReworkPartModal } from '@/components/modals/ReworkPartModal';
 
 interface BomConverterProps {
   projectId: string;
@@ -140,6 +141,15 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
   const [preparedBy, setPreparedBy] = useState<string>('DESIGN TEAM');
   const [checkedBy, setCheckedBy] = useState<string>('');
   const [authorisedSignatory, setAuthorisedSignatory] = useState<string>('');
+
+  // Part Rework Modal State
+  const [reworkModalOpen, setReworkModalOpen] = useState<boolean>(false);
+  const [reworkTargetPart, setReworkTargetPart] = useState<{
+    partName: string;
+    partNumber: string;
+    bomItemId?: string;
+    description?: string;
+  } | null>(null);
 
   const { data: existingBom } = useProjectBOM(projectId);
   const { data: masterMaterialsRes = [] } = useMasterData('materials');
@@ -2367,11 +2377,34 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
                           )}
                         </td>
 
-                        {/* DELETE */}
+                        {/* ACTIONS: REWORK & DELETE */}
                         <td className="px-1 py-1.5 text-center">
-                          <button onClick={() => handleDeleteRow(row.id)} className="p-0.5 hover:bg-red-100 text-zinc-400 hover:text-red-500 rounded transition-colors" title="Delete Item">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setReworkTargetPart({
+                                  partName: row.partName || `BOM Item #${row.srNo}`,
+                                  partNumber: String(row.srNo || ''),
+                                  bomItemId: row.id,
+                                  description: `Rework initiated from BOM for ${row.partName || 'Part'} (Tool #${row.toolNo || project?.projectNumber || ''}).`,
+                                });
+                                setReworkModalOpen(true);
+                              }} 
+                              className="p-1 hover:bg-amber-100 text-cool-gray hover:text-amber-700 rounded transition-colors" 
+                              title="Rework on this Part"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => handleDeleteRow(row.id)} 
+                              className="p-1 hover:bg-red-100 text-cool-gray hover:text-red-500 rounded transition-colors" 
+                              title="Delete Item"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -2572,6 +2605,23 @@ export const BomConverter: React.FC<BomConverterProps> = ({ projectId, project, 
             </form>
           </div>
         </div>
+      )}
+
+      {/* Part Rework Modal */}
+      {reworkModalOpen && reworkTargetPart && (
+        <ReworkPartModal
+          isOpen={reworkModalOpen}
+          onClose={() => {
+            setReworkModalOpen(false);
+            setReworkTargetPart(null);
+          }}
+          projectId={projectId}
+          initialPartName={reworkTargetPart.partName}
+          initialPartNumber={reworkTargetPart.partNumber}
+          initialBomItemId={reworkTargetPart.bomItemId}
+          initialSourceStage="ENGINEERING"
+          initialDescription={reworkTargetPart.description}
+        />
       )}
 
     </div>

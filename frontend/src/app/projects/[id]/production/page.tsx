@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   Plus,
   CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { Modal } from "@/components/ui/Modal";
@@ -25,6 +26,7 @@ import { FabricationSection } from "@/components/production/sections/Fabrication
 import { FabExportSection } from "@/components/production/sections/FabExportSection";
 import { TransfersSection } from "@/components/production/sections/TransfersSection";
 import { MoveToNextSectionModal } from "@/components/production/MoveToNextSectionModal";
+import { ReworkPartModal } from "@/components/modals/ReworkPartModal";
 
 type ProductionTab = "TOOLROOM" | "PRESS_SHOP" | "FABRICATION" | "FAB_EXPORT" | "TRANSFERS";
 
@@ -45,6 +47,14 @@ export default function ProjectProductionPage() {
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [moveItem, setMoveItem] = useState<any>(null);
   const [moveCurrentSection, setMoveCurrentSection] = useState<string>("");
+
+  // Part Rework modal state
+  const [reworkModalOpen, setReworkModalOpen] = useState(false);
+  const [reworkTarget, setReworkTarget] = useState<{
+    partName?: string;
+    partNumber?: string;
+    description?: string;
+  } | null>(null);
 
   // Fetch ALL MSDR logs for this project (all sections)
   const { data: msdrsResponse, isLoading } = useGlobalDailyReports({
@@ -134,6 +144,15 @@ export default function ProjectProductionPage() {
     setMoveModalOpen(true);
   };
 
+  const handleReworkPart = (item: any) => {
+    setReworkTarget({
+      partName: item.partOrDrawing || item.materialName || project?.partName || "Machined Component",
+      partNumber: item.detNo || item.partOrDrawing,
+      description: `Rework requested from Production ${item.workStageOrOperation || 'Machining'} operation. ${item.remarks || ''}`.trim(),
+    });
+    setReworkModalOpen(true);
+  };
+
   // Complete Production Phase state & mutation
   const completeProductionMutation = useCompleteProduction(id);
   const [showCompleteConfirmModal, setShowCompleteConfirmModal] = useState(false);
@@ -174,7 +193,20 @@ export default function ProjectProductionPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => {
+              setReworkTarget({
+                partName: project?.partName || "Machined Part",
+              });
+              setReworkModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] border border-border-gray bg-white hover:bg-canvas text-ink text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-4 h-4 text-amber-600" />
+            <span>Rework a Part</span>
+          </button>
+
           {isProductionCompleted ? (
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-semantic-success-subtle border border-semantic-success/20 text-semantic-success-dark text-xs font-semibold shadow-subtle">
               <CheckCircle2 className="w-4 h-4 text-semantic-success-dark" />
@@ -232,7 +264,7 @@ export default function ProjectProductionPage() {
 
       {/* Active Section Content — data sourced from Daily Reports & Issued Materials */}
       {activeTab === "TOOLROOM" && (
-        <ToolroomSection data={allMsdrs} materialIssues={allMaterialIssues} isLoading={isLoading} onMarkComplete={handleMarkComplete} />
+        <ToolroomSection data={allMsdrs} materialIssues={allMaterialIssues} isLoading={isLoading} onMarkComplete={handleMarkComplete} onReworkPart={handleReworkPart} />
       )}
       {activeTab === "PRESS_SHOP" && (
         <PressShopSection data={allMsdrs} materialIssues={allMaterialIssues} isLoading={isLoading} onMarkComplete={handleMarkComplete} />
@@ -315,6 +347,22 @@ export default function ProjectProductionPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Part Rework Modal */}
+      {reworkModalOpen && (
+        <ReworkPartModal
+          isOpen={reworkModalOpen}
+          onClose={() => {
+            setReworkModalOpen(false);
+            setReworkTarget(null);
+          }}
+          projectId={id}
+          initialPartName={reworkTarget?.partName || project?.partName}
+          initialPartNumber={reworkTarget?.partNumber}
+          initialSourceStage="MACHINING"
+          initialDescription={reworkTarget?.description}
+        />
+      )}
     </div>
   );
 }

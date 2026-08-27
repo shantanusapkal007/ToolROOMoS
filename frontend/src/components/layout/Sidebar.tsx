@@ -15,8 +15,12 @@ import {
   Calendar,
   PieChart,
   ChevronLeft,
+  FileText,
+  Download,
 } from 'lucide-react';
 import { useSidebarStore } from '../../store/useSidebarStore';
+import { usePwa } from '../../context/PwaContext';
+
 
 const EXPANDED_WIDTH = 240;
 const COLLAPSED_WIDTH = 68;
@@ -40,6 +44,8 @@ const labelVariants = {
 export function Sidebar() {
   const pathname = usePathname();
   const { isExpanded, toggleSidebar } = useSidebarStore();
+  const { isInstalled, installApp } = usePwa();
+
 
   return (
     <motion.aside 
@@ -98,6 +104,13 @@ export function Sidebar() {
             isExpanded={isExpanded}
           />
           <NavItem 
+            href="/rfq"
+            icon={<FileText className="h-4 w-4" />} 
+            label="RFQ & Quotes" 
+            active={pathname.startsWith("/rfq")} 
+            isExpanded={isExpanded}
+          />
+          <NavItem 
             href="/employee-daily-report"
             icon={<Calendar className="h-4 w-4" />} 
             label="Daily Reports" 
@@ -116,6 +129,13 @@ export function Sidebar() {
             icon={<Package className="h-4 w-4" />} 
             label="Inventory & Assets" 
             active={pathname.startsWith("/assets") || pathname.startsWith("/inventory")} 
+            isExpanded={isExpanded}
+          />
+          <NavItem 
+            href="/purchase-requisitions"
+            icon={<FileText className="h-4 w-4" />} 
+            label="Requisitions (PRN)" 
+            active={pathname.startsWith("/purchase-requisitions")} 
             isExpanded={isExpanded}
           />
           <NavItem 
@@ -151,7 +171,35 @@ export function Sidebar() {
 
       {/* Footer: Toggle + Version */}
       <div className="pt-2 border-t border-border-gray shrink-0 overflow-hidden space-y-1">
+        {/* Install Desktop / Mobile App Button */}
+        {!isInstalled && (
+          <button
+            onClick={installApp}
+            className="flex items-center w-full h-9 rounded-[10px] text-cool-gray hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer px-1 justify-start group"
+            title={!isExpanded ? "Install ToolRoomOS App" : undefined}
+          >
+            <div className="w-9 h-9 shrink-0 flex items-center justify-center">
+              <Download className="w-4 h-4 text-silver-blue group-hover:text-primary transition-colors" />
+            </div>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div 
+                  variants={labelVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  className="ml-2.5 whitespace-nowrap overflow-hidden text-caption font-medium tracking-tight text-ink group-hover:text-primary transition-colors flex items-center justify-between flex-1 pr-2"
+                >
+                  <span>Install App</span>
+                  <span className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">PWA</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
+        )}
+
         {/* Collapse / Expand Toggle Button */}
+
         <button
           onClick={toggleSidebar}
           className="flex items-center w-full h-9 rounded-[10px] text-cool-gray hover:text-ink hover:bg-[rgba(148,151,169,0.08)] transition-colors cursor-pointer px-1 justify-start"

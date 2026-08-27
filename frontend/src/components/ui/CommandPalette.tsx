@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Briefcase, Database, Package, Settings, Users, Factory, FileText, X } from 'lucide-react';
+import { Search, Briefcase, Database, Package, Settings, Users, Factory, FileText, X, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useGlobalSearch } from '../../hooks/useGlobalSearch';
+import { usePwa } from '../../context/PwaContext';
+
 
 export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,6 +43,16 @@ export function CommandPalette() {
     setQuery('');
   };
 
+  const { isInstalled, installApp } = usePwa();
+
+  const handleItemSelect = (item: any) => {
+    if (item.action) {
+      item.action();
+    } else if (item.path) {
+      handleSelect(item.path);
+    }
+  };
+
   const menuGroups = [
     {
       title: 'Projects',
@@ -62,9 +74,15 @@ export function CommandPalette() {
       items: [
         { icon: <Settings className="w-4 h-4 text-ink" />, label: 'Settings', path: '/settings' },
         { icon: <FileText className="w-4 h-4 text-ink" />, label: 'Form Builder', path: '/settings' },
+        ...(!isInstalled ? [{
+          icon: <Download className="w-4 h-4 text-primary" />,
+          label: 'Install ToolRoomOS App (PWA)',
+          action: () => { installApp(); setIsOpen(false); }
+        }] : [])
       ]
     }
   ];
+
 
   const allItems = menuGroups.flatMap(group => group.items);
   const filteredStaticItems = query 
@@ -148,7 +166,7 @@ export function CommandPalette() {
                             <div className="text-eyebrow-uppercase-sm font-medium text-mute uppercase px-3 mb-2 mt-3">System Menu</div>
                             <div className="space-y-0.5">
                               {filteredStaticItems.map((item, idx) => (
-                                <CommandItem key={`stat-${idx}`} item={item} onSelect={() => handleSelect(item.path)} />
+                                <CommandItem key={`stat-${idx}`} item={item} onSelect={() => handleItemSelect(item)} />
                               ))}
                             </div>
                           </div>
@@ -169,13 +187,14 @@ export function CommandPalette() {
                         <div className="text-eyebrow-uppercase-sm font-medium text-mute uppercase px-3 mb-1.5">{group.title}</div>
                         <div className="space-y-0.5">
                           {group.items.map((item, idx) => (
-                            <CommandItem key={idx} item={item} onSelect={() => handleSelect(item.path)} />
+                            <CommandItem key={idx} item={item} onSelect={() => handleItemSelect(item)} />
                           ))}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
+
               </div>
               
               {/* Footer */}

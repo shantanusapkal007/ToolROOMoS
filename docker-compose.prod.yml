@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   # -----------------------------------------------------
-  # 1. DATABASE LAYER
+  # 1. DATABASE & CACHE & STORAGE (INFRASTRUCTURE LAYER)
   # -----------------------------------------------------
   postgres:
     image: postgres:15-alpine
@@ -16,7 +16,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d toolroomos"]
+      test: [ "CMD-SHELL", "pg_isready -U root -d toolroomos" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -30,7 +30,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -53,17 +53,28 @@ services:
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
       - PORT=4000
       - NODE_ENV=production
+      - AUTO_MIGRATE=true
     restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   frontend:
     build:
       context: ./frontend
       target: runner
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
     container_name: toolroomos-frontend
     ports:
       - "3000:3000"
@@ -71,8 +82,15 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
       - NODE_ENV=production
     restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:

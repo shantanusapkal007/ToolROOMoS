@@ -10,9 +10,10 @@ interface ToolroomSectionProps {
   materialIssues?: any[];
   isLoading: boolean;
   onMarkComplete: (item: any) => void;
+  onReworkPart?: (item: any) => void;
 }
 
-export function ToolroomSection({ data, materialIssues = [], isLoading, onMarkComplete }: ToolroomSectionProps) {
+export function ToolroomSection({ data, materialIssues = [], isLoading, onMarkComplete, onReworkPart }: ToolroomSectionProps) {
   // Filter for toolroom-related sections
   const sectionData = data.filter((item: any) => {
     const s = item.section;
@@ -157,15 +158,29 @@ export function ToolroomSection({ data, materialIssues = [], isLoading, onMarkCo
       key: "_actions",
       label: "",
       render: (_: any, row: any) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onMarkComplete(row);
-          }}
-          className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-zinc-900 text-white hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap"
-        >
-          Complete → Move
-        </button>
+        <div className="flex items-center justify-end gap-1.5">
+          {onReworkPart && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onReworkPart(row);
+              }}
+              className="px-2 py-1 rounded-[10px] text-[10px] font-semibold bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border border-amber-500/20 transition-colors cursor-pointer whitespace-nowrap"
+              title="Rework this Part"
+            >
+              Rework
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onMarkComplete(row);
+            }}
+            className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-zinc-900 text-white hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap"
+          >
+            Complete → Move
+          </button>
+        </div>
       ),
     },
   ];

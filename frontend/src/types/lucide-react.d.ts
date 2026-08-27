@@ -27,6 +27,7 @@ declare module 'lucide-react' {
   export const Briefcase: LucideIcon;
   export const Building: LucideIcon;
   export const Building2: LucideIcon;
+  export const Calculator: LucideIcon;
   export const Calendar: LucideIcon;
   export const CalendarDays: LucideIcon;
   export const Check: LucideIcon;
@@ -190,4 +191,8 @@ declare module 'lucide-react' {
   export const Type: LucideIcon;
   export const UploadCloud: LucideIcon;
   export const HelpCircle: LucideIcon;
+  export const Wifi: LucideIcon;
+  export const WifiOff: LucideIcon;
+  export const Laptop: LucideIcon;
 }
+

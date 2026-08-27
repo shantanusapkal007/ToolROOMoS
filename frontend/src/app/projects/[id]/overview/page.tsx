@@ -23,7 +23,8 @@ import {
   CheckSquare,
   Factory,
   Trash2,
-  BadgeCheck
+  BadgeCheck,
+  Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -416,6 +417,83 @@ export default function ProjectOverviewPage() {
 
       {/* Stage Progress Pipeline Stepper */}
       <ToolingWorkflowStepper currentStage={project.currentStage} />
+
+      {/* RFQ & Commercial Quotation Reference Card */}
+      <div className="bg-white rounded-[12px] border border-border-gray p-5 shadow-subtle">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-[8px] bg-primary-subtle text-primary flex items-center justify-center">
+              <FileText className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-body font-semibold text-ink">Commercial RFQ & Quotation Reference</h3>
+              <p className="text-caption text-mute">Initial enquiry specifications, cost estimate breakdown, and accepted quotation terms</p>
+            </div>
+          </div>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => router.push(`/projects/${id}/rfq`)}
+            rightIcon={<ChevronRight className="w-3.5 h-3.5" />}
+          >
+            Manage RFQs & Quotes
+          </Button>
+        </div>
+
+        {project.rfqHeader ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-canvas rounded-[10px] border border-border-gray">
+            <div>
+              <span className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider block mb-1">Primary RFQ #</span>
+              <span className="font-mono text-body-sm font-semibold text-primary">{project.rfqHeader.rfqNumber}</span>
+              <p className="text-caption text-mute truncate mt-0.5">{project.rfqHeader.subject}</p>
+            </div>
+
+            <div>
+              <span className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider block mb-1">Enquiry Status</span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-caption font-semibold bg-semantic-success-subtle text-semantic-success-dark">
+                {project.rfqHeader.status || 'WON'}
+              </span>
+              <p className="text-caption text-mute mt-0.5">{project.rfqHeader.items?.length || 1} Part Requirements</p>
+            </div>
+
+            <div>
+              <span className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider block mb-1">Latest Quotation</span>
+              {project.rfqHeader.quotations?.[0] ? (
+                <div>
+                  <span className="font-mono text-body-sm font-semibold text-ink">
+                    {formatCurrency(project.rfqHeader.quotations[0].totalAmount)}
+                  </span>
+                  <p className="text-caption text-mute mt-0.5">Rev {project.rfqHeader.quotations[0].revision} ({project.rfqHeader.quotations[0].quotationNumber})</p>
+                </div>
+              ) : (
+                <span className="text-caption text-mute">No quote recorded</span>
+              )}
+            </div>
+
+            <div>
+              <span className="text-[11px] font-semibold text-cool-gray uppercase tracking-wider block mb-1">Customer Contact</span>
+              <span className="text-body-sm font-medium text-ink block">{project.rfqHeader.contactPerson || project.customer?.contactPerson || 'Direct Customer'}</span>
+              <span className="text-caption text-cool-gray">{project.rfqHeader.contactEmail || project.customer?.contactEmail || '—'}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-canvas rounded-[10px] border border-border-gray flex items-center justify-between flex-wrap gap-3">
+            <div className="space-y-0.5">
+              <p className="text-body-sm font-medium text-ink">No pre-sales RFQ or quotation attached to this project</p>
+              <p className="text-caption text-mute">You can link an existing enquiry or create a new quotation for tooling revisions & modifications.</p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => router.push(`/projects/${id}/rfq`)}
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Add Project RFQ
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

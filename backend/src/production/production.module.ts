@@ -13,6 +13,8 @@ import { SchedulingService } from './scheduling.service';
 import { SchedulingController } from './scheduling.controller';
 import { AssemblyController } from './assembly.controller';
 import { AssemblyService } from './assembly.service';
+import { PartReworkController } from './part-rework.controller';
+import { PartReworkService } from './part-rework.service';
 
 @Module({
   imports: [PrismaModule],
@@ -22,7 +24,8 @@ import { AssemblyService } from './assembly.service';
     JobCardsController, 
     WipController, 
     SchedulingController,
-    AssemblyController
+    AssemblyController,
+    PartReworkController
   ],
   providers: [
     MaterialIssuesService,
@@ -31,7 +34,8 @@ import { AssemblyService } from './assembly.service';
     JobCardsService,
     WipService,
     SchedulingService,
-    AssemblyService
+    AssemblyService,
+    PartReworkService
   ],
   exports: [
     MaterialIssuesService,
@@ -40,7 +44,8 @@ import { AssemblyService } from './assembly.service';
     JobCardsService,
     WipService,
     SchedulingService,
-    AssemblyService
+    AssemblyService,
+    PartReworkService
   ],
 })
 export class ProductionModule {}

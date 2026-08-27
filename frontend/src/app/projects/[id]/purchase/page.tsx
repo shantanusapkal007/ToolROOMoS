@@ -5,15 +5,17 @@ import { useParams } from "next/navigation";
 
 import { useProject } from "@/hooks/useProjects";
 import { useQuery } from "@tanstack/react-query";
-import { ShoppingCart, Plus, Eye, PackageCheck, Edit3, Trash2, Lock } from "lucide-react";
+import { ShoppingCart, Plus, Eye, PackageCheck, Edit3, Trash2, Lock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { SmartTable } from "@/components/ui/SmartTable";
 import { Modal } from "@/components/ui/Modal";
+import { Tabs } from "@/components/ui/Tabs";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { PurchaseOrderForm } from "@/components/purchase/PurchaseOrderForm";
 import { ReceiveGrnModal } from "@/components/purchase/ReceiveGrnModal";
 import { ProcurementService } from "@/services/procurement.service";
 import { AuthenticPoDocument } from "@/modules/procurement/AuthenticPoDocument";
+import { PurchaseRequisitionsModule } from "@/modules/purchase-requisitions/PurchaseRequisitionsModule";
 import { useToast } from "@/components/ui/Toast";
 
 export default function ProjectPurchasePage() {
@@ -23,6 +25,7 @@ export default function ProjectPurchasePage() {
   const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
   const { success, error } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'po' | 'prn'>('po');
   const [previewPo, setPreviewPo] = useState<any | null>(null);
   const [grnTargetPo, setGrnTargetPo] = useState<any | null>(null);
   const [editingPo, setEditingPo] = useState<any | null>(null);
@@ -253,33 +256,48 @@ export default function ProjectPurchasePage() {
                 <div className="h-8 w-8 rounded-[12px] bg-primary flex items-center justify-center shadow-sm shrink-0">
                   <ShoppingCart className="h-4 w-4 text-white" />
                 </div>
-                <h1 className="text-xl font-semibold text-ink tracking-tight">Purchase Orders & Procurement</h1>
+                <h1 className="text-xl font-semibold text-ink tracking-tight">Procurement &amp; Materials</h1>
               </div>
-              <p className="text-xs text-mute ml-[42px]">Manage supplier purchase orders, steel raw material requisitions, and GRNs.</p>
+              <p className="text-xs text-mute ml-[42px]">Manage supplier purchase orders, material requisitions (PRN), and goods receipts.</p>
             </div>
 
-            {!isProjectClosed && (
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => {
-                  setEditingPo(null);
-                  setIsFormOpen(true);
-                }}
-              >
-                <Plus className="w-4 h-4" />
-                <span>Generate New PO</span>
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              <Tabs
+                activeTab={activeTab}
+                onChange={(t) => setActiveTab(t as any)}
+                tabs={[
+                  { id: 'po', label: `Purchase Orders (${purchaseOrders.length})`, icon: <ShoppingCart className="w-3.5 h-3.5" /> },
+                  { id: 'prn', label: 'Requisitions (PRN)', icon: <FileText className="w-3.5 h-3.5" /> },
+                ]}
+              />
+
+              {activeTab === 'po' && !isProjectClosed && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  leftIcon={<Plus className="w-4 h-4" />}
+                  onClick={() => {
+                    setEditingPo(null);
+                    setIsFormOpen(true);
+                  }}
+                >
+                  Generate PO
+                </Button>
+              )}
+            </div>
           </div>
 
-          <SmartTable 
-            title="Project Purchase Orders"
-            columns={columns}
-            data={purchaseOrders}
-            isLoading={isLoadingPos}
-            exportFilename="Purchase_Orders"
-          />
+          {activeTab === 'prn' ? (
+            <PurchaseRequisitionsModule projectId={id} />
+          ) : (
+            <SmartTable 
+              title="Project Purchase Orders"
+              columns={columns}
+              data={purchaseOrders}
+              isLoading={isLoadingPos}
+              exportFilename="Purchase_Orders"
+            />
+          )}
 
           {isFormOpen && (
             <Modal 

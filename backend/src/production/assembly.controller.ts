@@ -48,25 +48,31 @@ export class AssemblyController {
   }
 
   @Post('trials')
-  @Roles('ADMIN', 'PRODUCTION', 'QUALITY')
-  async createTrial(@Param('projectId') projectId: string, @Body() data: CreateProjectTrialDto) {
-    return this.assemblyService.createProjectTrial(projectId, data);
+  @Roles('ADMIN', 'PRODUCTION', 'QUALITY', 'ENGINEERING')
+  async createTrial(
+    @Param('projectId') projectId: string,
+    @Body() data: CreateProjectTrialDto,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.name || req.user?.username || req.user?.email || 'USER';
+    return this.assemblyService.createProjectTrial(projectId, data, userId);
   }
 
   @Put('trials/:id/status')
-  @Roles('ADMIN', 'PRODUCTION', 'QUALITY')
+  @Roles('ADMIN', 'PRODUCTION', 'QUALITY', 'ENGINEERING')
   async updateTrialStatus(
     @Param('id') id: string, 
-    @Body('status') status: string,
-    @Body('remarks') remarks: string
+    @Body() data: any,
   ) {
-    return this.assemblyService.updateTrialStatus(id, status, remarks);
+    const status = data.status || 'PENDING';
+    const remarks = data.remarks || '';
+    return this.assemblyService.updateTrialStatus(id, status, remarks, data);
   }
 
   @Put('trials/:id/signoff')
   @Roles('ADMIN', 'QUALITY')
   async signOffTrial(@Param('id') id: string, @Req() req: any) {
-    const user = req.user?.name || 'Authorized Signatory';
+    const user = req.user?.name || req.user?.username || 'Authorized Signatory';
     return this.assemblyService.signOffTrial(id, user);
   }
 }

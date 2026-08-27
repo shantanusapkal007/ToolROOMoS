@@ -9,25 +9,31 @@ export class SequenceEngine {
   /**
    * Generates the next document number for a given document type.
    * Format: [PREFIX]-[FINANCIAL_YEAR]-[ZERO_PADDED_NUMBER]
-   * Example: PO-2026-00001
+   * Example: RFQ-2026-0001 or PO-2026-00001
    */
   async generateNextNumber(documentType: string): Promise<string> {
-    // Transaction ensures no two concurrent requests get the same number
     return await this.prisma.$transaction(async (tx) => {
-      const sequence = await tx.documentSequence.findUnique({
+      let sequence = await tx.documentSequence.findUnique({
         where: { documentType },
       });
 
       if (!sequence) {
-        throw new InternalServerErrorException(
-          `Document Sequence not configured for ${documentType}`,
-        );
+        const currentYear = new Date().getFullYear().toString();
+        sequence = await tx.documentSequence.create({
+          data: {
+            documentType,
+            prefix: documentType,
+            financialYear: currentYear,
+            nextNumber: 1,
+            padding: 4,
+          },
+        });
       }
 
       const currentNumber = sequence.nextNumber;
       const paddedNumber = currentNumber
         .toString()
-        .padStart(sequence.padding, '0');
+        .padStart(sequence.padding || 4, '0');
 
       let documentNumber = '';
       if (sequence.prefix) {
@@ -53,4 +59,3 @@ export class SequenceEngine {
     });
   }
 }
-

@@ -10,14 +10,12 @@ export class ReportsController {
 
   @Get('dashboard')
   async getDashboardMetrics() {
-    const data = await this.reportsService.getDashboardMetrics();
-    return { data };
+    return this.reportsService.getDashboardMetrics();
   }
 
   @Get('active-running-projects')
   async getActiveRunningProjects() {
-    const data = await this.reportsService.getActiveRunningProjects();
-    return { data };
+    return this.reportsService.getActiveRunningProjects();
   }
 
   @Get('employee-daily-reports')
@@ -30,7 +28,7 @@ export class ReportsController {
     @Query('search') search?: string,
     @Query('type') type?: string,
   ) {
-    const data = await this.reportsService.getGlobalEmployeeDailyReports({
+    return this.reportsService.getGlobalEmployeeDailyReports({
       date,
       projectId,
       section,
@@ -39,15 +37,13 @@ export class ReportsController {
       search,
       type,
     });
-    return { data };
   }
 
   @Get('employee-daily-reports/stats')
   async getEmployeeDailyReportStats(
     @Query('date') date?: string,
   ) {
-    const data = await this.reportsService.getEmployeeDailyReportStats({ date });
-    return { data };
+    return this.reportsService.getEmployeeDailyReportStats({ date });
   }
 
   @Post('designer-log')
@@ -55,8 +51,8 @@ export class ReportsController {
     @Body() dto: any,
     @CurrentUser() user: any,
   ) {
-    const data = await this.reportsService.createGlobalDesignerLog(dto, user.userId);
-    return { data, message: 'Designer log created successfully' };
+    const result = await this.reportsService.createGlobalDesignerLog(dto, user.userId);
+    return { success: true, data: result, message: 'Designer log created successfully' };
   }
 
   @Post('msdr-log')
@@ -64,8 +60,8 @@ export class ReportsController {
     @Body() dto: any,
     @CurrentUser() user: any,
   ) {
-    const data = await this.reportsService.createGlobalMsdrLog(dto, user.userId);
-    return { data, message: 'MSDR log created successfully' };
+    const result = await this.reportsService.createGlobalMsdrLog(dto, user.userId);
+    return { success: true, data: result, message: 'MSDR log created successfully' };
   }
 
   @Get('project-material-inventory')
@@ -74,7 +70,6 @@ export class ReportsController {
     @Query('section') section?: string,
     @Query('search') search?: string,
   ) {
-    const data = await this.reportsService.getProjectMaterialInventory({ projectId, section, search });
-    return { data };
+    return this.reportsService.getProjectMaterialInventory({ projectId, section, search });
   }
 }
