@@ -1,6 +1,22 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock, Unlock, Clock, AlertTriangle, Save, CheckCircle, Package, Briefcase, Factory } from 'lucide-react';
+import {
+  X,
+  Lock,
+  Unlock,
+  Clock,
+  AlertTriangle,
+  Save,
+  CheckCircle,
+  Package,
+  Briefcase,
+  Factory,
+  Cpu,
+  Layers,
+  Wrench,
+  RotateCcw,
+  CheckCircle2,
+} from 'lucide-react';
 import { useUpdateMaintenanceTicket, useToggleLOTO, useAddMaintenanceLog, useAddSparePart } from '../../../hooks/useMaintenance';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../../lib/api';
@@ -35,6 +51,8 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
   });
 
   if (!ticket) return null;
+
+  const isDieTool = ticket.targetType === 'DIE_TOOL';
 
   const handleToggleLoto = async () => {
     await toggleLoto.mutateAsync({
@@ -89,31 +107,47 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 bottom-0 w-[500px] bg-white/95 backdrop-blur-2xl border-l border-border-gray z-50 flex flex-col shadow-level-4"
+            className="fixed right-0 top-0 bottom-0 w-[540px] bg-white/95 backdrop-blur-2xl border-l border-border-gray z-50 flex flex-col shadow-level-4"
           >
             {/* Header */}
             <div className="p-6 border-b border-border-gray flex justify-between items-start relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 blur-[80px] pointer-events-none rounded-full" />
               
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-sm text-mute">{ticket.ticketNumber}</span>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xs font-mono font-bold text-mute">{ticket.ticketNumber}</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                    isDieTool ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-blue-50 text-blue-800 border-blue-300'
+                  }`}>
+                    {isDieTool ? 'Die & Press Tool' : 'Machine Asset'}
+                  </span>
                 </div>
-                <h2 className="text-xl font-semibold text-ink relative z-10">{ticket.machine?.machineName} Breakdown</h2>
+                <h2 className="text-lg font-bold text-ink relative z-10">
+                  {isDieTool ? (ticket.dieToolName || 'Stamping Die Breakage') : (ticket.machine?.machineName || 'Machine Asset Breakdown')}
+                </h2>
                 
                 {/* Meta information */}
-                <div className="flex flex-wrap items-center gap-3 mt-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${
-                    ticket.priority === 'CRITICAL' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                    ticket.priority === 'HIGH' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
-                    'bg-primary-subtle0/10 text-blue-400 border-blue-500/20'
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border flex items-center gap-1 ${
+                    ticket.priority === 'CRITICAL' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
+                    ticket.priority === 'HIGH' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
+                    'bg-primary-subtle text-primary border-primary/20'
                   }`}>
                     {ticket.priority} PRIORITY
                   </span>
 
+                  {/* Status */}
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                    ticket.status === 'RESOLVED' || ticket.status === 'CLOSED'
+                      ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+                      : 'bg-amber-500/10 text-amber-700 border-amber-500/20'
+                  }`}>
+                    {ticket.status}
+                  </span>
+
                   {/* Project Link */}
                   {ticket.project && (
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center gap-1">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-500/10 text-purple-700 border border-purple-500/20 flex items-center gap-1">
                       <Briefcase className="w-3 h-3" /> 
                       {ticket.project.projectNumber}
                     </span>
@@ -121,58 +155,106 @@ export const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, onClose }) =
 
                   {/* Category */}
                   {ticket.category && (
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center gap-1">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/10 text-cyan-700 border border-cyan-500/20 flex items-center gap-1">
                       {ticket.category}
-                    </span>
-                  )}
-
-                  {/* Plant / Department (Master Data) */}
-                  {ticket.machine?.plant && (
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-mute border border-border-gray flex items-center gap-1">
-                      <Factory className="w-3 h-3" /> 
-                      {ticket.machine.plant.plantName}
                     </span>
                   )}
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors relative z-10">
+              <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors relative z-10 cursor-pointer">
                 <X className="w-5 h-5 text-mute" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
-              {/* LOTO Control */}
-              <div className="spotlight-card p-6 rounded-[12px] border border-border-gray/60 bg-canvas">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-[12px] ${ticket.lotoApplied ? 'bg-red-500/20 text-red-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
-                      {ticket.lotoApplied ? <Lock className="w-6 h-6" /> : <Unlock className="w-6 h-6" />}
+              {/* Specialized Die Breakdown Summary Card */}
+              {isDieTool && (
+                <div className="p-4 rounded-[12px] border border-amber-500/30 bg-amber-500/5 space-y-3">
+                  <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
+                      <Wrench className="w-4 h-4 text-amber-600" />
+                      <span>Die & Tool Damage Log</span>
                     </div>
+                    {ticket.toolNumber && (
+                      <span className="font-mono font-semibold text-xs text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
+                        Tool #{ticket.toolNumber}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <h3 className="font-semibold text-ink">Lockout / Tagout</h3>
-                      <p className="text-sm text-mute">
-                        {ticket.lotoApplied ? 'Machine is isolated and locked.' : 'Machine is NOT locked out.'}
+                      <span className="text-cool-gray text-[10.5px] uppercase font-semibold">Broken Component</span>
+                      <p className="font-semibold text-ink mt-0.5">
+                        {ticket.brokenComponent || 'Not specified'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-cool-gray text-[10.5px] uppercase font-semibold">Strokes at Failure</span>
+                      <p className="font-semibold text-ink font-mono mt-0.5">
+                        {ticket.strokeCountAtFailure ? `${Number(ticket.strokeCountAtFailure).toLocaleString()} hits` : 'N/A'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-cool-gray text-[10.5px] uppercase font-semibold">Failure Mode</span>
+                      <p className="font-semibold text-amber-800 mt-0.5">
+                        {ticket.failureMode ? ticket.failureMode.replace(/_/g, ' ') : (ticket.category || 'PUNCH BREAKAGE')}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-cool-gray text-[10.5px] uppercase font-semibold">Action Required</span>
+                      <p className="font-semibold text-primary mt-0.5">
+                        {ticket.actionRequired ? ticket.actionRequired.replace(/_/g, ' ') : 'Toolroom Re-grind / Repair'}
                       </p>
                     </div>
                   </div>
-                </div>
-                <button 
-                  onClick={handleToggleLoto}
-                  disabled={toggleLoto.isPending}
-                  className={`w-full py-3 rounded-[12px] font-semibold flex items-center justify-center gap-2 transition-all ${
-                    ticket.lotoApplied 
-                      ? 'bg-zinc-100 text-ink hover:bg-zinc-700' 
-                      : 'bg-red-600/20 text-red-500 hover:bg-red-600/30 border border-red-500/30 shadow-elevation'
-                  }`}
-                >
-                  {ticket.lotoApplied ? (
-                    <>Remove LOTO Tag</>
-                  ) : (
-                    <><AlertTriangle className="w-4 h-4" /> Apply Digital LOTO</>
+
+                  {ticket.machine && (
+                    <div className="pt-2 border-t border-amber-500/10 text-xs text-cool-gray flex items-center gap-1.5">
+                      <Cpu className="w-3.5 h-3.5 text-cool-gray" />
+                      <span>Running Press Machine: <strong className="text-ink">{ticket.machine.machineName}</strong></span>
+                    </div>
                   )}
-                </button>
-              </div>
+                </div>
+              )}
+
+              {/* LOTO Control (For Machines) */}
+              {!isDieTool && (
+                <div className="spotlight-card p-5 rounded-[12px] border border-border-gray/60 bg-canvas">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-[10px] ${ticket.lotoApplied ? 'bg-red-500/20 text-red-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
+                        {ticket.lotoApplied ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-xs text-ink">Lockout / Tagout (LOTO)</h3>
+                        <p className="text-[11px] text-mute">
+                          {ticket.lotoApplied ? 'Machine is isolated and locked out.' : 'Machine is NOT locked out.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleToggleLoto}
+                    disabled={toggleLoto.isPending}
+                    className={`w-full py-2 rounded-[10px] text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      ticket.lotoApplied 
+                        ? 'bg-zinc-100 text-ink hover:bg-zinc-200' 
+                        : 'bg-red-600/20 text-red-600 hover:bg-red-600/30 border border-red-500/30'
+                    }`}
+                  >
+                    {ticket.lotoApplied ? (
+                      <>Remove LOTO Tag</>
+                    ) : (
+                      <><AlertTriangle className="w-3.5 h-3.5" /> Apply Digital LOTO</>
+                    )}
+                  </button>
+                </div>
+              )}
 
               <div className="space-y-4">
                 <div>

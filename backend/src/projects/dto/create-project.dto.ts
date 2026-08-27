@@ -48,4 +48,8 @@ export class CreateProjectDto {
   @IsString()
   @IsOptional()
   remarks?: string;
+
+  @IsString()
+  @IsOptional()
+  rfqHeaderId?: string;
 }

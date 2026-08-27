@@ -55,11 +55,19 @@ export class MaintenanceService {
   }
 
   async create(createDto: CreateTicketDto, userId: string) {
-    const machine = await this.prisma.machine.findUnique({ where: { id: createDto.machineId }});
-    if (!machine) throw new NotFoundException('Machine not found');
+    const isDieTool = createDto.targetType === 'DIE_TOOL';
+    let machine = null;
 
+    if (createDto.machineId) {
+      machine = await this.prisma.machine.findUnique({ where: { id: createDto.machineId }});
+      if (!machine && !isDieTool) throw new NotFoundException('Machine not found');
+    } else if (!isDieTool) {
+      throw new NotFoundException('Machine ID is required for machine maintenance');
+    }
+
+    let project = null;
     if (createDto.projectId) {
-      const project = await this.prisma.project.findUnique({ where: { id: createDto.projectId } });
+      project = await this.prisma.project.findUnique({ where: { id: createDto.projectId } });
       if (!project) throw new NotFoundException('Project not found');
     }
 
@@ -69,17 +77,25 @@ export class MaintenanceService {
     }
 
     const count = await this.prisma.maintenanceTicket.count();
-    const ticketNumber = `MT-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+    const prefix = isDieTool ? 'DT' : 'MT';
+    const ticketNumber = `${prefix}-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
 
     const ticket = await this.prisma.maintenanceTicket.create({
       data: {
         ticketNumber,
-        machineId: createDto.machineId,
-        plantId: machine.plantId,
+        targetType: createDto.targetType || 'MACHINE',
+        machineId: createDto.machineId || null,
+        plantId: machine?.plantId || project?.plantId || null,
         projectId: createDto.projectId || null,
+        dieToolName: createDto.dieToolName || (isDieTool && project ? (project.partName || project.projectNumber) : null),
+        toolNumber: createDto.toolNumber || (isDieTool && project ? project.projectNumber : null),
+        brokenComponent: createDto.brokenComponent || null,
+        strokeCountAtFailure: createDto.strokeCountAtFailure ? Number(createDto.strokeCountAtFailure) : null,
+        failureMode: createDto.failureMode || null,
+        actionRequired: createDto.actionRequired || null,
         issueDescription: createDto.issueDescription,
         priority: createDto.priority || 'NORMAL',
-        category: createDto.category || null,
+        category: createDto.category || (isDieTool ? 'DIE_TOOLING' : null),
         assignedToId: createDto.assignedToId || null,
         downtimeStartedAt: createDto.downtimeStartedAt ? new Date(createDto.downtimeStartedAt) : null,
         lotoApplied: Boolean(createDto.lotoApplied),
@@ -88,11 +104,13 @@ export class MaintenanceService {
       },
     });
 
-    // Automatically put machine in MAINTENANCE status if breakdown is reported
-    await this.prisma.machine.update({
-      where: { id: createDto.machineId },
-      data: { status: 'MAINTENANCE' },
-    });
+    // Automatically put machine in MAINTENANCE status if breakdown is reported on a machine
+    if (createDto.machineId) {
+      await this.prisma.machine.update({
+        where: { id: createDto.machineId },
+        data: { status: 'MAINTENANCE' },
+      });
+    }
 
     return ticket;
   }
@@ -107,7 +125,7 @@ export class MaintenanceService {
       data.resolvedAt = new Date();
       
       const ticket = await this.prisma.maintenanceTicket.findUnique({ where: { id } });
-      if (ticket) {
+      if (ticket && ticket.machineId) {
         await this.prisma.machine.update({
           where: { id: ticket.machineId },
           data: { status: 'ACTIVE' },
@@ -125,7 +143,7 @@ export class MaintenanceService {
       await this.prisma.maintenanceLog.create({
         data: {
           ticketId: id,
-          actionTaken: updateDto.lotoApplied ? 'LOTO Applied to machine.' : 'LOTO Removed from machine.',
+          actionTaken: updateDto.lotoApplied ? 'LOTO Applied to asset.' : 'LOTO Removed from asset.',
           loggedById: userId,
         },
       });

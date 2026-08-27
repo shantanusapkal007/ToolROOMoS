@@ -21,12 +21,20 @@ export class PrismaService
 
   constructor() {
     if (!PrismaService.pool) {
+      const dbUrl = process.env.DATABASE_URL || '';
+      const isSsl =
+        process.env.DB_SSL === 'true' ||
+        dbUrl.includes('sslmode=require') ||
+        dbUrl.includes('sslmode=no-verify');
+
       PrismaService.pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: dbUrl,
+        ssl: isSsl ? { rejectUnauthorized: false } : undefined,
       });
     }
     const adapter = new PrismaPg(PrismaService.pool);
     super({ adapter });
+
   }
 
   async onModuleInit() {

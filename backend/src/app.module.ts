@@ -40,7 +40,11 @@ import { LookupsModule } from './master-data/lookups/lookups.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { AssetsModule } from './assets/assets.module';
 import { SettingsModule } from './settings/settings.module';
+import { RfqModule } from './rfq/rfq.module';
+import { PurchaseRequisitionsModule } from './procurement/purchase-requisitions/purchase-requisitions.module';
+import { StorageModule } from './modules/storage/storage.module';
 import { ClsModule } from 'nestjs-cls';
+
 
 /**
  * AppModule
@@ -106,7 +110,11 @@ import { ClsModule } from 'nestjs-cls';
     MaintenanceModule,
     AssetsModule,
     SettingsModule,
+    RfqModule,
+    PurchaseRequisitionsModule,
+    StorageModule,
   ],
+
   controllers: [AppController],
   providers: [
     AppService,

@@ -17,9 +17,13 @@ import {
   BadgeCheck,
   Layers,
   ArrowRight,
+  RotateCcw,
 } from "lucide-react";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { Modal } from "@/components/ui/Modal";
+import { useProjectReworkOrders } from "@/hooks/usePartRework";
+import { ReworkPartModal } from "@/components/modals/ReworkPartModal";
+import { PartReworkList } from "@/components/rework/PartReworkList";
 
 type QualityTab = "REGISTERS" | "CMM_DIMENSIONS" | "NCR_REWORK" | "QC_CERTIFICATE";
 
@@ -54,9 +58,20 @@ export default function ProjectQualityPage() {
   });
 
   const { data: project, isLoading } = useProject(id);
+  const { data: reworkOrders = [], isLoading: isReworkLoading } = useProjectReworkOrders(id);
   const isProjectClosed = project?.currentStage === 'CLOSED' || project?.currentStage === 'COMPLETED';
   const logInspectionMutation = useLogInspection(id);
   const closeNcrMutation = useCloseNcr(id);
+
+  // Part Rework Modal State
+  const [reworkModalOpen, setReworkModalOpen] = useState(false);
+  const [reworkTargetPart, setReworkTargetPart] = useState<{
+    partName?: string;
+    partNumber?: string;
+    description?: string;
+    sourceStage?: string;
+    ncrId?: string;
+  } | null>(null);
 
   if (isLoading) return <SkeletonBox className="h-96 w-full" />;
 
@@ -459,6 +474,22 @@ export default function ProjectQualityPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Part Rework Orders Section */}
+          <div className="pt-3">
+            <PartReworkList
+              projectId={id}
+              reworkOrders={reworkOrders}
+              isLoading={isReworkLoading}
+              onOpenNewReworkModal={() => {
+                setReworkTargetPart({
+                  partName: project?.partName || "Component",
+                  sourceStage: "QUALITY_INSPECTION",
+                });
+                setReworkModalOpen(true);
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -689,6 +720,23 @@ export default function ProjectQualityPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Part Rework Modal */}
+      {reworkModalOpen && (
+        <ReworkPartModal
+          isOpen={reworkModalOpen}
+          onClose={() => {
+            setReworkModalOpen(false);
+            setReworkTargetPart(null);
+          }}
+          projectId={id}
+          initialPartName={reworkTargetPart?.partName || project?.partName}
+          initialPartNumber={reworkTargetPart?.partNumber}
+          initialNcrId={reworkTargetPart?.ncrId}
+          initialSourceStage="QUALITY_INSPECTION"
+          initialDescription={reworkTargetPart?.description}
+        />
+      )}
     </div>
   );
 }

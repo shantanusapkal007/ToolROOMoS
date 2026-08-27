@@ -23,7 +23,9 @@ import {
   Factory,
   User,
   Edit,
-  Lock
+  Lock,
+  FileText,
+  Gauge
 } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "@/lib/formatters";
@@ -67,6 +69,7 @@ export default function ProjectDetailLayout({
 
   const tabs = [
     { label: "Overview", path: `/projects/${id}/overview`, icon: Briefcase },
+    { label: "RFQ & Quotes", path: `/projects/${id}/rfq`, icon: FileText },
     { label: "Design", path: `/projects/${id}/design`, icon: Layers },
     { label: "Engineering", path: `/projects/${id}/engineering`, icon: Cpu },
     { label: "Purchase", path: `/projects/${id}/purchase`, icon: ShoppingCart },
@@ -74,6 +77,7 @@ export default function ProjectDetailLayout({
     { label: "Subcontract", path: `/projects/${id}/subcontract`, icon: Truck },
     { label: "Production", path: `/projects/${id}/production`, icon: Wrench },
     { label: "Assembly", path: `/projects/${id}/assembly`, icon: Activity },
+    { label: "Trials", path: `/projects/${id}/trials`, icon: Gauge },
     { label: "Quality", path: `/projects/${id}/quality`, icon: ShieldCheck },
     { label: "Dispatch", path: `/projects/${id}/dispatch`, icon: Truck },
     { label: "Finance", path: `/projects/${id}/finance`, icon: DollarSign },

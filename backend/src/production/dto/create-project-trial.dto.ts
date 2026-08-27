@@ -6,21 +6,40 @@ export class CreateProjectTrialDto {
   trialNumber: string;
 
   @IsOptional()
+  @IsString()
+  trialStage?: string; // T0, T1, T2, T3, FINAL_BUYOFF, CUSTOMER_SAMPLE
+
+  @IsOptional()
+  trialDate?: string | Date;
+
+  @IsOptional()
+  @IsString()
+  machineName?: string;
+
+  @IsOptional()
+  @IsString()
+  pressTonnage?: string;
+
+  @IsOptional()
+  @IsString()
+  spmRate?: string;
+
+  @IsOptional()
+  @IsString()
+  bolsterHeight?: string;
+
+  @IsOptional()
+  @IsString()
+  cushionPressure?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(1)
-  trialSequence?: number;
+  sampleQty?: number;
 
   @IsOptional()
   @IsString()
-  trialType?: string; // T0, T1, T2, FINAL
-
-  @IsOptional()
-  @IsString()
-  machineId?: string;
-
-  @IsOptional()
-  @IsString()
-  operatorId?: string;
+  result?: string; // PASS, FAIL, REWORK_REQUIRED, PASSED_WITH_DEVIATION
 
   @IsOptional()
   @IsString()
@@ -28,11 +47,15 @@ export class CreateProjectTrialDto {
 
   @IsOptional()
   @IsString()
-  observations?: string;
+  defectLog?: string;
 
   @IsOptional()
   @IsString()
-  actionPlan?: string;
+  inspectorName?: string;
+
+  @IsOptional()
+  @IsString()
+  reportUrl?: string;
 
   @IsOptional()
   @IsString()

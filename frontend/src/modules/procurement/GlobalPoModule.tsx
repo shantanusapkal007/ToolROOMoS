@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Trash2
 } from 'lucide-react';
+import Link from 'next/link';
 import { ProcurementService } from '@/services/procurement.service';
 import { MultiProjectPoWizard } from './MultiProjectPoWizard';
 import { AuthenticPoDocument } from './AuthenticPoDocument';
@@ -122,15 +123,22 @@ export function GlobalPoModule() {
         ]}
         icon={<ShoppingCart className="w-5 h-5 text-primary" />}
         actions={
-          <Tabs
-            activeTab={activeTab}
-            onChange={(tab) => { setActiveTab(tab as any); setPreviewPo(null); }}
-            tabs={[
-              { id: 'create', label: 'Create PO', icon: <Plus className="w-3.5 h-3.5" /> },
-              { id: 'history', label: `PO Register (${totalCount})`, icon: <FileText className="w-3.5 h-3.5" /> },
-              { id: 'dead', label: `Dead Material (${deadCount})`, icon: <AlertTriangle className="w-3.5 h-3.5" /> },
-            ]}
-          />
+          <div className="flex items-center gap-3">
+            <Link href="/purchase-requisitions">
+              <Button variant="secondary" size="sm" leftIcon={<FileText className="w-3.5 h-3.5 text-primary" />}>
+                Requisitions (PRN)
+              </Button>
+            </Link>
+            <Tabs
+              activeTab={activeTab}
+              onChange={(tab) => { setActiveTab(tab as any); setPreviewPo(null); }}
+              tabs={[
+                { id: 'create', label: 'Create PO', icon: <Plus className="w-3.5 h-3.5" /> },
+                { id: 'history', label: `PO Register (${totalCount})`, icon: <FileText className="w-3.5 h-3.5" /> },
+                { id: 'dead', label: `Dead Material (${deadCount})`, icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+              ]}
+            />
+          </div>
         }
       />
 

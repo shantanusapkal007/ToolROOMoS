@@ -1,9 +1,37 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsBoolean } from 'class-validator';
 
 export class CreateTicketDto {
   @IsString()
-  @IsNotEmpty()
-  machineId: string;
+  @IsOptional()
+  targetType?: string; // 'MACHINE' | 'DIE_TOOL'
+
+  @IsString()
+  @IsOptional()
+  machineId?: string;
+
+  @IsString()
+  @IsOptional()
+  dieToolName?: string;
+
+  @IsString()
+  @IsOptional()
+  toolNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  brokenComponent?: string;
+
+  @IsNumber()
+  @IsOptional()
+  strokeCountAtFailure?: number;
+
+  @IsString()
+  @IsOptional()
+  failureMode?: string;
+
+  @IsString()
+  @IsOptional()
+  actionRequired?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -28,6 +56,7 @@ export class CreateTicketDto {
   @IsOptional()
   downtimeStartedAt?: Date | string;
 
+  @IsBoolean()
   @IsOptional()
   lotoApplied?: boolean;
 }

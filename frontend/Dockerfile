@@ -3,14 +3,23 @@
 # Stage 1: Development / Build dependencies
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Accept build-time API URL argument (defaults to standard endpoint)
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_TELEMETRY_DISABLED=1
+
 COPY package*.json ./
 RUN npm ci
+
 COPY . .
 RUN npm run build
 
 # Stage 2: Production Image (Standalone)
 FROM node:20-alpine AS runner
 WORKDIR /app
+
+RUN apk add --no-cache curl
 
 ENV NODE_ENV=production
 ENV PORT=3000

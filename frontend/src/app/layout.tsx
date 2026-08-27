@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, Inconsolata } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../components/auth/AuthProvider";
@@ -10,6 +10,11 @@ import { SpotlightWrapper } from "../components/ui/SpotlightWrapper";
 import { NotificationProvider } from "../context/NotificationContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import { NotificationCenter } from "../components/ui/NotificationCenter";
+import { PwaRegister } from "../components/pwa/PwaRegister";
+import { OfflineIndicator } from "../components/pwa/OfflineIndicator";
+import { PwaProvider } from "../context/PwaContext";
+
+
 
 const fontPlexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
@@ -25,16 +30,40 @@ const fontInconsolata = Inconsolata({
   display: 'swap',
 });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0b0c0e" },
+    { media: "(prefers-color-scheme: light)", color: "#137749" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: "ToolRoomOS | Manufacturing Operating System",
   description: "Enterprise Manufacturing and Toolroom Operating System",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ToolRoomOS",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: [
-      { url: "/icon.png", type: "image/png" },
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
       { url: "/favicon.ico" },
     ],
-    shortcut: "/icon.png",
-    apple: "/apple-icon.png",
+    shortcut: "/icon-192x192.png",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
@@ -55,17 +84,22 @@ export default function RootLayout({
               <QueryProvider>
                 <ToastProvider>
                   <NotificationProvider>
-                    <SpotlightWrapper>
-                      {children}
-                      <CommandPalette />
-                      <NotificationCenter />
-                    </SpotlightWrapper>
+                    <PwaProvider>
+                      <SpotlightWrapper>
+                        {children}
+                        <CommandPalette />
+                        <NotificationCenter />
+                        <PwaRegister />
+                        <OfflineIndicator />
+                      </SpotlightWrapper>
+                    </PwaProvider>
                   </NotificationProvider>
                 </ToastProvider>
               </QueryProvider>
             </PermissionProvider>
           </AuthProvider>
         </ThemeProvider>
+
       </body>
     </html>
   );

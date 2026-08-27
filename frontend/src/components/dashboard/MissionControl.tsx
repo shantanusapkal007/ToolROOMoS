@@ -421,31 +421,58 @@ export function MissionControl({ projects, onSelectProject }: MissionControlProp
 }
 
 function CurrencyWidget() {
-  const [rates, setRates] = useState<{ usd: number, eur: number, gbp: number } | null>(null);
+  const [rates, setRates] = useState<{ usd: number; eur: number; gbp?: number } | null>({
+    usd: 95.47,
+    eur: 111.27,
+    gbp: 128.45,
+  });
 
   useEffect(() => {
-    fetch('https://api.exchangerate-api.com/v4/latest/USD')
+    fetch('https://open.er-api.com/v6/latest/USD')
       .then(res => res.json())
       .then(data => {
-        const inr = data.rates.INR;
-        const eur = inr / data.rates.EUR;
-        const gbp = inr / data.rates.GBP;
+        const inr = Number(data.rates?.INR) || 95.47;
+        const eur = inr / (Number(data.rates?.EUR) || 0.858);
+        const gbp = inr / (Number(data.rates?.GBP) || 0.743);
         setRates({ usd: inr, eur, gbp });
       })
-      .catch(() => {});
+      .catch(() => {
+        fetch('https://api.exchangerate-api.com/v4/latest/USD')
+          .then(res => res.json())
+          .then(data => {
+            const inr = Number(data.rates?.INR) || 95.47;
+            const eur = inr / (Number(data.rates?.EUR) || 0.858);
+            const gbp = inr / (Number(data.rates?.GBP) || 0.743);
+            setRates({ usd: inr, eur, gbp });
+          })
+          .catch(() => {});
+      });
   }, []);
 
   if (!rates) return null;
 
   return (
-    <div className="hidden md:flex items-center gap-2 bg-canvas px-3 py-1.5 rounded-sm border border-border-gray shadow-level-1">
+    <div className="hidden md:flex items-center gap-2.5 bg-canvas px-3 py-1.5 rounded-sm border border-border-gray shadow-level-1">
+      <span className="relative flex h-2 w-2 mr-0.5">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </span>
       <div className="text-caption font-mono text-ink">
-        <span className="text-mute mr-1">USD</span>₹{rates.usd.toFixed(1)}
+        <span className="text-mute mr-1 font-semibold">USD</span>₹{rates.usd.toFixed(2)}
       </div>
-      <span className="text-hairline">|</span>
+      <span className="text-border-gray">|</span>
       <div className="text-caption font-mono text-ink">
-        <span className="text-mute mr-1">EUR</span>₹{rates.eur.toFixed(1)}
+        <span className="text-mute mr-1 font-semibold">EUR</span>₹{rates.eur.toFixed(2)}
       </div>
+      {rates.gbp && (
+        <>
+          <span className="text-border-gray">|</span>
+          <div className="text-caption font-mono text-ink">
+            <span className="text-mute mr-1 font-semibold">GBP</span>₹{rates.gbp.toFixed(2)}
+          </div>
+        </>
+      )}
     </div>
   );
 }
+

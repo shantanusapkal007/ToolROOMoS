@@ -1,14 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, Bell, Shield, Database, CheckCircle2 } from 'lucide-react';
+import { Settings, Save, Bell, Shield, Database, CheckCircle2, Download, Laptop } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
 import { api } from '../../../lib/api';
+import { usePwa } from '../../../context/PwaContext';
+
 
 export const SystemPreferences = () => {
   const { success, error } = useToast();
+  const { isInstalled, installApp } = usePwa();
   const [isSaving, setIsSaving] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   
   const [preferences, setPreferences] = useState({
@@ -141,12 +145,48 @@ export const SystemPreferences = () => {
             </div>
           </div>
 
+          {/* Native Desktop / Mobile Application (PWA) Card */}
+          <div className="border border-border-gray p-6 rounded-[12px] bg-white shadow-subtle space-y-4">
+            <div className="flex items-center justify-between border-b border-border-gray pb-3">
+              <div className="flex items-center gap-2">
+                <Laptop className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-ink">Desktop & Mobile Application (PWA)</h3>
+              </div>
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                {isInstalled ? 'Installed' : 'Ready to Install'}
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-between py-1">
+              <div>
+                <p className="font-bold text-xs text-ink">Standalone Client Installation</p>
+                <p className="text-[11px] text-cool-gray mt-0.5">
+                  {isInstalled
+                    ? 'ToolRoomOS is installed on this device with offline caching and hardware acceleration enabled.'
+                    : 'Install ToolRoomOS as a native standalone window app on your Windows, Mac, Linux, or Android device.'}
+                </p>
+              </div>
+              {!isInstalled && (
+                <Button 
+                  variant="primary" 
+                  size="sm" 
+                  onClick={installApp} 
+                  className="h-8 px-4 font-semibold text-xs shrink-0 ml-4 shadow-subtle"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  <span>Install App</span>
+                </Button>
+              )}
+            </div>
+          </div>
+
           <div className="pt-2 flex justify-end">
             <Button variant="primary" size="sm" onClick={handleSave} isLoading={isSaving} className="h-9 px-5 font-semibold text-xs shadow-subtle">
               <Save className="w-4 h-4 mr-1.5" />
               <span>Apply Preferences</span>
             </Button>
           </div>
+
         </div>
       </div>
     </div>

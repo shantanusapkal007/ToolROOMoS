@@ -19,12 +19,15 @@ import {
   Tag,
   CheckCircle2,
   Info,
+  Cpu,
+  RotateCcw,
 } from 'lucide-react';
 import { useToast } from '../../../components/ui/Toast';
 
 interface CreateTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTargetType?: 'MACHINE' | 'DIE_TOOL';
   preselectedMachineId?: string;
   preselectedProjectId?: string;
 }
@@ -43,7 +46,7 @@ const FALLBACK_TECHNICIANS = [
   { id: '3fb1e78e-dc2c-4388-89ef-b6af65088351', name: 'Purchase Officer', role: 'Spare Parts Procurement' },
 ];
 
-const BREAKDOWN_CATEGORIES = [
+const MACHINE_CATEGORIES = [
   { value: 'MECHANICAL', label: 'Mechanical (Spindle / Bearing / Leadscrew / Chuck / ATC)' },
   { value: 'ELECTRICAL', label: 'Electrical (Servo Drive / Power Supply / Motor / Panel)' },
   { value: 'HYDRAULIC', label: 'Hydraulic (Pressure Drop / Pump / Valve / Oil Leak)' },
@@ -53,7 +56,31 @@ const BREAKDOWN_CATEGORIES = [
   { value: 'PREVENTIVE', label: 'Preventive Servicing & Calibration Routine' },
 ];
 
-const QUICK_SYMPTOMS = [
+const DIE_FAILURE_MODES = [
+  { value: 'PUNCH_BREAKAGE', label: 'Punch Breakage (Punch Snapped / Chipped / Sheared)' },
+  { value: 'DIE_INSERT_CRACK', label: 'Die Insert / Cavity Crack (Stress Fracture / Chipping)' },
+  { value: 'STRIPPER_EJECTOR_JAM', label: 'Stripper Plate / Ejector Pin Jam (Stuck / Pin Broken)' },
+  { value: 'GUIDE_PILLAR_BUSH_WEAR', label: 'Guide Post & Bushing Wear (Scoring / Clearance Play)' },
+  { value: 'SPRING_GAS_STRUT_FAILURE', label: 'Spring / Nitrogen Cylinder Failure (Lost Pressure / Broken)' },
+  { value: 'PRESS_DIE_COLLISION_SMASH', label: 'Press Die Smash / Misfeed Crash (Double Blank Impact)' },
+  { value: 'BURR_CLEARANCE_WEAR', label: 'Cutting Edge Burr / Clearance Loss (Blunt Edges)' },
+  { value: 'FORMING_PAD_GALLING', label: 'Forming Radius Galling / Scuffing (Material Pickup)' },
+  { value: 'PREVENTIVE_SHARPENING', label: 'Scheduled Tool Regrinding & Sharpening Routine' },
+  { value: 'OTHER', label: 'Other Tooling Breakdown' },
+];
+
+const DIE_ACTIONS_REQUIRED = [
+  { value: 'WIRE_CUT_NEW_PUNCH', label: 'Wire EDM: Cut & Fit New Replacement Punch' },
+  { value: 'REGRIND_SHARPEN', label: 'Surface Grinder: Regrind & Sharpen Cutting Edges' },
+  { value: 'CNC_REMILL_INSERT', label: 'CNC VMC: Re-machine / Fabricate New Die Insert' },
+  { value: 'WELD_REMILL', label: 'Laser / TIG Weld Repair & Re-machine Profile' },
+  { value: 'REPLACE_SPRINGS', label: 'Replace Broken Nitrogen / Die Springs' },
+  { value: 'POLISH_FIT_DEBURR', label: 'Bench Fitting: Polish Draw Radius & Re-bed Tool' },
+  { value: 'REPLACE_GUIDE_PILLARS', label: 'Replace Guide Posts & Bronze Bushings' },
+  { value: 'OTHER', label: 'Other Toolroom Corrective Action' },
+];
+
+const QUICK_MACHINE_SYMPTOMS = [
   'Abnormal Spindle Vibration',
   'Servo Axis Error 401',
   'Hydraulic Pressure Drop',
@@ -63,21 +90,47 @@ const QUICK_SYMPTOMS = [
   'Positioning Deviation / Backlash',
 ];
 
+const QUICK_DIE_SYMPTOMS = [
+  'Punch snapped during 250T stamping stroke',
+  'Excessive burr on blanked edge (>0.2mm)',
+  'Die plate insert cracked near pilot hole',
+  'Stripper plate jammed with stamped strip',
+  'Die smash damage due to double sheet misfeed',
+  'Nitrogen gas cylinder pressure lost',
+  'Pilot pin bent / sheared',
+  'Galling on draw punch radius',
+];
+
 export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
   isOpen,
   onClose,
+  initialTargetType = 'MACHINE',
   preselectedMachineId = '',
   preselectedProjectId = '',
 }) => {
   const { success, error } = useToast();
+  const [targetType, setTargetType] = useState<'MACHINE' | 'DIE_TOOL'>(initialTargetType);
   const [machineId, setMachineId] = useState(preselectedMachineId);
   const [projectId, setProjectId] = useState(preselectedProjectId);
+  const [dieToolName, setDieToolName] = useState('');
+  const [toolNumber, setToolNumber] = useState('');
+  const [brokenComponent, setBrokenComponent] = useState('');
+  const [strokeCountAtFailure, setStrokeCountAtFailure] = useState<string>('');
+  const [failureMode, setFailureMode] = useState('PUNCH_BREAKAGE');
+  const [actionRequired, setActionRequired] = useState('WIRE_CUT_NEW_PUNCH');
   const [issueDescription, setIssueDescription] = useState('');
   const [priority, setPriority] = useState<'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL'>('NORMAL');
   const [assignedToId, setAssignedToId] = useState('');
   const [category, setCategory] = useState('MECHANICAL');
   const [lotoApplied, setLotoApplied] = useState(false);
   const [downtimeStartedAt, setDowntimeStartedAt] = useState('');
+
+  // Sync initialTargetType when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTargetType(initialTargetType);
+    }
+  }, [isOpen, initialTargetType]);
 
   // Set default downtimeStartedAt to current ISO local time
   useEffect(() => {
@@ -169,10 +222,25 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
     });
   };
 
+  const handleSelectProject = (projId: string) => {
+    setProjectId(projId);
+    if (projId) {
+      const p = projects.find((item: any) => item.id === projId);
+      if (p) {
+        setDieToolName(p.partName || p.description || p.name || 'Stamping Die');
+        setToolNumber(p.projectNumber || '');
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!machineId) {
+    if (targetType === 'MACHINE' && !machineId) {
       error('Machine Required', 'Please select a shopfloor machine asset.');
+      return;
+    }
+    if (targetType === 'DIE_TOOL' && !dieToolName.trim() && !projectId) {
+      error('Die / Tool Required', 'Please select or enter the Die / Tool name.');
       return;
     }
     if (!issueDescription.trim()) {
@@ -182,21 +250,37 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
 
     try {
       await createTicket.mutateAsync({
-        machineId,
+        targetType,
+        machineId: machineId || undefined,
         projectId: projectId || undefined,
+        dieToolName: targetType === 'DIE_TOOL' ? (dieToolName.trim() || undefined) : undefined,
+        toolNumber: targetType === 'DIE_TOOL' ? (toolNumber.trim() || undefined) : undefined,
+        brokenComponent: targetType === 'DIE_TOOL' ? (brokenComponent.trim() || undefined) : undefined,
+        strokeCountAtFailure: targetType === 'DIE_TOOL' && strokeCountAtFailure ? Number(strokeCountAtFailure) : undefined,
+        failureMode: targetType === 'DIE_TOOL' ? failureMode : undefined,
+        actionRequired: targetType === 'DIE_TOOL' ? actionRequired : undefined,
         issueDescription: issueDescription.trim(),
         priority,
         assignedToId: assignedToId || undefined,
-        category: category || undefined,
+        category: targetType === 'DIE_TOOL' ? 'DIE_TOOLING' : (category || undefined),
         downtimeStartedAt: downtimeStartedAt ? new Date(downtimeStartedAt).toISOString() : new Date().toISOString(),
-        lotoApplied,
+        lotoApplied: targetType === 'MACHINE' ? lotoApplied : false,
       });
 
-      success('Breakdown Ticket Logged', 'Machine breakdown ticket submitted and asset marked under maintenance.');
+      success(
+        targetType === 'DIE_TOOL' ? 'Die Breakage Ticket Logged' : 'Breakdown Ticket Logged',
+        targetType === 'DIE_TOOL'
+          ? 'Die maintenance order recorded for toolroom corrective action.'
+          : 'Machine breakdown ticket submitted and asset marked under maintenance.'
+      );
 
       // Reset form
       setMachineId('');
       setProjectId('');
+      setDieToolName('');
+      setToolNumber('');
+      setBrokenComponent('');
+      setStrokeCountAtFailure('');
       setIssueDescription('');
       setPriority('NORMAL');
       setAssignedToId('');
@@ -206,7 +290,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
 
       onClose();
     } catch (err: any) {
-      error('Failed to Report Breakdown', err?.message || 'Error submitting maintenance ticket.');
+      error('Failed to Report Maintenance', err?.message || 'Error submitting maintenance ticket.');
     }
   };
 
@@ -214,56 +298,316 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Report Machine Breakdown / Maintenance Ticket"
-      subtitle="Log asset breakdown for instant technician dispatch, downtime calculation, and digital LOTO safety tracking."
-      maxWidth="xl"
+      title={targetType === 'DIE_TOOL' ? "Report Die / Press Tool Breakage" : "Report Machine Breakdown"}
+      subtitle={
+        targetType === 'DIE_TOOL'
+          ? "Log toolroom die damage, punch breakage, insert cracking, or scheduled regrinding for immediate corrective action."
+          : "Log asset breakdown for instant technician dispatch, downtime calculation, and digital LOTO safety tracking."
+      }
+      maxWidth="2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-        {/* 1. Machine Asset Selection (Required) */}
+        {/* Target Asset Type Switcher (Machine vs Die / Tool) */}
         <div>
-          <Select
-            label="Machine / Shopfloor Asset"
-            required
-            value={machineId}
-            onChange={(e) => setMachineId(e.target.value)}
-            size="md"
-          >
-            <option value="">Select breakdown machine asset...</option>
-            {machineOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </Select>
+          <label className="block text-[11px] font-semibold text-cool-gray mb-1.5 uppercase tracking-wider">
+            Maintenance Asset Target
+          </label>
+          <div className="grid grid-cols-2 gap-2 bg-canvas p-1 rounded-[12px] border border-border-gray">
+            <button
+              type="button"
+              onClick={() => setTargetType('MACHINE')}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
+                targetType === 'MACHINE'
+                  ? 'bg-white text-ink shadow-subtle border border-border-gray font-bold'
+                  : 'text-cool-gray hover:text-ink'
+              }`}
+            >
+              <Cpu className="w-4 h-4 text-primary" />
+              <span>Machine Asset (CNC / VMC / Press / Drill)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTargetType('DIE_TOOL')}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
+                targetType === 'DIE_TOOL'
+                  ? 'bg-white text-amber-700 shadow-subtle border border-amber-300 font-bold'
+                  : 'text-cool-gray hover:text-ink'
+              }`}
+            >
+              <Wrench className="w-4 h-4 text-amber-600" />
+              <span>Die / Press Tool Breakage</span>
+            </button>
+          </div>
         </div>
 
-        {/* 2. Related Tooling Project (Optional) */}
-        <div>
-          <Select
-            label="Related Project / Running Tool (Optional)"
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-            size="md"
-          >
-            <option value="">Search affected tooling project or workpiece...</option>
-            {projectOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </Select>
-        </div>
+        {/* ------------------------------------------------------------- */}
+        {/* DIE & PRESS TOOL BREAKAGE FIELDS                               */}
+        {/* ------------------------------------------------------------- */}
+        {targetType === 'DIE_TOOL' && (
+          <div className="space-y-3 bg-amber-500/5 p-4 rounded-[12px] border border-amber-500/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-bold text-amber-800 text-xs">
+                <Wrench className="w-3.5 h-3.5 text-amber-600" />
+                <span>Tooling & Die Damage Parameters</span>
+              </div>
+              <span className="text-[10px] text-amber-700 font-semibold uppercase tracking-wider bg-amber-100 px-2 py-0.5 rounded">
+                Toolroom Corrective Order
+              </span>
+            </div>
 
-        {/* 3. Assignee Technician & Breakdown Category */}
+            {/* Die / Tool Project Selection */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Select
+                  label="Select Tooling Project (Optional)"
+                  value={projectId}
+                  onChange={(e) => handleSelectProject(e.target.value)}
+                  size="md"
+                >
+                  <option value="">Choose active tooling project...</option>
+                  {projectOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1">
+                  Die / Tool Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Progressive Stamping Die - Lower Bracket"
+                  value={dieToolName}
+                  onChange={(e) => setDieToolName(e.target.value)}
+                  className="w-full h-10 bg-white border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+            </div>
+
+            {/* Broken Component & Tool # & Stroke Count */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1">
+                  Broken Component / Det #
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Station 4 Piercing Punch Det #12"
+                  value={brokenComponent}
+                  onChange={(e) => setBrokenComponent(e.target.value)}
+                  className="w-full h-10 bg-white border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1">
+                  Tool Identification #
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. TOOL-2026-042"
+                  value={toolNumber}
+                  onChange={(e) => setToolNumber(e.target.value)}
+                  className="w-full h-10 bg-white border border-border-gray px-3 text-xs text-ink font-mono rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1">
+                  Stroke / Hit Count at Failure
+                </label>
+                <input
+                  type="number"
+                  placeholder="e.g. 45000"
+                  value={strokeCountAtFailure}
+                  onChange={(e) => setStrokeCountAtFailure(e.target.value)}
+                  className="w-full h-10 bg-white border border-border-gray px-3 text-xs text-ink font-mono rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
+                />
+              </div>
+            </div>
+
+            {/* Broken Component Quick Chips */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[10px] font-semibold text-cool-gray">Quick Components:</span>
+              {[
+                'Piercing Punch',
+                'Blanking Die Insert',
+                'Bending Blade',
+                'Stripper Plate Pin',
+                'Guide Bushing',
+                'Forming Cavity Insert',
+                'Nitrogen Gas Cylinder',
+              ].map((comp) => (
+                <button
+                  key={comp}
+                  type="button"
+                  onClick={() => setBrokenComponent(comp)}
+                  className="px-2 py-0.5 rounded-[6px] bg-white hover:bg-amber-100 hover:text-amber-900 border border-border-gray text-[10px] font-medium text-ink transition-colors cursor-pointer"
+                >
+                  + {comp}
+                </button>
+              ))}
+            </div>
+
+            {/* Die Breakdown Mode & Toolroom Action Required */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <Select
+                  label="Die Failure Mode / Breakage Type"
+                  required
+                  value={failureMode}
+                  onChange={(e) => setFailureMode(e.target.value)}
+                  size="md"
+                >
+                  {DIE_FAILURE_MODES.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <Select
+                  label="Toolroom Action Required"
+                  required
+                  value={actionRequired}
+                  onChange={(e) => setActionRequired(e.target.value)}
+                  size="md"
+                >
+                  {DIE_ACTIONS_REQUIRED.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+
+            {/* Press Machine (Optional) */}
+            <div>
+              <Select
+                label="Press Machine where Die was Running (Optional)"
+                value={machineId}
+                onChange={(e) => setMachineId(e.target.value)}
+                size="md"
+              >
+                <option value="">Select press machine (if breakdown occurred on press)...</option>
+                {machineOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* MACHINE ASSET BREAKDOWN FIELDS                                */}
+        {/* ------------------------------------------------------------- */}
+        {targetType === 'MACHINE' && (
+          <div className="space-y-3">
+            {/* Machine Asset Selection (Required) */}
+            <div>
+              <Select
+                label="Machine / Shopfloor Asset"
+                required
+                value={machineId}
+                onChange={(e) => setMachineId(e.target.value)}
+                size="md"
+              >
+                <option value="">Select breakdown machine asset...</option>
+                {machineOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {/* Related Tooling Project (Optional) */}
+            <div>
+              <Select
+                label="Related Project / Running Tool (Optional)"
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                size="md"
+              >
+                <option value="">Search affected tooling project or workpiece...</option>
+                {projectOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {/* Machine Category */}
+            <div>
+              <Select
+                label="Breakdown Category"
+                required
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                size="md"
+              >
+                {MACHINE_CATEGORIES.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {/* Digital LOTO (Lockout / Tagout) Safety Isolation */}
+            <div
+              onClick={() => setLotoApplied(!lotoApplied)}
+              className={`p-3.5 rounded-[12px] border transition-all cursor-pointer flex items-start gap-3 ${
+                lotoApplied
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-900'
+                  : 'bg-canvas border-border-gray hover:border-cool-gray/60 text-ink'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                  lotoApplied ? 'bg-amber-600 text-white' : 'border border-border-gray bg-white'
+                }`}
+              >
+                {lotoApplied && <CheckCircle2 className="w-3.5 h-3.5" />}
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 font-bold text-xs">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Apply Digital LOTO (Lockout / Tagout) Isolation Safety Lock</span>
+                </div>
+                <p className="text-[11px] text-cool-gray">
+                  Isolates electrical and pneumatic feeds. Automatically tags machine with digital safety lock until cleared.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* COMMON FIELDS: ASSIGNEE, DOWNTIME, PRIORITY, DESCRIPTION     */}
+        {/* ------------------------------------------------------------- */}
+
+        {/* Assignee Technician & Downtime Started At */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Select
-              label="Assignee Technician / Engineer"
+              label={targetType === 'DIE_TOOL' ? "Assign Toolroom Fitter / Die Maker" : "Assign Maintenance Technician"}
               value={assignedToId}
               onChange={(e) => setAssignedToId(e.target.value)}
               size="md"
             >
-              <option value="">Assign maintenance technician...</option>
+              <option value="">Assign specialist technician...</option>
               {technicianOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -273,56 +617,39 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
           </div>
 
           <div>
-            <Select
-              label="Breakdown Category"
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-ink uppercase tracking-wider">
+                Downtime Started At
+              </label>
+              <button
+                type="button"
+                onClick={handleSetCurrentTime}
+                className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                <Clock className="w-3 h-3" /> Set Current Time
+              </button>
+            </div>
+            <input
+              type="datetime-local"
+              value={downtimeStartedAt}
+              onChange={(e) => setDowntimeStartedAt(e.target.value)}
+              className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
               required
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              size="md"
-            >
-              {BREAKDOWN_CATEGORIES.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </Select>
+            />
           </div>
         </div>
 
-        {/* 4. Downtime Started At */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-ink uppercase tracking-wider">
-              Downtime Started At
-            </label>
-            <button
-              type="button"
-              onClick={handleSetCurrentTime}
-              className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-            >
-              <Clock className="w-3 h-3" /> Set to Current Time
-            </button>
-          </div>
-          <input
-            type="datetime-local"
-            value={downtimeStartedAt}
-            onChange={(e) => setDowntimeStartedAt(e.target.value)}
-            className="w-full h-10 bg-canvas border border-border-gray px-3 text-xs text-ink rounded-[10px] focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle"
-            required
-          />
-        </div>
-
-        {/* 5. Priority Level Selector */}
+        {/* Priority Level Selector */}
         <div>
           <label className="block text-xs font-semibold text-ink mb-1.5 uppercase tracking-wider">
             Breakdown Severity & Priority Level
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { id: 'LOW', label: 'LOW', desc: 'Minor / Operational', color: 'border-emerald-300 bg-emerald-50 text-emerald-700' },
-              { id: 'NORMAL', label: 'NORMAL', desc: 'Standard Breakdown', color: 'border-blue-300 bg-blue-50 text-blue-700' },
-              { id: 'HIGH', label: 'HIGH', desc: 'Line Bottleneck', color: 'border-amber-300 bg-amber-50 text-amber-700' },
-              { id: 'CRITICAL', label: 'CRITICAL', desc: 'Total Stoppage / Danger', color: 'border-red-400 bg-red-50 text-red-700 font-bold' },
+              { id: 'LOW', label: 'LOW', desc: 'Minor / Normal Wear', color: 'border-emerald-300 bg-emerald-50 text-emerald-700' },
+              { id: 'NORMAL', label: 'NORMAL', desc: 'Standard Tooling Job', color: 'border-blue-300 bg-blue-50 text-blue-700' },
+              { id: 'HIGH', label: 'HIGH', desc: 'Press Line Bottleneck', color: 'border-amber-300 bg-amber-50 text-amber-700' },
+              { id: 'CRITICAL', label: 'CRITICAL', desc: 'Total Press Stoppage / Crash', color: 'border-red-400 bg-red-50 text-red-700 font-bold' },
             ].map((p) => (
               <button
                 key={p.id}
@@ -341,40 +668,14 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
           </div>
         </div>
 
-        {/* 6. Digital LOTO (Lockout / Tagout) Safety Isolation */}
-        <div
-          onClick={() => setLotoApplied(!lotoApplied)}
-          className={`p-3.5 rounded-[12px] border transition-all cursor-pointer flex items-start gap-3 ${
-            lotoApplied
-              ? 'bg-amber-500/10 border-amber-500/30 text-amber-900'
-              : 'bg-canvas border-border-gray hover:border-cool-gray/60 text-ink'
-          }`}
-        >
-          <div
-            className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-              lotoApplied ? 'bg-amber-600 text-white' : 'border border-border-gray bg-white'
-            }`}
-          >
-            {lotoApplied && <CheckCircle2 className="w-3.5 h-3.5" />}
-          </div>
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5 font-bold text-xs">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-              <span>Apply Digital LOTO (Lockout / Tagout) Isolation Safety Lock</span>
-            </div>
-            <p className="text-[11px] text-cool-gray">
-              Isolates electrical and pneumatic feeds. Automatically tags machine with digital safety lock until cleared.
-            </p>
-          </div>
-        </div>
-
-        {/* 7. Quick Symptom Chips */}
+        {/* Quick Symptom Chips */}
         <div>
           <label className="block text-[11px] font-semibold text-cool-gray mb-1.5 uppercase tracking-wider flex items-center gap-1">
-            <Tag className="w-3 h-3 text-cool-gray" /> Quick Symptom Tags
+            <Tag className="w-3 h-3 text-cool-gray" />
+            <span>{targetType === 'DIE_TOOL' ? 'Quick Die Symptoms' : 'Quick Machine Symptoms'}</span>
           </label>
           <div className="flex flex-wrap gap-1.5">
-            {QUICK_SYMPTOMS.map((symptom) => (
+            {(targetType === 'DIE_TOOL' ? QUICK_DIE_SYMPTOMS : QUICK_MACHINE_SYMPTOMS).map((symptom) => (
               <button
                 key={symptom}
                 type="button"
@@ -387,22 +688,26 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
           </div>
         </div>
 
-        {/* 8. Issue Description (Required) */}
+        {/* Issue Description (Required) */}
         <div>
           <label className="block text-xs font-semibold text-ink mb-1 uppercase tracking-wider">
-            Issue Description & Error Symptoms <span className="text-red-500">*</span>
+            Breakdown & Damage Description <span className="text-red-500">*</span>
           </label>
           <textarea
             value={issueDescription}
             onChange={(e) => setIssueDescription(e.target.value)}
             required
             rows={3}
-            placeholder="Describe the breakdown symptoms, error codes on CNC controller, mechanical noises, or potential hazards..."
+            placeholder={
+              targetType === 'DIE_TOOL'
+                ? "Describe the punch breakage, chipped insert profile, sheared pilot, or abnormal stamping burr..."
+                : "Describe the breakdown symptoms, error codes on CNC controller, mechanical noises, or potential hazards..."
+            }
             className="w-full bg-canvas border border-border-gray rounded-[10px] p-3 text-xs text-ink placeholder:text-mute focus:outline-none focus:ring-1 focus:ring-primary shadow-subtle resize-none"
           />
         </div>
 
-        {/* 9. Actions Footer */}
+        {/* Actions Footer */}
         <div className="pt-3 border-t border-border-gray flex items-center justify-end gap-2.5">
           <Button type="button" variant="secondary" size="md" onClick={onClose}>
             Cancel
@@ -412,9 +717,17 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
             variant="primary"
             size="md"
             isLoading={createTicket.isPending}
-            disabled={!machineId || !issueDescription.trim()}
+            disabled={
+              (targetType === 'MACHINE' && !machineId) ||
+              (targetType === 'DIE_TOOL' && !dieToolName.trim() && !projectId) ||
+              !issueDescription.trim()
+            }
           >
-            {createTicket.isPending ? 'Logging Breakdown...' : 'Submit Breakdown Ticket'}
+            {createTicket.isPending
+              ? 'Logging Maintenance...'
+              : targetType === 'DIE_TOOL'
+              ? 'Submit Die Breakage Ticket'
+              : 'Submit Breakdown Ticket'}
           </Button>
         </div>
       </form>

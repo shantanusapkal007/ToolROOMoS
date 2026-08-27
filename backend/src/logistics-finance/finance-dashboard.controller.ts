@@ -2,6 +2,7 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ModuleScope } from '../auth/decorators/module-scope.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { FinanceDashboardService } from './finance-dashboard.service';
 
 @Controller('api/v1/finance')
@@ -10,34 +11,36 @@ import { FinanceDashboardService } from './finance-dashboard.service';
 export class FinanceDashboardController {
   constructor(private readonly financeDashboardService: FinanceDashboardService) {}
 
+  @Public()
+  @Get('currency-rates')
+  async getCurrencyRates() {
+    return this.financeDashboardService.getCurrencyRates();
+  }
+
   @Get('dashboard')
   async getFinanceDashboard() {
-    const data = await this.financeDashboardService.getFinanceDashboard();
-    return { data };
+
+    return this.financeDashboardService.getFinanceDashboard();
   }
 
   @Get('labour-analytics')
   async getLabourAnalytics(@Query('monthYear') monthYear?: string) {
-    const data = await this.financeDashboardService.getLabourCostAnalytics(monthYear);
-    return { data };
+    return this.financeDashboardService.getLabourCostAnalytics(monthYear);
   }
 
   @Get('project-profitability')
   async getProjectProfitability() {
-    const data = await this.financeDashboardService.getProjectProfitability();
-    return { data };
+    return this.financeDashboardService.getProjectProfitability();
   }
 
   @Get('payroll-vs-revenue')
   async getPayrollVsRevenue(@Query('months') months?: string) {
     const m = months ? parseInt(months, 10) : 6;
-    const data = await this.financeDashboardService.getPayrollVsRevenue(m);
-    return { data };
+    return this.financeDashboardService.getPayrollVsRevenue(m);
   }
 
   @Get('cost-breakdown')
   async getCostBreakdown() {
-    const data = await this.financeDashboardService.getCostBreakdown();
-    return { data };
+    return this.financeDashboardService.getCostBreakdown();
   }
 }

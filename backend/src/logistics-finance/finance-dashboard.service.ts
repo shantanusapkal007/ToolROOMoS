@@ -364,4 +364,98 @@ export class FinanceDashboardService {
       total: Math.round(total * 100) / 100,
     };
   }
+
+  private static cachedRates: any = null;
+  private static lastFetchTime: number = 0;
+
+  async getCurrencyRates() {
+    const now = Date.now();
+    // Cache in memory for 60 seconds
+    if (FinanceDashboardService.cachedRates && now - FinanceDashboardService.lastFetchTime < 60000) {
+      return FinanceDashboardService.cachedRates;
+    }
+
+    try {
+      // Primary real-time interbank API
+      const res = await fetch('https://open.er-api.com/v6/latest/USD', { signal: AbortSignal.timeout(4000) });
+      if (!res.ok) throw new Error('Primary FX API status ' + res.status);
+      const data = await res.json();
+      
+      const inrRate = data.rates?.INR || 95.47;
+      const eurRate = inrRate / (data.rates?.EUR || 0.858);
+      const gbpRate = inrRate / (data.rates?.GBP || 0.743);
+      const aedRate = inrRate / (data.rates?.AED || 3.6725);
+      const cnyRate = inrRate / (data.rates?.CNY || 7.25);
+      const jpyRate = inrRate / (data.rates?.JPY || 153.5);
+
+      const result = {
+        base: 'USD',
+        target: 'INR',
+        rates: {
+          USD: Math.round(inrRate * 100) / 100,
+          EUR: Math.round(eurRate * 100) / 100,
+          GBP: Math.round(gbpRate * 100) / 100,
+          AED: Math.round(aedRate * 100) / 100,
+          CNY: Math.round(cnyRate * 100) / 100,
+          JPY: Math.round(jpyRate * 100) / 100,
+        },
+        timestamp: new Date().toISOString(),
+        isLive: true,
+      };
+
+      FinanceDashboardService.cachedRates = result;
+      FinanceDashboardService.lastFetchTime = now;
+      return result;
+    } catch {
+      try {
+        // Fallback secondary live API
+        const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD', { signal: AbortSignal.timeout(4000) });
+        const data = await res.json();
+        const inrRate = data.rates?.INR || 95.47;
+        const eurRate = inrRate / (data.rates?.EUR || 0.858);
+        const gbpRate = inrRate / (data.rates?.GBP || 0.743);
+        const aedRate = inrRate / (data.rates?.AED || 3.6725);
+        const cnyRate = inrRate / (data.rates?.CNY || 7.25);
+        const jpyRate = inrRate / (data.rates?.JPY || 153.5);
+
+        const result = {
+          base: 'USD',
+          target: 'INR',
+          rates: {
+            USD: Math.round(inrRate * 100) / 100,
+            EUR: Math.round(eurRate * 100) / 100,
+            GBP: Math.round(gbpRate * 100) / 100,
+            AED: Math.round(aedRate * 100) / 100,
+            CNY: Math.round(cnyRate * 100) / 100,
+            JPY: Math.round(jpyRate * 100) / 100,
+          },
+          timestamp: new Date().toISOString(),
+          isLive: true,
+        };
+
+        FinanceDashboardService.cachedRates = result;
+        FinanceDashboardService.lastFetchTime = now;
+        return result;
+      } catch {
+        if (FinanceDashboardService.cachedRates) {
+          return FinanceDashboardService.cachedRates;
+        }
+        return {
+          base: 'USD',
+          target: 'INR',
+          rates: {
+            USD: 95.47,
+            EUR: 111.27,
+            GBP: 128.45,
+            AED: 26.00,
+            CNY: 13.17,
+            JPY: 0.62,
+          },
+          timestamp: new Date().toISOString(),
+          isLive: false,
+        };
+      }
+    }
+  }
 }
+

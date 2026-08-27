@@ -6,7 +6,7 @@ FROM node:20-alpine AS builder
 WORKDIR /usr/src/app
 
 # Install build tools for native dependencies (Prisma, etc.)
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ openssl
 
 COPY package*.json ./
 RUN npm ci
@@ -24,13 +24,23 @@ FROM node:20-alpine AS production
 
 WORKDIR /usr/src/app
 
+# Install runtime dependencies for Prisma
+RUN apk add --no-cache openssl curl
+
 # Only copy over package definitions for production install
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copy built assets
+# Copy built assets and prisma runtime
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /usr/src/app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=builder /usr/src/app/prisma ./prisma
+COPY --from=builder /usr/src/app/prisma.config.ts ./prisma.config.ts
+
+# Copy startup entrypoint
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 # Environment defaults
 ENV NODE_ENV=production
@@ -38,4 +48,5 @@ ENV PORT=4000
 
 EXPOSE 4000
 
-CMD ["node", "dist/main.js"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["node", "dist/src/main.js"]
