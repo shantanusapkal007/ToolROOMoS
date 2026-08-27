@@ -16,7 +16,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d toolroomos"]
+      test: [ "CMD-SHELL", "pg_isready -U root -d toolroomos" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -30,27 +30,8 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: always
-
-  minio:
-    image: minio/minio
-    container_name: toolroomos-minio
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-adminpassword}
-    ports:
-      - "9000:9000" # API Port
-      - "9001:9001" # Console Web UI Port
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
       timeout: 5s
       retries: 5
     restart: always
@@ -68,19 +49,14 @@ services:
     environment:
       - DATABASE_URL=postgresql://root:${DB_PASSWORD:-rootpassword}@postgres:5432/toolroomos?schema=public
       - REDIS_URL=redis://redis:6379
-      - MINIO_ENDPOINT=minio
-      - MINIO_PORT=9000
-      - MINIO_ACCESS_KEY=admin
-      - MINIO_SECRET_KEY=${MINIO_PASSWORD:-adminpassword}
-      - MINIO_BUCKET=toolroomos-storage
-      - JWT_SECRET=${JWT_SECRET:-production-secret-replace-in-env}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:4000}
+      - JWT_SECRET=${JWT_SECRET:-production-secret}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
       - PORT=4000
       - NODE_ENV=production
       - AUTO_MIGRATE=true
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:4000/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -107,7 +83,7 @@ services:
       - NODE_ENV=production
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -119,4 +95,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
+

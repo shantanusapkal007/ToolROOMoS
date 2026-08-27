@@ -1,6 +1,6 @@
 # Architecture Blueprint
 *ToolRoomOS – Manufacturing Operating System*
-*Version 1.0*
+*Version 2.0*
 
 ## Purpose
 ToolRoomOS is not built as a traditional ERP. It is built as a Manufacturing Operating System whose architecture mirrors the physical movement of work inside a toolroom.
@@ -33,17 +33,17 @@ The system follows six architectural philosophies:
 ---
 
 ## 2. System Architecture Layers
-The system consists of seven logical layers, each with a single responsibility.
+The system consists of six logical layers, each with a single responsibility.
 
 ### Layer 1 — Presentation Layer
 **Purpose:** Provides the user interface.
-**Technology:** Next.js, React, TypeScript, Tailwind CSS.
+**Technology:** Next.js 16, React 19, TypeScript, Tailwind CSS.
 **Responsibilities:** Dashboard, Project Workspace, Document Viewer, Forms, Reports.
 **Rules:** No business logic. Only presentation.
 
 ### Layer 2 — Application Layer
 **Purpose:** Exposes business capabilities through REST APIs.
-**Technology:** NestJS, TypeScript.
+**Technology:** NestJS 11, TypeScript.
 **Responsibilities:** Authentication, Authorization, Validation, API Routing, Request Processing.
 **Rules:** Never contains business calculations. Only coordinates requests.
 
@@ -59,93 +59,89 @@ The system consists of seven logical layers, each with a single responsibility.
 
 ### Layer 5 — Persistence Layer
 **Purpose:** Stores manufacturing information.
-**Technology:** PostgreSQL.
+**Technology:** PostgreSQL 15, Prisma ORM.
 **Responsibilities:** Master Data, Projects, Documents, Transactions, Financial Outcomes.
 **Rules:** Strict foreign keys, Transactions, Audit History. No business logic.
 
-### Layer 6 — Storage Layer
-**Purpose:** Stores files.
-**Technology:** Amazon S3 or MinIO.
-**Stores:** Customer PO, Drawings, Excel, Inspection Images, Invoices, Dispatch Documents.
-**Rules:** Large files never enter PostgreSQL.
-
-### Layer 7 — Infrastructure Layer
+### Layer 6 — Infrastructure Layer
 **Purpose:** Provides platform services.
-**Components:** Redis, Docker, Background Workers, Object Storage, Networking, Monitoring, Logging.
+**Components:** Redis, Docker, Pino Logging, Health Checks, Rate Limiting (Throttler).
 
 ---
 
 ## 3. Technology Stack
 
 ### Frontend
-- **Framework:** Next.js
+- **Framework:** Next.js 16
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **State Management:** TanStack Query + Zustand
 - **Form Handling:** React Hook Form
 - **Validation:** Zod
+- **Tables:** TanStack Table
+- **Charts:** Visx
 
 ### Backend
-- **Framework:** NestJS
+- **Framework:** NestJS 11
 - **Language:** TypeScript
-- **Validation:** Zod / class-validator
-- **Authentication:** JWT
-- **Authorization:** RBAC
-- **API:** REST
+- **Validation:** class-validator / class-transformer
+- **Authentication:** JWT (via @nestjs/jwt + Passport)
+- **Authorization:** RBAC (Custom Guards)
+- **API:** REST (versioned under `/api/v1/`)
+- **Logging:** Pino (via nestjs-pino)
+- **Scheduling:** @nestjs/schedule
+- **Rate Limiting:** @nestjs/throttler
 
 ### Database
-- **Engine:** PostgreSQL (ACID, Foreign Keys, Transactions, Indexes, JSON Support)
+- **Engine:** PostgreSQL 15 (ACID, Foreign Keys, Transactions, Indexes, JSON Support)
 - **ORM:** Prisma (Type Safety, Migration Support, Developer Productivity)
 
-### Caching & Background Processing
-- **Cache:** Redis (Session Cache, Idempotency Keys, Temporary Data)
-- **Queue:** BullMQ (Excel Import, Drawing Processing, PDF Generation, Notification Processing, Long Running Jobs)
+### Caching
+- **Cache:** Redis (Session Cache, Temporary Data)
 
-### File Storage
-- **Cloud:** Amazon S3
-- **On-Premise:** MinIO
+### File Handling
+- **Approach:** Files (Excel, CSV) are parsed in-browser using PapaParse/xlsx and sent as structured JSON to the API. Reports and exports are generated in-memory and streamed to the browser for download.
+- **Note:** No external object storage is currently in use. File storage (e.g., S3) can be added in the future if document/drawing upload is needed.
 
 ---
 
 ## 4. Runtime Architecture
 
 **Standard API Flow:**
-`User` -> `Next.js Application` -> `REST API` -> `Authentication` -> `Workflow Validation` -> `Business Logic` -> `PostgreSQL / Object Storage` -> `Response`
-
-**Long-Running Operations:**
-`API` -> `Redis Queue` -> `Worker` -> `Storage` -> `Database` -> `Notification`
-*(The API always remains responsive).*
+`User` -> `Next.js Application` -> `REST API` -> `Authentication` -> `Workflow Validation` -> `Business Logic` -> `PostgreSQL` -> `Response`
 
 ---
 
 ## 5. Security Architecture
-- **Authentication:** JWT
-- **Authorization:** Role-Based Access Control
-- **Encryption:** TLS 1.2+ (Transit), Storage Encryption Enabled (At-Rest)
-- **Password Storage:** Argon2 or bcrypt
-- **Audit:** Every request recorded, every modification tracked, every approval recorded.
+- **Authentication:** JWT (Access + Refresh Tokens)
+- **Authorization:** Role-Based Access Control (ADMIN, MANAGER, OPERATOR, VIEWER)
+- **Password Storage:** bcrypt
+- **Security Headers:** Helmet
+- **Rate Limiting:** ThrottlerGuard (100 requests per 60 seconds)
+- **CORS:** Configurable allowed origins
+- **Audit:** Every modification tracked via audit logs.
 
 ---
 
 ## 6. Deployment Architecture
 
-### SaaS (Cloud)
-`Internet` -> `Load Balancer` -> `Frontend` -> `Backend` -> `Redis` -> `PostgreSQL` -> `S3`
+### Development
+`Developer Machine` -> `Next.js (port 3000)` -> `NestJS (port 4000)` -> `Redis (port 6380)` -> `PostgreSQL (port 5432)`
+*(PostgreSQL and Redis run as Docker containers via Docker Compose. Frontend and Backend run natively with hot-reload.)*
 
-### On-Premise (Factory Network)
-`Factory Network` -> `Nginx` -> `Frontend` -> `Backend` -> `Redis` -> `PostgreSQL` -> `MinIO`
-*(Everything deployed using Docker Compose).*
+### Production (On-Premise / Factory Network)
+`Factory Network` -> `Nginx` -> `Frontend` -> `Backend` -> `Redis` -> `PostgreSQL`
+*(Everything deployed using Docker Compose.)*
 
 ---
 
 ## 7. Reliability & Scalability
-- Frontend, Backend, Workers, and Storage scale independently.
+- Frontend, Backend, and Database scale independently.
 - Backend remains stateless. No component depends on local memory.
 - Database transactions guarantee consistency.
-- Background jobs retry safely.
 - Idempotency prevents duplicate processing.
 - Operational history is immutable. System failures never lose business data.
-- **Monitoring:** Application Logs, API Logs, Audit Logs, Error Logs, Health Checks ensure total observability.
+- **Monitoring:** Application Logs (Pino), Health Checks (`/health`, `/live`, `/ready`) ensure observability.
 
 ---
 
@@ -156,10 +152,8 @@ The system consists of seven logical layers, each with a single responsibility.
 4. Workflows control business progression.
 5. Business logic remains independent of infrastructure.
 6. Every transaction is atomic and auditable.
-7. Files are stored outside the database.
-8. APIs remain stateless.
-9. Background processing handles long-running operations.
-10. The architecture mirrors the physical manufacturing process, ensuring that every software component directly represents a real-world factory activity.
+7. APIs remain stateless.
+8. The architecture mirrors the physical manufacturing process, ensuring that every software component directly represents a real-world factory activity.
 
 ## Final Architecture Principle
 ToolRoomOS is not architected as a collection of software modules. It is architected as a digital factory. Every layer—from the user interface to the database—exists to faithfully represent how a manufacturing project moves through the factory, ensuring that information is captured once, reused everywhere, and transformed automatically into the next stage of work.
