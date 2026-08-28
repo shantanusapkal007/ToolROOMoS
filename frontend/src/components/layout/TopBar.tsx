@@ -16,6 +16,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../ui/Button';
 import { SearchInput } from '../ui/SearchInput';
+import { getBaseUrl } from '../../lib/api';
 
 interface CurrencyRates {
   usd: number;
@@ -66,7 +67,7 @@ export function TopBar() {
 
     try {
       // 1. Try Backend Proxy endpoint
-      const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/finance/currency-rates`;
+      const backendUrl = `${getBaseUrl()}/finance/currency-rates`;
       const res = await fetch(backendUrl, { signal: AbortSignal.timeout(3000) });
       if (res.ok) {
         const json = await res.json();

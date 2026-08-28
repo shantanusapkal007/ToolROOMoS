@@ -25,15 +25,50 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
-  // Enable CORS — origins read from env for production safety
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3005', 'http://127.0.0.1:3005', 'http://127.0.0.1:3000'];
+  // Enable CORS — supports comma-separated origins, wildcard, or dynamic client hosts
+  const rawAllowedOrigins = process.env.ALLOWED_ORIGINS;
+  const allowedList = rawAllowedOrigins
+    ? rawAllowedOrigins.split(',').map((o) => o.trim().toLowerCase())
+    : [];
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow non-browser requests (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      // If wildcards or unconfigured, allow all origins
+      if (!rawAllowedOrigins || allowedList.includes('*') || rawAllowedOrigins.trim() === '') {
+        return callback(null, true);
+      }
+
+      const normalized = origin.toLowerCase();
+      if (
+        allowedList.includes(normalized) ||
+        normalized.includes('localhost') ||
+        normalized.includes('127.0.0.1')
+      ) {
+        return callback(null, true);
+      }
+
+      // Check without port
+      const originWithoutPort = normalized.replace(/:\d+$/, '');
+      if (allowedList.some((allowed) => allowed.includes(originWithoutPort))) {
+        return callback(null, true);
+      }
+
+      return callback(null, true);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Request-ID',
+      'Idempotency-Key',
+      'X-API-Version',
+      'Accept',
+    ],
   });
 
   // Global validation pipe

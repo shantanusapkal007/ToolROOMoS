@@ -7,6 +7,7 @@ import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { useToast } from '../../../components/ui/Toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getBaseUrl } from '../../../lib/api';
 
 export type FieldType = 'text' | 'number' | 'select' | 'textarea' | 'checkbox' | 'date' | 'toggle' | 'radio' | 'contact' | 'file';
 
@@ -35,7 +36,7 @@ export const FormBuilder = () => {
   const { data: savedForm, isLoading } = useQuery({
     queryKey: ['form', activeForm],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/settings/forms/${activeForm}`);
+      const res = await fetch(`${getBaseUrl()}/settings/forms/${activeForm}`);
       if (!res.ok) throw new Error('Failed to fetch form');
       const json = await res.json();
       return json.data;
@@ -54,7 +55,7 @@ export const FormBuilder = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (schemaData: FormField[]) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/settings/forms`, {
+      const res = await fetch(`${getBaseUrl()}/settings/forms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

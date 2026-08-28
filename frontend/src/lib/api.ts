@@ -1,6 +1,22 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+export const getBaseUrl = (): string => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== 'undefined') {
+    // If explicit non-localhost URL is provided, use it
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+      return envUrl;
+    }
+    // If accessing via browser on a remote machine (e.g. AWS EC2, custom IP or domain),
+    // dynamically target backend on port 4000
+    const { protocol, hostname } = window.location;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return `${protocol}//${hostname}:4000/api/v1`;
+    }
+  }
+  return envUrl || 'http://localhost:4000/api/v1';
+};
+
 const API_VERSION = '1.0';
 
 export interface ApiResponse<T = any> {
@@ -34,7 +50,7 @@ export class ApiNetworkError extends Error {
 }
 
 const axiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: getBaseUrl(),
   timeout: 30000, // 30 seconds default
   headers: {
     'Content-Type': 'application/json',
@@ -49,6 +65,8 @@ const NON_RETRYABLE_STATUS_CODES = [400, 401, 403, 404, 409, 422];
 
 // Auth interceptor
 axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  config.baseURL = getBaseUrl();
+
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('access_token');
     if (token) {
@@ -101,7 +119,7 @@ axiosInstance.interceptors.response.use(
         if (refreshToken) {
           try {
             // Use standard axios to avoid interceptor loop
-            const res = await axios.post(`${BASE_URL}/auth/refresh`, { refresh_token: refreshToken });
+            const res = await axios.post(`${getBaseUrl()}/auth/refresh`, { refresh_token: refreshToken });
             const payload = res.data?.data?.access_token ? res.data.data : res.data;
             const { access_token, refresh_token: new_refresh_token } = payload;
             
