@@ -3,18 +3,18 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 export const getBaseUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== 'undefined') {
-    // If explicit non-localhost URL is provided, use it
-    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    // If NEXT_PUBLIC_API_URL is explicitly set to relative path or non-localhost domain, use it
+    if (envUrl && (envUrl.startsWith('/') || (!envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')))) {
       return envUrl;
     }
     // If accessing via browser on a remote machine (e.g. AWS EC2, custom IP or domain),
-    // dynamically target backend on port 4000
-    const { protocol, hostname } = window.location;
+    // default to relative '/api/v1' which is proxied by Next.js rewrites to the backend
+    const { hostname } = window.location;
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return `${protocol}//${hostname}:4000/api/v1`;
+      return '/api/v1';
     }
   }
-  return envUrl || 'http://localhost:4000/api/v1';
+  return envUrl || '/api/v1';
 };
 
 const API_VERSION = '1.0';
