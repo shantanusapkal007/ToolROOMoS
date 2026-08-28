@@ -63,6 +63,17 @@ const MAX_RETRIES = 3;
 const RETRYABLE_STATUS_CODES = [502, 503, 504];
 const NON_RETRYABLE_STATUS_CODES = [400, 401, 403, 404, 409, 422];
 
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 // Auth interceptor
 axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   config.baseURL = getBaseUrl();
@@ -76,13 +87,13 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
   // Inject Request ID
   if (!config.headers.has('X-Request-ID')) {
-    config.headers.set('X-Request-ID', crypto.randomUUID());
+    config.headers.set('X-Request-ID', generateUUID());
   }
 
   // Idempotency Key for mutations
   if (['post', 'put', 'patch', 'delete'].includes(config.method || '')) {
     if (!config.headers.has('Idempotency-Key')) {
-      config.headers.set('Idempotency-Key', crypto.randomUUID());
+      config.headers.set('Idempotency-Key', generateUUID());
     }
   }
 
