@@ -9,6 +9,12 @@ if [ "${AUTO_MIGRATE:-true}" = "true" ]; then
   npx prisma migrate deploy || echo "Warning: Migration check completed with warnings or database already up-to-date."
 fi
 
+# Run database seed if AUTO_SEED is true
+if [ "${AUTO_SEED:-false}" = "true" ]; then
+  echo "Running database seed..."
+  node prisma/seed.js || echo "Seed completed or skipped."
+fi
+
 # Execute main process
 echo "Starting Application Server on Port ${PORT:-4000}..."
 exec "$@"
