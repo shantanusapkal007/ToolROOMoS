@@ -23,7 +23,6 @@ export class StorageService implements OnModuleInit {
   private readonly logger = new Logger(StorageService.name);
   private s3Client: S3Client;
   private bucket: string;
-  private isMinio: boolean = false;
   private isConfigured: boolean = false;
 
   constructor() {
@@ -31,59 +30,32 @@ export class StorageService implements OnModuleInit {
   }
 
   private initClient() {
-    const minioEndpoint = process.env.MINIO_ENDPOINT;
-    const minioPort = process.env.MINIO_PORT ? parseInt(process.env.MINIO_PORT, 10) : 9000;
-    const minioUseSSL = process.env.MINIO_USE_SSL === 'true';
-    const minioAccessKey = process.env.MINIO_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID;
-    const minioSecretKey = process.env.MINIO_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY;
     const awsRegion = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+    const customEndpoint = process.env.AWS_ENDPOINT;
     
-    this.bucket = process.env.AWS_S3_BUCKET || process.env.MINIO_BUCKET || 'toolroomos-storage';
+    this.bucket = process.env.AWS_S3_BUCKET || 'toolroomos-storage';
 
-    if (minioEndpoint) {
-      // MinIO configuration (Self-hosted or Docker)
-      this.isMinio = true;
-      const protocol = minioUseSSL ? 'https://' : 'http://';
-      const endpoint = minioEndpoint.includes('://') 
-        ? minioEndpoint 
-        : `${protocol}${minioEndpoint}:${minioPort}`;
-
-      this.s3Client = new S3Client({
-        endpoint,
-        region: awsRegion,
-        credentials: minioAccessKey && minioSecretKey ? {
-          accessKeyId: minioAccessKey,
-          secretAccessKey: minioSecretKey,
-        } : undefined,
-        forcePathStyle: true, // Required for MinIO
-      });
-      this.isConfigured = true;
-      this.logger.log(`Initialized Object Storage with MinIO Driver [Endpoint: ${endpoint}, Bucket: ${this.bucket}]`);
-    } else if (process.env.AWS_S3_BUCKET || process.env.AWS_REGION || process.env.AWS_ACCESS_KEY_ID) {
-      // Native AWS S3 Configuration (Cloud)
-      this.isMinio = false;
+    if (accessKeyId && secretAccessKey) {
       this.s3Client = new S3Client({
         region: awsRegion,
-        credentials: minioAccessKey && minioSecretKey ? {
-          accessKeyId: minioAccessKey,
-          secretAccessKey: minioSecretKey,
-        } : undefined, // When running on AWS ECS/EC2 with IAM Role, credentials will automatically load from metadata service
-      });
-      this.isConfigured = true;
-      this.logger.log(`Initialized Object Storage with AWS S3 Driver [Region: ${awsRegion}, Bucket: ${this.bucket}]`);
-    } else {
-      // Fallback local S3 client config for dev
-      this.s3Client = new S3Client({
-        region: 'us-east-1',
-        endpoint: 'http://localhost:9000',
+        endpoint: customEndpoint || undefined,
         credentials: {
-          accessKeyId: 'admin',
-          secretAccessKey: 'adminpassword',
+          accessKeyId,
+          secretAccessKey,
         },
-        forcePathStyle: true,
       });
-      this.isConfigured = false;
-      this.logger.warn(`Object Storage not explicitly configured in environment. Using local development defaults.`);
+      this.isConfigured = true;
+      this.logger.log(`Initialized Object Storage with S3 Driver [Region: ${awsRegion}, Bucket: ${this.bucket}]`);
+    } else {
+      // Default / IAM Role / Fallback Configuration
+      this.s3Client = new S3Client({
+        region: awsRegion,
+        endpoint: customEndpoint || undefined,
+      });
+      this.isConfigured = !!process.env.AWS_S3_BUCKET;
+      this.logger.log(`Initialized Object Storage S3 Driver [Region: ${awsRegion}, Bucket: ${this.bucket}]`);
     }
   }
 
@@ -92,7 +64,7 @@ export class StorageService implements OnModuleInit {
   }
 
   /**
-   * Check if bucket exists, if not create it (useful for MinIO and local testing)
+   * Check if bucket exists, if not attempt to create it (for development environments)
    */
   async ensureBucketExists(): Promise<void> {
     try {
@@ -113,7 +85,7 @@ export class StorageService implements OnModuleInit {
   }
 
   /**
-   * Upload file to S3 / MinIO
+   * Upload file to S3
    */
   async uploadFile(
     key: string,
@@ -215,18 +187,18 @@ export class StorageService implements OnModuleInit {
   /**
    * Health check method for storage
    */
-  async checkHealth(): Promise<{ status: 'healthy' | 'degraded'; driver: 'minio' | 's3'; bucket: string; message?: string }> {
+  async checkHealth(): Promise<{ status: 'healthy' | 'degraded'; driver: 's3'; bucket: string; message?: string }> {
     try {
       await this.s3Client.send(new HeadBucketCommand({ Bucket: this.bucket }));
       return {
         status: 'healthy',
-        driver: this.isMinio ? 'minio' : 's3',
+        driver: 's3',
         bucket: this.bucket,
       };
     } catch (err: any) {
       return {
         status: 'degraded',
-        driver: this.isMinio ? 'minio' : 's3',
+        driver: 's3',
         bucket: this.bucket,
         message: err.message,
       };

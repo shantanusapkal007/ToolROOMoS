@@ -27,7 +27,7 @@ This guide outlines the production deployment architectures and step-by-step pro
                                       ┌────────────────────────────────────┼────────────────────────────────────┐
                                       ▼                                    ▼                                    ▼
                          ┌────────────────────────┐           ┌────────────────────────┐           ┌────────────────────────┐
-                         │   AWS RDS PostgreSQL   │           │  AWS ElastiCache Redis │           │     AWS S3 / MinIO     │
+                         │   AWS RDS PostgreSQL   │           │  AWS ElastiCache Redis │           │     AWS S3 Storage     │
                          │   (Multi-AZ, Encrypted)│           │   (In-Memory Caching)  │           │   (Object Storage)     │
                          └────────────────────────┘           └────────────────────────┘           └────────────────────────┘
 ```
@@ -69,7 +69,6 @@ PORT=4000
 AUTO_MIGRATE=true
 JWT_SECRET=your_super_strong_64_character_secret_key_here
 DB_PASSWORD=your_secure_postgres_password
-MINIO_PASSWORD=your_secure_minio_password
 ALLOWED_ORIGINS=https://toolroom.yourcompany.com,http://YOUR_EC2_PUBLIC_IP:3000
 ```
 
@@ -108,7 +107,6 @@ Best for high availability, zero-downtime rolling updates, and enterprise scalin
    ```env
    AWS_REGION=us-east-1
    AWS_S3_BUCKET=toolroomos-enterprise-storage
-   # MINIO_ENDPOINT is omitted to activate native AWS S3 mode
    ```
 
 ### 3. Cache & Session Store (AWS ElastiCache Redis)

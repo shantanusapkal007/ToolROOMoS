@@ -131,7 +131,7 @@ export const SystemPreferences = () => {
             <div className="flex items-center justify-between py-2">
               <div>
                 <p className="font-bold text-xs text-ink">Automated Daily Database Snapshots</p>
-                <p className="text-[11px] text-cool-gray mt-0.5">Perform incremental PostgreSQL backups and synchronize with MinIO bucket storage.</p>
+                <p className="text-[11px] text-cool-gray mt-0.5">Perform incremental PostgreSQL backups and synchronize with cloud bucket storage.</p>
               </div>
               <Toggle checked={preferences.autoBackup} onChange={() => togglePref('autoBackup')} />
             </div>

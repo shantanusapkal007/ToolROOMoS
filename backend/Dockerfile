@@ -24,14 +24,14 @@ FROM node:20-alpine AS production
 
 WORKDIR /usr/src/app
 
-# Install runtime dependencies for Prisma
+# Install runtime dependencies for Prisma and healthcheck
 RUN apk add --no-cache openssl curl
 
-# Only copy over package definitions for production install
+# Install production dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-# Copy built assets and prisma runtime
+# Copy built application and prisma runtime
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /usr/src/app/node_modules/@prisma/client ./node_modules/@prisma/client
@@ -50,3 +50,4 @@ EXPOSE 4000
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "dist/src/main.js"]
+

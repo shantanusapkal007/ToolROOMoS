@@ -5,10 +5,9 @@ describe('StorageService', () => {
   let service: StorageService;
 
   beforeEach(async () => {
-    process.env.MINIO_ENDPOINT = 'localhost';
-    process.env.MINIO_PORT = '9000';
-    process.env.MINIO_ACCESS_KEY = 'test_access';
-    process.env.MINIO_SECRET_KEY = 'test_secret';
+    process.env.AWS_REGION = 'us-east-1';
+    process.env.AWS_ACCESS_KEY_ID = 'test_access';
+    process.env.AWS_SECRET_ACCESS_KEY = 'test_secret';
     process.env.AWS_S3_BUCKET = 'test-bucket';
 
     const module: TestingModule = await Test.createTestingModule({
