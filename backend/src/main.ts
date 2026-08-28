@@ -22,8 +22,14 @@ async function bootstrap() {
 
   app.useLogger(app.get(Logger));
 
-  // Security headers
-  app.use(helmet());
+  // Security headers (Tailored for REST API)
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // CSP applies to HTML web servers, not JSON APIs
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginOpenerPolicy: false,
+    }),
+  );
 
   // Enable CORS — supports comma-separated origins, wildcard, or dynamic client hosts
   const rawAllowedOrigins = process.env.ALLOWED_ORIGINS;
