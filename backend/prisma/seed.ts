@@ -12,7 +12,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('🌱 Starting database seeding with client data...');
 
   // 0. Seed Admin User
   const passwordHash = await bcrypt.hash('admin123', 10);
@@ -39,7 +39,7 @@ async function main() {
       gstNumber: '27AAAAA1111A1Z1',
       pan: 'AAAAA1111A',
       address: 'Industrial Zone Sector 4, Pune',
-      currency: 'USD',
+      currency: 'INR',
       status: 'ACTIVE',
     },
   });
@@ -86,25 +86,44 @@ async function main() {
   });
   console.log(`✅ Seeded Department: ${department.departmentName}`);
 
-  // 5. Seed Customer
-  const customer = await prisma.customer.upsert({
-    where: { customerCode: 'CU-001' },
+  // 5. Seed Customers (Real: SPX Flow Technology, Lely)
+  const customerSPX = await prisma.customer.upsert({
+    where: { customerCode: 'CU-SPX' },
     update: {},
     create: {
-      customerCode: 'CU-001',
-      companyName: 'Aerospace Industries Ltd',
-      gstNumber: '27BBBBB2222B2Z2',
-      billingAddress: 'Airfield Road, Bangalore',
-      shippingAddress: 'Airfield Road, Bangalore',
-      contactPerson: 'Sarah Jenkins',
-      contactPhone: '+919876543210',
-      contactEmail: 'sarah@aerospaceind.com',
-      paymentTerms: 'NET30',
+      customerCode: 'CU-SPX',
+      companyName: 'SPX Flow Technology',
+      gstNumber: '27SPXFT0001S1Z1',
+      billingAddress: 'SPX Flow Technology, Pune, Maharashtra',
+      shippingAddress: 'SPX Flow Technology, Pune, Maharashtra',
+      contactPerson: 'SPX Procurement',
+      contactPhone: '+912066001100',
+      contactEmail: 'procurement@spxflow.com',
+      paymentTerms: 'NET45',
       companyId: company.id,
       status: 'ACTIVE',
     },
   });
-  console.log(`✅ Seeded Customer: ${customer.companyName}`);
+  console.log(`✅ Seeded Customer: ${customerSPX.companyName}`);
+
+  const customerLely = await prisma.customer.upsert({
+    where: { customerCode: 'CU-LELY' },
+    update: {},
+    create: {
+      customerCode: 'CU-LELY',
+      companyName: 'Lely Industries N.V.',
+      gstNumber: '27LELYIND001L1Z1',
+      billingAddress: 'Lely Industries, Maassluis, Netherlands',
+      shippingAddress: 'Lely Industries, Maassluis, Netherlands',
+      contactPerson: 'Lely Procurement',
+      contactPhone: '+31105998888',
+      contactEmail: 'procurement@lely.com',
+      paymentTerms: 'NET60',
+      companyId: company.id,
+      status: 'ACTIVE',
+    },
+  });
+  console.log(`✅ Seeded Customer: ${customerLely.companyName}`);
 
   // 6. Seed Vendor
   const vendor = await prisma.vendor.upsert({
@@ -124,233 +143,189 @@ async function main() {
   });
   console.log(`✅ Seeded Vendor: ${vendor.vendorName}`);
 
-  // 7. Seed Material Shape
-  const shapeBlock = await prisma.materialShape.upsert({
-    where: { shapeName: 'Block' },
+  // 7. Seed Material Shapes (actual shapes from client data)
+  const shapeSheet = await prisma.materialShape.upsert({
+    where: { shapeName: 'Sheet' },
     update: {},
-    create: {
-      shapeName: 'Block',
-      status: 'ACTIVE',
-    },
+    create: { shapeName: 'Sheet', status: 'ACTIVE' },
+  });
+  const shapeFlat = await prisma.materialShape.upsert({
+    where: { shapeName: 'Flat' },
+    update: {},
+    create: { shapeName: 'Flat', status: 'ACTIVE' },
   });
   const shapeRoundBar = await prisma.materialShape.upsert({
     where: { shapeName: 'Round Bar' },
     update: {},
-    create: {
-      shapeName: 'Round Bar',
-      status: 'ACTIVE',
-    },
+    create: { shapeName: 'Round Bar', status: 'ACTIVE' },
+  });
+  const shapeTube = await prisma.materialShape.upsert({
+    where: { shapeName: 'Tube' },
+    update: {},
+    create: { shapeName: 'Tube', status: 'ACTIVE' },
+  });
+  const shapePipe = await prisma.materialShape.upsert({
+    where: { shapeName: 'Pipe' },
+    update: {},
+    create: { shapeName: 'Pipe', status: 'ACTIVE' },
   });
   const shapePlate = await prisma.materialShape.upsert({
     where: { shapeName: 'Plate' },
     update: {},
-    create: {
-      shapeName: 'Plate',
-      status: 'ACTIVE',
-    },
+    create: { shapeName: 'Plate', status: 'ACTIVE' },
   });
-  const shapeHexBar = await prisma.materialShape.upsert({
-    where: { shapeName: 'Hex Bar' },
+  const shapeBlock = await prisma.materialShape.upsert({
+    where: { shapeName: 'Block' },
+    update: {},
+    create: { shapeName: 'Block', status: 'ACTIVE' },
+  });
+  console.log('✅ Seeded Material Shapes: Sheet, Flat, Round Bar, Tube, Pipe, Plate, Block');
+
+  // 8. Seed Materials (actual grades from client Excel data)
+  const matCRCA = await prisma.material.upsert({
+    where: { materialCode: 'MAT-CRCA' },
     update: {},
     create: {
-      shapeName: 'Hex Bar',
-      status: 'ACTIVE',
-    },
-  });
-  console.log(`✅ Seeded Material Shapes: Block, Round Bar, Plate, Hex Bar`);
-
-  // 8. Seed Materials
-  const material = await prisma.material.upsert({
-    where: { materialCode: 'MA-01' },
-    update: {
-      materialGrade: 'Aluminium Grade 7075',
-      materialCategory: 'RAW_MATERIAL',
-      density: 2.81,
-      standardCost: 15,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeBlock.id,
-      status: 'ACTIVE',
-    },
-    create: {
-      materialCode: 'MA-01',
-      materialGrade: 'Aluminium Grade 7075',
-      materialCategory: 'RAW_MATERIAL',
-      density: 2.81,
-      standardCost: 15,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeBlock.id,
-      status: 'ACTIVE',
-    },
-  });
-
-  const materialD2 = await prisma.material.upsert({
-    where: { materialCode: 'MA-02' },
-    update: {
-      materialGrade: 'D2 Tool Steel',
+      materialCode: 'MAT-CRCA',
+      materialGrade: 'CRCA',
       materialCategory: 'RAW_MATERIAL',
       density: 7.85,
-      standardCost: 85,
-      defaultUom: 'NOS',
+      standardCost: 65,
+      defaultUom: 'KG',
       defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeRoundBar.id,
+      shapeId: shapeSheet.id,
+      hsnCode: '7209',
       status: 'ACTIVE',
     },
+  });
+
+  const matMSFlat = await prisma.material.upsert({
+    where: { materialCode: 'MAT-MS-FLAT' },
+    update: {},
     create: {
-      materialCode: 'MA-02',
-      materialGrade: 'D2 Tool Steel',
+      materialCode: 'MAT-MS-FLAT',
+      materialGrade: 'MS FLAT',
       materialCategory: 'RAW_MATERIAL',
       density: 7.85,
-      standardCost: 85,
-      defaultUom: 'NOS',
+      standardCost: 55,
+      defaultUom: 'KG',
+      defaultVendor: 'Global Steel Suppliers Corp',
+      shapeId: shapeFlat.id,
+      hsnCode: '7208',
+      status: 'ACTIVE',
+    },
+  });
+
+  const matMSSheet = await prisma.material.upsert({
+    where: { materialCode: 'MAT-MS-SHEET' },
+    update: {},
+    create: {
+      materialCode: 'MAT-MS-SHEET',
+      materialGrade: 'MS SHEET',
+      materialCategory: 'RAW_MATERIAL',
+      density: 7.85,
+      standardCost: 58,
+      defaultUom: 'KG',
+      defaultVendor: 'Global Steel Suppliers Corp',
+      shapeId: shapeSheet.id,
+      hsnCode: '7208',
+      status: 'ACTIVE',
+    },
+  });
+
+  const matHRPO = await prisma.material.upsert({
+    where: { materialCode: 'MAT-HRPO' },
+    update: {},
+    create: {
+      materialCode: 'MAT-HRPO',
+      materialGrade: 'HRPO',
+      materialCategory: 'RAW_MATERIAL',
+      density: 7.85,
+      standardCost: 60,
+      defaultUom: 'KG',
+      defaultVendor: 'Global Steel Suppliers Corp',
+      shapeId: shapeSheet.id,
+      hsnCode: '7208',
+      status: 'ACTIVE',
+    },
+  });
+
+  const matMSRound = await prisma.material.upsert({
+    where: { materialCode: 'MAT-MS-ROUND' },
+    update: {},
+    create: {
+      materialCode: 'MAT-MS-ROUND',
+      materialGrade: 'MS ROUND',
+      materialCategory: 'RAW_MATERIAL',
+      density: 7.85,
+      standardCost: 52,
+      defaultUom: 'KG',
       defaultVendor: 'Global Steel Suppliers Corp',
       shapeId: shapeRoundBar.id,
+      hsnCode: '7214',
       status: 'ACTIVE',
     },
   });
 
-  const materialH13 = await prisma.material.upsert({
-    where: { materialCode: 'MA-03' },
-    update: {
-      materialGrade: 'H13 Die Steel',
-      materialCategory: 'RAW_MATERIAL',
-      density: 7.80,
-      standardCost: 95,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapePlate.id,
-      status: 'ACTIVE',
-    },
+  const matALU = await prisma.material.upsert({
+    where: { materialCode: 'MAT-ALU' },
+    update: {},
     create: {
-      materialCode: 'MA-03',
-      materialGrade: 'H13 Die Steel',
+      materialCode: 'MAT-ALU',
+      materialGrade: 'ALU',
       materialCategory: 'RAW_MATERIAL',
-      density: 7.80,
-      standardCost: 95,
-      defaultUom: 'NOS',
+      density: 2.70,
+      standardCost: 220,
+      defaultUom: 'KG',
       defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapePlate.id,
+      shapeId: shapeSheet.id,
+      hsnCode: '7606',
       status: 'ACTIVE',
     },
   });
 
-  const materialEN31 = await prisma.material.upsert({
-    where: { materialCode: 'MA-04' },
-    update: {
-      materialGrade: 'EN31 Alloy Steel',
-      materialCategory: 'RAW_MATERIAL',
-      density: 7.84,
-      standardCost: 45,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeRoundBar.id,
-      status: 'ACTIVE',
-    },
+  const matRectTube = await prisma.material.upsert({
+    where: { materialCode: 'MAT-RECT-TUBE' },
+    update: {},
     create: {
-      materialCode: 'MA-04',
-      materialGrade: 'EN31 Alloy Steel',
+      materialCode: 'MAT-RECT-TUBE',
+      materialGrade: 'RECT TUBE',
       materialCategory: 'RAW_MATERIAL',
-      density: 7.84,
-      standardCost: 45,
-      defaultUom: 'NOS',
+      density: 7.85,
+      standardCost: 70,
+      defaultUom: 'KG',
       defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeRoundBar.id,
+      shapeId: shapeTube.id,
+      hsnCode: '7306',
       status: 'ACTIVE',
     },
   });
 
-  const materialMS = await prisma.material.upsert({
-    where: { materialCode: 'MA-05' },
-    update: {
-      materialGrade: 'Mild Steel 1018',
-      materialCategory: 'RAW_MATERIAL',
-      density: 7.87,
-      standardCost: 12,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapePlate.id,
-      status: 'ACTIVE',
-    },
+  const matMSPipe = await prisma.material.upsert({
+    where: { materialCode: 'MAT-MS-PIPE' },
+    update: {},
     create: {
-      materialCode: 'MA-05',
-      materialGrade: 'Mild Steel 1018',
+      materialCode: 'MAT-MS-PIPE',
+      materialGrade: 'MS PIPE',
       materialCategory: 'RAW_MATERIAL',
-      density: 7.87,
-      standardCost: 12,
-      defaultUom: 'NOS',
+      density: 7.85,
+      standardCost: 62,
+      defaultUom: 'KG',
       defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapePlate.id,
+      shapeId: shapePipe.id,
+      hsnCode: '7306',
       status: 'ACTIVE',
     },
   });
 
-  const materialBrass = await prisma.material.upsert({
-    where: { materialCode: 'MA-06' },
-    update: {
-      materialGrade: 'Brass Alloy 360',
-      materialCategory: 'RAW_MATERIAL',
-      density: 8.50,
-      standardCost: 65,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeHexBar.id,
-      status: 'ACTIVE',
-    },
+  const matBOP = await prisma.material.upsert({
+    where: { materialCode: 'MAT-BOP' },
+    update: {},
     create: {
-      materialCode: 'MA-06',
-      materialGrade: 'Brass Alloy 360',
-      materialCategory: 'RAW_MATERIAL',
-      density: 8.50,
-      standardCost: 65,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeHexBar.id,
-      status: 'ACTIVE',
-    },
-  });
-
-  const materialCopper = await prisma.material.upsert({
-    where: { materialCode: 'MA-07' },
-    update: {
-      materialGrade: 'Electrolytic Copper',
-      materialCategory: 'RAW_MATERIAL',
-      density: 8.96,
-      standardCost: 110,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeRoundBar.id,
-      status: 'ACTIVE',
-    },
-    create: {
-      materialCode: 'MA-07',
-      materialGrade: 'Electrolytic Copper',
-      materialCategory: 'RAW_MATERIAL',
-      density: 8.96,
-      standardCost: 110,
-      defaultUom: 'NOS',
-      defaultVendor: 'Global Steel Suppliers Corp',
-      shapeId: shapeRoundBar.id,
-      status: 'ACTIVE',
-    },
-  });
-
-  const materialSTD = await prisma.material.upsert({
-    where: { materialCode: 'STD' },
-    update: {
-      materialGrade: 'Standard Bought-Out Component',
-      materialCategory: 'STANDARD_PART',
-      density: 1.0,
-      standardCost: 0,
-      defaultUom: 'NOS',
-      defaultVendor: 'Standard Parts Supplier',
-      status: 'ACTIVE',
-    },
-    create: {
-      materialCode: 'STD',
-      materialGrade: 'Standard Bought-Out Component',
-      materialCategory: 'STANDARD_PART',
-      density: 1.0,
+      materialCode: 'MAT-BOP',
+      materialGrade: 'BOP',
+      materialCategory: 'BOUGHT_OUT',
+      density: 7.85,
       standardCost: 0,
       defaultUom: 'NOS',
       defaultVendor: 'Standard Parts Supplier',
@@ -358,7 +333,141 @@ async function main() {
     },
   });
 
-  console.log(`✅ Seeded Materials: MA-01 (Aluminium), MA-02 (D2 Tool Steel), MA-03 (H13), MA-04 (EN31), MA-05 (Mild Steel), MA-06 (Brass), MA-07 (Copper), STD (Standard Bought-Out)`);
+  const matSTD = await prisma.material.upsert({
+    where: { materialCode: 'MAT-STD' },
+    update: {},
+    create: {
+      materialCode: 'MAT-STD',
+      materialGrade: 'STD',
+      materialCategory: 'STANDARD_PART',
+      density: 7.85,
+      standardCost: 0,
+      defaultUom: 'NOS',
+      defaultVendor: 'Standard Parts Supplier',
+      status: 'ACTIVE',
+    },
+  });
+
+  // Special machined material codes from File 1
+  const matID43OD80 = await prisma.material.upsert({
+    where: { materialCode: 'MAT-ID43-OD80' },
+    update: {},
+    create: {
+      materialCode: 'MAT-ID43-OD80',
+      materialGrade: 'ID43 OD80+',
+      materialCategory: 'RAW_MATERIAL',
+      density: 7.85,
+      standardCost: 205,
+      defaultUom: 'KG',
+      defaultVendor: 'Global Steel Suppliers Corp',
+      shapeId: shapePipe.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  const matID78OD95 = await prisma.material.upsert({
+    where: { materialCode: 'MAT-ID78-OD95' },
+    update: {},
+    create: {
+      materialCode: 'MAT-ID78-OD95',
+      materialGrade: 'ID 78 OD 95+',
+      materialCategory: 'RAW_MATERIAL',
+      density: 7.85,
+      standardCost: 172,
+      defaultUom: 'KG',
+      defaultVendor: 'Global Steel Suppliers Corp',
+      shapeId: shapePipe.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  const matID60OD80 = await prisma.material.upsert({
+    where: { materialCode: 'MAT-ID60-OD80' },
+    update: {},
+    create: {
+      materialCode: 'MAT-ID60-OD80',
+      materialGrade: 'ID 60 OD 80+',
+      materialCategory: 'RAW_MATERIAL',
+      density: 7.85,
+      standardCost: 132,
+      defaultUom: 'KG',
+      defaultVendor: 'Global Steel Suppliers Corp',
+      shapeId: shapePipe.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  const matMSBOP = await prisma.material.upsert({
+    where: { materialCode: 'MAT-MS-BOP' },
+    update: {},
+    create: {
+      materialCode: 'MAT-MS-BOP',
+      materialGrade: 'MS (BOP)',
+      materialCategory: 'BOUGHT_OUT',
+      density: 7.85,
+      standardCost: 0,
+      defaultUom: 'NOS',
+      defaultVendor: 'Standard Parts Supplier',
+      status: 'ACTIVE',
+    },
+  });
+
+  // SPX Assembly materials (generic for pump housing parts)
+  const matSS304 = await prisma.material.upsert({
+    where: { materialCode: 'MAT-SS304' },
+    update: {},
+    create: {
+      materialCode: 'MAT-SS304',
+      materialGrade: 'SS 304',
+      materialCategory: 'RAW_MATERIAL',
+      density: 8.0,
+      standardCost: 250,
+      defaultUom: 'NOS',
+      defaultVendor: 'Global Steel Suppliers Corp',
+      shapeId: shapeBlock.id,
+      hsnCode: '7304',
+      status: 'ACTIVE',
+    },
+  });
+
+  const matSS316 = await prisma.material.upsert({
+    where: { materialCode: 'MAT-SS316' },
+    update: {},
+    create: {
+      materialCode: 'MAT-SS316',
+      materialGrade: 'SS 316',
+      materialCategory: 'RAW_MATERIAL',
+      density: 8.0,
+      standardCost: 320,
+      defaultUom: 'NOS',
+      defaultVendor: 'Global Steel Suppliers Corp',
+      shapeId: shapeBlock.id,
+      hsnCode: '7304',
+      status: 'ACTIVE',
+    },
+  });
+
+  console.log('✅ Seeded Materials: CRCA, MS FLAT, MS SHEET, HRPO, MS ROUND, ALU, RECT TUBE, MS PIPE, BOP, STD, ID43OD80, ID78OD95, ID60OD80, MS(BOP), SS304, SS316');
+
+  // Material lookup map for BOM seeding
+  const materialMap: Record<string, string> = {
+    'CRCA': matCRCA.id,
+    'MS FLAT': matMSFlat.id,
+    'MS SHEET': matMSSheet.id,
+    'MS SHEET 1': matMSSheet.id,
+    'MS SHEET 2': matMSSheet.id,
+    'HRPO': matHRPO.id,
+    'MS ROUND': matMSRound.id,
+    'ALU': matALU.id,
+    'RECT TUBE': matRectTube.id,
+    'MS PIPE': matMSPipe.id,
+    'BOP': matBOP.id,
+    'STD': matSTD.id,
+    'ID43 OD80+': matID43OD80.id,
+    'ID 78 OD 95+': matID78OD95.id,
+    'ID 60 OD 80+': matID60OD80.id,
+    'MS (BOP)': matMSBOP.id,
+  };
 
   // 9. Seed Machine
   const machine = await prisma.machine.upsert({
@@ -442,27 +551,24 @@ async function main() {
   });
   console.log(`✅ Seeded Storage Location: ${location.locationName}`);
 
-  // 14. Seed Uoms
+  // 14. Seed UOMs
   const uomKg = await prisma.uom.upsert({
     where: { uomCode: 'KG' },
     update: {},
-    create: {
-      uomCode: 'KG',
-      uomName: 'Kilograms',
-      status: 'ACTIVE',
-    },
+    create: { uomCode: 'KG', uomName: 'Kilograms', status: 'ACTIVE' },
   });
-  console.log(`✅ Seeded Uom: ${uomKg.uomName}`);
+  const uomEa = await prisma.uom.upsert({
+    where: { uomCode: 'EA' },
+    update: {},
+    create: { uomCode: 'EA', uomName: 'Each', status: 'ACTIVE' },
+  });
+  console.log(`✅ Seeded UOMs: KG, EA`);
 
   // 15. Seed Document Types
   const dtDrawing = await prisma.documentType.upsert({
     where: { typeCode: 'DRAWING' },
     update: {},
-    create: {
-      typeCode: 'DRAWING',
-      typeName: 'Engineering Drawing',
-      status: 'ACTIVE',
-    },
+    create: { typeCode: 'DRAWING', typeName: 'Engineering Drawing', status: 'ACTIVE' },
   });
   console.log(`✅ Seeded Document Type: ${dtDrawing.typeName}`);
 
@@ -493,957 +599,699 @@ async function main() {
   });
   console.log(`✅ Seeded Cost Rate: ${costRateLabour.rateName}`);
 
-  // 18. Seed Additional Customers
-  const customer2 = await prisma.customer.upsert({
-    where: { customerCode: 'CU-002' },
-    update: {},
-    create: {
-      customerCode: 'CU-002',
-      companyName: 'Tata Motors Ltd',
-      gstNumber: '27DDDDD4444D4Z4',
-      billingAddress: 'Pimpri-Chinchwad, Pune',
-      shippingAddress: 'Pimpri-Chinchwad, Pune',
-      contactPerson: 'Rajesh Nair',
-      contactPhone: '+919812345678',
-      contactEmail: 'rajesh.nair@tatamotors.com',
-      paymentTerms: 'NET45',
-      companyId: company.id,
-      status: 'ACTIVE',
-    },
-  });
-  console.log(`✅ Seeded Customer: ${customer2.companyName}`);
+  // =====================================================================
+  // FILE 1: MATERIAL WEIGHT / CUTTING SHEET — Hierarchical BOM
+  // =====================================================================
+  console.log('\n🏭 Seeding File 1: Material Weight/Cutting Sheet BOM...');
 
-  const customer3 = await prisma.customer.upsert({
-    where: { customerCode: 'CU-003' },
-    update: {},
-    create: {
-      customerCode: 'CU-003',
-      companyName: 'Cummins India Pvt Ltd',
-      gstNumber: '27EEEEE5555E5Z5',
-      billingAddress: 'Kothrud, Pune',
-      shippingAddress: 'Kothrud, Pune',
-      contactPerson: 'Sanjay Patil',
-      contactPhone: '+919988776655',
-      contactEmail: 'sanjay.patil@cummins.com',
-      paymentTerms: 'NET60',
-      companyId: company.id,
-      status: 'ACTIVE',
-    },
-  });
-  console.log(`✅ Seeded Customer: ${customer3.companyName}`);
-
-  const customer4 = await prisma.customer.upsert({
-    where: { customerCode: 'CU-004' },
-    update: {},
-    create: {
-      customerCode: 'CU-004',
-      companyName: 'Mahindra & Mahindra',
-      gstNumber: '27FFFFF6666F6Z6',
-      billingAddress: 'Nashik, Maharashtra',
-      shippingAddress: 'Nashik, Maharashtra',
-      contactPerson: 'Priya Sharma',
-      contactPhone: '+919876000123',
-      contactEmail: 'priya.sharma@mahindra.com',
-      paymentTerms: 'NET30',
-      companyId: company.id,
-      status: 'ACTIVE',
-    },
-  });
-  console.log(`✅ Seeded Customer: ${customer4.companyName}`);
-
-  // 19. Seed Demo Projects Definitions
   const now = new Date();
   const daysAgo = (d: number) => new Date(now.getTime() - d * 86400000);
   const daysFromNow = (d: number) => new Date(now.getTime() + d * 86400000);
 
-  interface DemoProjectDef {
-    projectNumber: string;
-    customerPoNumber: string;
-    partName: string;
+  // BOM data from "New Microsoft Excel Worksheet(2).xlsx"
+  // Each entry: [srNo, partCode, description, thickness, gradeSize, sheetWt, grossWt, netWt, scrapWt]
+  // srNo = null means it's a child/sub-component of the previous parent part
+  interface BomPartDef {
+    srNo: number | null;
+    partCode: string;
     description: string;
-    targetDeliveryDate: Date;
-    priority: string;
-    projectOwner: string;
-    customerId: string;
-    currentStage: 'CREATED' | 'ENGINEERING' | 'PROCUREMENT' | 'MATERIAL_AVAILABLE' | 'PRODUCTION' | 'INSPECTION' | 'DISPATCH_READY' | 'DISPATCHED' | 'INVOICED' | 'PAYMENT_PENDING' | 'CLOSED';
-    progress: number;
-    createdAt: Date;
-    cost: {
-      estimatedMaterialCost: number;
-      actualMaterialCost: number;
-      materialConsumptionCost: number;
-      machineCost: number;
-      labourCost: number;
-      outsideProcessCost: number;
-      inspectionCost: number;
-      packingCost: number;
-      dispatchCost: number;
-      totalCost: number;
-      revenue: number;
-      profitability: number;
-      estimatedProjectCost: number;
-    };
+    thickness: string;
+    gradeSize: string;
+    sheetWtOrLength: number | null;
+    stripSize: string | null;
+    blanksPerSheet: number | null;
+    grossWt: number | null;
+    netWt: number | null;
+    scrapWt: number | null;
   }
 
-  const demoProjects: DemoProjectDef[] = [
-    {
-      projectNumber: 'PRJ-2025-001',
-      customerPoNumber: 'PO/AERO/2025/0145',
-      partName: 'Turbine Blade Fixture',
-      description: 'Precision fixture for aerospace turbine blade machining. 5-axis VMC setup with ±0.005mm tolerance.',
-      targetDeliveryDate: daysFromNow(21),
+  const bomParts: BomPartDef[] = [
+    { srNo: 1, partCode: 'I58700406', description: 'DUST COVER LAT. SIDE', thickness: '1.5', gradeSize: 'CRCA', sheetWtOrLength: 36.80, stripSize: '250', blanksPerSheet: 50, grossWt: 0.74, netWt: 0.45, scrapWt: 0.29 },
+    { srNo: 2, partCode: 'M12700610', description: 'TRANSMISSION SKID', thickness: '12', gradeSize: 'MS FLAT', sheetWtOrLength: 36.74, stripSize: '660', blanksPerSheet: 9, grossWt: 4.08, netWt: 3.88, scrapWt: 0.20 },
+    { srNo: null, partCode: 'M12700610-SUB1', description: 'TRANSMISSION SKID (MS SHEET 1)', thickness: '10', gradeSize: 'MS SHEET', sheetWtOrLength: 353.25, stripSize: 'LC', blanksPerSheet: 165, grossWt: 2.14, netWt: 1.39, scrapWt: 0.75 },
+    { srNo: 3, partCode: 'M12700620', description: 'SKID EX', thickness: '12', gradeSize: 'MS FLAT', sheetWtOrLength: 36.74, stripSize: '660', blanksPerSheet: 9, grossWt: 4.08, netWt: 3.88, scrapWt: 0.20 },
+    { srNo: null, partCode: 'M12700620-SUB1', description: 'SKID EX (MS SHEET 2)', thickness: '10', gradeSize: 'MS SHEET', sheetWtOrLength: 353.25, stripSize: 'LC', blanksPerSheet: 165, grossWt: 2.14, netWt: 1.39, scrapWt: 0.75 },
+    { srNo: 4, partCode: 'I58700407', description: 'DUST COVER TRANS. SIDE', thickness: '4mm tube', gradeSize: 'MS SHEET', sheetWtOrLength: 1.30, stripSize: '260', blanksPerSheet: 36, grossWt: 1.30, netWt: 7.77, scrapWt: 1.02 },
+    { srNo: 5, partCode: 'M12700650', description: 'UPPER REINF PLATE ZN', thickness: '2', gradeSize: 'CRCA', sheetWtOrLength: 49.06, stripSize: '260', blanksPerSheet: 36, grossWt: 1.36, netWt: 1.00, scrapWt: 0.36 },
+    { srNo: 6, partCode: 'M48000628', description: 'PROTEC. SUPPORT', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '260', blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
+    { srNo: 7, partCode: 'I48700412', description: 'FRONT BRACKET ZN', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '400', blanksPerSheet: 32, grossWt: 2.30, netWt: 1.72, scrapWt: 0.58 },
+    { srNo: 8, partCode: 'I48700416', description: 'REAR BRACKET ZN', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '400', blanksPerSheet: 32, grossWt: 2.30, netWt: 1.72, scrapWt: 0.58 },
+    { srNo: 9, partCode: 'M66100778A', description: 'STANDING PLATE "L" ZN (VARIANT)', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '35', blanksPerSheet: 852, grossWt: 0.06, netWt: 0.047, scrapWt: 0.01 },
+    { srNo: 10, partCode: 'M48000628B', description: 'PROTECTION SUPPORT (MAIN)', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: null, blanksPerSheet: 52, grossWt: 0.94, netWt: null, scrapWt: 0.94 },
+    { srNo: 11, partCode: 'M73108915A', description: 'COMP. PROT. SHAFT ZN', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.63, stripSize: null, blanksPerSheet: null, grossWt: 1.20, netWt: 1.00, scrapWt: 0.20 },
+    { srNo: 12, partCode: 'M41100215A', description: 'COMP. SHAFT PROTECTION L50', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.60, stripSize: null, blanksPerSheet: null, grossWt: 1.50, netWt: null, scrapWt: null },
+    { srNo: 13, partCode: 'T14002306', description: 'COMP. WHEEL SUPPORT (TYPE A)', thickness: '8', gradeSize: 'MS SHEET', sheetWtOrLength: 282.60, stripSize: null, blanksPerSheet: 165, grossWt: 1.71, netWt: 1.00, scrapWt: 0.71 },
+    { srNo: null, partCode: 'T14002306-BUSH', description: 'BUSH (dia 25 rod)', thickness: 'dia 25', gradeSize: 'MS ROUND', sheetWtOrLength: 6000, stripSize: '220', blanksPerSheet: 27, grossWt: null, netWt: null, scrapWt: 0.00 },
+    { srNo: 14, partCode: 'I48700415', description: 'SKID EX (VARIANT B)', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '590', blanksPerSheet: 24, grossWt: 3.07, netWt: 2.80, scrapWt: 0.27 },
+    { srNo: 15, partCode: 'T14002308', description: 'COMP. WHEEL SUPPORT', thickness: '8', gradeSize: 'MS SHEET', sheetWtOrLength: 282.60, stripSize: null, blanksPerSheet: 165, grossWt: 1.71, netWt: 1.00, scrapWt: 0.71 },
+    { srNo: null, partCode: 'T14002308-ROD', description: 'COMP. WHEEL SUPPORT (dia 25 rod)', thickness: 'dia 25', gradeSize: 'MS ROUND', sheetWtOrLength: 6000, stripSize: '220', blanksPerSheet: 27, grossWt: null, netWt: null, scrapWt: 0.00 },
+    { srNo: 16, partCode: 'I48700423', description: 'DUST COVER ZN', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '95', blanksPerSheet: 819, grossWt: 0.06, netWt: 0.05, scrapWt: 0.01 },
+    { srNo: 17, partCode: 'I48700423B', description: 'DUST COVER LAT. SIDE T=2', thickness: '2', gradeSize: 'CRCA', sheetWtOrLength: 49.06, stripSize: '260', blanksPerSheet: 36, grossWt: 1.36, netWt: 1.00, scrapWt: 0.36 },
+    { srNo: 18, partCode: 'C14152338', description: 'WHEEL SUPPORT ASSEMBLY 150', thickness: 'tube 40*60', gradeSize: 'RECT TUBE', sheetWtOrLength: 35.00, stripSize: '1200', blanksPerSheet: 5, grossWt: 7.00, netWt: 6.80, scrapWt: 0.20 },
+    { srNo: null, partCode: 'C14152338-BUSH', description: 'WHEEL SUPPORT 150 BUSH', thickness: 'bush', gradeSize: 'MS PIPE', sheetWtOrLength: 23.00, stripSize: '120', blanksPerSheet: 49, grossWt: 0.47, netWt: 0.40, scrapWt: 0.07 },
+    { srNo: 19, partCode: 'M73108915', description: 'COMP.PROT. SHAFT L.T. ZN', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.63, stripSize: null, blanksPerSheet: null, grossWt: 1.20, netWt: 1.00, scrapWt: 0.20 },
+    { srNo: 20, partCode: 'M48000532', description: 'SKID ADJUSTER', thickness: '4', gradeSize: 'HRPO', sheetWtOrLength: 98.13, stripSize: '220', blanksPerSheet: 154, grossWt: 0.64, netWt: 0.48, scrapWt: 0.16 },
+    { srNo: 21, partCode: 'C14182338', description: 'WHEEL SUPPORT ASSEMBLY 180', thickness: 'tube 40*60', gradeSize: 'RECT TUBE', sheetWtOrLength: 35.00, stripSize: '1300', blanksPerSheet: 4, grossWt: 8.75, netWt: 7.20, scrapWt: 1.55 },
+    { srNo: null, partCode: 'C14182338-BUSH', description: 'WHEEL SUPPORT 180 BUSH', thickness: 'bush', gradeSize: 'MS ROUND', sheetWtOrLength: 23.00, stripSize: '120', blanksPerSheet: 49, grossWt: 0.47, netWt: 0.40, scrapWt: 0.07 },
+    { srNo: 22, partCode: 'M66100778', description: 'STANDING PLATE "L" ZN', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '35', blanksPerSheet: 852, grossWt: 0.06, netWt: 0.047, scrapWt: 0.01 },
+    { srNo: 23, partCode: 'I48700711', description: 'FRONT STAND', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '495', blanksPerSheet: 80, grossWt: 0.92, netWt: 0.69, scrapWt: 0.23 },
+    { srNo: null, partCode: 'I48700711-BLANK', description: 'FRONT STAND 8mm blank', thickness: '8mm', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.24, netWt: 0.24, scrapWt: 0.00 },
+    { srNo: 24, partCode: 'I45700315', description: 'WELD CARTER WITH BUSH', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '800', blanksPerSheet: 6, grossWt: 12.27, netWt: 8.00, scrapWt: 4.27 },
+    { srNo: null, partCode: 'I45700315-NUT', description: 'WELD CARTER NUT', thickness: 'nut', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.03, netWt: null, scrapWt: 0.03 },
+    { srNo: null, partCode: 'I45700315-BOLT', description: 'WELD CARTER BOLT', thickness: 'bolt', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.05, netWt: null, scrapWt: 0.05 },
+    { srNo: null, partCode: 'I45700315-WASH', description: 'WELD CARTER WASHER', thickness: 'washer', gradeSize: 'ALU', sheetWtOrLength: 13.13, stripSize: null, blanksPerSheet: null, grossWt: 0.005, netWt: null, scrapWt: 0.005 },
+    { srNo: null, partCode: 'I45700315-FORG', description: 'WELD CARTER BUSH FORGING', thickness: 'bush forging', gradeSize: 'BOP', sheetWtOrLength: 1.10, stripSize: null, blanksPerSheet: null, grossWt: 1.10, netWt: 0.50, scrapWt: 0.60 },
+    { srNo: null, partCode: 'I45700315-MC', description: 'WELD CARTER BUSH M/C', thickness: 'bush m/c', gradeSize: 'ID43 OD80+', sheetWtOrLength: 205.00, stripSize: '42', blanksPerSheet: 133, grossWt: 1.51, netWt: 0.62, scrapWt: 0.89 },
+    { srNo: null, partCode: 'I45700315-M8', description: 'WELD CARTER M8 NUT', thickness: 'M8 nut', gradeSize: 'STD', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.005, netWt: null, scrapWt: 0.005 },
+    { srNo: null, partCode: 'I45700315-8CBK', description: 'WELD CARTER 8 C BRACKET', thickness: '8 C Bkt', gradeSize: 'BOP', sheetWtOrLength: 196.00, stripSize: null, blanksPerSheet: null, grossWt: 0.30, netWt: 0.25, scrapWt: 0.05 },
+    { srNo: 25, partCode: 'I45700224', description: 'SP CASING MODIFIED', thickness: '1 top', gradeSize: 'MS SHEET', sheetWtOrLength: 125.99, stripSize: null, blanksPerSheet: 1.67, grossWt: 125.99, netWt: 109.92, scrapWt: 16.07 },
+    { srNo: null, partCode: 'I45700224-RING', description: 'SP CASING RING PLATE', thickness: '2 ring plate', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: 0.95, grossWt: 0.00, netWt: 0.96, scrapWt: null },
+    { srNo: null, partCode: 'I45700224-BIG', description: 'SP CASING BIG PLATE', thickness: '3 big plate', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: 2.66, grossWt: 0.00, netWt: null, scrapWt: 0.00 },
+    { srNo: null, partCode: 'I45700224-PATTI', description: 'SP CASING PATTI', thickness: '4 patti', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: 1.59, grossWt: 0.00, netWt: null, scrapWt: 0.00 },
+    { srNo: null, partCode: 'I45700224-BBUSH', description: 'SP CASING BIG BUSH', thickness: 'big bush', gradeSize: 'ID 78 OD 95+', sheetWtOrLength: 172.00, stripSize: '27', blanksPerSheet: 222, grossWt: 0.77, netWt: 0.35, scrapWt: 0.42 },
+    { srNo: null, partCode: 'I45700224-SB62', description: 'SP CASING SMALL BUSH 62', thickness: 'small bush62', gradeSize: 'ID 60 OD 80+', sheetWtOrLength: 132.00, stripSize: '27', blanksPerSheet: 222, grossWt: 0.61, netWt: 0.24, scrapWt: 0.37 },
+    { srNo: null, partCode: 'I45700224-SB68', description: 'SP CASING SMALL BUSH 68', thickness: 'small bush68', gradeSize: 'ID 60 OD 80+', sheetWtOrLength: 132.00, stripSize: '27', blanksPerSheet: 222, grossWt: 0.61, netWt: 0.24, scrapWt: 0.37 },
+    { srNo: null, partCode: 'I45700224-LBKT', description: 'SP CASING 6mm L BRACKET', thickness: '6 mm L bkt', gradeSize: 'MS SHEET', sheetWtOrLength: 150.00, stripSize: null, blanksPerSheet: null, grossWt: 0.20, netWt: 0.16, scrapWt: 0.04 },
+    { srNo: 26, partCode: 'M74100126', description: 'COMP. PROTECTION SUPPORT', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: null, blanksPerSheet: 52, grossWt: 0.94, netWt: null, scrapWt: 0.94 },
+    { srNo: 27, partCode: 'M41100709', description: 'COMP. FRONT HITCH RH', thickness: '16', gradeSize: 'MS (BOP)', sheetWtOrLength: 2.70, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
+    { srNo: null, partCode: 'M41100709-FLAT', description: 'COMP. FRONT HITCH RH (FLAT)', thickness: '10', gradeSize: 'MS FLAT', sheetWtOrLength: 1.00, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
+    { srNo: 28, partCode: 'M41100710', description: 'COMP. FRONT HITCH LH', thickness: '16', gradeSize: 'MS (BOP)', sheetWtOrLength: 2.70, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
+    { srNo: null, partCode: 'M41100710-FLAT', description: 'COMP. FRONT HITCH LH (FLAT)', thickness: '10', gradeSize: 'MS FLAT', sheetWtOrLength: 1.00, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
+    { srNo: 29, partCode: 'M41100215', description: 'COMP. SHAFT PROTECTION L125', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.60, stripSize: null, blanksPerSheet: null, grossWt: 1.50, netWt: null, scrapWt: null },
+  ];
+
+  // Create Project for File 1 data
+  const projectCutting = await prisma.project.create({
+    data: {
+      projectNumber: 'KTD-1',
+      customerPoNumber: 'PO/SPX/2025/CUT-001',
+      partName: 'Material Weight & Cutting Sheet Components',
+      description: 'Client material nesting/cutting sheet for 29 component types with weight calculations, blank layout, and scrap tracking.',
+      targetDeliveryDate: daysFromNow(30),
       priority: 'HIGH',
       projectOwner: 'Alex Mercer',
-      customerId: customer.id,
+      customerId: customerSPX.id,
+      plantId: plant.id,
       currentStage: 'ENGINEERING',
-      progress: 15,
-      createdAt: daysAgo(5),
-      cost: {
-        estimatedMaterialCost: 45000,
-        actualMaterialCost: 0,
-        materialConsumptionCost: 0,
-        machineCost: 0,
-        labourCost: 0,
-        outsideProcessCost: 0,
-        inspectionCost: 0,
-        packingCost: 0,
-        dispatchCost: 0,
-        totalCost: 0,
-        revenue: 185000,
-        profitability: 0,
-        estimatedProjectCost: 120000,
+      progress: 20,
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
+  });
+
+  // Cost summary for cutting sheet project
+  await prisma.projectCostSummary.create({
+    data: {
+      projectId: projectCutting.id,
+      estimatedMaterialCost: 85000,
+      actualMaterialCost: 0,
+      materialConsumptionCost: 0,
+      machineCost: 0,
+      labourCost: 0,
+      outsideProcessCost: 0,
+      inspectionCost: 0,
+      packingCost: 0,
+      dispatchCost: 0,
+      totalCost: 0,
+      revenue: 350000,
+      profitability: 0,
+      estimatedProjectCost: 200000,
+    },
+  });
+
+  // Timeline entry
+  await prisma.projectTimeline.create({
+    data: {
+      projectId: projectCutting.id,
+      fromStage: 'CREATED',
+      toStage: 'CREATED',
+      transitionedAt: daysAgo(5),
+      transitionedBy: 'SEED',
+      remarks: 'Project initialized via Customer PO registration',
+    },
+  });
+  await prisma.projectTimeline.create({
+    data: {
+      projectId: projectCutting.id,
+      fromStage: 'CREATED',
+      toStage: 'ENGINEERING',
+      transitionedAt: daysAgo(3),
+      transitionedBy: 'SEED',
+      remarks: 'Advanced to ENGINEERING',
+    },
+  });
+
+  await prisma.projectActivity.create({
+    data: {
+      projectId: projectCutting.id,
+      action: 'PROJECT_CREATED',
+      description: 'Project KTD-1 registered — Material Weight/Cutting Sheet',
+      performedBy: 'SEED',
+      performedAt: daysAgo(5),
+    },
+  });
+
+  // Create BOM Header for File 1
+  const bomHeaderCutting = await prisma.billOfMaterialHeader.create({
+    data: {
+      projectId: projectCutting.id,
+      documentNumber: 'BOM-KTD-1',
+      revision: 1,
+      status: 'PENDING_APPROVAL',
+      approvalStatus: 'PENDING',
+      totalEstimatedCost: 85000,
+      remarks: 'Material weight/cutting sheet — 29 parent parts with sub-components',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
+  });
+
+  // Seed BOM items with parent-child hierarchy
+  let lastParentItemId: string | null = null;
+
+  for (const part of bomParts) {
+    const materialId = materialMap[part.gradeSize] || matBOP.id;
+
+    const parentItemIdValue: string | undefined = part.srNo === null && lastParentItemId ? lastParentItemId : undefined;
+    const createdItem: { id: string } = await prisma.billOfMaterialItem.create({
+      data: {
+        bomHeaderId: bomHeaderCutting.id,
+        materialId: materialId,
+        rawSize: part.thickness,
+        dimensions: part.stripSize ? `Strip: ${part.stripSize}mm` : undefined,
+        calculatedWeight: part.grossWt ?? undefined,
+        requiredQty: part.blanksPerSheet ?? 1,
+        estimatedCost: (part.grossWt ?? 0) * 60,
+        remarks: `${part.partCode} — ${part.description}`,
+        createdBy: 'SEED',
+        updatedBy: 'SEED',
+        parentItemId: parentItemIdValue,
+        customFields: {
+          partCode: part.partCode,
+          description: part.description,
+          sheetWtOrLength: part.sheetWtOrLength,
+          netWt: part.netWt,
+          scrapWt: part.scrapWt,
+          blanksPerSheet: part.blanksPerSheet,
+        },
       },
+    });
+
+    if (part.srNo !== null) {
+      lastParentItemId = createdItem.id;
+    }
+  }
+  console.log(`✅ Seeded BOM for KTD-1: ${bomParts.length} items (29 parent + sub-components)`);
+
+  // Routing for cutting sheet project
+  const routingCutting = await prisma.routingHeader.create({
+    data: {
+      projectId: projectCutting.id,
+      documentNumber: 'RT-KTD-1',
+      revision: 1,
+      status: 'PENDING_APPROVAL',
+      approvalStatus: 'PENDING',
+      remarks: 'Standard routing plan',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
+  });
+
+  await prisma.routingOperation.create({
+    data: {
+      routingHeaderId: routingCutting.id,
+      sequenceOrder: 10,
+      operationId: operation.id,
+      estimatedHours: 24,
+      remarks: 'Sheet metal cutting and blanking operations',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+      status: 'PENDING',
+      plannedMachineId: machine.id,
+      remainingQuantity: 29,
+    },
+  });
+
+  await prisma.routingOperation.create({
+    data: {
+      routingHeaderId: routingCutting.id,
+      sequenceOrder: 20,
+      operationId: opInspect.id,
+      estimatedHours: 4,
+      remarks: 'Quality inspection for cut blanks',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+      status: 'PENDING',
+      plannedMachineId: machine.id,
+      remainingQuantity: 29,
+    },
+  });
+
+  console.log(`✅ Seeded Project KTD-1 [ENGINEERING] — Material Weight/Cutting Sheet`);
+
+  // =====================================================================
+  // FILE 2: SPX BOM — Assembly Projects
+  // =====================================================================
+  console.log('\n🏭 Seeding File 2: SPX Assembly BOM...');
+
+  interface AssemblyDef {
+    srNo: number;
+    assemblyDescription: string;
+    childParts: { partNo: string; partName: string; quantity: number; uom: string }[];
+  }
+
+  const spxAssemblies: AssemblyDef[] = [
+    {
+      srNo: 1,
+      assemblyDescription: 'L851170 — W+10/8 Pumphouse Special For Lely',
+      childParts: [
+        { partNo: '851147', partName: 'Pump Body Lely Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '274305', partName: 'Outlet Pressing & Machined', quantity: 1, uom: 'EA' },
+        { partNo: '851160', partName: 'DIN11864-3-A1" Short For Lely', quantity: 1, uom: 'EA' },
+        { partNo: '851161', partName: 'DIN11864-3-A1.5" Short For Lely', quantity: 1, uom: 'EA' },
+        { partNo: 'TUBE-38.1', partName: 'Tube-Ø38.1x1.65x190.5 mm', quantity: 1, uom: 'EA' },
+      ],
     },
     {
-      projectNumber: 'PRJ-2025-002',
-      customerPoNumber: 'PO/TATA/2025/0889',
-      partName: 'Progressive Die – Door Hinge Bracket',
-      description: 'Progressive stamping die for automotive door hinge bracket. 12 stations, D2 tool steel.',
-      targetDeliveryDate: daysFromNow(35),
-      priority: 'HIGH',
-      projectOwner: 'Alex Mercer',
-      customerId: customer2.id,
-      currentStage: 'PROCUREMENT',
-      progress: 30,
-      createdAt: daysAgo(18),
-      cost: {
-        estimatedMaterialCost: 78000,
-        actualMaterialCost: 52000,
-        materialConsumptionCost: 0,
-        machineCost: 0,
-        labourCost: 0,
-        outsideProcessCost: 12000,
-        inspectionCost: 0,
-        packingCost: 0,
-        dispatchCost: 0,
-        totalCost: 64000,
-        revenue: 350000,
-        profitability: 0,
-        estimatedProjectCost: 220000,
-      },
+      srNo: 2,
+      assemblyDescription: 'L188735 — Backplat/Extension Frame Complete',
+      childParts: [
+        { partNo: '274535', partName: 'Plate f.welded, ext. frame Raw Component', quantity: 1, uom: 'EA' },
+        { partNo: '274041', partName: 'Plate f.welded, ext. frame Raw Component', quantity: 1, uom: 'EA' },
+        { partNo: '274536', partName: 'Plate f.welded, ext. frame Raw Component', quantity: 1, uom: 'EA' },
+        { partNo: '267362', partName: 'Backplate', quantity: 1, uom: 'EA' },
+      ],
     },
     {
-      projectNumber: 'PRJ-2025-003',
-      customerPoNumber: 'PO/CMI/2025/1201',
-      partName: 'Genset Enclosure Mould',
-      description: 'Sheet metal forming mould for genset enclosure body. 1.6mm CRCA with powder coat finish.',
-      targetDeliveryDate: daysFromNow(10),
-      priority: 'URGENT',
-      projectOwner: 'Alex Mercer',
-      customerId: customer3.id,
-      currentStage: 'PRODUCTION',
-      progress: 60,
-      createdAt: daysAgo(40),
-      cost: {
-        estimatedMaterialCost: 35000,
-        actualMaterialCost: 33500,
-        materialConsumptionCost: 28000,
-        machineCost: 42000,
-        labourCost: 18000,
-        outsideProcessCost: 8500,
-        inspectionCost: 2000,
-        packingCost: 0,
-        dispatchCost: 0,
-        totalCost: 132000,
-        revenue: 275000,
-        profitability: 0,
-        estimatedProjectCost: 165000,
-      },
+      srNo: 3,
+      assemblyDescription: 'WA2B2C1XC1 — W+22/20 PUMP HSG CONN 2"x2" (SMS 1145)',
+      childParts: [
+        { partNo: '253661', partName: 'Pump Body Pressing W+22/20', quantity: 1, uom: 'EA' },
+        { partNo: '256157', partName: 'Outlet for Pump Housing W+22/20', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION2IN', partName: 'Inlet/Outlet Connection', quantity: 2, uom: 'EA' },
+      ],
     },
     {
-      projectNumber: 'PRJ-2025-004',
-      customerPoNumber: 'PO/MAH/2025/0567',
-      partName: 'Tractor Axle Housing Jig',
-      description: 'Welding jig for tractor rear axle housing. AISI 4140 construction with locating pins.',
-      targetDeliveryDate: daysFromNow(5),
-      priority: 'NORMAL',
-      projectOwner: 'Alex Mercer',
-      customerId: customer4.id,
-      currentStage: 'INSPECTION',
-      progress: 80,
-      createdAt: daysAgo(52),
-      cost: {
-        estimatedMaterialCost: 22000,
-        actualMaterialCost: 21500,
-        materialConsumptionCost: 20000,
-        machineCost: 35000,
-        labourCost: 15000,
-        outsideProcessCost: 5000,
-        inspectionCost: 3500,
-        packingCost: 0,
-        dispatchCost: 0,
-        totalCost: 100000,
-        revenue: 195000,
-        profitability: 0,
-        estimatedProjectCost: 110000,
-      },
+      srNo: 4,
+      assemblyDescription: 'WA5B2C2XD1 — W+35/35 PUMP HSG CONN 2.5"x2" (SMS 1145)',
+      childParts: [
+        { partNo: '253645', partName: 'Pump Body Pressing W+35/35', quantity: 1, uom: 'EA' },
+        { partNo: '267590', partName: 'Outlet for Pump Housing W+35/35', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION2_5IN', partName: 'Inlet Connection', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION2IN', partName: 'Outlet Connection', quantity: 1, uom: 'EA' },
+      ],
     },
     {
-      projectNumber: 'PRJ-2025-005',
-      customerPoNumber: 'PO/AERO/2025/0098',
-      partName: 'Landing Gear Bushing Tool',
-      description: 'Precision boring tool for landing gear bushing. Inconel 718 with diamond-coated inserts.',
-      targetDeliveryDate: daysFromNow(2),
-      priority: 'HIGH',
-      projectOwner: 'Alex Mercer',
-      customerId: customer.id,
-      currentStage: 'DISPATCH_READY',
-      progress: 92,
-      createdAt: daysAgo(60),
-      cost: {
-        estimatedMaterialCost: 55000,
-        actualMaterialCost: 54000,
-        materialConsumptionCost: 52000,
-        machineCost: 68000,
-        labourCost: 22000,
-        outsideProcessCost: 15000,
-        inspectionCost: 5000,
-        packingCost: 3500,
-        dispatchCost: 0,
-        totalCost: 219500,
-        revenue: 425000,
-        profitability: 0,
-        estimatedProjectCost: 230000,
-      },
+      srNo: 5,
+      assemblyDescription: 'L901004 — PUMP HOUSING EFC 22/20 (Fab. + Mach.)',
+      childParts: [
+        { partNo: 'L901000', partName: 'Pump Housing EFC 22/20 Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '256157', partName: 'Outlet for Pump Housing W+22/20', quantity: 1, uom: 'EA' },
+      ],
     },
     {
-      projectNumber: 'PRJ-2025-006',
-      customerPoNumber: 'PO/TATA/2025/0445',
-      partName: 'Fender Panel Draw Die',
-      description: 'Deep draw die for front fender panel. 500T press, SKD11 tool steel.',
-      targetDeliveryDate: daysAgo(3),
-      priority: 'NORMAL',
-      projectOwner: 'Alex Mercer',
-      customerId: customer2.id,
-      currentStage: 'DISPATCHED',
-      progress: 96,
-      createdAt: daysAgo(75),
-      cost: {
-        estimatedMaterialCost: 92000,
-        actualMaterialCost: 89000,
-        materialConsumptionCost: 85000,
-        machineCost: 110000,
-        labourCost: 38000,
-        outsideProcessCost: 25000,
-        inspectionCost: 7000,
-        packingCost: 5000,
-        dispatchCost: 4500,
-        totalCost: 363500,
-        revenue: 580000,
-        profitability: 0,
-        estimatedProjectCost: 375000,
-      },
+      srNo: 6,
+      assemblyDescription: 'L901005 — PUMP HOUSING EFC 35/35 (Fab. + Mach.)',
+      childParts: [
+        { partNo: 'L901001', partName: 'Pump Housing EFC 35/35 Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '267590', partName: 'Outlet for Pump Housing W+35/35', quantity: 1, uom: 'EA' },
+      ],
     },
     {
-      projectNumber: 'PRJ-2025-007',
-      customerPoNumber: 'PO/CMI/2025/0823',
-      partName: 'Cylinder Head Checking Gauge',
-      description: 'Go/No-Go gauge for cylinder head bore dimensions. Hardened EN31, chrome plated.',
-      targetDeliveryDate: daysAgo(15),
-      priority: 'NORMAL',
-      projectOwner: 'Alex Mercer',
-      customerId: customer3.id,
-      currentStage: 'INVOICED',
-      progress: 98,
-      createdAt: daysAgo(90),
-      cost: {
-        estimatedMaterialCost: 18000,
-        actualMaterialCost: 17500,
-        materialConsumptionCost: 16800,
-        machineCost: 28000,
-        labourCost: 12000,
-        outsideProcessCost: 4000,
-        inspectionCost: 2500,
-        packingCost: 1500,
-        dispatchCost: 2000,
-        totalCost: 84300,
-        revenue: 165000,
-        profitability: 80700,
-        estimatedProjectCost: 90000,
-      },
+      srNo: 7,
+      assemblyDescription: 'L901006 — PUMP HOUSING EFC 35/55 (Fab. + Mach.)',
+      childParts: [
+        { partNo: 'L901002', partName: 'Pump Housing EFC 35/55 Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '260400', partName: 'Outlet for Pump Housing W+35/55', quantity: 1, uom: 'EA' },
+      ],
     },
     {
-      projectNumber: 'PRJ-2024-048',
-      customerPoNumber: 'PO/MAH/2024/1899',
-      partName: 'Transmission Case Fixture',
-      description: 'Multi-spindle drilling fixture for tractor transmission case. Hardened HSS bushings.',
-      targetDeliveryDate: daysAgo(45),
-      priority: 'NORMAL',
-      projectOwner: 'Alex Mercer',
-      customerId: customer4.id,
-      currentStage: 'CLOSED',
-      progress: 100,
-      createdAt: daysAgo(120),
-      cost: {
-        estimatedMaterialCost: 28000,
-        actualMaterialCost: 27000,
-        materialConsumptionCost: 26500,
-        machineCost: 45000,
-        labourCost: 16000,
-        outsideProcessCost: 6000,
-        inspectionCost: 3000,
-        packingCost: 2000,
-        dispatchCost: 2500,
-        totalCost: 128000,
-        revenue: 240000,
-        profitability: 112000,
-        estimatedProjectCost: 135000,
-      },
+      srNo: 8,
+      assemblyDescription: 'L901007 — PUMP HOUSING EFC 55/35 (Fab. + Mach.)',
+      childParts: [
+        { partNo: 'L901003', partName: 'Pump Housing EFC 55/35 Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '267591', partName: 'Outlet for Pump Housing W+55/35', quantity: 1, uom: 'EA' },
+        { partNo: '260001', partName: 'Connector', quantity: 1, uom: 'EA' },
+      ],
+    },
+    {
+      srNo: 9,
+      assemblyDescription: 'L901062 — ASTRA 22/20 CASING WITH SMS 1145 CONNECT',
+      childParts: [
+        { partNo: 'L901000', partName: 'Pump Housing EFC 22/20 Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '256157', partName: 'Outlet for Pump Housing W+22/20', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION2IN', partName: 'Inlet/Outlet Connection', quantity: 2, uom: 'EA' },
+      ],
+    },
+    {
+      srNo: 10,
+      assemblyDescription: 'L901063 — ASTRA 35/35 CASING WITH SMS 1145 CONNECT',
+      childParts: [
+        { partNo: 'L901001', partName: 'Pump Housing EFC 35/35 Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '267590', partName: 'Outlet for Pump Housing W+35/35', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION2_5IN', partName: 'Inlet Connection', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION2IN', partName: 'Outlet Connection', quantity: 1, uom: 'EA' },
+      ],
+    },
+    {
+      srNo: 11,
+      assemblyDescription: 'L901062 — ASTRA 35/55 CASING WITH SMS 1145 CONNECT',
+      childParts: [
+        { partNo: 'L901002', partName: 'Pump Housing EFC 35/55 Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '260400', partName: 'Outlet for Pump Housing W+35/55', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION3IN', partName: 'Inlet Connection', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION2_5IN', partName: 'Outlet Connection', quantity: 1, uom: 'EA' },
+      ],
+    },
+    {
+      srNo: 12,
+      assemblyDescription: 'L901062 — ASTRA 55/35 CASING WITH SMS 1145 CONNECT',
+      childParts: [
+        { partNo: 'L901003', partName: 'Pump Housing EFC 55/35 Pressing', quantity: 1, uom: 'EA' },
+        { partNo: '267591', partName: 'Outlet for Pump Housing W+55/35', quantity: 1, uom: 'EA' },
+        { partNo: '260001', partName: 'Connector', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION2_5IN', partName: 'Inlet Connection', quantity: 1, uom: 'EA' },
+        { partNo: 'WPSMSUNION1_5IN', partName: 'Outlet Connection', quantity: 1, uom: 'EA' },
+      ],
     },
   ];
 
-  // 20. Clean up existing data for these projects (to maintain idempotency with full cascade)
-  const projectNumbers = demoProjects.map((d) => d.projectNumber);
-  console.log('🧹 Cleaning old demo data...');
-  await prisma.projectTask.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.projectTimeline.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.projectActivity.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.projectCostEvent.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.projectCostSummary.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.machineShopDailyReport.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.jobCard.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.materialIssueItem.deleteMany({ where: { issueHeader: { project: { projectNumber: { in: projectNumbers } } } } });
-  await prisma.materialIssueHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.inventoryTransaction.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.inventoryBatch.deleteMany({ where: { grnItem: { grnHeader: { project: { projectNumber: { in: projectNumbers } } } } } });
-  await prisma.goodsReceiptItem.deleteMany({ where: { grnHeader: { project: { projectNumber: { in: projectNumbers } } } } });
-  await prisma.goodsReceiptHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.purchaseOrderItem.deleteMany({ where: { poHeader: { project: { projectNumber: { in: projectNumbers } } } } });
-  await prisma.purchaseOrderHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.routingOperation.deleteMany({ where: { routingHeader: { project: { projectNumber: { in: projectNumbers } } } } });
-  await prisma.routingHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.billOfMaterialItem.deleteMany({ where: { bomHeader: { project: { projectNumber: { in: projectNumbers } } } } });
-  await prisma.billOfMaterialHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.inspectionMeasurement.deleteMany({ where: { inspectionHeader: { project: { projectNumber: { in: projectNumbers } } } } });
-  await prisma.inspectionHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.ncrReport.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.invoiceItem.deleteMany({ where: { invoiceHeader: { project: { projectNumber: { in: projectNumbers } } } } });
-  await prisma.invoiceHeader.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.dispatchItem.deleteMany({ where: { dispatchNote: { project: { projectNumber: { in: projectNumbers } } } } });
-  await prisma.dispatchNote.deleteMany({ where: { project: { projectNumber: { in: projectNumbers } } } });
-  await prisma.project.deleteMany({ where: { projectNumber: { in: projectNumbers } } });
+  // Create master project for SPX BOM
+  const projectSPX = await prisma.project.create({
+    data: {
+      projectNumber: 'KTD-2',
+      customerPoNumber: 'PO/SPX/2025/BOM-001',
+      partName: 'SPX Pump Housing Assembly Line',
+      description: 'SPX Flow Technology pump housing assemblies — 12 assembly types with 41 total child components. Includes EFC and ASTRA series casings.',
+      targetDeliveryDate: daysFromNow(45),
+      priority: 'HIGH',
+      projectOwner: 'Alex Mercer',
+      customerId: customerSPX.id,
+      plantId: plant.id,
+      currentStage: 'PROCUREMENT',
+      progress: 30,
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
+  });
 
-  const stageOrder = [
-    'CREATED',
-    'ENGINEERING',
-    'PROCUREMENT',
-    'MATERIAL_AVAILABLE',
-    'PRODUCTION',
-    'INSPECTION',
-    'DISPATCH_READY',
-    'DISPATCHED',
-    'INVOICED',
-    'PAYMENT_PENDING',
-    'CLOSED',
-  ] as const;
+  await prisma.projectCostSummary.create({
+    data: {
+      projectId: projectSPX.id,
+      estimatedMaterialCost: 120000,
+      actualMaterialCost: 78000,
+      materialConsumptionCost: 0,
+      machineCost: 0,
+      labourCost: 0,
+      outsideProcessCost: 15000,
+      inspectionCost: 0,
+      packingCost: 0,
+      dispatchCost: 0,
+      totalCost: 93000,
+      revenue: 480000,
+      profitability: 0,
+      estimatedProjectCost: 280000,
+    },
+  });
 
-  for (const def of demoProjects) {
-    // Create the project
-    const project = await prisma.project.create({
+  // Timeline entries for SPX project
+  await prisma.projectTimeline.create({
+    data: {
+      projectId: projectSPX.id,
+      fromStage: 'CREATED',
+      toStage: 'CREATED',
+      transitionedAt: daysAgo(18),
+      transitionedBy: 'SEED',
+      remarks: 'Project initialized via SPX PO registration',
+    },
+  });
+  await prisma.projectTimeline.create({
+    data: {
+      projectId: projectSPX.id,
+      fromStage: 'CREATED',
+      toStage: 'ENGINEERING',
+      transitionedAt: daysAgo(14),
+      transitionedBy: 'SEED',
+      remarks: 'Advanced to ENGINEERING',
+    },
+  });
+  await prisma.projectTimeline.create({
+    data: {
+      projectId: projectSPX.id,
+      fromStage: 'ENGINEERING',
+      toStage: 'PROCUREMENT',
+      transitionedAt: daysAgo(7),
+      transitionedBy: 'SEED',
+      remarks: 'Advanced to PROCUREMENT',
+    },
+  });
+
+  await prisma.projectActivity.create({
+    data: {
+      projectId: projectSPX.id,
+      action: 'PROJECT_CREATED',
+      description: 'Project KTD-2 registered — SPX Pump Housing Assembly Line',
+      performedBy: 'SEED',
+      performedAt: daysAgo(18),
+    },
+  });
+  await prisma.projectActivity.create({
+    data: {
+      projectId: projectSPX.id,
+      action: 'STAGE_CHANGED',
+      description: 'Advanced to PROCUREMENT',
+      performedBy: 'SEED',
+      performedAt: daysAgo(7),
+    },
+  });
+
+  // BOM Header for SPX project
+  const bomHeaderSPX = await prisma.billOfMaterialHeader.create({
+    data: {
+      projectId: projectSPX.id,
+      documentNumber: 'BOM-KTD-2',
+      revision: 1,
+      status: 'APPROVED',
+      approvalStatus: 'APPROVED',
+      totalEstimatedCost: 120000,
+      remarks: 'SPX BOM — 12 assemblies with 41 child components',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
+  });
+
+  // Create BOM Items + Assembly structures for each SPX assembly
+  for (const assembly of spxAssemblies) {
+    // Create Assembly Header
+    const assemblyHeader = await prisma.assemblyHeader.create({
       data: {
-        projectNumber: def.projectNumber,
-        customerPoNumber: def.customerPoNumber,
-        partName: def.partName,
-        description: def.description,
-        targetDeliveryDate: def.targetDeliveryDate,
-        priority: def.priority,
-        projectOwner: def.projectOwner,
-        customerId: def.customerId,
-        plantId: plant.id,
-        currentStage: def.currentStage,
-        progress: def.progress,
-        closedAt: def.currentStage === 'CLOSED' ? daysAgo(44) : undefined,
-        createdBy: 'SEED',
-        updatedBy: 'SEED',
+        projectId: projectSPX.id,
+        assemblyNumber: `ASSY-SPX-${String(assembly.srNo).padStart(3, '0')}`,
+        assemblyName: assembly.assemblyDescription,
+        status: 'DRAFT',
       },
     });
 
-    // Create cost summary
-    await prisma.projectCostSummary.create({
-      data: {
-        projectId: project.id,
-        estimatedMaterialCost: def.cost.estimatedMaterialCost,
-        actualMaterialCost: def.cost.actualMaterialCost,
-        materialConsumptionCost: def.cost.materialConsumptionCost,
-        machineCost: def.cost.machineCost,
-        labourCost: def.cost.labourCost,
-        outsideProcessCost: def.cost.outsideProcessCost,
-        inspectionCost: def.cost.inspectionCost,
-        packingCost: def.cost.packingCost,
-        dispatchCost: def.cost.dispatchCost,
-        totalCost: def.cost.totalCost,
-        revenue: def.cost.revenue,
-        profitability: def.cost.profitability,
-        estimatedProjectCost: def.cost.estimatedProjectCost,
-      },
-    });
-
-    // Build timeline entries for all stages up to the current stage
-    const currentStageIdx = stageOrder.indexOf(def.currentStage as typeof stageOrder[number]);
-    for (let i = 0; i <= currentStageIdx; i++) {
-      const fromStage = i === 0 ? 'CREATED' : stageOrder[i - 1];
-      const toStage = stageOrder[i];
-      const transitionedAt = new Date(
-        def.createdAt.getTime() + (i / (currentStageIdx || 1)) * (now.getTime() - def.createdAt.getTime())
-      );
-
-      await prisma.projectTimeline.create({
-        data: {
-          projectId: project.id,
-          fromStage: fromStage as any,
-          toStage: toStage as any,
-          transitionedAt,
-          transitionedBy: 'SEED',
-          remarks: i === 0 ? 'Project initialized via Customer PO registration' : `Advanced to ${toStage}`,
-        },
-      });
-    }
-
-    // Create activity entries
-    await prisma.projectActivity.create({
-      data: {
-        projectId: project.id,
-        action: 'PROJECT_CREATED',
-        description: `Project ${def.projectNumber} registered with status CREATED`,
-        performedBy: 'SEED',
-        performedAt: def.createdAt,
-      },
-    });
-
-    if (currentStageIdx >= 1) {
-      await prisma.projectActivity.create({
-        data: {
-          projectId: project.id,
-          action: 'STAGE_CHANGED',
-          description: `Advanced to ${def.currentStage}`,
-          performedBy: 'SEED',
-          performedAt: daysAgo(1),
-        },
-      });
-    }
-
-    // --- TRANSACTIONAL SECTIONS ---
-
-    // 2. BOM Section
-    const bomHeader = await prisma.billOfMaterialHeader.create({
-      data: {
-        projectId: project.id,
-        documentNumber: `BOM-${project.projectNumber}`,
-        revision: 1,
-        status: project.currentStage === 'ENGINEERING' ? 'PENDING_APPROVAL' : 'APPROVED',
-        approvalStatus: project.currentStage === 'ENGINEERING' ? 'PENDING' : 'APPROVED',
-        totalEstimatedCost: def.cost.estimatedMaterialCost,
-        remarks: 'Released for procurement',
-        createdBy: 'SEED',
-        updatedBy: 'SEED',
-      },
-    });
-
-    await prisma.billOfMaterialItem.create({
-      data: {
-        bomHeaderId: bomHeader.id,
-        materialId: material.id,
-        rawSize: '150x150x200mm',
-        calculatedWeight: 12.5,
-        requiredQty: 2,
-        estimatedCost: def.cost.estimatedMaterialCost,
-        remarks: 'Base plate raw material block',
-        createdBy: 'SEED',
-        updatedBy: 'SEED',
-      },
-    });
-
-    // 3. Routing Section
-    const routingHeader = await prisma.routingHeader.create({
-      data: {
-        projectId: project.id,
-        documentNumber: `RT-${project.projectNumber}`,
-        revision: 1,
-        status: project.currentStage === 'ENGINEERING' ? 'PENDING_APPROVAL' : 'APPROVED',
-        approvalStatus: project.currentStage === 'ENGINEERING' ? 'PENDING' : 'APPROVED',
-        remarks: 'Standard routing plan',
-        createdBy: 'SEED',
-        updatedBy: 'SEED',
-      },
-    });
-
-    const rtOpMilling = await prisma.routingOperation.create({
-      data: {
-        routingHeaderId: routingHeader.id,
-        sequenceOrder: 10,
-        operationId: operation.id,
-        estimatedHours: 8.5,
-        remarks: 'Setup and machine cavity',
-        createdBy: 'SEED',
-        updatedBy: 'SEED',
-        status: ['CREATED', 'ENGINEERING', 'PROCUREMENT', 'MATERIAL_AVAILABLE'].includes(project.currentStage)
-          ? 'PENDING'
-          : project.currentStage === 'PRODUCTION'
-            ? 'IN_PROGRESS'
-            : 'COMPLETED',
-        plannedMachineId: machine.id,
-        remainingQuantity: 1,
-      },
-    });
-
-    const rtOpInspect = await prisma.routingOperation.create({
-      data: {
-        routingHeaderId: routingHeader.id,
-        sequenceOrder: 20,
-        operationId: opInspect.id,
-        estimatedHours: 2.0,
-        remarks: 'Final dimensional and surface check',
-        createdBy: 'SEED',
-        updatedBy: 'SEED',
-        status: ['CREATED', 'ENGINEERING', 'PROCUREMENT', 'MATERIAL_AVAILABLE', 'PRODUCTION'].includes(
-          project.currentStage
-        )
-          ? 'PENDING'
-          : project.currentStage === 'INSPECTION'
-            ? 'IN_PROGRESS'
-            : 'COMPLETED',
-        plannedMachineId: machine.id,
-        remainingQuantity: 1,
-      },
-    });
-
-    // 4. Procurement Section (PO, GRN & Inventory Batch)
-    if (currentStageIdx >= 2) {
-      // Stage >= PROCUREMENT
-      const poHeader = await prisma.purchaseOrderHeader.create({
-        data: {
-          projectId: project.id,
-          vendorId: vendor.id,
-          poNumber: `PO-${project.projectNumber}`,
-          documentNumber: `PO-${project.projectNumber}`,
-          revision: 1,
-          totalAmount: def.cost.estimatedMaterialCost,
-          expectedDeliveryDate: daysAgo(2),
-          status: project.currentStage === 'PROCUREMENT' ? 'ISSUED' : 'CLOSED',
-          approvalStatus: 'APPROVED',
-          remarks: 'Material purchase for tool block',
-          createdBy: 'SEED',
-          updatedBy: 'SEED',
-        },
-      });
-
-      const poItem = await prisma.purchaseOrderItem.create({
-        data: {
-          poHeaderId: poHeader.id,
-          materialId: material.id,
-          orderedQty: 2,
-          agreedRate: def.cost.estimatedMaterialCost / 2,
-          lineTotal: def.cost.estimatedMaterialCost,
-          status: project.currentStage === 'PROCUREMENT' ? 'PENDING' : 'RECEIVED',
-          receivedQty: project.currentStage === 'PROCUREMENT' ? 0 : 2,
-          createdBy: 'SEED',
-          updatedBy: 'SEED',
-        },
-      });
-
-      // 5. Goods Receipt Note (GRN)
-      if (currentStageIdx >= 3) {
-        // Stage >= MATERIAL_AVAILABLE
-        const grnHeader = await prisma.goodsReceiptHeader.create({
-          data: {
-            projectId: project.id,
-            poHeaderId: poHeader.id,
-            grnNumber: `GRN-${project.projectNumber}`,
-            documentNumber: `GRN-${project.projectNumber}`,
-            receiptDate: daysAgo(4),
-            status: 'COMPLETED',
-            remarks: 'Materials received in good condition',
-            createdBy: 'SEED',
-            updatedBy: 'SEED',
-          },
-        });
-
-        const grnItem = await prisma.goodsReceiptItem.create({
-          data: {
-            grnHeaderId: grnHeader.id,
-            poItemId: poItem.id,
-            receivedQty: 2,
-            acceptedQty: 2,
-            rejectedQty: 0,
-            actualRate: def.cost.estimatedMaterialCost / 2,
-            actualMaterialCost: def.cost.estimatedMaterialCost,
-            remarks: 'Passed inspection',
-            createdBy: 'SEED',
-            updatedBy: 'SEED',
-          },
-        });
-
-        // 6. Inventory Batch & Stock
-        const invBatch = await prisma.inventoryBatch.create({
-          data: {
-            materialId: material.id,
-            grnItemId: grnItem.id,
-            batchNumber: `BATCH-${project.projectNumber}`,
-            locationId: location.id,
-            receivedQty: 2,
-            currentQty: project.currentStage === 'MATERIAL_AVAILABLE' ? 2 : 0,
-            availableQty: project.currentStage === 'MATERIAL_AVAILABLE' ? 2 : 0,
-            issuedQty: project.currentStage === 'MATERIAL_AVAILABLE' ? 0 : 2,
-            unitCost: def.cost.estimatedMaterialCost / 2,
-            status: project.currentStage === 'MATERIAL_AVAILABLE' ? 'AVAILABLE' : 'CONSUMED',
-            createdBy: 'SEED',
-          },
-        });
-
-        await prisma.inventoryStock.upsert({
-          where: {
-            materialId_warehouseId: {
-              materialId: material.id,
-              warehouseId: warehouse.id,
-            },
-          },
-          update: {
-            currentQuantity: { increment: project.currentStage === 'MATERIAL_AVAILABLE' ? 2 : 0 },
-            availableQuantity: { increment: project.currentStage === 'MATERIAL_AVAILABLE' ? 2 : 0 },
-          },
+    // Create child parts as BOM items and Assembly components
+    for (const child of assembly.childParts) {
+      // Create or find a material for each unique child part
+      const childMaterialCode = `SPX-${child.partNo}`;
+      let childMaterial;
+      try {
+        childMaterial = await prisma.material.upsert({
+          where: { materialCode: childMaterialCode },
+          update: {},
           create: {
-            materialId: material.id,
-            warehouseId: warehouse.id,
-            currentQuantity: project.currentStage === 'MATERIAL_AVAILABLE' ? 2 : 0,
-            availableQuantity: project.currentStage === 'MATERIAL_AVAILABLE' ? 2 : 0,
+            materialCode: childMaterialCode,
+            materialGrade: `SPX Component — ${child.partName}`,
+            materialCategory: 'SEMI_FINISHED',
+            density: 8.0,
+            standardCost: 0,
+            defaultUom: child.uom,
+            status: 'ACTIVE',
           },
         });
-
-        // 7. Material Issue Slip
-        if (currentStageIdx >= 4) {
-          // Stage >= PRODUCTION
-          const issueHeader = await prisma.materialIssueHeader.create({
-            data: {
-              projectId: project.id,
-              issueNumber: `IS-${project.projectNumber}`,
-              documentNumber: `IS-${project.projectNumber}`,
-              issueDate: daysAgo(3),
-              status: 'COMPLETED',
-              remarks: 'Issued to VMC section',
-              createdBy: 'SEED',
-              updatedBy: 'SEED',
-            },
-          });
-
-          await prisma.materialIssueItem.create({
-            data: {
-              issueHeaderId: issueHeader.id,
-              inventoryBatchId: invBatch.id,
-              issuedQty: 2,
-              materialValue: def.cost.estimatedMaterialCost,
-              remarks: 'For CNC milling stage',
-              createdBy: 'SEED',
-              updatedBy: 'SEED',
-            },
-          });
-
-          await prisma.inventoryTransaction.create({
-            data: {
-              projectId: project.id,
-              inventoryBatchId: invBatch.id,
-              movementType: 'MATERIAL_ISSUE',
-              quantity: 2,
-              referenceDocType: 'MATERIAL_ISSUE',
-              referenceDocId: issueHeader.id,
-              remarks: 'Issued to VMC Shop',
-              createdBy: 'SEED',
-            },
-          });
-
-          // 8. Job Cards & Production Reports
-          await prisma.jobCard.create({
-            data: {
-              projectId: project.id,
-              routingOperationId: rtOpMilling.id,
-              machineId: machine.id,
-              status: ['PRODUCTION', 'INSPECTION'].includes(project.currentStage) ? 'IN_PROGRESS' : 'COMPLETED',
-              priority: 'NORMAL',
-              operatorId: employee.id,
-              createdBy: 'SEED',
-              updatedBy: 'SEED',
-            },
-          });
-
-          if (project.currentStage !== 'PRODUCTION') {
-            await prisma.machineShopDailyReport.create({
-              data: {
-                projectId: project.id,
-                machineId: machine.id,
-                employeeId: employee.id,
-                reportDate: daysAgo(2),
-                startTime: daysAgo(2),
-                endTime: daysAgo(2),
-                setupTime: 1.5,
-                cuttingTime: 7.0,
-                producedQty: 1,
-                scrapQty: 0,
-                remarks: 'Milling completed within tolerance',
-                actualLabourHours: 8.5,
-                actualMachineHours: 8.5,
-                inventoryBatchId: invBatch.id,
-                materialIssueId: issueHeader.id,
-                routingOperationId: rtOpMilling.id,
-                createdBy: 'SEED',
-                updatedBy: 'SEED',
-              },
-            });
-          }
-
-          // 9. Quality & Inspection Section
-          if (currentStageIdx >= 5) {
-            // Stage >= INSPECTION
-            const inspection = await prisma.inspectionHeader.create({
-              data: {
-                projectId: project.id,
-                routingOperationId: rtOpInspect.id,
-                inspectionNumber: `INSP-${project.projectNumber}`,
-                documentNumber: `INSP-${project.projectNumber}`,
-                inspectedQty: 1,
-                passedQty: project.currentStage === 'INSPECTION' ? 0 : 1,
-                reworkQty: project.currentStage === 'INSPECTION' ? 1 : 0,
-                scrapQty: 0,
-                result: project.currentStage === 'INSPECTION' ? 'REWORK' : 'PASS',
-                status: 'COMPLETED',
-                remarks:
-                  project.currentStage === 'INSPECTION'
-                    ? 'Minor burr found, sent for polishing'
-                    : 'Passed final checks',
-                inspectionType: 'FINAL_PDI',
-                createdBy: 'SEED',
-                updatedBy: 'SEED',
-              },
-            });
-
-            await prisma.inspectionMeasurement.create({
-              data: {
-                inspectionHeaderId: inspection.id,
-                inspectionStandardId: stdDimensional.id,
-                nominalValue: 120.0,
-                upperTolerance: 0.05,
-                lowerTolerance: -0.05,
-                actualValue: project.currentStage === 'INSPECTION' ? 120.07 : 120.01,
-                result: project.currentStage === 'INSPECTION' ? 'REWORK' : 'PASS',
-                remarks: 'Measurement checked on CMM',
-                createdBy: 'SEED',
-              },
-            });
-
-            if (project.currentStage === 'INSPECTION') {
-              await prisma.ncrReport.create({
-                data: {
-                  projectId: project.id,
-                  ncrNumber: `NCR-${project.projectNumber}`,
-                  defectDescription: 'Bore dimension 120.07mm exceeded upper limit of 120.05mm',
-                  rootCause: 'Tool wear during boring cycle',
-                  status: 'OPEN',
-                  remarks: 'Hold production. Tool replacement scheduled.',
-                  createdBy: 'SEED',
-                  updatedBy: 'SEED',
-                },
-              });
-            }
-
-            // 10. Dispatch Section
-            if (currentStageIdx >= 7) {
-              // Stage >= DISPATCHED
-              const dispatch = await prisma.dispatchNote.create({
-                data: {
-                  projectId: project.id,
-                  customerId: project.customerId,
-                  dispatchNumber: `DP-${project.projectNumber}`,
-                  documentNumber: `DP-${project.projectNumber}`,
-                  dispatchDate: daysAgo(1),
-                  dispatchQty: 1,
-                  transporterName: 'SafeExpress Logistics',
-                  vehicleNumber: 'MH-12-PQ-8877',
-                  logisticsCost: 3500,
-                  status: 'COMPLETED',
-                  remarks: 'Packed in wooden crate with anti-rust oil applied',
-                  createdBy: 'SEED',
-                  updatedBy: 'SEED',
-                },
-              });
-
-              await prisma.dispatchItem.create({
-                data: {
-                  dispatchNoteId: dispatch.id,
-                  partDescription: def.partName,
-                  quantity: 1,
-                  remarks: 'CMM inspection reports attached',
-                  createdBy: 'SEED',
-                },
-              });
-
-              // 11. Invoice Section
-              if (currentStageIdx >= 8) {
-                // Stage >= INVOICED
-                const invoice = await prisma.invoiceHeader.create({
-                  data: {
-                    projectId: project.id,
-                    dispatchNoteId: dispatch.id,
-                    invoiceNumber: `INV-${project.projectNumber}`,
-                    documentNumber: `INV-${project.projectNumber}`,
-                    invoiceDate: daysAgo(1),
-                    subtotal: def.cost.revenue,
-                    taxAmount: def.cost.revenue * 0.18,
-                    totalAmount: def.cost.revenue * 1.18,
-                    status: project.currentStage === 'CLOSED' ? 'PAID' : 'SENT',
-                    paymentStatus: project.currentStage === 'CLOSED' ? 'PAID' : 'PENDING',
-                    paidAt: project.currentStage === 'CLOSED' ? daysAgo(1) : undefined,
-                    remarks: '18% GST Applied',
-                    createdBy: 'SEED',
-                    updatedBy: 'SEED',
-                  },
-                });
-
-                await prisma.invoiceItem.create({
-                  data: {
-                    invoiceHeaderId: invoice.id,
-                    description: def.partName,
-                    quantity: 1,
-                    rate: def.cost.revenue,
-                    lineTotal: def.cost.revenue,
-                    remarks: 'Tool room tooling charge',
-                    createdBy: 'SEED',
-                  },
-                });
-              }
-            }
-          }
-        }
+      } catch {
+        childMaterial = await prisma.material.findUnique({ where: { materialCode: childMaterialCode } });
+        if (!childMaterial) throw new Error(`Failed to create material ${childMaterialCode}`);
       }
+
+      // BOM Item
+      await prisma.billOfMaterialItem.create({
+        data: {
+          bomHeaderId: bomHeaderSPX.id,
+          materialId: childMaterial.id,
+          requiredQty: child.quantity,
+          remarks: `Assembly ${assembly.srNo}: ${child.partName}`,
+          createdBy: 'SEED',
+          updatedBy: 'SEED',
+          customFields: {
+            assemblyNumber: `ASSY-SPX-${String(assembly.srNo).padStart(3, '0')}`,
+            assemblyDescription: assembly.assemblyDescription,
+            childPartNo: child.partNo,
+            childPartName: child.partName,
+          },
+        },
+      });
+
+      // Assembly Component
+      await prisma.assemblyComponent.create({
+        data: {
+          assemblyHeaderId: assemblyHeader.id,
+          materialId: childMaterial.id,
+          quantity: child.quantity,
+        },
+      });
     }
-
-    console.log(`✅ Seeded Project: ${def.projectNumber} [${def.currentStage}] — ${def.partName}`);
   }
 
-  // 21. Seed project tasks for active projects
-  const engineeringProject = await prisma.project.findUnique({
-    where: { projectNumber: 'PRJ-2025-001' },
+  console.log(`✅ Seeded SPX Assembly BOM: 12 assemblies with 41 child components`);
+
+  // Routing for SPX project
+  const routingSPX = await prisma.routingHeader.create({
+    data: {
+      projectId: projectSPX.id,
+      documentNumber: 'RT-KTD-2',
+      revision: 1,
+      status: 'APPROVED',
+      approvalStatus: 'APPROVED',
+      remarks: 'Pump housing fabrication and machining routing',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
   });
-  if (engineeringProject) {
-    await prisma.projectTask.createMany({
-      data: [
-        {
-          projectId: engineeringProject.id,
-          taskName: 'Create 3D CAD Model',
-          description: 'Full 3D model in SolidWorks with tolerance stack analysis',
-          startDate: daysAgo(3),
-          endDate: daysFromNow(4),
-          status: 'IN_PROGRESS',
-          assignedTo: 'Alex Mercer',
-          createdBy: 'SEED',
-        },
-        {
-          projectId: engineeringProject.id,
-          taskName: 'Generate Manufacturing Drawings',
-          description: 'Detail drawings with GD&T callouts per ASME Y14.5',
-          startDate: daysFromNow(4),
-          endDate: daysFromNow(8),
-          status: 'PENDING',
-          assignedTo: 'Alex Mercer',
-          createdBy: 'SEED',
-        },
-        {
-          projectId: engineeringProject.id,
-          taskName: 'Create Bill of Materials',
-          description: 'Complete BOM with material specs and vendor recommendations',
-          startDate: daysFromNow(5),
-          endDate: daysFromNow(7),
-          status: 'PENDING',
-          assignedTo: 'Alex Mercer',
-          createdBy: 'SEED',
-        },
-        {
-          projectId: engineeringProject.id,
-          taskName: 'Define Routing & Process Plan',
-          description: 'Operation sequence, machine allocation, and cycle time estimates',
-          startDate: daysFromNow(7),
-          endDate: daysFromNow(10),
-          status: 'PENDING',
-          assignedTo: 'Alex Mercer',
-          createdBy: 'SEED',
-        },
-      ],
-    });
-    console.log(`✅ Seeded Tasks for PRJ-2025-001`);
-  }
 
-  const productionProject = await prisma.project.findUnique({
-    where: { projectNumber: 'PRJ-2025-003' },
+  await prisma.routingOperation.create({
+    data: {
+      routingHeaderId: routingSPX.id,
+      sequenceOrder: 10,
+      operationId: operation.id,
+      estimatedHours: 48,
+      remarks: 'Pump housing fabrication and CNC machining',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+      status: 'PENDING',
+      plannedMachineId: machine.id,
+      remainingQuantity: 12,
+    },
   });
-  if (productionProject) {
-    await prisma.projectTask.createMany({
-      data: [
-        {
-          projectId: productionProject.id,
-          taskName: 'CNC Rough Machining',
-          description: 'Rough machining of base plate and cavity on VMC',
-          startDate: daysAgo(8),
-          endDate: daysAgo(3),
-          status: 'COMPLETED',
-          assignedTo: 'Alex Mercer',
-          createdBy: 'SEED',
-        },
-        {
-          projectId: productionProject.id,
-          taskName: 'CNC Finish Machining',
-          description: 'Finish pass with 0.02mm stepover for surface quality',
-          startDate: daysAgo(3),
-          endDate: daysFromNow(2),
-          status: 'IN_PROGRESS',
-          assignedTo: 'Alex Mercer',
-          createdBy: 'SEED',
-        },
-        {
-          projectId: productionProject.id,
-          taskName: 'Wire EDM Cutting',
-          description: 'EDM cutting for sharp corners and intricate profiles',
-          startDate: daysFromNow(2),
-          endDate: daysFromNow(5),
-          status: 'PENDING',
-          assignedTo: 'Alex Mercer',
-          createdBy: 'SEED',
-        },
-        {
-          projectId: productionProject.id,
-          taskName: 'Heat Treatment',
-          description: 'Hardening to 58-60 HRC and stress relieving',
-          startDate: daysFromNow(5),
-          endDate: daysFromNow(8),
-          status: 'PENDING',
-          assignedTo: 'Alex Mercer',
-          createdBy: 'SEED',
-        },
-      ],
-    });
-    console.log(`✅ Seeded Tasks for PRJ-2025-003`);
-  }
 
-  // -------------------------------------------------------------
-  // SEED GLOBAL ASSETS & TOOL MANAGEMENT (STANDALONE MODULE)
-  // -------------------------------------------------------------
-  console.log('🌱 Seeding Global Asset Management...');
+  await prisma.routingOperation.create({
+    data: {
+      routingHeaderId: routingSPX.id,
+      sequenceOrder: 20,
+      operationId: opInspect.id,
+      estimatedHours: 8,
+      remarks: 'Dimensional and surface quality inspection',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+      status: 'PENDING',
+      plannedMachineId: machine.id,
+      remainingQuantity: 12,
+    },
+  });
+
+  // PO for SPX project (stage >= PROCUREMENT)
+  const poHeaderSPX = await prisma.purchaseOrderHeader.create({
+    data: {
+      projectId: projectSPX.id,
+      vendorId: vendor.id,
+      poNumber: 'PO-KTD-2',
+      documentNumber: 'PO-KTD-2',
+      revision: 1,
+      totalAmount: 120000,
+      expectedDeliveryDate: daysFromNow(14),
+      status: 'ISSUED',
+      approvalStatus: 'APPROVED',
+      remarks: 'Material purchase for SPX pump housing assemblies',
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
+  });
+
+  await prisma.purchaseOrderItem.create({
+    data: {
+      poHeaderId: poHeaderSPX.id,
+      materialId: matSS304.id,
+      orderedQty: 12,
+      agreedRate: 10000,
+      lineTotal: 120000,
+      status: 'PENDING',
+      receivedQty: 0,
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
+  });
+
+  console.log(`✅ Seeded Project KTD-2 [PROCUREMENT] — SPX Pump Housing Assembly Line`);
+
+  // =====================================================================
+  // LELY PUMPHOUSE PROJECT (Assembly 1 from SPX BOM — dedicated project)
+  // =====================================================================
+  const projectLely = await prisma.project.create({
+    data: {
+      projectNumber: 'KTD-3',
+      customerPoNumber: 'PO/LELY/2025/PH-001',
+      partName: 'W+10/8 Pumphouse Special For Lely',
+      description: 'Dedicated Lely pumphouse assembly — L851170 series. Fabrication + Machining + Assembly.',
+      targetDeliveryDate: daysFromNow(60),
+      priority: 'NORMAL',
+      projectOwner: 'Alex Mercer',
+      customerId: customerLely.id,
+      plantId: plant.id,
+      currentStage: 'CREATED',
+      progress: 5,
+      createdBy: 'SEED',
+      updatedBy: 'SEED',
+    },
+  });
+
+  await prisma.projectCostSummary.create({
+    data: {
+      projectId: projectLely.id,
+      estimatedMaterialCost: 45000,
+      actualMaterialCost: 0,
+      materialConsumptionCost: 0,
+      machineCost: 0,
+      labourCost: 0,
+      outsideProcessCost: 0,
+      inspectionCost: 0,
+      packingCost: 0,
+      dispatchCost: 0,
+      totalCost: 0,
+      revenue: 185000,
+      profitability: 0,
+      estimatedProjectCost: 110000,
+    },
+  });
+
+  await prisma.projectTimeline.create({
+    data: {
+      projectId: projectLely.id,
+      fromStage: 'CREATED',
+      toStage: 'CREATED',
+      transitionedAt: daysAgo(2),
+      transitionedBy: 'SEED',
+      remarks: 'Project initialized via Lely PO registration',
+    },
+  });
+
+  await prisma.projectActivity.create({
+    data: {
+      projectId: projectLely.id,
+      action: 'PROJECT_CREATED',
+      description: 'Project KTD-3 registered — Lely Pumphouse',
+      performedBy: 'SEED',
+      performedAt: daysAgo(2),
+    },
+  });
+
+  console.log(`✅ Seeded Project KTD-3 [CREATED] — Lely Pumphouse`);
+
+  // =====================================================================
+  // GLOBAL ASSETS & TOOL MANAGEMENT (kept from original)
+  // =====================================================================
+  console.log('\n🌱 Seeding Global Asset Management...');
 
   const catCutting = await prisma.globalAssetCategory.upsert({
     where: { categoryCode: 'CAT-CUT' },
@@ -1493,7 +1341,6 @@ async function main() {
     create: { locationCode: 'LOC-ITSTORE', locationName: 'IT Asset Locker', building: 'Main Office', room: 'Room 304', rackBin: 'Shelf C-1' },
   });
 
-  // Seed Assets
   const asset1 = await prisma.globalAsset.upsert({
     where: { assetId: 'AST-10001' },
     update: {},
@@ -1521,7 +1368,7 @@ async function main() {
       qrCode: 'QR-AST-10001',
       barcode: 'BC-VC-300-DIG',
       createdBy: 'SEED',
-    }
+    },
   });
 
   const asset2 = await prisma.globalAsset.upsert({
@@ -1550,7 +1397,7 @@ async function main() {
       qrCode: 'QR-AST-10002',
       barcode: 'BC-PWR-TRQ-61',
       createdBy: 'SEED',
-    }
+    },
   });
 
   const asset3 = await prisma.globalAsset.upsert({
@@ -1579,10 +1426,9 @@ async function main() {
       qrCode: 'QR-AST-10003',
       barcode: 'BC-IT-LAP-5570',
       createdBy: 'SEED',
-    }
+    },
   });
 
-  // Seed Issue Transaction if employee exists
   const emp = await prisma.employee.findFirst();
   if (emp) {
     const issue1 = await prisma.globalAssetIssueTransaction.upsert({
@@ -1597,9 +1443,9 @@ async function main() {
         expectedReturnDate: new Date('2025-08-05'),
         conditionBeforeIssue: 'EXCELLENT',
         status: 'ISSUED',
-        remarks: 'Issued for CMM inspection run on PRJ-2025-001',
+        remarks: 'Issued for CMM inspection run on KTD-2',
         createdBy: 'SEED',
-      }
+      },
     });
 
     await prisma.globalAssetAuditLog.create({
@@ -1608,13 +1454,19 @@ async function main() {
         action: 'ISSUED',
         performedBy: 'SEED',
         newValues: { issueNumber: 'ISS-10001', employeeName: emp.name, quantity: 2 },
-      }
+      },
     });
   }
 
   console.log('✅ Seeded Global Assets: Categories, Locations, Assets & Issues');
 
-  console.log('🌱 Database seeding completed successfully.');
+  console.log('\n🌱 Database seeding completed successfully with client data!');
+  console.log('  📋 Projects seeded:');
+  console.log('    • KTD-1 [ENGINEERING] — Material Weight/Cutting Sheet (29 parts)');
+  console.log('    • KTD-2 [PROCUREMENT] — SPX Pump Housing Assembly Line (12 assemblies)');
+  console.log('    • KTD-3 [CREATED] — Lely Pumphouse');
+  console.log('  🏭 Materials seeded: 16 actual grades (CRCA, HRPO, MS SHEET, etc.)');
+  console.log('  🏢 Customers seeded: SPX Flow Technology, Lely Industries');
 }
 
 main()
