@@ -15,7 +15,6 @@ export class UsersService {
         passwordHash,
         role: data.role || 'PRODUCTION',
         plantId: data.plantId,
-        hourlyRate: data.hourlyRate !== undefined ? Number(data.hourlyRate) : 0,
         status: 'ACTIVE',
       },
       select: {
@@ -25,7 +24,6 @@ export class UsersService {
         role: true,
         plantId: true,
         status: true,
-        hourlyRate: true,
       }
     });
   }
@@ -56,7 +54,6 @@ export class UsersService {
           role: true,
           plantId: true,
           status: true,
-          hourlyRate: true,
           createdAt: true,
           lastLoginAt: true,
         },
@@ -77,45 +74,25 @@ export class UsersService {
   }
 
   async update(id: string, data: any) {
-    return this.prisma.$transaction(async (tx) => {
-      const existingUser = await tx.user.findUniqueOrThrow({ where: { id } });
-      const oldRate = existingUser.hourlyRate;
-      const newRate = data.hourlyRate !== undefined ? Number(data.hourlyRate) : undefined;
+    const updateData: any = { ...data };
+    if (data.password) {
+      updateData.passwordHash = await bcrypt.hash(data.password, 10);
+      delete updateData.password;
+    }
+    // Remove hourlyRate if accidentally sent by client
+    delete updateData.hourlyRate;
 
-      const updateData: any = { ...data };
-      if (data.password) {
-        updateData.passwordHash = await bcrypt.hash(data.password, 10);
-        delete updateData.password;
+    return this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        plantId: true,
+        status: true,
       }
-
-      const updated = await tx.user.update({
-        where: { id },
-        data: updateData,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          plantId: true,
-          status: true,
-          hourlyRate: true,
-        }
-      });
-
-      if (newRate !== undefined && Number(oldRate) !== Number(newRate)) {
-        await tx.costRateHistory.create({
-          data: {
-            entityType: 'USER',
-            entityId: id,
-            oldRate,
-            newRate,
-            reason: 'User hourly rate updated',
-            recordedBy: 'SYSTEM',
-          },
-        });
-      }
-
-      return updated;
     });
   }
 }

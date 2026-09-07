@@ -205,9 +205,9 @@ export class MaintenanceService {
       // Calculate Labor Cost
       let laborCost = 0;
       if (logDto.timeSpentHours && logDto.timeSpentHours > 0) {
-        const user = await tx.user.findUnique({ where: { id: userId }});
-        if (user && user.hourlyRate) {
-          laborCost = Number(user.hourlyRate) * logDto.timeSpentHours;
+        const user = await tx.user.findUnique({ where: { id: userId }, include: { employee: true } });
+        if (user?.employee && user.employee.hourlyRate) {
+          laborCost = Number(user.employee.hourlyRate) * logDto.timeSpentHours;
         }
       }
 

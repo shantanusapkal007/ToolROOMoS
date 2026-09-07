@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useProject, useCompleteProduction } from "@/hooks/useProjects";
 import {
@@ -26,19 +26,115 @@ import {
   ArrowRight,
   RotateCcw,
   ExternalLink,
+  GitBranch,
+  ChevronDown,
+  ChevronRight,
+  Box,
 } from "lucide-react";
 import Link from "next/link";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { Modal } from "@/components/ui/Modal";
 import { ReworkPartModal } from "@/components/modals/ReworkPartModal";
 
-type AssemblyTab = "KITTING" | "SUB_ASSEMBLIES" | "TRIALS" | "FITTER_LOGS";
+type AssemblyTab = "PRODUCT_TREE" | "KITTING" | "SUB_ASSEMBLIES" | "TRIALS" | "FITTER_LOGS";
+
+// --- Product Tree Types & Helpers ---
+interface AssemblyTreeNode {
+  item: any;
+  children: AssemblyTreeNode[];
+  level: number;
+}
+
+function buildAssemblyTree(items: any[]): AssemblyTreeNode[] {
+  if (!items || items.length === 0) return [];
+
+  // Try parentItemId-based hierarchy first (DB-level)
+  const hasParentIds = items.some((item: any) => item.parentItemId);
+
+  if (hasParentIds) {
+    const nodeMap = new Map<string, AssemblyTreeNode>();
+    const roots: AssemblyTreeNode[] = [];
+
+    items.forEach((item: any) => {
+      nodeMap.set(item.id, { item, children: [], level: 0 });
+    });
+
+    items.forEach((item: any) => {
+      const node = nodeMap.get(item.id)!;
+      if (item.parentItemId && nodeMap.has(item.parentItemId)) {
+        const parent = nodeMap.get(item.parentItemId)!;
+        node.level = parent.level + 1;
+        parent.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    return roots;
+  }
+
+  // Fallback: srNo dot-notation hierarchy (1, 1.1, 1.1.1)
+  const nodes: AssemblyTreeNode[] = items.map((item: any) => ({
+    item,
+    children: [],
+    level: 0,
+  }));
+
+  const nodeMap = new Map<string, AssemblyTreeNode>();
+  nodes.forEach((node) => {
+    const srNo = String(node.item.srNo || node.item.id || "").trim();
+    nodeMap.set(srNo, node);
+  });
+
+  const roots: AssemblyTreeNode[] = [];
+  nodes.forEach((node) => {
+    const srNo = String(node.item.srNo || node.item.id || "").trim();
+    const dotIndex = srNo.lastIndexOf(".");
+    if (dotIndex === -1) {
+      node.level = 0;
+      roots.push(node);
+    } else {
+      const parentSrNo = srNo.substring(0, dotIndex);
+      const parent = nodeMap.get(parentSrNo);
+      if (parent) {
+        node.level = parent.level + 1;
+        parent.children.push(node);
+      } else {
+        node.level = 0;
+        roots.push(node);
+      }
+    }
+  });
+
+  return roots;
+}
+
+function flattenTree(
+  nodes: AssemblyTreeNode[],
+  expanded: Record<string, boolean>
+): { node: AssemblyTreeNode; isVisible: boolean }[] {
+  const list: { node: AssemblyTreeNode; isVisible: boolean }[] = [];
+  const recurse = (nodeList: AssemblyTreeNode[], parentVisible: boolean) => {
+    nodeList.forEach((node) => {
+      list.push({ node, isVisible: parentVisible });
+      const key = node.item.id || String(node.item.srNo || "").trim();
+      const isExpanded = expanded[key] !== false; // default expanded
+      recurse(node.children, parentVisible && isExpanded);
+    });
+  };
+  recurse(nodes, true);
+  return list;
+}
 
 export default function ProjectAssemblyPage() {
   const params = useParams();
   const id = params?.id as string;
 
-  const [activeTab, setActiveTab] = useState<AssemblyTab>("KITTING");
+  const [activeTab, setActiveTab] = useState<AssemblyTab>("PRODUCT_TREE");
+
+  // Product Tree state
+  const [treeExpandedNodes, setTreeExpandedNodes] = useState<Record<string, boolean>>({});
+  const [treeViewMode, setTreeViewMode] = useState<'tree' | 'flat'>('tree');
 
   // Part Rework Modal State
   const [reworkModalOpen, setReworkModalOpen] = useState(false);
@@ -274,6 +370,16 @@ export default function ProjectAssemblyPage() {
       {/* Navigation Tabs */}
       <div className="flex items-center p-1 bg-canvas rounded-[12px] border border-border-gray overflow-x-auto gap-1">
         <button
+          onClick={() => setActiveTab("PRODUCT_TREE")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "PRODUCT_TREE" ? "bg-white text-ink shadow-subtle" : "text-mute hover:text-ink"
+          }`}
+        >
+          <GitBranch className="w-4 h-4 text-indigo-600" />
+          <span>Product Tree</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab("KITTING")}
           className={`flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "KITTING" ? "bg-white text-ink shadow-subtle" : "text-mute hover:text-ink"
@@ -313,6 +419,253 @@ export default function ProjectAssemblyPage() {
           <span>Fitter Daily Reports</span>
         </button>
       </div>
+
+      {/* Tab 0: Product Tree */}
+      {activeTab === "PRODUCT_TREE" && (() => {
+        const tree = buildAssemblyTree(bomItems);
+        const flatNodes = flattenTree(tree, treeExpandedNodes);
+        const visibleNodes = flatNodes.filter((n) => n.isVisible);
+
+        const toggleExpanded = (key: string) => {
+          setTreeExpandedNodes((prev) => ({
+            ...prev,
+            [key]: prev[key] === false ? true : false,
+          }));
+        };
+
+        const collapseAll = () => {
+          const collapsed: Record<string, boolean> = {};
+          flatNodes.forEach(({ node }) => {
+            if (node.children.length > 0) {
+              const key = node.item.id || String(node.item.srNo || "").trim();
+              collapsed[key] = false;
+            }
+          });
+          setTreeExpandedNodes(collapsed);
+        };
+
+        const expandAll = () => setTreeExpandedNodes({});
+
+        return (
+          <div className="bg-white rounded-[12px] border border-border-gray/80 shadow-subtle overflow-hidden">
+            <div className="p-4 border-b border-border-gray flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+                  <GitBranch className="w-4 h-4 text-indigo-600" />
+                  Assembly Product Tree
+                </h3>
+                <p className="text-xs text-mute mt-0.5">Hierarchical breakdown of all BOM components and sub-assemblies for this tool</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Expand / Collapse All */}
+                <button
+                  onClick={collapseAll}
+                  className="text-[10px] font-semibold text-cool-gray hover:text-ink px-2 py-1 rounded-[8px] hover:bg-canvas transition-colors cursor-pointer"
+                >
+                  Collapse All
+                </button>
+                <button
+                  onClick={expandAll}
+                  className="text-[10px] font-semibold text-cool-gray hover:text-ink px-2 py-1 rounded-[8px] hover:bg-canvas transition-colors cursor-pointer"
+                >
+                  Expand All
+                </button>
+
+                {/* Tree / Flat Toggle */}
+                <div className="flex bg-canvas border border-border-gray rounded-[10px] p-0.5 shadow-subtle">
+                  <button
+                    onClick={() => setTreeViewMode('tree')}
+                    className={`px-2.5 py-1 rounded-[8px] text-[10px] font-semibold transition-all cursor-pointer ${
+                      treeViewMode === 'tree' ? 'bg-white text-ink shadow-subtle' : 'text-cool-gray hover:text-ink'
+                    }`}
+                  >
+                    Tree View
+                  </button>
+                  <button
+                    onClick={() => setTreeViewMode('flat')}
+                    className={`px-2.5 py-1 rounded-[8px] text-[10px] font-semibold transition-all cursor-pointer ${
+                      treeViewMode === 'flat' ? 'bg-white text-ink shadow-subtle' : 'text-cool-gray hover:text-ink'
+                    }`}
+                  >
+                    Flat List
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-canvas border-b border-border-gray/80 text-mute uppercase text-[10px] font-semibold tracking-wider">
+                  <tr>
+                    <th className="p-3 w-10">#</th>
+                    <th className="p-3">Part / Component Name</th>
+                    <th className="p-3">Material Grade</th>
+                    <th className="p-3 text-center">Qty</th>
+                    <th className="p-3 text-center">Type</th>
+                    <th className="p-3 text-center">Kitting Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {bomItems.length > 0 ? (
+                    treeViewMode === 'tree' ? (
+                      visibleNodes.map(({ node }) => {
+                        const item = node.item;
+                        const hasChildren = node.children.length > 0;
+                        const key = item.id || String(item.srNo || "").trim();
+                        const isExpanded = treeExpandedNodes[key] !== false;
+                        const isAssemblyItem = item.isAssembly || hasChildren;
+                        const isIssued = materialIssues.some(
+                          (m: any) => m.inventoryBatch?.materialId === item.materialId || m.materialName?.includes(item.partName)
+                        );
+
+                        return (
+                          <tr key={key} className="hover:bg-canvas/80 transition-colors group">
+                            <td className="p-3 font-mono text-cool-gray text-[10px]">
+                              {item.srNo || "—"}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center" style={{ paddingLeft: `${node.level * 20}px` }}>
+                                {hasChildren ? (
+                                  <button
+                                    onClick={() => toggleExpanded(key)}
+                                    className="p-0.5 mr-1.5 text-primary hover:text-primary-hover rounded transition-colors cursor-pointer"
+                                    title={isExpanded ? "Collapse" : "Expand"}
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
+                                    ) : (
+                                      <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                                    )}
+                                  </button>
+                                ) : node.level > 0 ? (
+                                  <span className="text-zinc-300 font-mono text-[10px] mr-1.5 shrink-0">└</span>
+                                ) : (
+                                  <span className="w-[22px] shrink-0" />
+                                )}
+                                <span className={`font-semibold ${
+                                  isAssemblyItem ? 'text-indigo-700' : 'text-ink'
+                                }`}>
+                                  {item.partName || item.partNumber || item.material?.materialName || `Item`}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="p-3 text-cool-gray font-mono text-[11px]">
+                              {item.materialGrade || item.material?.materialGrade || "—"}
+                            </td>
+                            <td className="p-3 text-center font-semibold text-ink">
+                              {item.requiredQty || item.quantity || 1}
+                            </td>
+                            <td className="p-3 text-center">
+                              {isAssemblyItem ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  <Layers className="w-3 h-3" />
+                                  Assembly
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-50 text-slate-600 border border-slate-200">
+                                  <Box className="w-3 h-3" />
+                                  Component
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3 text-center">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                                isIssued
+                                  ? "bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20"
+                                  : "bg-semantic-warning-subtle text-semantic-warning-dark border border-semantic-warning/20"
+                              }`}>
+                                <CheckCircle2 className="w-3 h-3" />
+                                {isIssued ? "Issued" : "Pending"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      /* Flat list mode */
+                      bomItems.map((item: any, idx: number) => {
+                        const isIssued = materialIssues.some(
+                          (m: any) => m.inventoryBatch?.materialId === item.materialId || m.materialName?.includes(item.partName)
+                        );
+                        const isAssemblyItem = item.isAssembly;
+                        return (
+                          <tr key={item.id || idx} className="hover:bg-canvas/80 transition-colors">
+                            <td className="p-3 font-mono text-cool-gray text-[10px]">{idx + 1}</td>
+                            <td className="p-3 font-semibold text-ink">
+                              {item.partName || item.partNumber || item.material?.materialName || `Item #${idx + 1}`}
+                            </td>
+                            <td className="p-3 text-cool-gray font-mono text-[11px]">
+                              {item.materialGrade || item.material?.materialGrade || "—"}
+                            </td>
+                            <td className="p-3 text-center font-semibold text-ink">
+                              {item.requiredQty || item.quantity || 1}
+                            </td>
+                            <td className="p-3 text-center">
+                              {isAssemblyItem ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  <Layers className="w-3 h-3" />
+                                  Assembly
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-50 text-slate-600 border border-slate-200">
+                                  <Box className="w-3 h-3" />
+                                  Component
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3 text-center">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                                isIssued
+                                  ? "bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/20"
+                                  : "bg-semantic-warning-subtle text-semantic-warning-dark border border-semantic-warning/20"
+                              }`}>
+                                <CheckCircle2 className="w-3 h-3" />
+                                {isIssued ? "Issued" : "Pending"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="p-12 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <GitBranch className="w-8 h-8 text-cool-gray" />
+                          <p className="text-xs font-semibold text-cool-gray">No BOM items available for this project.</p>
+                          <p className="text-[10px] text-mute">Upload a BOM in the Engineering workspace to see the product tree here.</p>
+                          <Link
+                            href={`/projects/${id}/engineering`}
+                            className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-[10px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors"
+                          >
+                            <span>Go to Engineering BOM</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Tree summary footer */}
+            {bomItems.length > 0 && (
+              <div className="p-3 border-t border-border-gray bg-canvas flex items-center justify-between text-[10px] text-mute">
+                <span>
+                  {bomItems.filter((i: any) => i.isAssembly).length} assemblies · {bomItems.filter((i: any) => !i.isAssembly).length} components · {bomItems.length} total items
+                </span>
+                <Link
+                  href={`/projects/${id}/engineering`}
+                  className="text-primary font-semibold hover:underline"
+                >
+                  Edit in Engineering →
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Tab 1: Kitting Checklist */}
       {activeTab === "KITTING" && (

@@ -22,10 +22,6 @@ export class UpdateUserDto {
   @IsOptional()
   plantId?: string;
 
-  @IsNumber()
-  @IsOptional()
-  hourlyRate?: number;
-
   @IsString()
   @IsOptional()
   @IsIn(['ACTIVE', 'INACTIVE'])

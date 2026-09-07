@@ -21,8 +21,4 @@ export class CreateUserDto {
   @IsUUID()
   @IsOptional()
   plantId?: string;
-
-  @IsNumber()
-  @IsOptional()
-  hourlyRate?: number;
 }

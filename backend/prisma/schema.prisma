@@ -14,7 +14,6 @@ model User {
   role           SystemRole    @default(PRODUCTION)
   isActive       Boolean       @default(true)
   employeeId     String?       @unique
-  hourlyRate     Decimal       @default(0)
   status         String        @default("ACTIVE")
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

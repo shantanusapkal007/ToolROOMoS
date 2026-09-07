@@ -34,8 +34,7 @@ export const UserManagement: React.FC = () => {
     name: '', 
     email: '', 
     selectedRoles: ['PRODUCTION'] as string[], 
-    password: '', 
-    hourlyRate: 0,
+    password: '',
   });
 
   // Edit User / Reset Password Form State
@@ -45,7 +44,6 @@ export const UserManagement: React.FC = () => {
     selectedRoles: ['PRODUCTION'] as string[],
     status: 'ACTIVE',
     newPassword: '',
-    hourlyRate: 0,
   });
 
   const toggleCreateRole = (roleId: string) => {
@@ -86,10 +84,9 @@ export const UserManagement: React.FC = () => {
         email: createFormData.email,
         password: createFormData.password,
         role: createFormData.selectedRoles.join(', '),
-        hourlyRate: Number(createFormData.hourlyRate || 0)
       });
       setShowInviteModal(false);
-      setCreateFormData({ name: '', email: '', selectedRoles: ['PRODUCTION'], password: '', hourlyRate: 0 });
+      setCreateFormData({ name: '', email: '', selectedRoles: ['PRODUCTION'], password: '' });
     } catch (err) {}
   };
 
@@ -102,7 +99,6 @@ export const UserManagement: React.FC = () => {
       selectedRoles: existingRoles,
       status: user.status || 'ACTIVE',
       newPassword: '',
-      hourlyRate: Number(user.hourlyRate || 0)
     });
   };
 
@@ -118,7 +114,6 @@ export const UserManagement: React.FC = () => {
           role: editFormData.selectedRoles.join(', '),
           status: editFormData.status,
           ...(editFormData.newPassword ? { password: editFormData.newPassword } : {}),
-          hourlyRate: Number(editFormData.hourlyRate || 0)
         }
       });
       setEditingUser(null);
@@ -144,7 +139,7 @@ export const UserManagement: React.FC = () => {
           <div>
             <h2 className="text-sub-heading font-bold text-ink tracking-tight">User Login Credentials & Access Governance</h2>
             <p className="text-caption text-cool-gray mt-0.5">
-              Manage user credentials, assign multi-role permission tiers, and configure hourly cost rates.
+              Manage user credentials and assign multi-role permission tiers.
             </p>
           </div>
         </div>
@@ -185,7 +180,6 @@ export const UserManagement: React.FC = () => {
               <tr>
                 <th className="px-5 py-3.5">User & Login ID</th>
                 <th className="px-5 py-3.5">Assigned System Roles</th>
-                <th className="px-5 py-3.5">Hourly Cost Rate</th>
                 <th className="px-5 py-3.5">Last Login</th>
                 <th className="px-5 py-3.5">Status</th>
                 <th className="px-5 py-3.5 text-right">Actions</th>
@@ -194,12 +188,12 @@ export const UserManagement: React.FC = () => {
             <tbody className="divide-y divide-border-gray/70">
               {isLoading && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-cool-gray animate-pulse">Loading user accounts...</td>
+                  <td colSpan={5} className="px-5 py-8 text-center text-cool-gray animate-pulse">Loading user accounts...</td>
                 </tr>
               )}
               {filteredUsers.length === 0 && !isLoading && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-cool-gray">No matching user accounts found.</td>
+                  <td colSpan={5} className="px-5 py-8 text-center text-cool-gray">No matching user accounts found.</td>
                 </tr>
               )}
               {filteredUsers.map((u: any) => {
@@ -234,9 +228,6 @@ export const UserManagement: React.FC = () => {
                       </div>
                     </td>
 
-                    <td className="px-5 py-3.5 font-mono font-bold text-ink text-xs">
-                      ₹{Number(u.hourlyRate || 0).toFixed(2)}/hr
-                    </td>
                     <td className="px-5 py-3.5 text-cool-gray font-mono text-[11px]">
                       {u.lastLoginAt ? (
                         <span className="flex items-center gap-1 text-emerald-700 font-medium">
@@ -314,13 +305,6 @@ export const UserManagement: React.FC = () => {
                   placeholder="••••••••"
                   value={createFormData.password} 
                   onChange={(e) => setCreateFormData({...createFormData, password: e.target.value})} 
-                />
-                <Input 
-                  label="Hourly Cost Rate (₹/hr)" 
-                  type="number" 
-                  required 
-                  value={createFormData.hourlyRate} 
-                  onChange={(e) => setCreateFormData({...createFormData, hourlyRate: (e.target.value === '' ? ('' as any) : Number(e.target.value))})} 
                 />
               </div>
 
@@ -467,14 +451,6 @@ export const UserManagement: React.FC = () => {
                     <option value="INACTIVE">INACTIVE (Login Disabled)</option>
                   </select>
                 </div>
-
-                <Input 
-                  label="Hourly Cost Rate (₹/hr)" 
-                  type="number" 
-                  required 
-                  value={editFormData.hourlyRate} 
-                  onChange={(e) => setEditFormData({...editFormData, hourlyRate: (e.target.value === '' ? ('' as any) : Number(e.target.value))})} 
-                />
               </div>
 
               <div className="flex space-x-3 pt-4 border-t border-border-gray">
