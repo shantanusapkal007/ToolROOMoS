@@ -12,7 +12,6 @@ const adapter = new adapter_pg_1.PrismaPg(pool);
 const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
     console.log('🌱 Starting database seeding with client data...');
-    // 0. Seed Admin User
     const passwordHash = await bcrypt.hash('admin123', 10);
     const adminUser = await prisma.user.upsert({
         where: { email: 'admin@toolroom.com' },
@@ -26,7 +25,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded User: ${adminUser.email}`);
-    // 1. Seed Company
     const company = await prisma.company.upsert({
         where: { companyCode: 'MF-01' },
         update: {},
@@ -41,7 +39,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Company: ${company.companyName}`);
-    // 2. Seed Plant
     const plant = await prisma.plant.upsert({
         where: { plantCode: 'PL-01' },
         update: {},
@@ -55,7 +52,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Plant: ${plant.plantName}`);
-    // 3. Seed Warehouse
     const warehouse = await prisma.warehouse.upsert({
         where: { warehouseCode: 'DEFAULT-WH' },
         update: {},
@@ -67,7 +63,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Warehouse: ${warehouse.warehouseName}`);
-    // 4. Seed Department
     const department = await prisma.department.upsert({
         where: { departmentCode: 'DE-01' },
         update: {},
@@ -79,7 +74,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Department: ${department.departmentName}`);
-    // 5. Seed Customers (Real: SPX Flow Technology, Lely)
     const customerSPX = await prisma.customer.upsert({
         where: { customerCode: 'CU-SPX' },
         update: {},
@@ -116,7 +110,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Customer: ${customerLely.companyName}`);
-    // 6. Seed Vendor
     const vendor = await prisma.vendor.upsert({
         where: { vendorCode: 'VE-001' },
         update: {},
@@ -133,7 +126,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Vendor: ${vendor.vendorName}`);
-    // 7. Seed Material Shapes (actual shapes from client data)
     const shapeSheet = await prisma.materialShape.upsert({
         where: { shapeName: 'Sheet' },
         update: {},
@@ -170,7 +162,6 @@ async function main() {
         create: { shapeName: 'Block', status: 'ACTIVE' },
     });
     console.log('✅ Seeded Material Shapes: Sheet, Flat, Round Bar, Tube, Pipe, Plate, Block');
-    // 8. Seed Materials (actual grades from client Excel data)
     const matCRCA = await prisma.material.upsert({
         where: { materialCode: 'MAT-CRCA' },
         update: {},
@@ -327,7 +318,6 @@ async function main() {
             status: 'ACTIVE',
         },
     });
-    // Special machined material codes from File 1
     const matID43OD80 = await prisma.material.upsert({
         where: { materialCode: 'MAT-ID43-OD80' },
         update: {},
@@ -387,7 +377,54 @@ async function main() {
             status: 'ACTIVE',
         },
     });
-    // SPX Assembly materials (generic for pump housing parts)
+    const matTUBE = await prisma.material.upsert({
+        where: { materialCode: 'MAT-TUBE' },
+        update: {},
+        create: {
+            materialCode: 'MAT-TUBE',
+            materialGrade: 'TUBE',
+            materialCategory: 'RAW_MATERIAL',
+            density: 7.85,
+            standardCost: 68,
+            defaultUom: 'KG',
+            defaultVendor: 'Global Steel Suppliers Corp',
+            shapeId: shapeTube.id,
+            hsnCode: '7306',
+            status: 'ACTIVE',
+        },
+    });
+    const matSquarePipe = await prisma.material.upsert({
+        where: { materialCode: 'MAT-SQ-PIPE' },
+        update: {},
+        create: {
+            materialCode: 'MAT-SQ-PIPE',
+            materialGrade: '1.5X50X50',
+            materialCategory: 'RAW_MATERIAL',
+            density: 7.85,
+            standardCost: 72,
+            defaultUom: 'KG',
+            defaultVendor: 'Global Steel Suppliers Corp',
+            shapeId: shapePipe.id,
+            hsnCode: '7306',
+            status: 'ACTIVE',
+        },
+    });
+    const matAngle = await prisma.material.upsert({
+        where: { materialCode: 'MAT-ANGLE' },
+        update: {},
+        create: {
+            materialCode: 'MAT-ANGLE',
+            materialGrade: '10X L 110',
+            materialCategory: 'RAW_MATERIAL',
+            density: 7.85,
+            standardCost: 55,
+            defaultUom: 'KG',
+            defaultVendor: 'Global Steel Suppliers Corp',
+            shapeId: shapeFlat.id,
+            hsnCode: '7216',
+            status: 'ACTIVE',
+        },
+    });
     const matSS304 = await prisma.material.upsert({
         where: { materialCode: 'MAT-SS304' },
         update: {},
@@ -420,8 +457,7 @@ async function main() {
             status: 'ACTIVE',
         },
     });
-    console.log('✅ Seeded Materials: CRCA, MS FLAT, MS SHEET, HRPO, MS ROUND, ALU, RECT TUBE, MS PIPE, BOP, STD, ID43OD80, ID78OD95, ID60OD80, MS(BOP), SS304, SS316');
-    // Material lookup map for BOM seeding
+    console.log('✅ Seeded Materials: CRCA, MS FLAT, MS SHEET, HRPO, MS ROUND, ALU, RECT TUBE, MS PIPE, BOP, STD, ID43OD80, ID78OD95, ID60OD80, MS(BOP), TUBE, 1.5X50X50, 10X L 110, SS304, SS316');
     const materialMap = {
         'CRCA': matCRCA.id,
         'MS FLAT': matMSFlat.id,
@@ -439,8 +475,10 @@ async function main() {
         'ID 78 OD 95+': matID78OD95.id,
         'ID 60 OD 80+': matID60OD80.id,
         'MS (BOP)': matMSBOP.id,
+        'TUBE': matTUBE.id,
+        '1.5X50X50': matSquarePipe.id,
+        '10X L 110': matAngle.id,
     };
-    // 9. Seed Machine
     const machine = await prisma.machine.upsert({
         where: { machineCode: 'MC-04' },
         update: {},
@@ -456,7 +494,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Machine: ${machine.machineName}`);
-    // 10. Seed Shift
     const shift = await prisma.shift.upsert({
         where: { shiftName: 'General Shift' },
         update: {},
@@ -468,7 +505,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Shift: ${shift.shiftName}`);
-    // 11. Seed Employee
     const employee = await prisma.employee.upsert({
         where: { employeeCode: 'EM-042' },
         update: {},
@@ -483,7 +519,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Employee: ${employee.name}`);
-    // 12. Seed Operations
     const operation = await prisma.operation.upsert({
         where: { operationCode: 'OP-01' },
         update: {},
@@ -505,7 +540,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Operations: ${operation.operationName}, ${opInspect.operationName}`);
-    // 13. Seed Storage Locations
     const location = await prisma.storageLocation.upsert({
         where: { locationCode: 'SL-WH-01' },
         update: {},
@@ -517,7 +551,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Storage Location: ${location.locationName}`);
-    // 14. Seed UOMs
     const uomKg = await prisma.uom.upsert({
         where: { uomCode: 'KG' },
         update: {},
@@ -529,14 +562,12 @@ async function main() {
         create: { uomCode: 'EA', uomName: 'Each', status: 'ACTIVE' },
     });
     console.log(`✅ Seeded UOMs: KG, EA`);
-    // 15. Seed Document Types
     const dtDrawing = await prisma.documentType.upsert({
         where: { typeCode: 'DRAWING' },
         update: {},
         create: { typeCode: 'DRAWING', typeName: 'Engineering Drawing', status: 'ACTIVE' },
     });
     console.log(`✅ Seeded Document Type: ${dtDrawing.typeName}`);
-    // 16. Seed Inspection Standards
     const stdDimensional = await prisma.inspectionStandard.upsert({
         where: { standardCode: 'STD-DIM-01' },
         update: {},
@@ -548,7 +579,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Inspection Standard: ${stdDimensional.standardName}`);
-    // 17. Seed Cost Rates
     const costRateLabour = await prisma.costRate.upsert({
         where: { id: 'CR-LABOUR-01' },
         update: {},
@@ -561,9 +591,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Cost Rate: ${costRateLabour.rateName}`);
-    // =====================================================================
-    // FILE 1: MATERIAL WEIGHT / CUTTING SHEET — Hierarchical BOM
-    // =====================================================================
     console.log('\n🏭 Seeding File 1: Material Weight/Cutting Sheet BOM...');
     const now = new Date();
     const daysAgo = (d) => new Date(now.getTime() - d * 86400000);
@@ -571,34 +598,44 @@ async function main() {
     const bomParts = [
         { srNo: 1, partCode: 'I58700406', description: 'DUST COVER LAT. SIDE', thickness: '1.5', gradeSize: 'CRCA', sheetWtOrLength: 36.80, stripSize: '250', blanksPerSheet: 50, grossWt: 0.74, netWt: 0.45, scrapWt: 0.29 },
         { srNo: 2, partCode: 'M12700610', description: 'TRANSMISSION SKID', thickness: '12', gradeSize: 'MS FLAT', sheetWtOrLength: 36.74, stripSize: '660', blanksPerSheet: 9, grossWt: 4.08, netWt: 3.88, scrapWt: 0.20 },
-        { srNo: null, partCode: 'M12700610-SUB1', description: 'TRANSMISSION SKID (MS SHEET 1)', thickness: '10', gradeSize: 'MS SHEET', sheetWtOrLength: 353.25, stripSize: 'LC', blanksPerSheet: 165, grossWt: 2.14, netWt: 1.39, scrapWt: 0.75 },
+        { srNo: null, partCode: 'M12700610-SUB1', description: 'TRANSMISSION SKID (MS SHEET 1)', thickness: '10', gradeSize: 'MS SHEET 1', sheetWtOrLength: 353.25, stripSize: 'LC', blanksPerSheet: 165, grossWt: 2.14, netWt: 1.39, scrapWt: 0.75 },
         { srNo: 3, partCode: 'M12700620', description: 'SKID EX', thickness: '12', gradeSize: 'MS FLAT', sheetWtOrLength: 36.74, stripSize: '660', blanksPerSheet: 9, grossWt: 4.08, netWt: 3.88, scrapWt: 0.20 },
-        { srNo: null, partCode: 'M12700620-SUB1', description: 'SKID EX (MS SHEET 2)', thickness: '10', gradeSize: 'MS SHEET', sheetWtOrLength: 353.25, stripSize: 'LC', blanksPerSheet: 165, grossWt: 2.14, netWt: 1.39, scrapWt: 0.75 },
-        { srNo: 4, partCode: 'I58700407', description: 'DUST COVER TRANS. SIDE', thickness: '4mm tube', gradeSize: 'MS SHEET', sheetWtOrLength: 1.30, stripSize: '260', blanksPerSheet: 36, grossWt: 1.30, netWt: 7.77, scrapWt: 1.02 },
-        { srNo: 5, partCode: 'M12700650', description: 'UPPER REINF PLATE ZN', thickness: '2', gradeSize: 'CRCA', sheetWtOrLength: 49.06, stripSize: '260', blanksPerSheet: 36, grossWt: 1.36, netWt: 1.00, scrapWt: 0.36 },
-        { srNo: 6, partCode: 'M48000628', description: 'PROTEC. SUPPORT', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '260', blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
-        { srNo: 7, partCode: 'I48700412', description: 'FRONT BRACKET ZN', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '400', blanksPerSheet: 32, grossWt: 2.30, netWt: 1.72, scrapWt: 0.58 },
-        { srNo: 8, partCode: 'I48700416', description: 'REAR BRACKET ZN', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '400', blanksPerSheet: 32, grossWt: 2.30, netWt: 1.72, scrapWt: 0.58 },
-        { srNo: 9, partCode: 'M66100778A', description: 'STANDING PLATE "L" ZN (VARIANT)', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '35', blanksPerSheet: 852, grossWt: 0.06, netWt: 0.047, scrapWt: 0.01 },
-        { srNo: 10, partCode: 'M48000628B', description: 'PROTECTION SUPPORT (MAIN)', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: null, blanksPerSheet: 52, grossWt: 0.94, netWt: null, scrapWt: 0.94 },
-        { srNo: 11, partCode: 'M73108915A', description: 'COMP. PROT. SHAFT ZN', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.63, stripSize: null, blanksPerSheet: null, grossWt: 1.20, netWt: 1.00, scrapWt: 0.20 },
-        { srNo: 12, partCode: 'M41100215A', description: 'COMP. SHAFT PROTECTION L50', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.60, stripSize: null, blanksPerSheet: null, grossWt: 1.50, netWt: null, scrapWt: null },
-        { srNo: 13, partCode: 'T14002306', description: 'COMP. WHEEL SUPPORT (TYPE A)', thickness: '8', gradeSize: 'MS SHEET', sheetWtOrLength: 282.60, stripSize: null, blanksPerSheet: 165, grossWt: 1.71, netWt: 1.00, scrapWt: 0.71 },
-        { srNo: null, partCode: 'T14002306-BUSH', description: 'BUSH (dia 25 rod)', thickness: 'dia 25', gradeSize: 'MS ROUND', sheetWtOrLength: 6000, stripSize: '220', blanksPerSheet: 27, grossWt: null, netWt: null, scrapWt: 0.00 },
-        { srNo: 14, partCode: 'I48700415', description: 'SKID EX (VARIANT B)', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '590', blanksPerSheet: 24, grossWt: 3.07, netWt: 2.80, scrapWt: 0.27 },
+        { srNo: null, partCode: 'M12700620-SUB1', description: 'SKID EX (MS SHEET 2)', thickness: '10', gradeSize: 'MS SHEET 2', sheetWtOrLength: 353.25, stripSize: 'LC', blanksPerSheet: 165, grossWt: 2.14, netWt: 1.39, scrapWt: 0.75 },
+        { srNo: 4, partCode: 'I58700407', description: 'DUST COVER TRANS. SIDE', thickness: '1.5', gradeSize: 'CRCA', sheetWtOrLength: 36.80, stripSize: '260', blanksPerSheet: 36, grossWt: 1.02, netWt: null, scrapWt: 1.02 },
+        { srNo: 5, partCode: 'M53400742', description: 'COMP. REGULATION TUBE', thickness: '4mm tube', gradeSize: 'TUBE', sheetWtOrLength: 1.30, stripSize: '605', blanksPerSheet: 1, grossWt: 1.30, netWt: null, scrapWt: 1.30 },
+        { srNo: null, partCode: 'M53400742-SUB1', description: 'COMP. REGULATION TUBE (HRPO)', thickness: '4', gradeSize: 'HRPO', sheetWtOrLength: 98.13, stripSize: '95', blanksPerSheet: 1300, grossWt: 0.08, netWt: null, scrapWt: 0.08 },
+        { srNo: 6, partCode: 'I01700106', description: 'CARTER WELDED ASSEMBLY', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: 'LC', blanksPerSheet: 5, grossWt: 14.72, netWt: 7.77, scrapWt: 6.95 },
+        { srNo: null, partCode: 'I01700106-NOTCH', description: '3mm plate with notch1', thickness: '3mm plate  with notch1', gradeSize: 'HRPO', sheetWtOrLength: null, stripSize: 'LC', blanksPerSheet: 5, grossWt: null, netWt: 1.29, scrapWt: null },
+        { srNo: null, partCode: 'I01700106-PLT2', description: '3mm plate 2', thickness: '3mm plate 2', gradeSize: 'HRPO', sheetWtOrLength: null, stripSize: 'LC', blanksPerSheet: 5, grossWt: null, netWt: 1.55, scrapWt: null },
+        { srNo: 7, partCode: 'M63100306', description: 'COMP. CARTER H -GEAR', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '675', blanksPerSheet: 9, grossWt: 8.18, netWt: 5.06, scrapWt: 3.12 },
+        { srNo: null, partCode: 'M63100306-NUT', description: 'CARTER GEAR NUT', thickness: 'nut', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: 0.03, scrapWt: null },
+        { srNo: null, partCode: 'M63100306-BOLT', description: 'CARTER GEAR BOLT', thickness: 'bolt', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: 0.05, scrapWt: null },
+        { srNo: null, partCode: 'M63100306-WASH', description: 'CARTER GEAR WASHER', thickness: 'washer', gradeSize: 'ALU', sheetWtOrLength: 13.13, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: 0.005, scrapWt: null },
+        { srNo: null, partCode: 'M63100306-BUSH', description: 'CARTER GEAR BUSH 306', thickness: 'bush 306', gradeSize: 'MS ROUND', sheetWtOrLength: 0.93, stripSize: null, blanksPerSheet: null, grossWt: 0.84, netWt: 0.19, scrapWt: 0.65 },
+        { srNo: 8, partCode: 'M68100647', description: 'MECHANICAL RAM SUPPORT ZN', thickness: '8', gradeSize: 'MS FLAT', sheetWtOrLength: 19.20, stripSize: null, blanksPerSheet: 22, grossWt: 0.87, netWt: 0.74, scrapWt: 0.13 },
+        { srNo: 9, partCode: 'I48700606', description: 'FRONT HITCH BACK PLATE', thickness: 'angle', gradeSize: '10X L 110', sheetWtOrLength: 95.00, stripSize: null, blanksPerSheet: 45, grossWt: 2.20, netWt: 2.10, scrapWt: 0.10 },
+        { srNo: 10, partCode: 'I48700320', description: 'WELDED CARTER N16', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 58.88, stripSize: null, blanksPerSheet: 4, grossWt: 14.72, netWt: 6.99, scrapWt: 7.73 },
+        { srNo: null, partCode: 'I48700320-NUT', description: 'CARTER N16 NUT', thickness: 'nut', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: 0.03, scrapWt: null },
+        { srNo: null, partCode: 'I48700320-BOLT', description: 'CARTER N16 BOLT', thickness: 'bolt', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: 0.05, scrapWt: null },
+        { srNo: null, partCode: 'I48700320-WASH', description: 'CARTER N16 WASHER', thickness: 'washer', gradeSize: 'ALU', sheetWtOrLength: 13.13, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: 0.005, scrapWt: null },
+        { srNo: null, partCode: 'I48700320-FORG', description: 'CARTER N16 BUSH FORGING', thickness: 'bush forging', gradeSize: 'BOP', sheetWtOrLength: 1.10, stripSize: null, blanksPerSheet: null, grossWt: 1.10, netWt: 0.50, scrapWt: 0.60 },
+        { srNo: 11, partCode: 'M73112913', description: 'COMP. SHAFT PROTECTION L.E. ZN', thickness: 'pipe', gradeSize: '1.5X50X50', sheetWtOrLength: 6000.00, stripSize: '428', blanksPerSheet: 13, grossWt: null, netWt: 1.00, scrapWt: null },
+        { srNo: 12, partCode: 'M73114915', description: 'COMP. SHAFT PROTECTION L.T. ZN', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.63, stripSize: null, blanksPerSheet: null, grossWt: 1.50, netWt: 1.00, scrapWt: 0.50 },
+        { srNo: 13, partCode: 'M73116913', description: 'COMP. SHAFT PROTECTION L.E. ZN', thickness: 'pipe', gradeSize: '1.5X50X50', sheetWtOrLength: 13.70, stripSize: '578', blanksPerSheet: 10, grossWt: null, netWt: 1.35, scrapWt: 0.02 },
+        { srNo: 14, partCode: 'I48700422', description: 'DUST COVER TRANS. SIDE T=2', thickness: '2', gradeSize: 'CRCA', sheetWtOrLength: 49.06, stripSize: '250', blanksPerSheet: 50, grossWt: 0.98, netWt: 0.75, scrapWt: 0.23 },
         { srNo: 15, partCode: 'T14002308', description: 'COMP. WHEEL SUPPORT', thickness: '8', gradeSize: 'MS SHEET', sheetWtOrLength: 282.60, stripSize: null, blanksPerSheet: 165, grossWt: 1.71, netWt: 1.00, scrapWt: 0.71 },
-        { srNo: null, partCode: 'T14002308-ROD', description: 'COMP. WHEEL SUPPORT (dia 25 rod)', thickness: 'dia 25', gradeSize: 'MS ROUND', sheetWtOrLength: 6000, stripSize: '220', blanksPerSheet: 27, grossWt: null, netWt: null, scrapWt: 0.00 },
-        { srNo: 16, partCode: 'I48700423', description: 'DUST COVER ZN', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '95', blanksPerSheet: 819, grossWt: 0.06, netWt: 0.05, scrapWt: 0.01 },
-        { srNo: 17, partCode: 'I48700423B', description: 'DUST COVER LAT. SIDE T=2', thickness: '2', gradeSize: 'CRCA', sheetWtOrLength: 49.06, stripSize: '260', blanksPerSheet: 36, grossWt: 1.36, netWt: 1.00, scrapWt: 0.36 },
+        { srNo: null, partCode: 'T14002308-ROD', description: 'WHEEL SUPPORT dia 25 rod', thickness: 'dia 25 rod', gradeSize: 'MS ROUND', sheetWtOrLength: 6000.00, stripSize: '220', blanksPerSheet: 27, grossWt: null, netWt: null, scrapWt: null },
+        { srNo: 16, partCode: 'T14003670', description: 'DUST COVER ZN', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '95', blanksPerSheet: 819, grossWt: 0.06, netWt: 0.05, scrapWt: 0.01 },
+        { srNo: 17, partCode: 'I48700423', description: 'DUST COVER LAT. SIDE T=2', thickness: '2', gradeSize: 'CRCA', sheetWtOrLength: 49.06, stripSize: '260', blanksPerSheet: 36, grossWt: 1.36, netWt: 1.00, scrapWt: 0.36 },
         { srNo: 18, partCode: 'C14152338', description: 'WHEEL SUPPORT ASSEMBLY 150', thickness: 'tube 40*60', gradeSize: 'RECT TUBE', sheetWtOrLength: 35.00, stripSize: '1200', blanksPerSheet: 5, grossWt: 7.00, netWt: 6.80, scrapWt: 0.20 },
         { srNo: null, partCode: 'C14152338-BUSH', description: 'WHEEL SUPPORT 150 BUSH', thickness: 'bush', gradeSize: 'MS PIPE', sheetWtOrLength: 23.00, stripSize: '120', blanksPerSheet: 49, grossWt: 0.47, netWt: 0.40, scrapWt: 0.07 },
         { srNo: 19, partCode: 'M73108915', description: 'COMP.PROT. SHAFT L.T. ZN', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.63, stripSize: null, blanksPerSheet: null, grossWt: 1.20, netWt: 1.00, scrapWt: 0.20 },
         { srNo: 20, partCode: 'M48000532', description: 'SKID ADJUSTER', thickness: '4', gradeSize: 'HRPO', sheetWtOrLength: 98.13, stripSize: '220', blanksPerSheet: 154, grossWt: 0.64, netWt: 0.48, scrapWt: 0.16 },
         { srNo: 21, partCode: 'C14182338', description: 'WHEEL SUPPORT ASSEMBLY 180', thickness: 'tube 40*60', gradeSize: 'RECT TUBE', sheetWtOrLength: 35.00, stripSize: '1300', blanksPerSheet: 4, grossWt: 8.75, netWt: 7.20, scrapWt: 1.55 },
         { srNo: null, partCode: 'C14182338-BUSH', description: 'WHEEL SUPPORT 180 BUSH', thickness: 'bush', gradeSize: 'MS ROUND', sheetWtOrLength: 23.00, stripSize: '120', blanksPerSheet: 49, grossWt: 0.47, netWt: 0.40, scrapWt: 0.07 },
-        { srNo: 22, partCode: 'M66100778', description: 'STANDING PLATE "L" ZN', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '35', blanksPerSheet: 852, grossWt: 0.06, netWt: 0.047, scrapWt: 0.01 },
+        { srNo: 22, partCode: 'M66100778', description: 'STANDING PLATE \"L\" ZN', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: '35', blanksPerSheet: 852, grossWt: 0.06, netWt: 0.047, scrapWt: 0.01 },
         { srNo: 23, partCode: 'I48700711', description: 'FRONT STAND', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '495', blanksPerSheet: 80, grossWt: 0.92, netWt: 0.69, scrapWt: 0.23 },
-        { srNo: null, partCode: 'I48700711-BLANK', description: 'FRONT STAND 8mm blank', thickness: '8mm', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.24, netWt: 0.24, scrapWt: 0.00 },
+        { srNo: null, partCode: 'I48700711-BLANK', description: 'FRONT STAND 8mm blank', thickness: '8mm blank', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.24, netWt: 0.24, scrapWt: null },
         { srNo: 24, partCode: 'I45700315', description: 'WELD CARTER WITH BUSH', thickness: '3', gradeSize: 'HRPO', sheetWtOrLength: 73.59, stripSize: '800', blanksPerSheet: 6, grossWt: 12.27, netWt: 8.00, scrapWt: 4.27 },
         { srNo: null, partCode: 'I45700315-NUT', description: 'WELD CARTER NUT', thickness: 'nut', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.03, netWt: null, scrapWt: 0.03 },
         { srNo: null, partCode: 'I45700315-BOLT', description: 'WELD CARTER BOLT', thickness: 'bolt', gradeSize: 'BOP', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.05, netWt: null, scrapWt: 0.05 },
@@ -607,22 +644,101 @@ async function main() {
         { srNo: null, partCode: 'I45700315-MC', description: 'WELD CARTER BUSH M/C', thickness: 'bush m/c', gradeSize: 'ID43 OD80+', sheetWtOrLength: 205.00, stripSize: '42', blanksPerSheet: 133, grossWt: 1.51, netWt: 0.62, scrapWt: 0.89 },
         { srNo: null, partCode: 'I45700315-M8', description: 'WELD CARTER M8 NUT', thickness: 'M8 nut', gradeSize: 'STD', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: 0.005, netWt: null, scrapWt: 0.005 },
         { srNo: null, partCode: 'I45700315-8CBK', description: 'WELD CARTER 8 C BRACKET', thickness: '8 C Bkt', gradeSize: 'BOP', sheetWtOrLength: 196.00, stripSize: null, blanksPerSheet: null, grossWt: 0.30, netWt: 0.25, scrapWt: 0.05 },
-        { srNo: 25, partCode: 'I45700224', description: 'SP CASING MODIFIED', thickness: '1 top', gradeSize: 'MS SHEET', sheetWtOrLength: 125.99, stripSize: null, blanksPerSheet: 1.67, grossWt: 125.99, netWt: 109.92, scrapWt: 16.07 },
-        { srNo: null, partCode: 'I45700224-RING', description: 'SP CASING RING PLATE', thickness: '2 ring plate', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: 0.95, grossWt: 0.00, netWt: 0.96, scrapWt: null },
-        { srNo: null, partCode: 'I45700224-BIG', description: 'SP CASING BIG PLATE', thickness: '3 big plate', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: 2.66, grossWt: 0.00, netWt: null, scrapWt: 0.00 },
-        { srNo: null, partCode: 'I45700224-PATTI', description: 'SP CASING PATTI', thickness: '4 patti', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: 1.59, grossWt: 0.00, netWt: null, scrapWt: 0.00 },
+        { srNo: 25, partCode: 'I45700224', description: 'SP CASING MODIFIED', thickness: '1 top', gradeSize: 'MS SHEET', sheetWtOrLength: 125.99, stripSize: null, blanksPerSheet: 1, grossWt: 125.99, netWt: 109.92, scrapWt: 16.07 },
+        { srNo: null, partCode: 'I45700224-RING', description: 'SP CASING RING PLATE', thickness: '2 ring plate', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: 0.96, scrapWt: null },
+        { srNo: null, partCode: 'I45700224-BIG', description: 'SP CASING BIG PLATE', thickness: '3 big plate', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: null },
+        { srNo: null, partCode: 'I45700224-PATTI', description: 'SP CASING PATTI', thickness: '4 patti', gradeSize: 'MS SHEET', sheetWtOrLength: null, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: null },
         { srNo: null, partCode: 'I45700224-BBUSH', description: 'SP CASING BIG BUSH', thickness: 'big bush', gradeSize: 'ID 78 OD 95+', sheetWtOrLength: 172.00, stripSize: '27', blanksPerSheet: 222, grossWt: 0.77, netWt: 0.35, scrapWt: 0.42 },
         { srNo: null, partCode: 'I45700224-SB62', description: 'SP CASING SMALL BUSH 62', thickness: 'small bush62', gradeSize: 'ID 60 OD 80+', sheetWtOrLength: 132.00, stripSize: '27', blanksPerSheet: 222, grossWt: 0.61, netWt: 0.24, scrapWt: 0.37 },
         { srNo: null, partCode: 'I45700224-SB68', description: 'SP CASING SMALL BUSH 68', thickness: 'small bush68', gradeSize: 'ID 60 OD 80+', sheetWtOrLength: 132.00, stripSize: '27', blanksPerSheet: 222, grossWt: 0.61, netWt: 0.24, scrapWt: 0.37 },
         { srNo: null, partCode: 'I45700224-LBKT', description: 'SP CASING 6mm L BRACKET', thickness: '6 mm L bkt', gradeSize: 'MS SHEET', sheetWtOrLength: 150.00, stripSize: null, blanksPerSheet: null, grossWt: 0.20, netWt: 0.16, scrapWt: 0.04 },
         { srNo: 26, partCode: 'M74100126', description: 'COMP. PROTECTION SUPPORT', thickness: '2', gradeSize: 'HRPO', sheetWtOrLength: 49.06, stripSize: null, blanksPerSheet: 52, grossWt: 0.94, netWt: null, scrapWt: 0.94 },
-        { srNo: 27, partCode: 'M41100709', description: 'COMP. FRONT HITCH RH', thickness: '16', gradeSize: 'MS (BOP)', sheetWtOrLength: 2.70, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
-        { srNo: null, partCode: 'M41100709-FLAT', description: 'COMP. FRONT HITCH RH (FLAT)', thickness: '10', gradeSize: 'MS FLAT', sheetWtOrLength: 1.00, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
-        { srNo: 28, partCode: 'M41100710', description: 'COMP. FRONT HITCH LH', thickness: '16', gradeSize: 'MS (BOP)', sheetWtOrLength: 2.70, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
-        { srNo: null, partCode: 'M41100710-FLAT', description: 'COMP. FRONT HITCH LH (FLAT)', thickness: '10', gradeSize: 'MS FLAT', sheetWtOrLength: 1.00, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: 0.00 },
+        { srNo: 27, partCode: 'M41100709', description: 'COMP. FRONT HITCH RH', thickness: '16', gradeSize: 'MS (BOP)', sheetWtOrLength: 2.70, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: null },
+        { srNo: null, partCode: 'M41100709-FLAT', description: 'FRONT HITCH RH (FLAT)', thickness: '10', gradeSize: 'MS FLAT', sheetWtOrLength: 1.00, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: null },
+        { srNo: 28, partCode: 'M41100710', description: 'COMP. FRONT HITCH LH', thickness: '16', gradeSize: 'MS (BOP)', sheetWtOrLength: 2.70, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: null },
+        { srNo: null, partCode: 'M41100710-FLAT', description: 'FRONT HITCH LH (FLAT)', thickness: '10', gradeSize: 'MS FLAT', sheetWtOrLength: 1.00, stripSize: null, blanksPerSheet: null, grossWt: null, netWt: null, scrapWt: null },
         { srNo: 29, partCode: 'M41100215', description: 'COMP. SHAFT PROTECTION L125', thickness: '0.8', gradeSize: 'CRCA', sheetWtOrLength: 19.60, stripSize: null, blanksPerSheet: null, grossWt: 1.50, netWt: null, scrapWt: null },
     ];
-    // Create Project for File 1 data
+    const existingKtdProjects = await prisma.project.findMany({
+        where: { projectNumber: { in: ['KTD-1', 'KTD-2', 'KTD-3'] } },
+        select: { id: true },
+    });
+    if (existingKtdProjects.length > 0) {
+        const ktdIds = existingKtdProjects.map((p) => p.id);
+        await prisma.jobCard.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        const existingRoutings = await prisma.routingHeader.findMany({
+            where: { projectId: { in: ktdIds } },
+            select: { id: true },
+        });
+        if (existingRoutings.length > 0) {
+            const routingIds = existingRoutings.map((r) => r.id);
+            await prisma.routingOperation.deleteMany({
+                where: { routingHeaderId: { in: routingIds } },
+            });
+            await prisma.routingHeader.deleteMany({
+                where: { id: { in: routingIds } },
+            });
+        }
+        const existingPOs = await prisma.purchaseOrderHeader.findMany({
+            where: { projectId: { in: ktdIds } },
+            select: { id: true },
+        });
+        if (existingPOs.length > 0) {
+            const poIds = existingPOs.map((po) => po.id);
+            await prisma.purchaseOrderItem.deleteMany({
+                where: { poHeaderId: { in: poIds } },
+            });
+            await prisma.purchaseOrderHeader.deleteMany({
+                where: { id: { in: poIds } },
+            });
+        }
+        const existingAssyHeaders = await prisma.assemblyHeader.findMany({
+            where: { projectId: { in: ktdIds } },
+            select: { id: true },
+        });
+        if (existingAssyHeaders.length > 0) {
+            const assyIds = existingAssyHeaders.map((a) => a.id);
+            await prisma.assemblyComponent.deleteMany({
+                where: { assemblyHeaderId: { in: assyIds } },
+            });
+            await prisma.assemblyHeader.deleteMany({
+                where: { id: { in: assyIds } },
+            });
+        }
+        await prisma.productionBatch.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        await prisma.productionSchedule.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        await prisma.projectCostSummary.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        await prisma.projectTimeline.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        await prisma.projectActivity.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        await prisma.billOfMaterialItem.deleteMany({
+            where: { bomHeader: { projectId: { in: ktdIds } } },
+        });
+        await prisma.billOfMaterialHeader.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        await prisma.projectBudget.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        await prisma.projectTeam.deleteMany({
+            where: { projectId: { in: ktdIds } },
+        });
+        await prisma.project.deleteMany({
+            where: { id: { in: ktdIds } },
+        });
+        console.log('🔄 Cleaned up previous KTD-1, KTD-2, KTD-3 records for idempotent re-seed.');
+    }
     const projectCutting = await prisma.project.create({
         data: {
             projectNumber: 'KTD-1',
@@ -640,7 +756,6 @@ async function main() {
             updatedBy: 'SEED',
         },
     });
-    // Cost summary for cutting sheet project
     await prisma.projectCostSummary.create({
         data: {
             projectId: projectCutting.id,
@@ -659,7 +774,6 @@ async function main() {
             estimatedProjectCost: 200000,
         },
     });
-    // Timeline entry
     await prisma.projectTimeline.create({
         data: {
             projectId: projectCutting.id,
@@ -689,7 +803,6 @@ async function main() {
             performedAt: daysAgo(5),
         },
     });
-    // Create BOM Header for File 1
     const bomHeaderCutting = await prisma.billOfMaterialHeader.create({
         data: {
             projectId: projectCutting.id,
@@ -703,7 +816,6 @@ async function main() {
             updatedBy: 'SEED',
         },
     });
-    // Seed BOM items with parent-child hierarchy
     let lastParentItemId = null;
     for (const part of bomParts) {
         const materialId = materialMap[part.gradeSize] || matBOP.id;
@@ -735,8 +847,7 @@ async function main() {
             lastParentItemId = createdItem.id;
         }
     }
-    console.log(`✅ Seeded BOM for KTD-1: ${bomParts.length} items (29 parent + sub-components)`);
-    // Routing for cutting sheet project
+    console.log(`✅ Seeded BOM for KTD-1: ${bomParts.length} items (29 parent parts + 33 sub-components = 62 total rows from Excel)`);
     const routingCutting = await prisma.routingHeader.create({
         data: {
             projectId: projectCutting.id,
@@ -778,9 +889,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Project KTD-1 [ENGINEERING] — Material Weight/Cutting Sheet`);
-    // =====================================================================
-    // FILE 2: SPX BOM — Assembly Projects
-    // =====================================================================
     console.log('\n🏭 Seeding File 2: SPX Assembly BOM...');
     const spxAssemblies = [
         {
@@ -897,7 +1005,6 @@ async function main() {
             ],
         },
     ];
-    // Create master project for SPX BOM
     const projectSPX = await prisma.project.create({
         data: {
             projectNumber: 'KTD-2',
@@ -933,7 +1040,6 @@ async function main() {
             estimatedProjectCost: 280000,
         },
     });
-    // Timeline entries for SPX project
     await prisma.projectTimeline.create({
         data: {
             projectId: projectSPX.id,
@@ -982,7 +1088,6 @@ async function main() {
             performedAt: daysAgo(7),
         },
     });
-    // BOM Header for SPX project
     const bomHeaderSPX = await prisma.billOfMaterialHeader.create({
         data: {
             projectId: projectSPX.id,
@@ -996,9 +1101,7 @@ async function main() {
             updatedBy: 'SEED',
         },
     });
-    // Create BOM Items + Assembly structures for each SPX assembly
     for (const assembly of spxAssemblies) {
-        // Create Assembly Header
         const assemblyHeader = await prisma.assemblyHeader.create({
             data: {
                 projectId: projectSPX.id,
@@ -1007,9 +1110,7 @@ async function main() {
                 status: 'DRAFT',
             },
         });
-        // Create child parts as BOM items and Assembly components
         for (const child of assembly.childParts) {
-            // Create or find a material for each unique child part
             const childMaterialCode = `SPX-${child.partNo}`;
             let childMaterial;
             try {
@@ -1032,7 +1133,6 @@ async function main() {
                 if (!childMaterial)
                     throw new Error(`Failed to create material ${childMaterialCode}`);
             }
-            // BOM Item
             await prisma.billOfMaterialItem.create({
                 data: {
                     bomHeaderId: bomHeaderSPX.id,
@@ -1049,7 +1149,6 @@ async function main() {
                     },
                 },
             });
-            // Assembly Component
             await prisma.assemblyComponent.create({
                 data: {
                     assemblyHeaderId: assemblyHeader.id,
@@ -1060,7 +1159,6 @@ async function main() {
         }
     }
     console.log(`✅ Seeded SPX Assembly BOM: 12 assemblies with 41 child components`);
-    // Routing for SPX project
     const routingSPX = await prisma.routingHeader.create({
         data: {
             projectId: projectSPX.id,
@@ -1101,7 +1199,6 @@ async function main() {
             remainingQuantity: 12,
         },
     });
-    // PO for SPX project (stage >= PROCUREMENT)
     const poHeaderSPX = await prisma.purchaseOrderHeader.create({
         data: {
             projectId: projectSPX.id,
@@ -1132,9 +1229,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Project KTD-2 [PROCUREMENT] — SPX Pump Housing Assembly Line`);
-    // =====================================================================
-    // LELY PUMPHOUSE PROJECT (Assembly 1 from SPX BOM — dedicated project)
-    // =====================================================================
     const projectLely = await prisma.project.create({
         data: {
             projectNumber: 'KTD-3',
@@ -1190,9 +1284,6 @@ async function main() {
         },
     });
     console.log(`✅ Seeded Project KTD-3 [CREATED] — Lely Pumphouse`);
-    // =====================================================================
-    // GLOBAL ASSETS & TOOL MANAGEMENT (kept from original)
-    // =====================================================================
     console.log('\n🌱 Seeding Global Asset Management...');
     const catCutting = await prisma.globalAssetCategory.upsert({
         where: { categoryCode: 'CAT-CUT' },
@@ -1349,7 +1440,7 @@ async function main() {
     console.log('✅ Seeded Global Assets: Categories, Locations, Assets & Issues');
     console.log('\n🌱 Database seeding completed successfully with client data!');
     console.log('  📋 Projects seeded:');
-    console.log('    • KTD-1 [ENGINEERING] — Material Weight/Cutting Sheet (29 parts)');
+    console.log('    • KTD-1 [ENGINEERING] — Material Weight/Cutting Sheet (29 parents + 33 subs = 62 rows)');
     console.log('    • KTD-2 [PROCUREMENT] — SPX Pump Housing Assembly Line (12 assemblies)');
     console.log('    • KTD-3 [CREATED] — Lely Pumphouse');
     console.log('  🏭 Materials seeded: 16 actual grades (CRCA, HRPO, MS SHEET, etc.)');
@@ -1364,3 +1455,4 @@ main()
     await prisma.$disconnect();
     await pool.end();
 });
+//# sourceMappingURL=seed.js.map
