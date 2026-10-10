@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsNotEmpty, IsNumber } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateEmployeeDto {
   @IsString()
@@ -14,8 +15,9 @@ export class CreateEmployeeDto {
   designation?: string;
 
   @IsNumber()
-  @IsNotEmpty()
-  hourlyRate: number;
+  @IsOptional()
+  @Transform(({ value }) => value !== undefined && value !== null ? Number(value) : undefined)
+  hourlyRate?: number;
 
   @IsString()
   @IsOptional()
@@ -35,9 +37,13 @@ export class CreateEmployeeDto {
 
   @IsString()
   @IsOptional()
+  employeeType?: string;
+
+  @IsString()
+  @IsOptional()
   remarks?: string;
+
   @IsString()
   @IsOptional()
   status?: string;
 }
-

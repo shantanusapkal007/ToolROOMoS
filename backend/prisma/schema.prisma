@@ -1609,6 +1609,13 @@ enum VendorType {
 enum EmployeeType {
   INTERNAL
   EXTERNAL
+  WORKER
+  TRAINEE
+  HELPER
+  CASH_WORKER
+  BALAJI_ENT
+  OM_MULTI_SERVICES
+  K_K_MULTI_SERVICES
 }
 
 enum InspectionType {

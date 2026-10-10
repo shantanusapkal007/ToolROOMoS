@@ -28,6 +28,13 @@ export const employeeRegistry: EntityRegistry = {
     { name: 'employeeType', label: 'Employee Type', type: 'select', options: [
       { label: 'Internal', value: 'INTERNAL' },
       { label: 'External', value: 'EXTERNAL' },
+      { label: 'Worker', value: 'WORKER' },
+      { label: 'Trainee', value: 'TRAINEE' },
+      { label: 'Helper', value: 'HELPER' },
+      { label: 'Cash Worker', value: 'CASH_WORKER' },
+      { label: 'Balaji Ent', value: 'BALAJI_ENT' },
+      { label: 'Om Multi Services', value: 'OM_MULTI_SERVICES' },
+      { label: 'K K Multi Services', value: 'K_K_MULTI_SERVICES' },
     ] },
     { name: 'hourlyRate', label: 'Hourly Cost Rate', type: 'number', required: true },
     { name: 'remarks', label: 'Remarks', type: 'textarea', gridCols: 2 },

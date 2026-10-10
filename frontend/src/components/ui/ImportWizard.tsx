@@ -69,6 +69,14 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
       let isRowValid = true;
       const rowNum = idx + 2;
 
+      // Skip template sample rows
+      const values = Object.values(row);
+      const isSampleRow = values.some((v: any) => typeof v === 'string' && v.startsWith('Sample '));
+      if (isSampleRow) {
+        newErrors.push({ row: rowNum, message: 'Skipped template sample row' });
+        return;
+      }
+
       registry.fields.forEach(field => {
         const val = row[field.name];
         
@@ -93,6 +101,47 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
     setStep(3);
   };
 
+  const normalizeEmployeeType = (val: string): string => {
+    if (!val) return val;
+    const mapping: Record<string, string> = {
+      'worker': 'WORKER',
+      'trainee': 'TRAINEE',
+      'helper': 'HELPER',
+      'cash worker': 'CASH_WORKER',
+      'balaji ent': 'BALAJI_ENT',
+      'om multi services': 'OM_MULTI_SERVICES',
+      'k k multi services': 'K_K_MULTI_SERVICES',
+      'internal': 'INTERNAL',
+      'external': 'EXTERNAL',
+    };
+    return mapping[val.trim().toLowerCase()] || val;
+  };
+
+  const transformRow = (row: any) => {
+    const transformed = { ...row };
+
+    // Convert number fields from CSV strings to actual numbers
+    registry.fields.forEach(field => {
+      if (field.type === 'number' && transformed[field.name] !== undefined && transformed[field.name] !== '') {
+        transformed[field.name] = Number(transformed[field.name]);
+      }
+    });
+
+    // Normalize employeeType to match Prisma enum
+    if (transformed.employeeType) {
+      transformed.employeeType = normalizeEmployeeType(transformed.employeeType);
+    }
+
+    // Remove empty string fields so the backend can use defaults
+    Object.keys(transformed).forEach(key => {
+      if (transformed[key] === '') {
+        delete transformed[key];
+      }
+    });
+
+    return transformed;
+  };
+
   const handleExecuteImport = async () => {
     setIsImporting(true);
     setProgress({ current: 0, total: parsedData.length });
@@ -107,7 +156,8 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
       const promises = chunk.map(async (item, idx) => {
         const rowNum = i + idx + 2;
         try {
-          await api.post(endpoint, item);
+          const payload = transformRow(item);
+          await api.post(endpoint, payload);
           setProgress(prev => ({ ...prev, current: prev.current + 1 }));
         } catch (err: any) {
           importErrors.push({ 
