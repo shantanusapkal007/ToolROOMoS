@@ -124,6 +124,9 @@ export class CreateMultiPoDto {
   remarks?: string;
 
   @IsOptional()
+  termsAndConditions?: string[] | string;
+
+  @IsOptional()
   customFields?: any;
 
   @IsArray()

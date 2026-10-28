@@ -55,6 +55,35 @@ export function GlobalPoModule() {
     }
   };
 
+  const handleExportPo = (po: any) => {
+    const custom = (po.customFields as any) || {};
+    exportPoToExcel({
+      poNumber: po.poNumber || "PUR/26-27/001",
+      rmSlipNo: custom.rmSlipNo || po.rmSlipNo || po.poNumber,
+      date: new Date(po.createdAt || Date.now()).toLocaleDateString('en-GB'),
+      vendorName: po.vendor?.vendorName || po.vendorName || custom.vendorName || "Standard Vendor",
+      vendorAddress: po.vendor?.address || custom.vendorAddress || "Pune",
+      deliveryTerms: po.deliveryTerms || custom.deliveryTerms || "Immediate",
+      termsAndConditions: custom.termsAndConditions || po.termsAndConditions,
+      items: (po.items || []).map((item: any, idx: number) => ({
+        toolNo: item.project?.projectNumber || item.toolNo || 'KTD-GENERAL',
+        detNo: item.detNo || `${idx + 1}`,
+        length: item.length || '-',
+        width: item.width || '-',
+        height: item.height || '-',
+        materialGrade: item.materialGrade || item.material?.materialGrade || 'MS',
+        orderedQty: Number(item.orderedQty || item.quantity || 1),
+        apWt: Number(item.apWt || item.unitWeight || 10),
+        totalWt: Number(item.totalWt || item.weight || 10),
+        agreedRate: Number(item.agreedRate || item.rate || 85),
+        basicValue: Number(item.basicValue || item.amount || 850),
+        gstAmount: Number(item.gstAmount || 153),
+        lineTotal: Number(item.lineTotal || 1003),
+        remarks: item.remarks || '',
+      })),
+    });
+  };
+
   const fetchGlobalOrders = async () => {
     setIsLoading(true);
     try {
@@ -190,11 +219,12 @@ export function GlobalPoModule() {
         <AuthenticPoDocument 
           data={{
             poNumber: previewPo.poNumber || "PUR/26-27/001",
-            rmSlipNo: previewPo.rmSlipNo || "-",
+            rmSlipNo: previewPo.rmSlipNo || (previewPo.customFields as any)?.rmSlipNo || "-",
             date: new Date(previewPo.createdAt || Date.now()).toLocaleDateString('en-GB'),
-            vendorName: previewPo.vendor?.vendorName || previewPo.vendorName || "Standard Vendor",
-            vendorAddress: previewPo.vendor?.address || "Pune",
-            deliveryTerms: previewPo.deliveryTerms || "Immediate",
+            vendorName: previewPo.vendor?.vendorName || previewPo.vendorName || (previewPo.customFields as any)?.vendorName || "Standard Vendor",
+            vendorAddress: previewPo.vendor?.address || (previewPo.customFields as any)?.vendorAddress || "Pune",
+            deliveryTerms: previewPo.deliveryTerms || (previewPo.customFields as any)?.deliveryTerms || "Immediate",
+            termsAndConditions: (previewPo.customFields as any)?.termsAndConditions || previewPo.termsAndConditions,
             items: (previewPo.items || []).map((item: any, idx: number) => ({
               id: item.id || `item-${idx}`,
               projectId: item.projectId || '',
@@ -204,14 +234,14 @@ export function GlobalPoModule() {
               width: item.width || '-',
               height: item.height || '-',
               materialGrade: item.materialGrade || item.material?.materialGrade || 'MS',
-              orderedQty: item.orderedQty || item.quantity || 1,
-              apWt: item.apWt || item.unitWeight || 10,
-              totalWt: item.totalWt || item.weight || 10,
-              agreedRate: item.agreedRate || item.rate || 85,
-              basicValue: item.basicValue || item.amount || 850,
-              gstPercent: item.gstPercent || 18,
-              gstAmount: item.gstAmount || 153,
-              lineTotal: item.lineTotal || 1003,
+              orderedQty: Number(item.orderedQty || item.quantity || 1),
+              apWt: Number(item.apWt || item.unitWeight || 10),
+              totalWt: Number(item.totalWt || item.weight || 10),
+              agreedRate: Number(item.agreedRate || item.rate || 85),
+              basicValue: Number(item.basicValue || item.amount || 850),
+              gstPercent: Number(item.gstPercent || 18),
+              gstAmount: Number(item.gstAmount || 153),
+              lineTotal: Number(item.lineTotal || 1003),
               remarks: item.remarks || '',
             })),
           }}
@@ -278,7 +308,7 @@ export function GlobalPoModule() {
                             variant="secondary"
                             size="sm"
                             leftIcon={<Download className="w-3.5 h-3.5" />}
-                            onClick={() => exportPoToExcel(po)}
+                            onClick={() => handleExportPo(po)}
                           >
                             Excel
                           </Button>

@@ -130,6 +130,7 @@ export default function ProjectPurchasePage() {
           vendorName: row.vendor?.vendorName || custom.vendorName || "Primary Supplier",
           vendorAddress: row.vendor?.address || custom.vendorAddress || "Tooling Hub",
           deliveryTerms: custom.deliveryTerms || "Standard Delivery",
+          termsAndConditions: custom.termsAndConditions || row.termsAndConditions,
           items: items.map((i: any, idx: number) => {
             const itemCustom = (i.customFields as any) || {};
             const qty = Number(i.orderedQty) || 1;

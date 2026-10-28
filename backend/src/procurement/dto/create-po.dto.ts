@@ -20,6 +20,9 @@ export class CreatePoDto {
   remarks?: string;
 
   @IsOptional()
+  termsAndConditions?: string[] | string;
+
+  @IsOptional()
   customFields?: any;
 
   @IsArray()

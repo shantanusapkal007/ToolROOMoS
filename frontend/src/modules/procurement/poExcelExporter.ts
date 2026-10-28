@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { applyKrupaHeader } from '@/utils/excelHeaderTemplate';
+import { normalizePoTerms } from './poTermsPresets';
 
 export interface PoExportData {
   poNumber: string;
@@ -8,6 +9,7 @@ export interface PoExportData {
   vendorName: string;
   vendorAddress?: string;
   deliveryTerms?: string;
+  termsAndConditions?: string[] | string;
   items: Array<{
     toolNo: string;
     detNo: string;
@@ -199,7 +201,25 @@ export async function exportPoToExcel(data: PoExportData) {
     sheet.getRow(r).getCell(c).border = { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle };
   }
 
-  r += 3;
+  // Terms & Conditions
+  const rawTerms = data.termsAndConditions ?? (data as any).customFields?.termsAndConditions;
+  const termsList = normalizePoTerms(rawTerms);
+
+  r += 2;
+  sheet.mergeCells(`A${r}:H${r}`);
+  sheet.getCell(`A${r}`).value = 'TERMS & CONDITIONS:';
+  sheet.getCell(`A${r}`).font = { bold: true, size: 9 };
+  r++;
+
+  termsList.forEach((term, idx) => {
+    sheet.mergeCells(`A${r}:N${r}`);
+    sheet.getCell(`A${r}`).value = `${idx + 1}. ${term}`;
+    sheet.getCell(`A${r}`).font = { size: 8, color: { argb: 'FF4B5563' } };
+    sheet.getCell(`A${r}`).alignment = { vertical: 'middle', horizontal: 'left' };
+    r++;
+  });
+
+  r += 2;
 
   // Signatures
   sheet.getRow(r).height = 24;

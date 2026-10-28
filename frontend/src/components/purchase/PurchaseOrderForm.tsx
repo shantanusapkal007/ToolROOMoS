@@ -5,6 +5,8 @@ import { ShoppingCart, Plus, Trash2, CheckCircle2, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { ProcurementService } from "@/services/procurement.service";
+import { PoTermsEditor } from "@/modules/procurement/PoTermsEditor";
+import { normalizePoTerms } from "@/modules/procurement/poTermsPresets";
 
 interface PurchaseOrderFormProps {
   projectId: string;
@@ -31,6 +33,9 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
       ? new Date(editingPo.expectedDeliveryDate).toISOString().split("T")[0]
       : ""
   );
+  const [termsAndConditions, setTermsAndConditions] = useState<string[]>(() =>
+    normalizePoTerms(editingPo?.customFields?.termsAndConditions || editingPo?.termsAndConditions)
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const initialItems = (editingPo?.items && editingPo.items.length > 0)
@@ -53,6 +58,9 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
     if (editingPo) {
       setPoNumber(editingPo.poNumber || `PO-2026-${Math.floor(100 + Math.random() * 900)}`);
       setVendorName(editingPo.vendor?.vendorName || editingPo.supplierName || (editingPo.customFields as any)?.vendorName || "");
+      setTermsAndConditions(
+        normalizePoTerms(editingPo?.customFields?.termsAndConditions || editingPo?.termsAndConditions)
+      );
       if (editingPo.items && editingPo.items.length > 0) {
         setItems(editingPo.items.map((i: any, idx: number) => {
           const itemCustom = (i.customFields as any) || {};
@@ -116,9 +124,11 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
         poNumber,
         category,
         expectedDeliveryDate: deliveryDate || undefined,
+        termsAndConditions,
         customFields: {
           vendorName,
           deliveryTerms: paymentTerms,
+          termsAndConditions,
         },
         items: items.map((item: any) => ({
           orderedQty: Number(item.qty) || 1,
@@ -317,6 +327,14 @@ export function PurchaseOrderForm({ projectId, editingPo, onClose, onSuccess }: 
           </table>
         </div>
       </div>
+
+      {/* Dynamic Terms & Conditions */}
+      <PoTermsEditor
+        terms={termsAndConditions}
+        onChange={setTermsAndConditions}
+        title="Purchase Order Terms & Conditions"
+        subtitle="Dynamic conditions applied to this supplier purchase order"
+      />
 
       {/* Summary totals */}
       <div className="flex justify-end pt-2 border-t border-border-gray">

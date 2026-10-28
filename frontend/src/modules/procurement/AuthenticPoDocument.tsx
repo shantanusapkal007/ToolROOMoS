@@ -1,19 +1,24 @@
 "use client";
 
-import React from 'react';
-import { Download, Printer, ArrowLeft, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, Printer, ArrowLeft, CheckCircle, Edit2, Plus, Trash2 } from 'lucide-react';
 import { exportPoToExcel, PoExportData } from './poExcelExporter';
 import { parseLwh } from './MultiProjectPoWizard';
+import { normalizePoTerms } from './poTermsPresets';
 
 interface AuthenticPoDocumentProps {
   data: PoExportData;
   onBack?: () => void;
-  onSave?: () => void;
+  onSave?: (updatedTerms?: string[]) => void;
   isSaving?: boolean;
   saved?: boolean;
 }
 
 export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: AuthenticPoDocumentProps) {
+  const [currentTerms, setCurrentTerms] = useState<string[]>(() =>
+    normalizePoTerms(data.termsAndConditions ?? (data as any).customFields?.termsAndConditions)
+  );
+  const [isEditingTerms, setIsEditingTerms] = useState<boolean>(false);
   // Group items by toolNo
   const grouped: { [key: string]: typeof data.items } = {};
   data.items.forEach(item => {
@@ -136,7 +141,7 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => exportPoToExcel(data)}
+            onClick={() => exportPoToExcel({ ...data, termsAndConditions: currentTerms })}
             className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-[12px] text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
           >
             <Download className="w-4 h-4" />
@@ -153,7 +158,7 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
 
           {onSave && (
             <button
-              onClick={onSave}
+              onClick={() => onSave(currentTerms)}
               disabled={isSaving || saved}
               className={`px-4 py-2 rounded-[12px] text-xs font-semibold flex items-center gap-2 shadow-subtle transition-all cursor-pointer ${
                 saved 
@@ -374,11 +379,68 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
               </div>
             </div>
 
-            <div className="space-y-1 text-[11px] text-zinc-600">
-              <p className="font-semibold text-zinc-800">Standard Terms & Conditions:</p>
-              <p>1. Material must strictly conform to technical specification & dimensions.</p>
-              <p>2. Test certificate / inspection report must accompany the delivery slip.</p>
-              <p>3. Rejected items will be returned at supplier's expense.</p>
+            <div className="space-y-1.5 text-[11px] text-zinc-600">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-zinc-800">Terms &amp; Conditions ({currentTerms.length}):</p>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingTerms(!isEditingTerms)}
+                  className="hide-on-print text-[10px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                  title="Customize terms before printing or exporting"
+                >
+                  <Edit2 className="w-3 h-3" />
+                  <span>{isEditingTerms ? 'Done' : 'Edit Terms'}</span>
+                </button>
+              </div>
+
+              {isEditingTerms && (
+                <div className="space-y-1.5 hide-on-print bg-canvas p-2.5 rounded-[8px] border border-border-gray my-1 shadow-micro">
+                  {currentTerms.map((term, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono font-semibold text-cool-gray w-4 text-right shrink-0">{idx + 1}.</span>
+                      <input
+                        type="text"
+                        value={term}
+                        onChange={(e) => {
+                          const updated = [...currentTerms];
+                          updated[idx] = e.target.value;
+                          setCurrentTerms(updated);
+                        }}
+                        className="flex-1 px-2.5 py-1 text-[11px] bg-white border border-border-gray rounded text-ink focus:outline-none focus:border-primary"
+                        placeholder="Enter condition..."
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = currentTerms.filter((_, i) => i !== idx);
+                          setCurrentTerms(updated.length > 0 ? updated : ['']);
+                        }}
+                        disabled={currentTerms.length <= 1}
+                        className="text-cool-gray hover:text-semantic-danger p-1 disabled:opacity-30 cursor-pointer"
+                        title="Remove clause"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentTerms([...currentTerms, ''])}
+                    className="text-[10px] font-semibold text-primary hover:text-primary-dark flex items-center gap-1 mt-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add Clause</span>
+                  </button>
+                </div>
+              )}
+
+              <div className={isEditingTerms ? 'hidden print:block' : 'space-y-1'}>
+                {currentTerms.map((term, idx) => (
+                  <p key={idx} className="leading-snug">
+                    {idx + 1}. {term}
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
 

@@ -569,9 +569,12 @@ export async function exportPremiumPO(po: any) {
   font(commTitle, 10, true, C.darkText);
   commTitle.alignment = { horizontal: 'right' };
 
-  const rawTerms = po.customFields?.termsAndConditions || `*Delivery schedule :- 2-3 DAYS\n*Mode of Transport :- BY ROAD\n*Payment Term:- 45 DAYS\n*Header Text:- RAW MATERIAL\n*All the legal concerns associated with Aurangabad jurisdiction board\nPlease indicate our PO No., Material code & HSN Code on all your correspondence.\nThe material is to be supplied as per drawing and parts inspection specification / supply specification as applicable.\n"Any Product delivered under this Purchase order must meet all requirement of ROHS "Restriction of Hazardous Substances" and\nPacking material used for packing for such products, should be within legal norms set by Government from time to time.`;
-
-  const termsList = rawTerms.split('\n');
+  const rawTerms = po.customFields?.termsAndConditions || po.termsAndConditions;
+  const termsList: string[] = Array.isArray(rawTerms) && rawTerms.length > 0
+    ? rawTerms
+    : typeof rawTerms === 'string' && rawTerms.trim()
+      ? rawTerms.split('\n')
+      : `*Delivery schedule :- 2-3 DAYS\n*Mode of Transport :- BY ROAD\n*Payment Term:- 45 DAYS\n*Header Text:- RAW MATERIAL\n*All the legal concerns associated with Aurangabad jurisdiction board\nPlease indicate our PO No., Material code & HSN Code on all your correspondence.\nThe material is to be supplied as per drawing and parts inspection specification / supply specification as applicable.\n"Any Product delivered under this Purchase order must meet all requirement of ROHS "Restriction of Hazardous Substances" and\nPacking material used for packing for such products, should be within legal norms set by Government from time to time.`.split('\n');
   const terms = termsList.map((t: string, idx: number) => ({
     left: t,
     right: idx === 1 ? "COMMISIONERATE: A'BAD." : ""

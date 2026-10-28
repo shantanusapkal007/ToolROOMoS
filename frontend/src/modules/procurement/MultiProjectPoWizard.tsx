@@ -28,6 +28,8 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { Select } from '@/components/ui/Select';
 
 import { parseDimension, calculateMaterialWeight } from '@/utils/dimensionParser';
+import { PoTermsEditor } from './PoTermsEditor';
+import { DEFAULT_PO_TERMS } from './poTermsPresets';
 
 export interface WizardItem {
   id: string;
@@ -85,6 +87,7 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
   const [poNumber, setPoNumber] = useState("");
   const [poDate, setPoDate] = useState(new Date().toISOString().split('T')[0]);
   const [deliveryTerms, setDeliveryTerms] = useState("");
+  const [termsAndConditions, setTermsAndConditions] = useState<string[]>(DEFAULT_PO_TERMS);
 
   // Raw BOM Items & Selected Items
   const [availableBomItems, setAvailableBomItems] = useState<any[]>([]);
@@ -381,11 +384,13 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
     setLineItems(prev => prev.filter(i => i.id !== id));
   };
 
-  const handleSavePo = async () => {
+  const handleSavePo = async (overrideTerms?: string[]) => {
     if (!vendorName.trim()) {
       error("Missing Vendor", "Please provide vendor/supplier name.");
       return;
     }
+
+    const finalTerms = overrideTerms && overrideTerms.length > 0 ? overrideTerms : termsAndConditions;
 
     setIsSaving(true);
     try {
@@ -396,7 +401,11 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
         rmSlipNo,
         expectedDeliveryDate: poDate,
         deliveryTerms,
+        termsAndConditions: finalTerms,
         remarks: `Multi-project PO created for ${lineItems.length} items across multiple tools.`,
+        customFields: {
+          termsAndConditions: finalTerms,
+        },
         items: lineItems.map(i => ({
           projectId: i.projectId,
           toolNo: i.toolNo,
@@ -440,6 +449,7 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
     vendorName,
     vendorAddress,
     deliveryTerms,
+    termsAndConditions,
     items: lineItems,
   };
 
@@ -576,6 +586,16 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
                   className="w-full px-3.5 py-2.5 bg-canvas/80 border border-border-gray rounded-[12px] text-xs font-semibold text-ink focus:bg-white focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 outline-none transition-all"
                 />
               </div>
+            </div>
+
+            {/* Dynamic Terms & Conditions Section */}
+            <div className="pt-3 border-t border-border-gray">
+              <PoTermsEditor
+                terms={termsAndConditions}
+                onChange={setTermsAndConditions}
+                title="Purchase Order Terms & Conditions"
+                subtitle="Select a supplier preset or customize clauses for this purchase order"
+              />
             </div>
           </div>
 

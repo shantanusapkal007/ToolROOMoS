@@ -238,6 +238,7 @@ export class PurchaseOrdersService {
             vendorAddress: dto.vendorAddress || '',
             rmSlipNo: dto.rmSlipNo || finalPoNumber,
             deliveryTerms: dto.deliveryTerms || 'DELIVERY WITHIN 1 DAYS',
+            termsAndConditions: dto.termsAndConditions || (dto.customFields?.termsAndConditions) || undefined,
             grandTotalWeight,
             grandBasicValue,
             grandGstValue,
@@ -460,7 +461,10 @@ export class PurchaseOrdersService {
           status: PurchaseOrderStatus.ISSUED,
           approvalStatus: ApprovalStatus.APPROVED,
           remarks: dto.remarks,
-          customFields: dto.customFields,
+          customFields: {
+            ...(dto.customFields || {}),
+            termsAndConditions: dto.termsAndConditions || (dto.customFields?.termsAndConditions) || undefined,
+          },
           createdBy: userId,
           updatedBy: userId,
         },
@@ -604,7 +608,10 @@ export class PurchaseOrdersService {
           totalAmount,
           expectedDeliveryDate: dto.expectedDeliveryDate ? new Date(dto.expectedDeliveryDate) : null,
           remarks: dto.remarks,
-          customFields: dto.customFields,
+          customFields: {
+            ...(dto.customFields || {}),
+            termsAndConditions: dto.termsAndConditions || (dto.customFields?.termsAndConditions) || undefined,
+          },
           updatedBy: userId,
         },
       });
