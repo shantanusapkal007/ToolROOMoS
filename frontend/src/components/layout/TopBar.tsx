@@ -135,7 +135,7 @@ export function TopBar() {
   }, []);
 
   return (
-    <header className="h-14 w-full bg-white border-b border-border-gray px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-subtle z-30 select-none gap-3">
+    <header className="h-14 w-full bg-white border-b border-border-gray px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-subtle z-30 select-none gap-3 print:hidden">
       {/* Left Section: Status & Adaptive Global Search */}
       <div className="flex items-center gap-3 shrink-0">
         {/* Plant Status Pill — Tokenized Semantic Success */}

@@ -5,6 +5,7 @@ import { Download, Printer, ArrowLeft, CheckCircle, Edit2, Plus, Trash2 } from '
 import { exportPoToExcel, PoExportData } from './poExcelExporter';
 import { parseLwh } from './MultiProjectPoWizard';
 import { normalizePoTerms } from './poTermsPresets';
+import { printIsolatedElement } from '@/utils/printDocument';
 
 interface AuthenticPoDocumentProps {
   data: PoExportData;
@@ -112,7 +113,10 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
   };
 
   const handlePrint = () => {
-    window.print();
+    printIsolatedElement('authentic-po-sheet', {
+      orientation: 'landscape',
+      title: data.poNumber || 'Purchase_Order',
+    });
   };
 
   return (
@@ -174,7 +178,11 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
       </div>
 
       {/* Physical Paper Document Sheet (Print Target) */}
-      <div className="bg-white p-8 rounded-[12px] shadow-level-4 border border-border-gray text-ink max-w-[1050px] mx-auto print:max-w-none print:w-full print:p-0 print:border-none print:shadow-none font-sans">
+      <div 
+        id="authentic-po-sheet"
+        data-print-target="true"
+        className="printable-sheet bg-white p-8 rounded-[12px] shadow-level-4 border border-border-gray text-ink max-w-[1050px] mx-auto print:max-w-none print:w-full print:p-0 print:border-none print:shadow-none font-sans"
+      >
         
         {/* Document Header */}
         <div className="border-2 border-zinc-900 p-4 rounded-t-lg flex items-center justify-between gap-4 bg-white">

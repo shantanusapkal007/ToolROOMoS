@@ -52,7 +52,8 @@ export function Sidebar() {
       initial={false}
       animate={isExpanded ? 'expanded' : 'collapsed'}
       variants={sidebarVariants}
-      className="fixed left-0 top-0 bottom-0 z-40 bg-white border-r border-border-gray shadow-subtle flex flex-col justify-between p-3 select-none will-change-[width]"
+      data-sidebar="true"
+      className="fixed left-0 top-0 bottom-0 z-40 bg-white border-r border-border-gray shadow-subtle flex flex-col justify-between p-3 select-none will-change-[width] print:hidden"
     >
       {/* Top Section: Logo & Navigation */}
       <div className="flex flex-col flex-1 overflow-hidden">

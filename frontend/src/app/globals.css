@@ -366,3 +366,86 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ==========================================================================
+   Print Styles — Clean document printing without browser/app chrome
+   ========================================================================== */
+
+@media print {
+  /* Hide elements explicitly marked as non-printable */
+  .hide-on-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Hide app chrome: sidebar, topbar, navigation tabs, breadcrumbs, modals, toasts */
+  nav,
+  header,
+  aside,
+  [data-sidebar],
+  [role="navigation"],
+  [data-no-print="true"],
+  .toast-container,
+  [role="status"] {
+    display: none !important;
+  }
+
+  /* Reset the layout shell so content fills the page naturally */
+  html, body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #101114 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure containers do not clip overflow or constrain height */
+  .flex.h-screen.w-screen,
+  .flex-1.h-full.flex.flex-col,
+  main,
+  div[class*="overflow-"] {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Printable sheet container styling */
+  #authentic-po-sheet,
+  .printable-sheet,
+  [data-print-target="true"] {
+    display: block !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  /* Page setup: Landscape A4 with standard document margins */
+  @page {
+    size: A4 landscape;
+    margin: 6mm 8mm;
+  }
+
+  /* Ensure table borders, cells and backgrounds print crisp */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

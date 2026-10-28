@@ -88,7 +88,7 @@ export default function ProjectDetailLayout({
     <AppLayout noPadding>
       <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
         {/* Sub Header */}
-        <div className="w-full bg-white border-b border-border-gray shrink-0 shadow-subtle">
+        <div data-no-print="true" className="w-full bg-white border-b border-border-gray shrink-0 shadow-subtle hide-on-print print:hidden">
           {/* Upper Header Content */}
           <div className="w-full px-6 pt-4 pb-3">
             <div className="max-w-[1440px] mx-auto flex flex-col gap-3">

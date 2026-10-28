@@ -5,6 +5,7 @@ import { Download, Printer, ArrowLeft, CheckCircle2, Building, Layers, Calendar,
 import { exportPrnToExcel } from './prnExcelExporter';
 import { PurchaseRequisition } from '@/services/purchase-requisitions.service';
 import { Button } from '@/components/ui/Button';
+import { printIsolatedElement } from '@/utils/printDocument';
 
 interface AuthenticPrnDocumentProps {
   prn: PurchaseRequisition;
@@ -13,7 +14,10 @@ interface AuthenticPrnDocumentProps {
 
 export function AuthenticPrnDocument({ prn, onBack }: AuthenticPrnDocumentProps) {
   const handlePrint = () => {
-    window.print();
+    printIsolatedElement('authentic-prn-sheet', {
+      orientation: 'landscape',
+      title: `PRN_${prn.prNumber || 'Voucher'}`,
+    });
   };
 
   const handleExportExcel = () => {
@@ -64,7 +68,11 @@ export function AuthenticPrnDocument({ prn, onBack }: AuthenticPrnDocumentProps)
       </div>
 
       {/* Printable Authentic PRN Document */}
-      <div className="bg-white text-slate-900 border border-slate-300 rounded-[12px] shadow-sm p-8 max-w-5xl mx-auto font-sans print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none">
+      <div 
+        id="authentic-prn-sheet" 
+        data-print-target="true"
+        className="printable-sheet bg-white text-slate-900 border border-slate-300 rounded-[12px] shadow-sm p-8 max-w-5xl mx-auto font-sans print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none"
+      >
         
         {/* Company Header */}
         <div className="border-b-2 border-slate-900 pb-4 mb-5 flex items-start justify-between">

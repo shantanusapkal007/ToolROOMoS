@@ -3,6 +3,7 @@
 import React from 'react';
 import { Download, Printer, ArrowLeft } from 'lucide-react';
 import { parseLwh } from '../procurement/MultiProjectPoWizard';
+import { printIsolatedElement } from '@/utils/printDocument';
 
 interface AuthenticMaterialIssueDocumentProps {
   data: any;
@@ -11,7 +12,10 @@ interface AuthenticMaterialIssueDocumentProps {
 
 export function AuthenticMaterialIssueDocument({ data, onBack }: AuthenticMaterialIssueDocumentProps) {
   const handlePrint = () => {
-    window.print();
+    printIsolatedElement('authentic-material-issue-sheet', {
+      orientation: 'portrait',
+      title: `Material_Issue_${data?.slipNo || 'Slip'}`,
+    });
   };
 
   return (
@@ -38,7 +42,11 @@ export function AuthenticMaterialIssueDocument({ data, onBack }: AuthenticMateri
       </div>
 
       {/* A4 Paper Container */}
-      <div className="max-w-[210mm] mx-auto bg-white shadow-level-4 print:shadow-none print:w-full">
+      <div 
+        id="authentic-material-issue-sheet"
+        data-print-target="true"
+        className="printable-sheet max-w-[210mm] mx-auto bg-white shadow-level-4 print:shadow-none print:w-full"
+      >
         
         {/* Document Header */}
         <div className="border-2 border-zinc-900 p-4 rounded-t-lg flex items-center justify-between gap-4 bg-white">
