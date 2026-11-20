@@ -57,6 +57,8 @@ ToolRoomOS is a decoupled monorepo leveraging modern enterprise technologies:
 
 ## 📦 Getting Started
 
+> 💡 **Quick Start for Developers & AI Agents**: See the comprehensive [RUN_GUIDE.md](./RUN_GUIDE.md) to start the entire system and view active ports, topology, and default credentials in seconds.
+
 ### Prerequisites
 *   Node.js (v20+)
 *   PostgreSQL Database
