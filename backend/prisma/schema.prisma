@@ -1325,6 +1325,7 @@ model SubcontractOrderItem {
   inventoryBatchId   String?
   operationId        String
   sentQty            Decimal
+  hoursPerPc         Decimal                  @default(1)
   rate               Decimal
   lineEstimatedCost  Decimal                  @default(0)
   remarks            String?
@@ -1367,6 +1368,7 @@ model SubcontractReceiptItem {
   receivedQty          Decimal
   acceptedQty          Decimal
   rejectedQty          Decimal              @default(0)
+  hoursPerPc           Decimal              @default(1)
   actualRate           Decimal
   actualProcessCost    Decimal              @default(0)
   remarks              String?

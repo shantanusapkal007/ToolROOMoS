@@ -124,8 +124,19 @@ CLOSED ◄── PAYMENT_PENDING ◄── INVOICED ◄── DISPATCHED ◄─�
      * Scrap & Rework count
    - Automatically updates Machine OEE logs (`OeeDailyLog`) and accumulates machine/labour costs into `ProjectCostSummary`.
 8. **Outside Processing / Subcontracting (`SubcontractOrder`, `SubcontractReceipt`)**:
-   - Special operations (Heat Treatment, Hard Chrome Plating, Blackening, Gun Drilling) sent to approved vendors.
-   - Outward delivery challan created; vendor charges flow directly into project actual costs.
+   - Special operations (Heat Treatment, Hard Chrome Plating, Blackening, Gun Drilling, Precision CNC Milling, EDM, Wire Cut) sent to approved vendors.
+   - **Machining Hours & Hourly Rate Pricing**:
+     * In precision toolrooms, outside machining is quoted and calculated by cutting time and hourly rate:
+       $$\text{Total Hours} = \text{Sent Qty (pcs)} \times \text{Hours per Pc}$$
+       $$\text{Estimated Line Cost} = \text{Total Hours} \times \text{Rate per Hour (₹/hr)}$$
+     * Schema models: `SubcontractOrderItem.hoursPerPc` (default 1) and `SubcontractReceiptItem.hoursPerPc` (default 1).
+   - **End-to-End Raw Material Issuance & Stores Traceability**:
+     * `Factory Stores Material`: Issues physical raw stock from stores, atomically decrements `InventoryBatch` (`availableQty` & `currentQty`) and `InventoryStock`, and creates an immutable `InventoryTransaction` (`MATERIAL_ISSUE`, reference: `SUBCONTRACT_CHALLAN`).
+     * `Service Only / Vendor Material`: Vendor provides stock or performs labor only. No factory inventory is deducted.
+     * When return receipt is posted, accepted material replenishes stores (`InventoryBatch` created with `-S-` suffix, `InventoryStock` incremented, `InventoryTransaction` logged with `MATERIAL_RETURN`, reference: `SUBCONTRACT_RECEIPT`). Added unit cost per pc = $\text{Hours per Pc} \times \text{Actual Rate}$.
+   - **Official Factory PO & Challan Generation (`AuthenticSubcontractPoDocument.tsx`)**:
+     * Generates statutory print-ready PO & Delivery Challan under Rule 55 / Section 143 of CGST Act.
+     * Features live interactive **Terms & Conditions editing**, 4 signature authority boxes, PDF print, and multi-sheet formatted Excel workbook export (`exceljs`).
 9. **Quality Gate & Inspection (`INSPECTION` -> `DISPATCH_READY`)**:
    - Final QC inspector measures critical dimensions against drawing tolerances (`InspectionHeader`, `InspectionMeasurement`).
    - Quantity partitioned: $\text{Passed} + \text{Rework} + \text{Scrap} = \text{Produced Quantity}$.
@@ -250,6 +261,19 @@ export interface StandardApiResponse<T> {
 4. **Button & Input Components**:
    * Use the standardized `Button` component (`variant="primary" | "secondary" | "white" | "danger"`).
    * Inputs must use `Input`, `Select`, `Combobox` from `src/components/ui/`.
+5. **Modal Card Layering (Off-White Contrast Standard)**:
+   * Modals in Light Mode have a pure white (`bg-white` / `#ffffff`) background.
+   * Cards placed inside a modal (e.g. Challan details, line item cards, summary footers) MUST use the soft off-white surface style:
+     `className="bg-[#f8f9fc] dark:bg-[#181b29] border border-border-gray rounded-[14px] p-5 shadow-subtle"`
+   * Interactive inputs (`Input`, `Select`, `textarea`) and nested summary strips inside these cards use pure white (`bg-white dark:bg-[#151824]`) to create clean visual hierarchy, depth, and contrast.
+6. **Readable Typography (Strictly Avoid Microscopic 7px Text)**:
+   * `text-micro` is defined as 7px in `globals.css` and is an accessibility failure if used for human-readable content.
+   * Adhere strictly to this hierarchy for readable content:
+     * Section/Card headers: `text-body font-semibold text-ink` (16px) or `text-caption font-semibold text-ink` (14px).
+     * Form field labels: `text-caption font-medium text-ink` (14px).
+     * Subtitles, descriptions, helper text: `text-small text-cool-gray` (12px) in sentence case.
+     * Stat values and totals: `text-feature-title` or `text-heading-xl` (22px - 28px).
+   * Always format batch dropdown options cleanly with `formatBatchOption` (`SS 304 [BAT-473141 • Heat: N/A] — 5 NOS Available`) rather than dumping raw 36-character database UUIDs.
 
 ### Smart Components & UI Standards
 * **`SmartTable` (`src/components/ui/SmartTable.tsx`)**: Reusable data grid supporting sorting, multi-column filtering, pagination, CSV exports, and virtualized row rendering.
@@ -257,7 +281,7 @@ export interface StandardApiResponse<T> {
 * **`PremiumDrawer` & `Modal`**: Consistent slide-out detail inspectors and modal dialogs.
 * **Authentic Document Exporters**:
   * `poExcelExporter.ts`, `prnExcelExporter.ts`, `grnExcelExporter.ts` (generate professional multi-sheet Excel workbooks with borders, company headers, and calculation formulas using `exceljs`).
-  * `AuthenticPoDocument.tsx`, `AuthenticPrnDocument.tsx` (pixel-perfect print/PDF templates matching real Indian factory documents).
+  * `AuthenticPoDocument.tsx`, `AuthenticPrnDocument.tsx`, `AuthenticSubcontractPoDocument.tsx` (pixel-perfect print/PDF templates matching real Indian factory documents with customizable terms).
 
 ---
 

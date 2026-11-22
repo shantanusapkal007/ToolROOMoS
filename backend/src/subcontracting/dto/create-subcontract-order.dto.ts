@@ -12,6 +12,12 @@ class SubcontractOrderItemDto {
   @IsNumber()
   sentQty: number;
 
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  hoursPerPc?: number;
+
+  @Type(() => Number)
   @IsNumber()
   rate: number;
 

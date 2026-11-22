@@ -19,6 +19,11 @@ class SubcontractReceiptItemDto {
 
   @Type(() => Number)
   @IsNumber()
+  @IsOptional()
+  hoursPerPc?: number;
+
+  @Type(() => Number)
+  @IsNumber()
   actualRate: number;
 
   @IsString()

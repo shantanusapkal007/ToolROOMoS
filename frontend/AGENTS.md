@@ -36,3 +36,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Test and verify that background contrast, text visibility, card borders, icons, and status badges remain crisp, legible, and visually balanced in both Light Mode (`.light`) and Dark Mode (`.dark`).
 - Never introduce hardcoded light-only or dark-only surface colors or text styles that break readability or visual quality in either theme.
 
+### 7. Modal Card Layering (Off-White Contrast Standard)
+- Modals in Light Mode have a pure white (`bg-white` / `#ffffff`) background.
+- Cards placed inside a modal (e.g. Challan details, line item cards, summary footers) MUST use the soft off-white surface style:
+  `className="bg-[#f8f9fc] dark:bg-[#181b29] border border-border-gray rounded-[14px] p-5 shadow-subtle"`
+- Interactive inputs (`Input`, `Select`, `textarea`) and nested summary strips inside these cards use pure white (`bg-white dark:bg-[#151824]`) to create clean visual hierarchy, depth, and contrast.
+
+### 8. Readable Typography (Strictly Avoid Microscopic 7px Text)
+- `text-micro` is defined as 7px in `globals.css` and is an accessibility failure if used for human-readable content.
+- Adhere strictly to this hierarchy for readable content:
+  * Section/Card headers: `text-body font-semibold text-ink` (16px) or `text-caption font-semibold text-ink` (14px).
+  * Form field labels: `text-caption font-medium text-ink` (14px).
+  * Subtitles, descriptions, helper text: `text-small text-cool-gray` (12px) in sentence case.
+  * Stat values and totals: `text-feature-title` or `text-heading-xl` (22px - 28px).
+- Always format batch dropdown options cleanly with `formatBatchOption` (`SS 304 [BAT-473141 • Heat: N/A] — 5 NOS Available`) rather than dumping raw 36-character database UUIDs.
+

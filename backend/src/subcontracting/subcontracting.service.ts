@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubcontractOrderDto } from './dto/create-subcontract-order.dto';
 import { CreateSubcontractReceiptDto } from './dto/create-subcontract-receipt.dto';
+import { InventoryMovementType } from '@prisma/client';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -27,21 +28,27 @@ export class SubcontractingService {
     return project?.id || projectId;
   }
 
-  async createOrder(projectId: string, dto: CreateSubcontractOrderDto) {
+  async createOrder(projectId: string, dto: CreateSubcontractOrderDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
       const targetProjectId = await this.resolveProjectId(projectId, tx);
       const project = await tx.project.findUnique({ where: { id: targetProjectId } });
       if (!project) throw new NotFoundException('Project not found');
 
+      const vendor = await tx.vendor.findUnique({ where: { id: dto.vendorId } });
+      if (!vendor) throw new NotFoundException('Vendor not found');
+
       let totalEstimatedCost = 0;
       const orderItemsData = dto.items.map((item) => {
-        const lineEstimatedCost = item.sentQty * item.rate;
+        const hoursPerPc = Number(item.hoursPerPc) > 0 ? Number(item.hoursPerPc) : 1;
+        const ratePerHour = Number(item.rate) || 0;
+        const lineEstimatedCost = item.sentQty * hoursPerPc * ratePerHour;
         totalEstimatedCost += lineEstimatedCost;
         return {
           inventoryBatchId: item.inventoryBatchId,
           operationId: item.operationId,
           sentQty: item.sentQty,
-          rate: item.rate,
+          hoursPerPc,
+          rate: ratePerHour,
           lineEstimatedCost,
           remarks: item.remarks,
         };
@@ -64,10 +71,124 @@ export class SubcontractingService {
           },
         },
         include: {
-          items: true,
+          items: {
+            include: {
+              operation: true,
+              inventoryBatch: {
+                include: {
+                  material: true,
+                },
+              },
+            },
+          },
           vendor: true,
         },
       });
+
+      // Deduct material from stores if material batch is specified
+      let materialDeductedCount = 0;
+      for (const item of dto.items) {
+        if (item.inventoryBatchId && item.sentQty > 0) {
+          const batch = await tx.inventoryBatch.findUnique({
+            where: { id: item.inventoryBatchId },
+            include: { material: true, location: true },
+          });
+
+          if (!batch) {
+            throw new NotFoundException(`Inventory batch ${item.inventoryBatchId} not found.`);
+          }
+
+          const availableQty = Number(batch.availableQty || 0);
+          if (availableQty < item.sentQty) {
+            throw new BadRequestException(
+              `Insufficient available stock in Batch ${batch.batchNumber}. Available: ${availableQty}, Requested: ${item.sentQty}`
+            );
+          }
+
+          // Concurrency-safe atomic decrement of InventoryBatch
+          const remainingBatchQty = availableQty - item.sentQty;
+          const updateBatchCount = await tx.inventoryBatch.updateMany({
+            where: {
+              id: item.inventoryBatchId,
+              availableQty: { gte: item.sentQty },
+            },
+            data: {
+              currentQty: { decrement: item.sentQty },
+              availableQty: { decrement: item.sentQty },
+              issuedQty: { increment: item.sentQty },
+              status: remainingBatchQty === 0 ? 'CONSUMED' : 'AVAILABLE',
+            },
+          });
+
+          if (updateBatchCount.count === 0) {
+            throw new BadRequestException(
+              `Concurrent modification or insufficient stock in Batch ${batch.batchNumber}.`
+            );
+          }
+
+          // Resolve warehouse stock for this material
+          let currentStock = null;
+          if (batch.location?.warehouseId) {
+            currentStock = await tx.inventoryStock.findUnique({
+              where: {
+                materialId_warehouseId: {
+                  materialId: batch.materialId,
+                  warehouseId: batch.location.warehouseId,
+                },
+              },
+            });
+          }
+
+          if (!currentStock || Number(currentStock.availableQuantity) < item.sentQty) {
+            currentStock = await tx.inventoryStock.findFirst({
+              where: {
+                materialId: batch.materialId,
+                availableQuantity: { gte: item.sentQty },
+              },
+            });
+          }
+
+          if (!currentStock || Number(currentStock.availableQuantity) < item.sentQty) {
+            throw new BadRequestException(
+              `Insufficient warehouse stock for material ${batch.material?.materialGrade || batch.materialId}. Available: ${currentStock?.availableQuantity || 0}, Requested: ${item.sentQty}`
+            );
+          }
+
+          // Concurrency-safe atomic decrement of InventoryStock
+          const updateStockCount = await tx.inventoryStock.updateMany({
+            where: {
+              id: currentStock.id,
+              availableQuantity: { gte: item.sentQty },
+            },
+            data: {
+              currentQuantity: { decrement: item.sentQty },
+              availableQuantity: { decrement: item.sentQty },
+            },
+          });
+
+          if (updateStockCount.count === 0) {
+            throw new BadRequestException(
+              `Concurrent modification or insufficient warehouse stock for material ${batch.material?.materialGrade || batch.materialId}.`
+            );
+          }
+
+          // Record Inventory Transaction (Layer 4 - Audit Trail)
+          await tx.inventoryTransaction.create({
+            data: {
+              projectId: targetProjectId,
+              inventoryBatchId: batch.id,
+              movementType: InventoryMovementType.MATERIAL_ISSUE,
+              quantity: item.sentQty,
+              referenceDocType: 'SUBCONTRACT_CHALLAN',
+              referenceDocId: order.id,
+              remarks: `Material issued to Subcontractor ${vendor.vendorName} under Challan ${challanNumber}`,
+              createdBy: userId,
+            },
+          });
+
+          materialDeductedCount++;
+        }
+      }
 
       // Update project timeline to PRODUCTION if not already
       if (
@@ -95,7 +216,8 @@ export class SubcontractingService {
         data: {
           projectId: targetProjectId,
           action: 'SUBCONTRACT_ORDER_ISSUED',
-          description: `Challan ${challanNumber} generated for Vendor.`,
+          description: `Challan ${challanNumber} generated for ${vendor.vendorName}.${materialDeductedCount > 0 ? ` Material issued from stores for ${materialDeductedCount} line item(s).` : ''}`,
+          performedBy: userId || 'SYSTEM',
         },
       });
 
@@ -125,12 +247,12 @@ export class SubcontractingService {
     });
   }
 
-  async createReceipt(projectId: string, dto: CreateSubcontractReceiptDto) {
+  async createReceipt(projectId: string, dto: CreateSubcontractReceiptDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
       const targetProjectId = await this.resolveProjectId(projectId, tx);
       const order = await tx.subcontractOrder.findUnique({
         where: { id: dto.subcontractOrderId },
-        include: { items: { include: { inventoryBatch: { include: { material: true } } } } },
+        include: { items: { include: { inventoryBatch: { include: { material: true, location: true } } } } },
       });
 
       if (!order) throw new NotFoundException('Subcontract Order not found');
@@ -142,7 +264,11 @@ export class SubcontractingService {
         const orderItem = order.items.find((i) => i.id === item.orderItemId);
         if (!orderItem) throw new BadRequestException(`Order item ${item.orderItemId} not found`);
 
-        const actualProcessCost = item.acceptedQty * item.actualRate;
+        const hoursPerPc = Number(item.hoursPerPc) > 0 
+          ? Number(item.hoursPerPc) 
+          : (Number((orderItem as any).hoursPerPc) > 0 ? Number((orderItem as any).hoursPerPc) : 1);
+        const actualRate = Number(item.actualRate) || 0;
+        const actualProcessCost = item.acceptedQty * hoursPerPc * actualRate;
         totalProcessCost += actualProcessCost;
 
         const baseData: any = {
@@ -150,13 +276,15 @@ export class SubcontractingService {
           receivedQty: item.receivedQty,
           acceptedQty: item.acceptedQty,
           rejectedQty: item.rejectedQty,
-          actualRate: item.actualRate,
+          hoursPerPc,
+          actualRate,
           actualProcessCost,
           remarks: item.remarks,
         };
 
         // Only create a return batch when the source order item has a valid linked inventory batch
         if (orderItem.inventoryBatch?.materialId && item.acceptedQty > 0) {
+          const addedCostPerPc = hoursPerPc * actualRate;
           baseData.inventoryBatches = {
             create: [
               {
@@ -166,7 +294,8 @@ export class SubcontractingService {
                 heatNumber: orderItem.inventoryBatch.heatNumber,
                 receivedQty: item.acceptedQty,
                 currentQty: item.acceptedQty,
-                unitCost: (Number(orderItem.inventoryBatch.unitCost) || 0) + (Number(item.actualRate) || 0),
+                availableQty: item.acceptedQty,
+                unitCost: (Number(orderItem.inventoryBatch.unitCost) || 0) + addedCostPerPc,
                 status: 'AVAILABLE',
               },
             ],
@@ -230,20 +359,21 @@ export class SubcontractingService {
 
       // Synchronize inventoryStock ledger for inward return batches
       const defaultWh = await tx.warehouse.findFirst({ where: { status: 'ACTIVE' } }) || await tx.warehouse.findFirst();
-      if (defaultWh) {
-        for (const item of dto.items) {
-          const orderItem = order.items.find((i: any) => i.id === item.orderItemId);
-          if (orderItem?.inventoryBatch?.materialId && item.acceptedQty > 0) {
+      for (const item of dto.items) {
+        const orderItem = order.items.find((i: any) => i.id === item.orderItemId);
+        if (orderItem?.inventoryBatch?.materialId && item.acceptedQty > 0) {
+          const targetWhId = orderItem.inventoryBatch.location?.warehouseId || defaultWh?.id;
+          if (targetWhId) {
             await tx.inventoryStock.upsert({
               where: {
                 materialId_warehouseId: {
                   materialId: orderItem.inventoryBatch.materialId,
-                  warehouseId: defaultWh.id,
+                  warehouseId: targetWhId,
                 }
               },
               create: {
                 materialId: orderItem.inventoryBatch.materialId,
-                warehouseId: defaultWh.id,
+                warehouseId: targetWhId,
                 currentQuantity: item.acceptedQty,
                 availableQuantity: item.acceptedQty,
               },
@@ -253,6 +383,40 @@ export class SubcontractingService {
               }
             });
           }
+        }
+      }
+
+      // Record Inventory Transactions for returned batches (End-to-End Traceability)
+      for (const rItem of receipt.items) {
+        if (rItem.inventoryBatches && rItem.inventoryBatches.length > 0) {
+          for (const retBatch of rItem.inventoryBatches) {
+            await tx.inventoryTransaction.create({
+              data: {
+                projectId: targetProjectId,
+                inventoryBatchId: retBatch.id,
+                movementType: InventoryMovementType.MATERIAL_RETURN,
+                quantity: retBatch.receivedQty,
+                referenceDocType: 'SUBCONTRACT_RECEIPT',
+                referenceDocId: receipt.id,
+                remarks: `Material returned from subcontracting under Receipt ${receiptNumber} (Challan: ${order.challanNumber})`,
+                createdBy: userId,
+              },
+            });
+          }
+        }
+      }
+
+      // Log reject activity if any items had rejects
+      for (const item of dto.items) {
+        if (Number(item.rejectedQty) > 0) {
+          await tx.projectActivity.create({
+            data: {
+              projectId: targetProjectId,
+              action: 'SUBCONTRACT_REJECT',
+              description: `Receipt ${receiptNumber}: ${item.rejectedQty} pcs rejected for order item ${item.orderItemId}.`,
+              performedBy: userId || 'SYSTEM',
+            },
+          });
         }
       }
 

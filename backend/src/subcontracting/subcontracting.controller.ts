@@ -26,7 +26,7 @@ export class SubcontractingController {
     @Body() dto: CreateSubcontractOrderDto,
     @CurrentUser() user: any,
   ) {
-    const data = await this.subcontractingService.createOrder(projectId, dto);
+    const data = await this.subcontractingService.createOrder(projectId, dto, user?.id || user?.sub);
     return {
       status: 'success',
       message: 'Subcontract Order / Challan generated successfully.',
@@ -51,7 +51,7 @@ export class SubcontractingController {
     @Body() dto: CreateSubcontractReceiptDto,
     @CurrentUser() user: any,
   ) {
-    const data = await this.subcontractingService.createReceipt(projectId, dto);
+    const data = await this.subcontractingService.createReceipt(projectId, dto, user?.id || user?.sub);
     return {
       status: 'success',
       message: 'Subcontract Receipt generated successfully.',
@@ -71,7 +71,7 @@ export class SubcontractingController {
       ...dto,
       subcontractOrderId: dto.subcontractOrderId || orderId,
     };
-    const data = await this.subcontractingService.createReceipt(projectId, receiptDto);
+    const data = await this.subcontractingService.createReceipt(projectId, receiptDto, user?.id || user?.sub);
     return {
       status: 'success',
       message: 'Subcontract Receipt generated successfully.',

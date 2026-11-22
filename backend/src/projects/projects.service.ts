@@ -500,7 +500,7 @@ export class ProjectsService {
 
   async getInventoryBatches(projectId: string) {
     const targetProjectId = await this.resolveProjectId(projectId);
-    return this.prisma.inventoryBatch.findMany({
+    const projectBatches = await this.prisma.inventoryBatch.findMany({
       where: {
         OR: [
           {
@@ -523,6 +523,29 @@ export class ProjectsService {
       },
       include: {
         material: true,
+        location: true,
+        grnItem: {
+          include: {
+            poItem: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (projectBatches.length > 0) {
+      return projectBatches;
+    }
+
+    // Fallback: Return available warehouse stock batches
+    return this.prisma.inventoryBatch.findMany({
+      where: {
+        status: 'AVAILABLE',
+        availableQty: { gt: 0 }
+      },
+      include: {
+        material: true,
+        location: true,
         grnItem: {
           include: {
             poItem: true

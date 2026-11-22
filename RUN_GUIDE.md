@@ -13,8 +13,9 @@ Run these two commands from the project root (`ToolROOMoS/`):
 # 1. Start Database, Redis, and Backend in Docker (detached)
 docker compose up -d postgres redis backend
 
-# 2. Start Frontend locally on host (with Next.js Turbopack)
-npm run dev --prefix frontend
+# 2. Start Frontend locally on host (Webpack recommended on macOS)
+npm run dev:webpack --prefix frontend
+# (or `npm run dev --prefix frontend` for Turbopack)
 ```
 
 ### Active Ports & URLs Reference Table
