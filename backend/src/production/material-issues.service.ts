@@ -24,6 +24,9 @@ export class MaterialIssuesService {
     return project?.id || projectId;
   }
 
+  /**
+   * Issue material to a PROJECT — existing full flow with cost booking, WIP, and stage transitions.
+   */
   async issueMaterial(projectId: string, dto: CreateIssueDto, userId?: string) {
     return this.prisma.$transaction(async (tx) => {
       const targetProjectId = await this.resolveProjectId(projectId, tx);
@@ -65,6 +68,9 @@ export class MaterialIssuesService {
           expectedManufactureQty: dto.expectedManufactureQty || null,
           jobCardId: dto.jobCardId || null,
           remarks: dto.remarks || null,
+          issueType: 'PROJECT',
+          issuedToEmployeeId: dto.issuedToEmployeeId || null,
+          issuedToMachineId: dto.issuedToMachineId || null,
           createdBy: userId,
           updatedBy: userId,
         },
@@ -297,6 +303,160 @@ export class MaterialIssuesService {
     });
   }
 
+  /**
+   * Issue consumable material to an OPERATOR or MACHINE.
+   * No project cost booking, no WIP entry, no project stage transitions.
+   * Only deducts inventory and records the transaction.
+   */
+  async issueConsumableMaterial(dto: CreateIssueDto, userId?: string) {
+    const issueType = dto.issueType || 'OPERATOR';
+
+    if (issueType === 'OPERATOR' && !dto.issuedToEmployeeId) {
+      throw new BadRequestException('Employee (Operator) is required when issuing consumables to an operator.');
+    }
+    if (issueType === 'MACHINE' && !dto.issuedToMachineId) {
+      throw new BadRequestException('Machine is required when issuing consumables to a machine.');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Determine partial status
+      let hasPartialItem = dto.isPartial || false;
+      for (const item of dto.items) {
+        const batch = await tx.inventoryBatch.findUniqueOrThrow({
+          where: { id: item.inventoryBatchId },
+        });
+        if (item.issuedQty < batch.availableQty.toNumber()) {
+          hasPartialItem = true;
+        }
+      }
+
+      // Create Material Issue Header (no projectId)
+      const issueHeader = await tx.materialIssueHeader.create({
+        data: {
+          issueNumber: dto.issueNumber,
+          documentNumber: dto.issueNumber,
+          status: hasPartialItem ? 'PARTIAL' : 'COMPLETED',
+          isPartial: hasPartialItem,
+          productionSection: dto.productionSection || 'MACHINE_SHOP',
+          remarks: dto.remarks || null,
+          issueType: issueType,
+          issuedToEmployeeId: dto.issuedToEmployeeId || null,
+          issuedToMachineId: dto.issuedToMachineId || null,
+          createdBy: userId,
+          updatedBy: userId,
+        },
+      });
+
+      let totalConsumptionCost = 0;
+
+      // Process each issued item
+      for (const item of dto.items) {
+        const batch = await tx.inventoryBatch.findUniqueOrThrow({
+          where: { id: item.inventoryBatchId },
+        });
+
+        if (batch.availableQty.toNumber() < item.issuedQty) {
+          throw new BadRequestException(
+            `Insufficient available stock in Batch ${batch.batchNumber}. Available: ${batch.availableQty}, Requested: ${item.issuedQty}`
+          );
+        }
+
+        const consumptionValue = item.issuedQty * batch.unitCost.toNumber();
+        totalConsumptionCost += consumptionValue;
+
+        const remainingBatchQty = batch.availableQty.toNumber() - item.issuedQty;
+        const isItemPartial = item.issuedQty < batch.availableQty.toNumber();
+
+        // Create Issue Item
+        await tx.materialIssueItem.create({
+          data: {
+            issueHeaderId: issueHeader.id,
+            inventoryBatchId: item.inventoryBatchId,
+            issuedQty: item.issuedQty,
+            materialValue: consumptionValue,
+            remainingBatchQty: remainingBatchQty,
+            isPartial: isItemPartial,
+            remarks: item.remarks,
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        // Update Inventory Batch with atomic concurrency check
+        const updateBatchCount = await tx.inventoryBatch.updateMany({
+          where: {
+            id: item.inventoryBatchId,
+            availableQty: { gte: item.issuedQty },
+          },
+          data: {
+            currentQty: { decrement: item.issuedQty },
+            availableQty: { decrement: item.issuedQty },
+            issuedQty: { increment: item.issuedQty },
+            status: remainingBatchQty === 0 ? 'CONSUMED' : 'AVAILABLE',
+          },
+        });
+
+        if (updateBatchCount.count === 0) {
+          throw new BadRequestException(
+            `Insufficient stock or concurrent modification in Batch ${batch.batchNumber}.`
+          );
+        }
+
+        // Update Inventory Stock
+        const currentStock = await tx.inventoryStock.findFirst({
+          where: {
+            materialId: batch.materialId,
+            availableQuantity: { gte: item.issuedQty },
+          },
+        });
+
+        if (!currentStock || currentStock.availableQuantity.toNumber() < item.issuedQty) {
+          throw new BadRequestException(
+            `Insufficient stock for material ${batch.materialId}. Available: ${currentStock?.availableQuantity || 0}, Requested: ${item.issuedQty}`
+          );
+        }
+
+        await tx.inventoryStock.updateMany({
+          where: {
+            materialId: batch.materialId,
+            warehouseId: currentStock.warehouseId,
+            availableQuantity: { gte: item.issuedQty },
+          },
+          data: {
+            currentQuantity: { decrement: item.issuedQty },
+            availableQuantity: { decrement: item.issuedQty },
+          },
+        });
+
+        // Record Inventory Transaction (no projectId for consumable issue)
+        await tx.inventoryTransaction.create({
+          data: {
+            inventoryBatchId: batch.id,
+            movementType: InventoryMovementType.MATERIAL_ISSUE,
+            quantity: item.issuedQty,
+            referenceDocType: 'CONSUMABLE_ISSUE',
+            referenceDocId: issueHeader.id,
+            remarks: `Consumable issued to ${issueType === 'OPERATOR' ? 'Operator' : 'Machine'}. ${item.remarks || ''}`.trim(),
+            createdBy: userId,
+          },
+        });
+      }
+
+      return tx.materialIssueHeader.findUnique({
+        where: { id: issueHeader.id },
+        include: {
+          issuedToEmployee: true,
+          issuedToMachine: true,
+          items: {
+            include: {
+              inventoryBatch: { include: { material: true } },
+            },
+          },
+        },
+      });
+    });
+  }
+
   async getMaterialIssues(projectId: string) {
     const targetProjectId = await this.resolveProjectId(projectId);
     return this.prisma.materialIssueHeader.findMany({
@@ -310,7 +470,12 @@ export class MaterialIssuesService {
         },
         items: {
           include: {
-            inventoryBatch: { include: { material: true } },
+            inventoryBatch: {
+              include: {
+                material: true,
+                grnItem: { include: { poItem: true } },
+              },
+            },
           },
         },
       },
@@ -329,6 +494,8 @@ export class MaterialIssuesService {
     return this.prisma.materialIssueHeader.findMany({
       include: {
         project: true,
+        issuedToEmployee: true,
+        issuedToMachine: true,
         jobCard: {
           include: {
             routingOperation: { include: { operation: true } },
@@ -337,7 +504,12 @@ export class MaterialIssuesService {
         },
         items: {
           include: {
-            inventoryBatch: { include: { material: true } },
+            inventoryBatch: {
+              include: {
+                material: true,
+                grnItem: { include: { poItem: true } },
+              },
+            },
           },
         },
       },

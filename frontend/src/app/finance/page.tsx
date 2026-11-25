@@ -125,8 +125,8 @@ export default function FinancePage() {
                     flex items-center gap-1.5 px-3.5 py-1.5 rounded-[12px] text-xs font-medium
                     transition-all duration-150 cursor-pointer
                     ${activeTab === tab.key
-                      ? 'bg-zinc-900 text-white shadow-sm'
-                      : 'text-mute hover:text-ink hover:bg-zinc-100'
+                      ? 'bg-primary text-white shadow-subtle'
+                      : 'text-mute hover:text-ink hover:bg-canvas'
                     }
                   `}
                 >
@@ -388,7 +388,7 @@ function ProfitabilityTab({ data, loading, search, setSearch, sort, setSort }: a
               onClick={() => setSort(s)}
               className={`px-3 py-1 text-xs rounded-[12px] font-medium transition-colors cursor-pointer ${
                 sort === s
-                  ? 'bg-zinc-900 text-white'
+                  ? 'bg-primary text-white shadow-subtle'
                   : 'bg-canvas text-mute hover:text-ink border border-border-gray'
               }`}
             >

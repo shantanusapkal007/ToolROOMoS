@@ -610,18 +610,9 @@ export class PurchaseRequisitionsService {
       throw new NotFoundException(`Vendor with ID ${dto.vendorId} not found.`);
     }
 
-    // Determine target project (use PRN project or fallback to first active project if general stores)
-    let targetProjectId = prn.projectId;
-    if (!targetProjectId) {
-      const anyProject = await this.prisma.project.findFirst({
-        where: { status: 'ACTIVE' },
-        orderBy: { createdAt: 'desc' },
-      });
-      if (!anyProject) {
-        throw new BadRequestException('No active project found to associate with this Purchase Order.');
-      }
-      targetProjectId = anyProject.id;
-    }
+    // Determine target project (use PRN project if assigned, or null for general stores/consumables)
+    const targetProjectId = prn.projectId || null;
+    const isGeneralStoresPrn = !targetProjectId;
 
     // Generate unique official PO number
     const poNumber = await this.sequenceEngine.generateNextNumber('PO');
@@ -680,6 +671,8 @@ export class PurchaseRequisitionsService {
             detNo: prItem.detNo || '',
             materialGrade: prItem.materialGrade || '',
             partName: prItem.itemName || '',
+            toolNo: isGeneralStoresPrn ? 'GENERAL / CRIB' : (prn.project?.projectNumber || 'GENERAL'),
+            isGeneralStores: isGeneralStoresPrn,
           },
         });
 
@@ -717,6 +710,11 @@ export class PurchaseRequisitionsService {
             deliveryTerms: dto.deliveryTerms || 'Door Delivery / CIF Factory Gate',
             vendorName: vendor.vendorName,
             vendorAddress: vendor.address || '',
+            isGeneralStores: isGeneralStoresPrn,
+            isConsumable: isGeneralStoresPrn || prn.category === 'CONSUMABLES' || prn.category === 'TOOLING',
+            toolNo: isGeneralStoresPrn ? 'GENERAL / CRIB' : (prn.project?.projectNumber || 'GENERAL'),
+            department: prn.department || 'Stores / Tool Crib',
+            category: prn.category || 'TOOLING',
           },
           items: {
             create: poItemsData,

@@ -36,8 +36,9 @@ export const ProcurementService = {
     return res?.data !== undefined ? res.data : res;
   },
 
-  processGRN: async (projectId: string, data: any): Promise<any> => {
-    const res: any = await api.post(`projects/${projectId}/goods-receipts`, data);
+  processGRN: async (projectId: string | null | undefined, data: any): Promise<any> => {
+    const url = projectId && projectId !== 'global' ? `projects/${projectId}/goods-receipts` : `procurement/goods-receipts`;
+    const res: any = await api.post(url, data);
     return res?.data !== undefined ? res.data : res;
   },
 

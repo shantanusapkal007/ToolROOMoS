@@ -62,7 +62,7 @@ export class SubcontractingService {
           vendorId: dto.vendorId,
           challanNumber,
           documentNumber: dto.documentNumber,
-          expectedReturnDate: dto.expectedReturnDate ? new Date(dto.expectedReturnDate) : null,
+          expectedReturnDate: dto.expectedReturnDate && dto.expectedReturnDate.trim() !== '' ? new Date(dto.expectedReturnDate) : null,
           totalEstimatedCost,
           status: 'ISSUED',
           remarks: dto.remarks,
@@ -244,6 +244,256 @@ export class SubcontractingService {
         subcontractReceipts: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async cancelOrder(projectId: string, orderId: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+      const order = await tx.subcontractOrder.findFirst({
+        where: {
+          id: orderId,
+          projectId: targetProjectId,
+        },
+        include: {
+          items: {
+            include: {
+              inventoryBatch: {
+                include: {
+                  material: true,
+                  location: true,
+                },
+              },
+            },
+          },
+          subcontractReceipts: true,
+          vendor: true,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundException(`Subcontract Order '${orderId}' not found.`);
+      }
+
+      if (order.status === 'CANCELLED') {
+        throw new BadRequestException('Subcontract Order is already cancelled.');
+      }
+
+      if (order.subcontractReceipts && order.subcontractReceipts.length > 0) {
+        throw new BadRequestException(
+          'Cannot cancel a subcontract order that already has processed return receipts.',
+        );
+      }
+
+      if (order.status === 'CLOSED' || order.status === 'PARTIAL_RECEIPT') {
+        throw new BadRequestException(
+          'Cannot cancel a subcontract order that has been partially or fully received.',
+        );
+      }
+
+      // Revert stores material for items that issued stock
+      for (const item of order.items) {
+        const sentQty = Number(item.sentQty || 0);
+        if (item.inventoryBatchId && sentQty > 0) {
+          const batch = item.inventoryBatch;
+          if (batch) {
+            // Restore batch quantity
+            await tx.inventoryBatch.update({
+              where: { id: item.inventoryBatchId },
+              data: {
+                currentQty: { increment: sentQty },
+                availableQty: { increment: sentQty },
+                issuedQty: { decrement: sentQty },
+                status: 'AVAILABLE',
+              },
+            });
+
+            // Restore warehouse stock
+            let currentStock = null;
+            if (batch.location?.warehouseId) {
+              currentStock = await tx.inventoryStock.findUnique({
+                where: {
+                  materialId_warehouseId: {
+                    materialId: batch.materialId,
+                    warehouseId: batch.location.warehouseId,
+                  },
+                },
+              });
+            }
+
+            if (!currentStock) {
+              currentStock = await tx.inventoryStock.findFirst({
+                where: { materialId: batch.materialId },
+              });
+            }
+
+            if (currentStock) {
+              await tx.inventoryStock.update({
+                where: { id: currentStock.id },
+                data: {
+                  currentQuantity: { increment: sentQty },
+                  availableQuantity: { increment: sentQty },
+                },
+              });
+            }
+
+            // Create Inventory Transaction (Audit Trail)
+            await tx.inventoryTransaction.create({
+              data: {
+                projectId: targetProjectId,
+                inventoryBatchId: batch.id,
+                movementType: InventoryMovementType.MATERIAL_RETURN,
+                quantity: sentQty,
+                referenceDocType: 'SUBCONTRACT_CANCEL',
+                referenceDocId: order.id,
+                remarks: `Material returned to stores due to cancellation of Subcontract Challan ${order.challanNumber}`,
+                createdBy: userId,
+              },
+            });
+          }
+        }
+      }
+
+      // Update status to CANCELLED
+      const updatedOrder = await tx.subcontractOrder.update({
+        where: { id: order.id },
+        data: { status: 'CANCELLED' },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId: targetProjectId,
+          action: 'SUBCONTRACT_ORDER_CANCELLED',
+          description: `Subcontract Challan ${order.challanNumber} for ${order.vendor?.vendorName || 'Vendor'} was cancelled. Deducted store materials were restored.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return updatedOrder;
+    });
+  }
+
+  async deleteOrder(projectId: string, orderId: string, userId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const targetProjectId = await this.resolveProjectId(projectId, tx);
+      const order = await tx.subcontractOrder.findFirst({
+        where: {
+          id: orderId,
+          projectId: targetProjectId,
+        },
+        include: {
+          items: {
+            include: {
+              inventoryBatch: {
+                include: {
+                  material: true,
+                  location: true,
+                },
+              },
+            },
+          },
+          subcontractReceipts: true,
+          vendor: true,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundException(`Subcontract Order '${orderId}' not found.`);
+      }
+
+      if (order.subcontractReceipts && order.subcontractReceipts.length > 0) {
+        throw new BadRequestException(
+          'Cannot delete a subcontract order that already has processed return receipts.',
+        );
+      }
+
+      if (order.status === 'CLOSED' || order.status === 'PARTIAL_RECEIPT') {
+        throw new BadRequestException(
+          'Cannot delete a subcontract order that has been partially or fully received.',
+        );
+      }
+
+      // If the order was NOT already cancelled, restore the deducted stock before deleting
+      if (order.status !== 'CANCELLED') {
+        for (const item of order.items) {
+          const sentQty = Number(item.sentQty || 0);
+          if (item.inventoryBatchId && sentQty > 0) {
+            const batch = item.inventoryBatch;
+            if (batch) {
+              await tx.inventoryBatch.update({
+                where: { id: item.inventoryBatchId },
+                data: {
+                  currentQty: { increment: sentQty },
+                  availableQty: { increment: sentQty },
+                  issuedQty: { decrement: sentQty },
+                  status: 'AVAILABLE',
+                },
+              });
+
+              let currentStock = null;
+              if (batch.location?.warehouseId) {
+                currentStock = await tx.inventoryStock.findUnique({
+                  where: {
+                    materialId_warehouseId: {
+                      materialId: batch.materialId,
+                      warehouseId: batch.location.warehouseId,
+                    },
+                  },
+                });
+              }
+
+              if (!currentStock) {
+                currentStock = await tx.inventoryStock.findFirst({
+                  where: { materialId: batch.materialId },
+                });
+              }
+
+              if (currentStock) {
+                await tx.inventoryStock.update({
+                  where: { id: currentStock.id },
+                  data: {
+                    currentQuantity: { increment: sentQty },
+                    availableQuantity: { increment: sentQty },
+                  },
+                });
+              }
+
+              await tx.inventoryTransaction.create({
+                data: {
+                  projectId: targetProjectId,
+                  inventoryBatchId: batch.id,
+                  movementType: InventoryMovementType.MATERIAL_RETURN,
+                  quantity: sentQty,
+                  referenceDocType: 'SUBCONTRACT_DELETE',
+                  referenceDocId: order.id,
+                  remarks: `Material returned to stores due to deletion of Subcontract Challan ${order.challanNumber}`,
+                  createdBy: userId,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      // Delete line items first due to foreign key
+      await tx.subcontractOrderItem.deleteMany({
+        where: { subcontractOrderId: order.id },
+      });
+
+      await tx.subcontractOrder.delete({
+        where: { id: order.id },
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          projectId: targetProjectId,
+          action: 'SUBCONTRACT_ORDER_DELETED',
+          description: `Subcontract Challan ${order.challanNumber} for ${order.vendor?.vendorName || 'Vendor'} was deleted.`,
+          performedBy: userId || 'SYSTEM',
+        },
+      });
+
+      return { success: true };
     });
   }
 

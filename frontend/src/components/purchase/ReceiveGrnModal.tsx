@@ -7,7 +7,7 @@ import { ProcurementService } from "@/services/procurement.service";
 import { api } from "@/lib/api";
 
 interface ReceiveGrnModalProps {
-  projectId: string;
+  projectId?: string | null;
   po: any;
   onClose: () => void;
   onSuccess: () => void;
@@ -54,7 +54,7 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
         gst: Math.round((gst + Number.EPSILON) * 100) / 100,
         total,
         remarks: item.remarks || "",
-        partName: custom.materialGrade || item.material?.materialGrade || "Material"
+        partName: custom.materialGrade || item.materialGrade || item.material?.materialGrade || item.description || item.remarks || "Material"
       };
     });
   });
@@ -120,7 +120,11 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
         }))
       };
 
-      await api.post(`/projects/${projectId}/goods-receipts`, payload);
+      const url = projectId && projectId !== 'global'
+        ? `/projects/${projectId}/goods-receipts`
+        : `/procurement/goods-receipts`;
+
+      await api.post(url, payload);
       
       success("GRN Created Successfully", `Received material under ${grnNumber} and updated live inventory stock.`);
       onSuccess();
@@ -138,19 +142,19 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
       <div className="bg-white rounded-[12px] shadow-level-4 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center bg-canvas/50">
+        <div className="px-6 py-4 border-b border-border-gray flex justify-between items-center bg-canvas">
           <div>
-            <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
-              <PackageCheck className="w-5 h-5 text-emerald-600" />
+            <h2 className="text-body font-semibold text-ink flex items-center gap-2">
+              <PackageCheck className="w-5 h-5 text-semantic-success-dark" />
               Goods Receipt Note (GRN)
             </h2>
-            <p className="text-xs text-mute mt-1">
-              Receiving against PO: <span className="font-mono font-semibold text-zinc-700">{po.poNumber}</span>
+            <p className="text-small text-cool-gray mt-1">
+              Receiving against PO: <span className="font-mono font-semibold text-ink">{po.poNumber}</span>
             </p>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-zinc-200 rounded-[12px] text-mute transition-colors"
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[12px] text-cool-gray hover:text-ink transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -160,11 +164,11 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
         <div className="p-6 overflow-y-auto flex-1">
           {allFulfilled ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
-              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-semantic-success-subtle text-semantic-success-dark rounded-full flex items-center justify-center mb-4">
                 <PackageCheck className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-semibold text-ink">PO Fully Received</h3>
-              <p className="text-sm text-mute mt-2 max-w-md">
+              <h3 className="text-body font-semibold text-ink">PO Fully Received</h3>
+              <p className="text-small text-cool-gray mt-2 max-w-md">
                 All items in this Purchase Order have already been fully received into inventory. No further GRN can be created.
               </p>
             </div>
@@ -172,63 +176,63 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
             <form id="grn-form" onSubmit={handleSubmit} className="space-y-6">
               
               {/* Header Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-canvas rounded-[12px] border border-zinc-100">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-canvas rounded-[12px] border border-border-gray">
                 <div>
-                  <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">GRN Number *</label>
+                  <label className="block text-caption font-medium text-ink mb-1.5">GRN Number *</label>
                   <input
                     type="text"
                     required
                     value={grnNumber}
                     onChange={(e) => setGrnNumber(e.target.value)}
-                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-caption text-ink focus:border-semantic-success-dark focus:ring-1 focus:ring-semantic-success-dark"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">Supplier Challan No.</label>
+                  <label className="block text-caption font-medium text-ink mb-1.5">Supplier Challan No.</label>
                   <input
                     type="text"
                     value={supplierChallan}
                     onChange={(e) => setSupplierChallan(e.target.value)}
                     placeholder="e.g. CH-2024"
-                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-caption text-ink focus:border-semantic-success-dark focus:ring-1 focus:ring-semantic-success-dark"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-mute uppercase tracking-wider mb-1.5">Remarks</label>
+                  <label className="block text-caption font-medium text-ink mb-1.5">Remarks</label>
                   <input
                     type="text"
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
                     placeholder="Condition notes..."
-                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-sm text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-white border border-border-gray rounded-[12px] px-3 py-2 text-caption text-ink focus:border-semantic-success-dark focus:ring-1 focus:ring-semantic-success-dark"
                   />
                 </div>
               </div>
 
               {/* Items Table */}
               <div>
-                <h3 className="text-sm font-semibold text-ink mb-3">Line Items Pending Receipt</h3>
-                <div className="border border-border-gray rounded-[12px] overflow-hidden shadow-sm">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-canvas text-mute font-semibold uppercase tracking-wider border-b border-border-gray">
+                <h3 className="text-caption font-semibold text-ink mb-3">Line Items Pending Receipt</h3>
+                <div className="border border-border-gray rounded-[12px] overflow-hidden shadow-subtle">
+                  <table className="w-full text-left text-caption border-collapse">
+                    <thead className="bg-canvas text-cool-gray font-semibold uppercase tracking-wider text-small border-b border-border-gray">
                       <tr>
                         <th className="px-3 py-2.5">Material</th>
                         <th className="px-3 py-2.5 text-center">Pending Qty</th>
                         <th className="px-3 py-2.5">Receive Qty</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100 bg-white">
+                    <tbody className="divide-y divide-border-gray bg-white">
                       {items.map((item: any, idx: number) => {
                         if (item.remainingQty <= 0) return null; // Skip fulfilled items
                         
                         return (
-                          <tr key={idx} className="hover:bg-canvas/50">
+                          <tr key={idx} className="hover:bg-canvas transition-colors">
                             <td className="px-3 py-3">
                               <div className="font-semibold text-ink">{item.partName}</div>
-                              <div className="text-[10px] text-mute font-mono mt-0.5">{item.length}×{item.width}×{item.height}</div>
+                              <div className="text-small text-cool-gray font-mono mt-0.5">{item.length}×{item.width}×{item.height}</div>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex items-center justify-center px-2 py-1 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200">
+                              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-semibold border border-amber-200 dark:border-amber-800 text-small font-mono">
                                 {item.remainingQty}
                               </span>
                             </td>
@@ -240,7 +244,7 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
                                 step="any"
                                 value={item.acceptedQty}
                                 onChange={(e) => updateItem(idx, 'acceptedQty', Number(e.target.value))}
-                                className="w-24 bg-white border border-border-gray rounded-[12px] px-2 py-1.5 text-sm font-semibold text-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                className="w-24 bg-white border border-border-gray rounded-[8px] px-2 py-1 text-caption font-semibold text-ink focus:border-semantic-success-dark focus:ring-1 focus:ring-semantic-success-dark"
                               />
                             </td>
                           </tr>
@@ -256,11 +260,11 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-zinc-100 bg-canvas flex justify-end gap-3 shrink-0">
+        <div className="px-6 py-4 border-t border-border-gray bg-canvas flex justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-white border border-border-gray text-zinc-700 font-semibold text-sm rounded-[12px] hover:bg-canvas transition-colors shadow-subtle"
+            className="px-4 py-2 bg-white border border-border-gray text-ink font-semibold text-caption rounded-[12px] hover:bg-canvas transition-colors shadow-subtle"
           >
             Cancel
           </button>
@@ -269,7 +273,7 @@ export function ReceiveGrnModal({ projectId, po, onClose, onSuccess }: ReceiveGr
               type="submit"
               form="grn-form"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-[12px] shadow-subtle transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-5 py-2 bg-semantic-success-dark hover:opacity-90 text-white font-semibold text-caption rounded-[12px] shadow-subtle transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>Processing...</>

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/ui/Toast';
+import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api';
 import { Modal } from '@/components/ui/Modal';
 
@@ -255,7 +256,7 @@ export default function MonthlyPayrollPage() {
         />
 
         {/* Editable Month Span Bar */}
-        <div className="bg-white/60 dark:bg-zinc-900/60 border border-border-gray rounded-[12px] p-5 mb-8 backdrop-blur-xl shadow-elevation relative overflow-hidden">
+        <div className="bg-white/60 dark:bg-[#151824] border border-border-gray rounded-[12px] p-5 mb-8 backdrop-blur-xl shadow-elevation relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-emerald-500/10 via-blue-500/5 to-transparent pointer-events-none" />
           
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 relative z-10">
@@ -275,16 +276,16 @@ export default function MonthlyPayrollPage() {
 
             {/* Editable Controls */}
             <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-              <div className="flex bg-black/5 p-1 rounded-[12px] border border-border-gray">
+              <div className="flex bg-canvas p-1 rounded-[12px] border border-border-gray">
                 <button
                   onClick={() => setDateRangeType('month')}
-                  className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all ${dateRangeType === 'month' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600 hover:text-ink'}`}
+                  className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${dateRangeType === 'month' ? 'bg-primary text-white shadow-subtle' : 'text-cool-gray hover:text-ink'}`}
                 >
                   Month Picker
                 </button>
                 <button
                   onClick={() => setDateRangeType('custom')}
-                  className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all ${dateRangeType === 'custom' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600 hover:text-ink'}`}
+                  className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${dateRangeType === 'custom' ? 'bg-primary text-white shadow-subtle' : 'text-cool-gray hover:text-ink'}`}
                 >
                   Custom Range
                 </button>
@@ -737,12 +738,13 @@ export default function MonthlyPayrollPage() {
 
               {/* Modal Footer */}
               <div className="pt-4 border-t border-border-gray flex justify-end">
-                <button
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setSelectedEmployeeDetail(null)}
-                  className="px-5 py-2 bg-zinc-900 text-white rounded-[12px] text-xs font-semibold hover:bg-zinc-800 transition-colors cursor-pointer"
                 >
                   Close Work Logs
-                </button>
+                </Button>
               </div>
 
             </div>

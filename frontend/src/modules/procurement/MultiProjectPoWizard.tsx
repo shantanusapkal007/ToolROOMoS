@@ -397,8 +397,8 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
       const payload = {
         vendorName,
         vendorAddress,
-        poNumber: poNumber || `PUR/26-27/${Math.floor(10 + Math.random() * 90)}`,
-        rmSlipNo,
+        poNumber: poNumber.trim() || undefined,
+        rmSlipNo: rmSlipNo.trim() || undefined,
         expectedDeliveryDate: poDate,
         deliveryTerms,
         termsAndConditions: finalTerms,
@@ -434,9 +434,7 @@ export function MultiProjectPoWizard({ onSuccess }: MultiProjectPoWizardProps) {
       onSuccess?.();
     } catch (err: any) {
       console.error("Save PO error:", err);
-      setSavedSuccess(true);
-      success("PO Issued!", `Purchase Order ${poNumber || 'PUR/26-27'} generated successfully.`);
-      onSuccess?.();
+      error("Failed to Save PO", err?.response?.data?.message || err?.message || "Failed to save Purchase Order to database.");
     } finally {
       setIsSaving(false);
     }

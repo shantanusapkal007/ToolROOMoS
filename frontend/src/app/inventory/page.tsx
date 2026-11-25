@@ -24,9 +24,37 @@ import { exportGrnToExcel } from "@/modules/procurement/grnExcelExporter";
 import { exportMaterialIssueToExcel } from "@/modules/production/materialIssueExcelExporter";
 
 export default function InventoryPage() {
+  const getBatchDisplayName = (batch: any): string => {
+    const poCustom = (batch?.grnItem?.poItem?.customFields as any) || {};
+    if (poCustom.materialGrade !== undefined) {
+      return (
+        poCustom.partName ||
+        poCustom.materialGrade ||
+        batch?.grnItem?.remarks ||
+        batch?.material?.materialGrade ||
+        batch?.material?.materialCode ||
+        'Material'
+      );
+    }
+    return (
+      batch?.grnItem?.remarks ||
+      batch?.material?.materialGrade ||
+      batch?.material?.materialName ||
+      batch?.material?.materialCode ||
+      'Material'
+    );
+  };
+
+  const formatShortBatch = (batchNumber?: string): string => {
+    if (!batchNumber) return '';
+    // Condense long generated batch IDs like BAT-GRN-477038-d702dfe2-1795585479087 -> BAT-GRN-477038
+    const match = batchNumber.match(/^(BAT-GRN-\d+)/);
+    return match ? match[1] : batchNumber;
+  };
   const { data: ledger = [], isLoading: isLedgerLoading, refetch: refetchLedger } = useInventoryLedger();
   const { data: materials = [] } = useMasterData('materials');
   const { data: employees = [] } = useMasterData('employees');
+  const { data: machines = [] } = useMasterData('machines');
   const { data: projects = [] } = useProjects();
 
   const [activeTab, setActiveTab] = useState<'grn' | 'ledger' | 'issues'>('ledger');
@@ -43,6 +71,7 @@ export default function InventoryPage() {
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
   const [isIssueMaterialOpen, setIsIssueMaterialOpen] = useState(false);
   const [viewingGrnDetails, setViewingGrnDetails] = useState<any | null>(null);
+  const [viewingIssueDetails, setViewingIssueDetails] = useState<any | null>(null);
   const [printIssueData, setPrintIssueData] = useState<any | null>(null);
 
   // Forms State
@@ -54,10 +83,12 @@ export default function InventoryPage() {
   });
 
   const [issueForm, setIssueForm] = useState({
+    issueType: 'PROJECT' as 'PROJECT' | 'OPERATOR' | 'MACHINE',
     projectId: '',
     issueNumber: `ISS-${Date.now().toString().slice(-6)}`,
     productionSection: 'MACHINE_SHOP',
     issuedToEmployeeId: '',
+    issuedToMachineId: '',
     issuedTo: '',
     remarks: '',
     expectedManufactureQty: '' as string | number,
@@ -118,10 +149,12 @@ export default function InventoryPage() {
 
   const handleOpenIssueDrawer = (batch?: any) => {
     setIssueForm({
+      issueType: 'PROJECT',
       projectId: projects[0]?.id || '',
       issueNumber: `ISS-${Date.now().toString().slice(-6)}`,
       productionSection: 'MACHINE_SHOP',
       issuedToEmployeeId: '',
+      issuedToMachineId: '',
       issuedTo: '',
       remarks: batch ? `Material issue from batch ${batch.batchNumber}` : '',
       expectedManufactureQty: '',
@@ -132,8 +165,19 @@ export default function InventoryPage() {
 
   const handleIssueMaterial = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!issueForm.projectId) {
+
+    const isProjectIssue = issueForm.issueType === 'PROJECT';
+
+    if (isProjectIssue && !issueForm.projectId) {
       return showToast('error', 'Please select a target project for material issuing.');
+    }
+
+    if (issueForm.issueType === 'OPERATOR' && !issueForm.issuedToEmployeeId) {
+      return showToast('error', 'Please select an operator / employee.');
+    }
+
+    if (issueForm.issueType === 'MACHINE' && !issueForm.issuedToMachineId) {
+      return showToast('error', 'Please select a machine.');
     }
 
     if (!issueForm.productionSection) {
@@ -162,10 +206,13 @@ export default function InventoryPage() {
     }
 
     try {
-      await ProductionService.issueMaterial(issueForm.projectId, {
+      const payload = {
         issueNumber: issueForm.issueNumber,
         productionSection: issueForm.productionSection,
         remarks: issueForm.remarks,
+        issueType: issueForm.issueType,
+        ...(issueForm.issuedToEmployeeId ? { issuedToEmployeeId: issueForm.issuedToEmployeeId } : {}),
+        ...(issueForm.issuedToMachineId ? { issuedToMachineId: issueForm.issuedToMachineId } : {}),
         ...(issueForm.productionSection === 'PRESS_SHOP' && issueForm.expectedManufactureQty
           ? { expectedManufactureQty: Number(issueForm.expectedManufactureQty) }
           : {}),
@@ -174,7 +221,13 @@ export default function InventoryPage() {
           issuedQty: Number(i.qty),
           remarks: i.remarks
         }))
-      });
+      };
+
+      if (isProjectIssue) {
+        await ProductionService.issueMaterial(issueForm.projectId, payload);
+      } else {
+        await ProductionService.issueConsumableMaterial(payload);
+      }
       showToast('success', 'Material issued successfully in inventory ledger!');
       setIsIssueMaterialOpen(false);
       refetchLedger();
@@ -304,7 +357,7 @@ export default function InventoryPage() {
               Inventory & Stores Management
             </h1>
             <p className="text-body text-silver-blue mt-1">
-              End-to-end material flow control: Goods Receipts (GRN) In $\rightarrow$ Live Stock Ledger $\rightarrow$ Material Issues Out.
+              End-to-end material flow control: Goods Receipts (GRN) In → Live Stock Ledger → Material Issues Out.
             </p>
           </div>
 
@@ -475,7 +528,7 @@ export default function InventoryPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse font-sans">
                   <thead>
-                    <tr className="bg-canvas text-ink/70 font-semibold border-b border-border-gray text-[11px] uppercase tracking-wider">
+                    <tr className="bg-canvas text-ink/70 font-semibold border-b border-border-gray text-[11px] uppercase tracking-wider whitespace-nowrap">
                       <th className="p-3.5">GRN #</th>
                       <th className="p-3.5">Project</th>
                       <th className="p-3.5">PO Number</th>
@@ -489,37 +542,43 @@ export default function InventoryPage() {
                   <tbody className="divide-y divide-border-gray">
                     {filteredGrns.map((grn: any) => (
                       <tr key={grn.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="p-3.5 font-mono font-bold text-primary">
+                        <td className="p-3.5 font-mono font-bold text-primary whitespace-nowrap">
                           {grn.grnNumber}
                         </td>
-                        <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 border border-border-gray text-ink">
-                            {grn.project?.projectNumber || 'PROJECT'}
-                          </span>
+                        <td className="p-3.5 whitespace-nowrap">
+                          {grn.project?.projectNumber ? (
+                            <span className="inline-block whitespace-nowrap px-2 py-0.5 rounded text-small font-semibold bg-canvas border border-border-gray text-ink">
+                              {grn.project.projectNumber}
+                            </span>
+                          ) : (
+                            <span className="inline-block whitespace-nowrap px-2 py-0.5 rounded text-small font-semibold bg-semantic-warning-subtle border border-semantic-warning/20 text-semantic-warning-dark">
+                              GENERAL
+                            </span>
+                          )}
                         </td>
-                        <td className="p-3.5 font-mono text-ink">
+                        <td className="p-3.5 font-mono text-ink whitespace-nowrap">
                           {grn.poHeader?.poNumber || '-'}
                         </td>
                         <td className="p-3.5">
-                          <div className="font-semibold text-ink">{grn.poHeader?.vendor?.vendorName || 'Primary Supplier'}</div>
-                          <div className="text-[10px] text-mute">{grn.supplierChallan ? `Challan: ${grn.supplierChallan}` : 'Direct Receipt'}</div>
+                          <div className="font-semibold text-ink whitespace-nowrap">{grn.poHeader?.vendor?.vendorName || 'Primary Supplier'}</div>
+                          <div className="text-[10px] text-mute whitespace-nowrap">{grn.supplierChallan ? `Challan: ${grn.supplierChallan}` : 'Direct Receipt'}</div>
                         </td>
-                        <td className="p-3.5 text-center font-mono font-semibold text-ink">
+                        <td className="p-3.5 text-center font-mono font-semibold text-ink whitespace-nowrap">
                           {grn.items?.length || 0}
                         </td>
-                        <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                        <td className="p-3.5 whitespace-nowrap">
+                          <span className="inline-block whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
                             {grn.status || 'COMPLETED'}
                           </span>
                         </td>
-                        <td className="p-3.5 font-mono text-mute text-[11px]">
+                        <td className="p-3.5 font-mono text-mute text-[11px] whitespace-nowrap">
                           {new Date(grn.createdAt).toLocaleDateString('en-GB')}
                         </td>
-                        <td className="p-3.5 text-right">
+                        <td className="p-3.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => setViewingGrnDetails(grn)}
-                              className="p-1.5 rounded-[10px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 text-[10px] uppercase font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                              className="px-2.5 py-1.5 rounded-[10px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 text-[10px] uppercase font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
                               title="View Full GRN Details"
                             >
                               <Eye className="w-3.5 h-3.5" />
@@ -527,7 +586,7 @@ export default function InventoryPage() {
                             </button>
                             <button
                               onClick={() => handleExportGrnRow(grn)}
-                              className="p-1.5 rounded-[10px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 text-[10px] uppercase font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                              className="px-2.5 py-1.5 rounded-[10px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 text-[10px] uppercase font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
                               title="Export GRN Excel"
                             >
                               <Download className="w-3.5 h-3.5" />
@@ -559,7 +618,7 @@ export default function InventoryPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs font-sans">
                   <thead>
-                    <tr className="bg-canvas text-ink/70 font-semibold border-b border-border-gray text-[11px] uppercase tracking-wider">
+                    <tr className="bg-canvas text-ink/70 font-semibold border-b border-border-gray text-[11px] uppercase tracking-wider whitespace-nowrap">
                       <th className="p-3.5">Material & Batch</th>
                       <th className="p-3.5">Warehouse & Location</th>
                       <th className="p-3.5 text-right">Available Qty</th>
@@ -582,7 +641,10 @@ export default function InventoryPage() {
                               </div>
                               <div>
                                 <div className="font-semibold text-ink text-sm">
-                                  {batch.material?.materialCode} <span className="text-mute font-normal">· {batch.material?.materialGrade || batch.material?.materialName}</span>
+                                  {getBatchDisplayName(batch)}
+                                  {batch.material?.materialCode && !(batch.grnItem?.poItem?.customFields as any)?.partName && (
+                                    <span className="text-mute font-normal"> · {batch.material.materialCode}</span>
+                                  )}
                                 </div>
                                 <div className="text-[10px] text-zinc-400 font-mono uppercase flex items-center gap-1.5 mt-0.5">
                                   <span className="font-bold text-zinc-600">{batch.batchNumber}</span>
@@ -653,12 +715,11 @@ export default function InventoryPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse font-sans">
                   <thead>
-                    <tr className="bg-canvas text-ink/70 font-semibold border-b border-border-gray text-[11px] uppercase tracking-wider">
+                    <tr className="bg-canvas text-ink/70 font-semibold border-b border-border-gray text-[11px] uppercase tracking-wider whitespace-nowrap">
                       <th className="p-3.5">Issue Slip #</th>
-                      <th className="p-3.5">Project</th>
+                      <th className="p-3.5">Target</th>
                       <th className="p-3.5">Production Section</th>
-                      <th className="p-3.5">Issued To</th>
-                      <th className="p-3.5 text-center">Items Count</th>
+                      <th className="p-3.5">Issued Items</th>
                       <th className="p-3.5">Status</th>
                       <th className="p-3.5">Date</th>
                       <th className="p-3.5 text-right">Actions</th>
@@ -667,38 +728,88 @@ export default function InventoryPage() {
                   <tbody className="divide-y divide-border-gray">
                     {filteredIssues.map((issue: any) => (
                       <tr key={issue.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="p-3.5 font-mono font-bold text-purple-700">
+                        <td className="p-3.5 font-mono font-bold text-purple-700 whitespace-nowrap">
                           {issue.issueNumber}
                         </td>
-                        <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 border border-border-gray text-ink">
-                            {issue.project?.projectNumber || 'PROJECT'}
-                          </span>
+                        <td className="p-3.5 whitespace-nowrap">
+                          {issue.issueType === 'OPERATOR' ? (
+                            <span className="inline-flex items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded text-small font-semibold bg-primary-subtle border border-primary/20 text-primary-dark">
+                              👷 {issue.issuedToEmployee?.name || 'Operator'}
+                            </span>
+                          ) : issue.issueType === 'MACHINE' ? (
+                            <span className="inline-flex items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded text-small font-semibold bg-semantic-warning-subtle border border-semantic-warning/20 text-semantic-warning-dark">
+                              ⚙️ {issue.issuedToMachine?.machineName || 'Machine'}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-small font-semibold bg-canvas border border-border-gray text-ink">
+                              {issue.project?.projectNumber || 'GENERAL'}
+                            </span>
+                          )}
                         </td>
-                        <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wider">
-                            {issue.productionSection?.replace('_', ' ')}
-                          </span>
+                        <td className="p-3.5 whitespace-nowrap">
+                          {issue.productionSection ? (
+                            <span className="inline-block whitespace-nowrap px-2 py-0.5 rounded text-small font-semibold bg-semantic-warning-subtle text-semantic-warning-dark border border-semantic-warning/20 uppercase tracking-wider">
+                              {issue.productionSection.replace('_', ' ')}
+                            </span>
+                          ) : (
+                            <span className="text-mute">—</span>
+                          )}
                         </td>
-                        <td className="p-3.5 font-medium text-ink">
-                          {issue.issuedTo || 'Shopfloor Operator'}
+                        <td className="p-3.5 max-w-[260px]">
+                          {(issue.items || []).length === 0 ? (
+                            <span className="text-mute">No items</span>
+                          ) : (
+                            <div className="space-y-1">
+                              {(issue.items || []).slice(0, 2).map((item: any, idx: number) => {
+                                const mat = item.inventoryBatch?.material;
+                                const matLabel = getBatchDisplayName(item.inventoryBatch);
+                                const uom = mat?.defaultUom || 'NOS';
+                                const batchNo = item.inventoryBatch?.batchNumber;
+                                return (
+                                  <div key={item.id || idx} className="space-y-0.5">
+                                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                      <span className="font-semibold text-ink truncate max-w-[160px]" title={matLabel}>{matLabel}</span>
+                                      <span className="px-1.5 py-0.5 rounded bg-canvas border border-border-gray font-mono text-ink font-semibold shrink-0">
+                                        {Number(item.issuedQty)} {uom}
+                                      </span>
+                                    </div>
+                                    {batchNo && (
+                                      <div className="text-mute font-mono truncate max-w-[240px]" title={batchNo}>
+                                        {batchNo}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                              {(issue.items || []).length > 2 && (
+                                <div className="text-small text-primary font-semibold whitespace-nowrap">
+                                  +{(issue.items || []).length - 2} more item(s)
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </td>
-                        <td className="p-3.5 text-center font-mono font-semibold text-ink">
-                          {issue.items?.length || 0}
-                        </td>
-                        <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                        <td className="p-3.5 whitespace-nowrap">
+                          <span className="inline-block whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
                             {issue.status || 'ISSUED'}
                           </span>
                         </td>
-                        <td className="p-3.5 font-mono text-mute text-[11px]">
+                        <td className="p-3.5 font-mono text-mute text-[11px] whitespace-nowrap">
                           {new Date(issue.createdAt).toLocaleDateString('en-GB')}
                         </td>
-                        <td className="p-3.5 text-right">
+                        <td className="p-3.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
+                              onClick={() => setViewingIssueDetails(issue)}
+                              className="px-2.5 py-1.5 rounded-[10px] bg-primary-subtle hover:bg-primary-subtle/80 text-primary border border-primary/20 text-small uppercase font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+                              title="View Issued Items Details"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View</span>
+                            </button>
+                            <button
                               onClick={() => setPrintIssueData(issue)}
-                              className="p-1.5 rounded-[10px] bg-canvas hover:bg-white text-ink border border-border-gray text-[10px] uppercase font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                              className="px-2.5 py-1.5 rounded-[10px] bg-canvas hover:bg-white text-ink border border-border-gray text-small uppercase font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
                               title="Print Material Issue Slip"
                             >
                               <Printer className="w-3.5 h-3.5" />
@@ -706,7 +817,7 @@ export default function InventoryPage() {
                             </button>
                             <button
                               onClick={() => handleExportIssueRow(issue)}
-                              className="p-1.5 rounded-[10px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 text-[10px] uppercase font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                              className="px-2.5 py-1.5 rounded-[10px] bg-semantic-success-subtle hover:bg-semantic-success-subtle/80 text-semantic-success-dark border border-semantic-success/20 text-small uppercase font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
                               title="Export Issue Excel"
                             >
                               <Download className="w-3.5 h-3.5" />
@@ -809,6 +920,124 @@ export default function InventoryPage() {
         </div>
       )}
 
+      {/* VIEW MATERIAL ISSUE DETAILS MODAL */}
+      {viewingIssueDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[12px] shadow-level-4 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-border-gray flex justify-between items-center bg-canvas/50">
+              <div>
+                <h2 className="text-body font-semibold text-ink flex items-center gap-2">
+                  <PackageMinus className="w-5 h-5 text-primary" />
+                  <span>Material Issue Details: {viewingIssueDetails.issueNumber}</span>
+                </h2>
+                <p className="text-small text-cool-gray mt-0.5">
+                  Date: {new Date(viewingIssueDetails.createdAt).toLocaleDateString('en-GB')} · Status: <span className="font-semibold text-ink">{viewingIssueDetails.status || 'COMPLETED'}</span>
+                </p>
+              </div>
+              <button onClick={() => setViewingIssueDetails(null)} className="p-2 hover:bg-canvas rounded-[10px] text-cool-gray hover:text-ink transition-colors cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#f8f9fc] dark:bg-[#181b29] border border-border-gray rounded-[14px] p-5 shadow-subtle text-small">
+                <div>
+                  <span className="text-cool-gray font-medium">Issue Type:</span>
+                  <p className="font-semibold text-ink mt-0.5">
+                    {viewingIssueDetails.issueType === 'OPERATOR'
+                      ? 'Operator / Employee'
+                      : viewingIssueDetails.issueType === 'MACHINE'
+                        ? 'Machine'
+                        : 'Project'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-cool-gray font-medium">Issued To:</span>
+                  <p className="font-semibold text-ink mt-0.5">
+                    {viewingIssueDetails.issueType === 'OPERATOR'
+                      ? `${viewingIssueDetails.issuedToEmployee?.employeeCode || ''} ${viewingIssueDetails.issuedToEmployee?.name || 'Operator'}`.trim()
+                      : viewingIssueDetails.issueType === 'MACHINE'
+                        ? `${viewingIssueDetails.issuedToMachine?.machineCode || ''} ${viewingIssueDetails.issuedToMachine?.machineName || 'Machine'}`.trim()
+                        : `${viewingIssueDetails.project?.projectNumber || 'PROJECT'}${viewingIssueDetails.project?.name ? ` — ${viewingIssueDetails.project.name}` : ''}`}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-cool-gray font-medium">Production Section:</span>
+                  <p className="font-semibold text-ink mt-0.5">
+                    {viewingIssueDetails.productionSection ? viewingIssueDetails.productionSection.replace('_', ' ') : '—'}
+                  </p>
+                </div>
+                {viewingIssueDetails.remarks && (
+                  <div className="sm:col-span-3 pt-2 border-t border-border-gray">
+                    <span className="text-cool-gray font-medium">Remarks:</span>
+                    <p className="text-ink mt-0.5">{viewingIssueDetails.remarks}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border border-border-gray rounded-[10px] overflow-hidden">
+                <table className="w-full text-left text-small border-collapse font-sans">
+                  <thead>
+                    <tr className="bg-canvas text-ink font-semibold border-b border-border-gray">
+                      <th className="p-3">#</th>
+                      <th className="p-3">Material / Grade</th>
+                      <th className="p-3">Batch #</th>
+                      <th className="p-3 text-right">Issued Qty</th>
+                      <th className="p-3 text-right">Unit Cost (₹)</th>
+                      <th className="p-3 text-right">Total Value (₹)</th>
+                      <th className="p-3">Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-gray">
+                    {(viewingIssueDetails.items || []).map((item: any, idx: number) => {
+                      const mat = item.inventoryBatch?.material;
+                      const matName = getBatchDisplayName(item.inventoryBatch);
+                      const uom = mat?.defaultUom || 'NOS';
+                      return (
+                        <tr key={item.id || idx} className="hover:bg-canvas/50">
+                          <td className="p-3 font-mono text-cool-gray">{idx + 1}</td>
+                          <td className="p-3">
+                            <div className="font-semibold text-ink">{matName}</div>
+                            {mat?.materialCode && (
+                              <div className="text-small text-cool-gray font-mono">{mat.materialCode}</div>
+                            )}
+                          </td>
+                          <td className="p-3 font-mono text-ink">{item.inventoryBatch?.batchNumber || '—'}</td>
+                          <td className="p-3 text-right font-mono font-semibold text-ink">
+                            {Number(item.issuedQty)} {uom}
+                          </td>
+                          <td className="p-3 text-right font-mono text-cool-gray">
+                            ₹{Number(item.inventoryBatch?.unitCost || 0).toFixed(2)}
+                          </td>
+                          <td className="p-3 text-right font-mono font-semibold text-primary">
+                            ₹{Number(item.materialValue || 0).toFixed(2)}
+                          </td>
+                          <td className="p-3 text-cool-gray">{item.remarks || '—'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="px-6 py-3 border-t border-border-gray bg-canvas/50 flex justify-end gap-2">
+              <Button variant="white" onClick={() => handleExportIssueRow(viewingIssueDetails)}>
+                <Download className="w-4 h-4 mr-1.5" />
+                <span>Export Excel</span>
+              </Button>
+              <Button variant="white" onClick={() => { setPrintIssueData(viewingIssueDetails); setViewingIssueDetails(null); }}>
+                <Printer className="w-4 h-4 mr-1.5" />
+                <span>Print Slip</span>
+              </Button>
+              <Button variant="primary" onClick={() => setViewingIssueDetails(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PRINT MATERIAL ISSUE SLIP MODAL */}
       {printIssueData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
@@ -824,7 +1053,7 @@ export default function InventoryPage() {
                 issueNumber: printIssueData.issueNumber || "ISS-001",
                 jobCardNumber: printIssueData.jobCard?.jobCardNumber || "JC-GENERAL",
                 operationName: printIssueData.productionSection || "MACHINE_SHOP",
-                operatorName: printIssueData.issuedTo || "General Operator",
+                operatorName: printIssueData.issuedToEmployee?.name || printIssueData.issuedToMachine?.machineName || printIssueData.issuedTo || "General Operator",
                 date: new Date(printIssueData.createdAt || Date.now()).toLocaleDateString("en-GB"),
                 remarks: printIssueData.remarks || "",
                 items: (printIssueData.items || []).map((i: any) => ({
@@ -956,24 +1185,110 @@ export default function InventoryPage() {
               </div>
 
               <form onSubmit={handleIssueMaterial} className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Target Project</label>
-                    <select 
-                      value={issueForm.projectId}
-                      onChange={(e) => setIssueForm({ ...issueForm, projectId: e.target.value })}
-                      required
-                      className="w-full border border-border-gray rounded-[10px] px-3.5 py-2 text-xs focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
+                {/* Issue Type Toggle */}
+                <div>
+                  <label className="block text-caption font-medium text-ink mb-2">Issue Type</label>
+                  <div className="flex gap-1 p-1 bg-canvas rounded-[10px] border border-border-gray">
+                    <button
+                      type="button"
+                      onClick={() => setIssueForm({ ...issueForm, issueType: 'PROJECT', issuedToEmployeeId: '', issuedToMachineId: '' })}
+                      className={`flex-1 px-3 py-2 rounded-[8px] text-small font-semibold transition-all cursor-pointer ${
+                        issueForm.issueType === 'PROJECT'
+                          ? 'bg-white text-ink shadow-subtle border border-border-gray'
+                          : 'text-cool-gray hover:text-ink'
+                      }`}
                     >
-                      <option value="">-- Select Project --</option>
-                      {projects.map((p: any) => (
-                        <option key={p.id} value={p.id}>{p.projectNumber} - {p.name}</option>
-                      ))}
-                    </select>
+                      🏭 Issue to Project
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIssueForm({ ...issueForm, issueType: 'OPERATOR', projectId: '', issuedToMachineId: '' })}
+                      className={`flex-1 px-3 py-2 rounded-[8px] text-small font-semibold transition-all cursor-pointer ${
+                        issueForm.issueType === 'OPERATOR'
+                          ? 'bg-white text-ink shadow-subtle border border-border-gray'
+                          : 'text-cool-gray hover:text-ink'
+                      }`}
+                    >
+                      👷 Issue to Operator
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIssueForm({ ...issueForm, issueType: 'MACHINE', projectId: '', issuedToEmployeeId: '' })}
+                      className={`flex-1 px-3 py-2 rounded-[8px] text-small font-semibold transition-all cursor-pointer ${
+                        issueForm.issueType === 'MACHINE'
+                          ? 'bg-white text-ink shadow-subtle border border-border-gray'
+                          : 'text-cool-gray hover:text-ink'
+                      }`}
+                    >
+                      ⚙️ Issue to Machine
+                    </button>
                   </div>
+                  <p className="text-small text-mute mt-1">
+                    {issueForm.issueType === 'PROJECT'
+                      ? 'Raw materials issued to a specific project — costs booked to project WIP.'
+                      : issueForm.issueType === 'OPERATOR'
+                        ? 'Consumable items (cutting tools, inserts, coolants) issued to an operator.'
+                        : 'Consumable items issued to a machine — no project cost booking.'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Conditional: Project Selector (only for PROJECT issue type) */}
+                  {issueForm.issueType === 'PROJECT' && (
+                    <div>
+                      <label className="block text-caption font-medium text-ink mb-1.5">Target Project</label>
+                      <select 
+                        value={issueForm.projectId}
+                        onChange={(e) => setIssueForm({ ...issueForm, projectId: e.target.value })}
+                        required
+                        className="w-full border border-border-gray rounded-[10px] px-3.5 py-2 text-small focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
+                      >
+                        <option value="">-- Select Project --</option>
+                        {projects.map((p: any) => (
+                          <option key={p.id} value={p.id}>{p.projectNumber} - {p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Conditional: Operator Selector (only for OPERATOR issue type) */}
+                  {issueForm.issueType === 'OPERATOR' && (
+                    <div>
+                      <label className="block text-caption font-medium text-ink mb-1.5">Operator / Employee</label>
+                      <select 
+                        value={issueForm.issuedToEmployeeId}
+                        onChange={(e) => setIssueForm({ ...issueForm, issuedToEmployeeId: e.target.value })}
+                        required
+                        className="w-full border border-border-gray rounded-[10px] px-3.5 py-2 text-small focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
+                      >
+                        <option value="">-- Select Operator --</option>
+                        {employees.map((emp: any) => (
+                          <option key={emp.id} value={emp.id}>{emp.employeeCode} — {emp.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Conditional: Machine Selector (only for MACHINE issue type) */}
+                  {issueForm.issueType === 'MACHINE' && (
+                    <div>
+                      <label className="block text-caption font-medium text-ink mb-1.5">Machine</label>
+                      <select 
+                        value={issueForm.issuedToMachineId}
+                        onChange={(e) => setIssueForm({ ...issueForm, issuedToMachineId: e.target.value })}
+                        required
+                        className="w-full border border-border-gray rounded-[10px] px-3.5 py-2 text-small focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
+                      >
+                        <option value="">-- Select Machine --</option>
+                        {machines.map((m: any) => (
+                          <option key={m.id} value={m.id}>{m.machineCode} — {m.machineName}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Production Section</label>
+                    <label className="block text-caption font-medium text-ink mb-1.5">Production Section</label>
                     <select 
                       value={issueForm.productionSection}
                       onChange={(e) => setIssueForm({ ...issueForm, productionSection: e.target.value })}
@@ -1018,7 +1333,7 @@ export default function InventoryPage() {
                           <option value="">-- Choose Stock Batch --</option>
                           {ledger?.filter((b: any) => Number(b.availableQty ?? b.currentQty ?? 0) > 0).map((b: any) => (
                             <option key={b.id} value={b.id}>
-                              {b.batchNumber} ({b.material?.materialCode} · Avail: {b.availableQty ?? b.currentQty} {b.material?.defaultUom || 'NOS'})
+                              {getBatchDisplayName(b)} [{formatShortBatch(b.batchNumber)}] — {b.availableQty ?? b.currentQty} {b.material?.defaultUom || 'NOS'} Available
                             </option>
                           ))}
                         </select>

@@ -69,7 +69,7 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
     {
       id: `item-${Date.now()}-1`,
       itemName: '',
-      materialGrade: 'DIN 1.2738',
+      materialGrade: '',
       dimensions: '',
       requiredQuantity: 1,
       uom: 'PCS',
@@ -97,7 +97,7 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
       {
         id: `item-${Date.now()}-${prev.length + 1}`,
         itemName: '',
-        materialGrade: 'DIN 1.2738',
+        materialGrade: '',
         dimensions: '',
         requiredQuantity: 1,
         uom: 'PCS',
@@ -249,16 +249,16 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
     >
       <div className="space-y-6 text-ink">
         {/* Header Parameters Card */}
-        <div className="bg-canvas p-4 rounded-[12px] border border-border-gray space-y-4">
+        <div className="bg-[#f8f9fc] dark:bg-[#181b29] p-5 rounded-[14px] border border-border-gray shadow-subtle space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-cool-gray mb-1">
+              <label className="block text-caption font-medium text-ink mb-1.5">
                 Project / Tool (Optional)
               </label>
               <select
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
-                className="w-full h-9 bg-white border border-border-gray rounded-[8px] px-3 text-xs font-medium text-ink focus:outline-none focus:border-primary"
+                className="w-full h-10 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer"
               >
                 <option value="">General Toolroom / Stores (No Project)</option>
                 {activeProjects.map((p: any) => (
@@ -270,13 +270,13 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-cool-gray mb-1">
+              <label className="block text-caption font-medium text-ink mb-1.5">
                 Originating Department
               </label>
               <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="w-full h-9 bg-white border border-border-gray rounded-[8px] px-3 text-xs font-medium text-ink focus:outline-none focus:border-primary"
+                className="w-full h-10 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer"
               >
                 {DEPARTMENTS.map((d) => (
                   <option key={d} value={d}>
@@ -287,13 +287,13 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-cool-gray mb-1">
+              <label className="block text-caption font-medium text-ink mb-1.5">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
-                className="w-full h-9 bg-white border border-border-gray rounded-[8px] px-3 text-xs font-medium text-ink focus:outline-none focus:border-primary"
+                className="w-full h-10 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -304,7 +304,7 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-cool-gray mb-1">
+              <label className="block text-caption font-medium text-ink mb-1.5">
                 Requested By
               </label>
               <input
@@ -312,30 +312,30 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
                 value={requestedBy}
                 onChange={(e) => setRequestedBy(e.target.value)}
                 placeholder="e.g. Rahul Sharma (Design Engg)"
-                className="w-full h-9 bg-white border border-border-gray rounded-[8px] px-3 text-xs font-medium text-ink focus:outline-none focus:border-primary"
+                className="w-full h-10 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink placeholder:text-mute focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-cool-gray mb-1">
+              <label className="block text-caption font-medium text-ink mb-1.5">
                 Required Target Date
               </label>
               <input
                 type="date"
                 value={requiredDate}
                 onChange={(e) => setRequiredDate(e.target.value)}
-                className="w-full h-9 bg-white border border-border-gray rounded-[8px] px-3 text-xs font-medium text-ink focus:outline-none focus:border-primary"
+                className="w-full h-10 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-cool-gray mb-1">
+              <label className="block text-caption font-medium text-ink mb-1.5">
                 Priority Level
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full h-9 bg-white border border-border-gray rounded-[8px] px-3 text-xs font-medium text-ink focus:outline-none focus:border-primary"
+                className="w-full h-10 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer"
               >
                 <option value="NORMAL">Normal Priority</option>
                 <option value="URGENT">Urgent (Production Critical)</option>
@@ -345,7 +345,7 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-cool-gray mb-1">
+            <label className="block text-caption font-medium text-ink mb-1.5">
               Purpose / Justification
             </label>
             <input
@@ -353,15 +353,15 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               placeholder="e.g. Core & Cavity blocks for 4-Cavity Mould Assembly, Carbide Milling Inserts replenishment"
-              className="w-full h-9 bg-white border border-border-gray rounded-[8px] px-3 text-xs font-medium text-ink focus:outline-none focus:border-primary"
+              className="w-full h-10 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink placeholder:text-mute focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
           </div>
         </div>
 
-        {/* Action strip above items grid */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-ink">Requisition Line Items ({items.length})</h3>
+        {/* Action strip above items */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h3 className="text-body font-semibold text-ink">Requisition Line Items ({items.length})</h3>
             {projectId && (
               <Button
                 variant="secondary"
@@ -385,144 +385,166 @@ export function CreatePrnModal({ isOpen, onClose, onSuccess, defaultProjectId }:
           </Button>
         </div>
 
-        {/* Dynamic Line Items Grid */}
-        <div className="border border-border-gray rounded-[10px] overflow-hidden bg-white">
-          <div className="overflow-x-auto max-h-[320px]">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-canvas border-b border-border-gray text-cool-gray font-semibold sticky top-0 z-10">
-                <tr>
-                  <th className="py-2 px-2 text-center w-10">#</th>
-                  <th className="py-2 px-2 w-14 text-center">Det #</th>
-                  <th className="py-2 px-2 min-w-[140px]">Part / Description</th>
-                  <th className="py-2 px-2 min-w-[120px]">Material Grade</th>
-                  <th className="py-2 px-2 min-w-[110px]">Dimensions (L×W×H)</th>
-                  <th className="py-2 px-2 w-16 text-right">Qty</th>
-                  <th className="py-2 px-2 w-16 text-center">UOM</th>
-                  <th className="py-2 px-2 w-20 text-right">Est. Rate</th>
-                  <th className="py-2 px-2 w-20 text-right">Line Total</th>
-                  <th className="py-2 px-2 min-w-[150px]">Suggested Vendor</th>
-                  <th className="py-2 px-2 w-8"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-gray">
-                {items.map((item, index) => {
-                  const lineTotal = (Number(item.requiredQuantity) || 1) * (Number(item.estimatedRate) || 0);
-                  return (
-                    <tr key={item.id} className="hover:bg-canvas/50">
-                      <td className="py-2 px-2 text-center font-mono text-mute">{index + 1}</td>
-                      <td className="py-2 px-2 text-center">
-                        <input
-                          type="text"
-                          value={item.detNo || ''}
-                          onChange={(e) => handleItemChange(item.id, 'detNo', e.target.value)}
-                          placeholder="01"
-                          className="w-full text-center bg-transparent border-b border-dashed border-border-gray focus:border-primary font-mono text-xs"
-                        />
-                      </td>
-                      <td className="py-2 px-2">
-                        <input
-                          type="text"
-                          value={item.itemName}
-                          onChange={(e) => handleItemChange(item.id, 'itemName', e.target.value)}
-                          placeholder="Part Name / Component"
-                          className="w-full bg-transparent border-b border-dashed border-border-gray focus:border-primary font-medium text-xs text-ink"
-                        />
-                      </td>
-                      <td className="py-2 px-2">
-                        <input
-                          type="text"
-                          list="prn-materials-datalist"
-                          value={item.materialGrade}
-                          onChange={(e) => handleItemChange(item.id, 'materialGrade', e.target.value)}
-                          placeholder="e.g. DIN 1.2738 / P20"
-                          className="w-full bg-transparent border-b border-dashed border-border-gray focus:border-primary text-xs"
-                        />
-                      </td>
-                      <td className="py-2 px-2">
-                        <input
-                          type="text"
-                          value={item.dimensions}
-                          onChange={(e) => handleItemChange(item.id, 'dimensions', e.target.value)}
-                          placeholder="120 x 80 x 45"
-                          className="w-full bg-transparent border-b border-dashed border-border-gray focus:border-primary font-mono text-xs"
-                        />
-                      </td>
-                      <td className="py-2 px-2 text-right">
-                        <input
-                          type="number"
-                          min="0.1"
-                          step="any"
-                          value={item.requiredQuantity}
-                          onChange={(e) => handleItemChange(item.id, 'requiredQuantity', parseFloat(e.target.value) || 1)}
-                          className="w-full text-right bg-transparent border-b border-dashed border-border-gray focus:border-primary font-mono text-xs font-bold"
-                        />
-                      </td>
-                      <td className="py-2 px-2 text-center">
-                        <select
-                          value={item.uom}
-                          onChange={(e) => handleItemChange(item.id, 'uom', e.target.value)}
-                          className="bg-transparent border-b border-dashed border-border-gray focus:border-primary text-xs text-center font-mono"
-                        >
-                          <option value="PCS">PCS</option>
-                          <option value="KG">KG</option>
-                          <option value="MTR">MTR</option>
-                          <option value="SET">SET</option>
-                          <option value="NOS">NOS</option>
-                        </select>
-                      </td>
-                      <td className="py-2 px-2 text-right">
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          value={item.estimatedRate}
-                          onChange={(e) => handleItemChange(item.id, 'estimatedRate', parseFloat(e.target.value) || 0)}
-                          className="w-full text-right bg-transparent border-b border-dashed border-border-gray focus:border-primary font-mono text-xs"
-                        />
-                      </td>
-                      <td className="py-2 px-2 text-right font-mono font-bold text-ink">
-                        ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2 px-2">
-                        <select
-                          value={item.suggestedVendor || ''}
-                          onChange={(e) => handleItemChange(item.id, 'suggestedVendor', e.target.value)}
-                          className="w-full bg-white dark:bg-canvas border border-border-gray rounded-[6px] px-2 py-1 text-xs text-ink focus:outline-none focus:border-primary font-medium"
-                        >
-                          <option value="">-- Choose Vendor --</option>
-                          {vendors.map((v: any) => (
-                            <option key={v.id || v.vendorName} value={v.vendorName}>
-                              {v.vendorName}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="py-2 px-2 text-center">
-                        {items.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.id)}
-                            className="text-mute hover:text-semantic-danger-dark transition-colors"
-                            title="Remove row"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {/* Structured Line Item Cards */}
+        <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+          {items.map((item, index) => {
+            const lineTotal = (Number(item.requiredQuantity) || 0) * (Number(item.estimatedRate) || 0);
+            return (
+              <div
+                key={item.id}
+                className="bg-[#f8f9fc] dark:bg-[#181b29] border border-border-gray rounded-[14px] p-4 shadow-subtle space-y-3"
+              >
+                {/* Item Card Header */}
+                <div className="flex items-center justify-between gap-3 pb-2 border-b border-border-gray">
+                  <div className="flex items-center gap-2.5">
+                    <span className="px-2.5 py-0.5 rounded-full bg-primary-subtle text-primary text-small font-semibold">
+                      Item #{index + 1}
+                    </span>
+                    <div className="flex items-center gap-1.5 text-small text-cool-gray">
+                      <span className="font-medium">Det #:</span>
+                      <input
+                        type="text"
+                        value={item.detNo || ''}
+                        onChange={(e) => handleItemChange(item.id, 'detNo', e.target.value)}
+                        placeholder="01"
+                        className="w-14 h-7 text-center bg-white dark:bg-[#151824] border border-border-gray rounded-[6px] px-1.5 font-mono text-small font-semibold text-ink focus:outline-none focus:border-primary"
+                      />
+                    </div>
+                  </div>
 
-          {/* Footer Total Strip */}
-          <div className="bg-canvas border-t border-border-gray p-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-cool-gray">Total Estimated Requisition Value:</span>
-            <span className="font-mono text-base font-bold text-primary">
-              ₹{calculateTotal().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
+                  <div className="flex items-center gap-3">
+                    <div className="px-3 py-1 rounded-[8px] bg-white dark:bg-[#151824] border border-border-gray text-small">
+                      <span className="text-cool-gray mr-1.5">Line Total:</span>
+                      <span className="font-mono font-bold text-ink">
+                        ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    {items.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="p-1.5 rounded-[8px] text-mute hover:text-semantic-danger-dark hover:bg-semantic-danger-subtle transition-colors cursor-pointer"
+                        title="Remove line item"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 1: Description, Material Grade, Dimensions */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                  <div className="md:col-span-5">
+                    <label className="block text-small font-medium text-ink mb-1">
+                      Part / Item Description <span className="text-semantic-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={item.itemName}
+                      onChange={(e) => handleItemChange(item.id, 'itemName', e.target.value)}
+                      placeholder="e.g. Carbide Milling Insert / Core Plate"
+                      className="w-full h-9 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink placeholder:text-mute focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="md:col-span-4">
+                    <label className="block text-small font-medium text-ink mb-1">
+                      Material Grade <span className="text-cool-gray font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      list="prn-materials-datalist"
+                      value={item.materialGrade}
+                      onChange={(e) => handleItemChange(item.id, 'materialGrade', e.target.value)}
+                      placeholder="Select or type grade..."
+                      className="w-full h-9 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink placeholder:text-mute focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="md:col-span-3">
+                    <label className="block text-small font-medium text-ink mb-1">
+                      Dimensions <span className="text-cool-gray font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={item.dimensions}
+                      onChange={(e) => handleItemChange(item.id, 'dimensions', e.target.value)}
+                      placeholder="120 × 80 × 45"
+                      className="w-full h-9 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-mono text-ink placeholder:text-mute focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 2: Qty, UOM, Est. Rate, Suggested Vendor */}
+                <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="block text-small font-medium text-ink mb-1">Qty</label>
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="any"
+                      value={item.requiredQuantity}
+                      onChange={(e) => handleItemChange(item.id, 'requiredQuantity', parseFloat(e.target.value) || 0)}
+                      className="w-full h-9 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-right font-mono text-small font-semibold text-ink focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-small font-medium text-ink mb-1">UOM</label>
+                    <select
+                      value={item.uom}
+                      onChange={(e) => handleItemChange(item.id, 'uom', e.target.value)}
+                      className="w-full h-9 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-2.5 text-small font-mono font-medium text-ink focus:outline-none focus:border-primary cursor-pointer"
+                    >
+                      <option value="PCS">PCS</option>
+                      <option value="KG">KG</option>
+                      <option value="MTR">MTR</option>
+                      <option value="SET">SET</option>
+                      <option value="NOS">NOS</option>
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-3">
+                    <label className="block text-small font-medium text-ink mb-1">Est. Rate (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={item.estimatedRate}
+                      onChange={(e) => handleItemChange(item.id, 'estimatedRate', parseFloat(e.target.value) || 0)}
+                      className="w-full h-9 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-right font-mono text-small font-medium text-ink focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="col-span-2 md:col-span-5">
+                    <label className="block text-small font-medium text-ink mb-1">
+                      Suggested Vendor <span className="text-cool-gray font-normal">(Optional)</span>
+                    </label>
+                    <select
+                      value={item.suggestedVendor || ''}
+                      onChange={(e) => handleItemChange(item.id, 'suggestedVendor', e.target.value)}
+                      className="w-full h-9 bg-white dark:bg-[#151824] border border-border-gray rounded-[10px] px-3 text-small font-medium text-ink focus:outline-none focus:border-primary cursor-pointer"
+                    >
+                      <option value="">-- Choose Vendor --</option>
+                      {vendors.map((v: any) => (
+                        <option key={v.id || v.vendorName} value={v.vendorName}>
+                          {v.vendorName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer Total Strip */}
+        <div className="bg-[#f8f9fc] dark:bg-[#181b29] border border-border-gray rounded-[12px] px-5 py-3.5 flex items-center justify-between shadow-subtle">
+          <span className="text-caption font-medium text-cool-gray">Total Estimated Requisition Value:</span>
+          <span className="font-mono text-feature-title font-bold text-primary">
+            ₹{calculateTotal().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </span>
         </div>
 
         {/* Datalist for Materials master data */}

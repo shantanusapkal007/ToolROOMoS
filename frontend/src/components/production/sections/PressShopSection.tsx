@@ -151,7 +151,7 @@ export function PressShopSection({ data, materialIssues = [], isLoading, onMarkC
             e.stopPropagation();
             onMarkComplete(row);
           }}
-          className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-zinc-900 text-white hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap"
+          className="px-2.5 py-1 rounded-[12px] text-[10px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-micro transition-colors cursor-pointer whitespace-nowrap"
         >
           Complete → Move
         </button>

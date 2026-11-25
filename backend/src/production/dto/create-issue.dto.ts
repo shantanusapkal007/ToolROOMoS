@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsUUID, IsBoolean, IsInt, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsUUID, IsBoolean, IsInt, Min, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateIssueItemDto } from './create-issue-item.dto';
 
@@ -31,6 +31,19 @@ export class CreateIssueDto {
   @Min(1)
   @IsOptional()
   expectedManufactureQty?: number;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['PROJECT', 'OPERATOR', 'MACHINE'])
+  issueType?: string;
+
+  @IsUUID()
+  @IsOptional()
+  issuedToEmployeeId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  issuedToMachineId?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

@@ -39,6 +39,26 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
+    try {
+      await this.$executeRawUnsafe(`
+        ALTER TABLE "purchase_order_headers" ALTER COLUMN "projectId" DROP NOT NULL;
+      `);
+      await this.$executeRawUnsafe(`
+        ALTER TABLE "goods_receipt_headers" ALTER COLUMN "projectId" DROP NOT NULL;
+      `);
+      await this.$executeRawUnsafe(`
+        UPDATE "purchase_order_headers"
+        SET "projectId" = NULL
+        WHERE "purchaseRequestId" IN (
+          SELECT id FROM "purchase_request_headers" WHERE "projectId" IS NULL
+        );
+      `);
+      await this.$executeRawUnsafe(`
+        DELETE FROM "projects" WHERE "projectNumber" IN ('GENERAL', 'GENERAL-STORES', 'KTD-GENERAL');
+      `);
+    } catch (e) {
+      // Non-blocking auto-alignment
+    }
   }
 
   async onModuleDestroy() {

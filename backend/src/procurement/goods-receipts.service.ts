@@ -7,26 +7,10 @@ import { ProjectStatus, InventoryMovementType } from '@prisma/client';
 export class GoodsReceiptsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createGrn(projectId: string, dto: CreateGrnDto, userId?: string) {
+  async createGrn(projectId: string | null | undefined, dto: CreateGrnDto, userId?: string) {
     try {
       return await this.prisma.$transaction(async (tx) => {
-      // 1. Validate project stage (resolving by ID or projectNumber)
-      const project = await tx.project.findFirst({
-        where: {
-          OR: [
-            { id: projectId },
-            { projectNumber: projectId }
-          ]
-        }
-      });
-
-      if (!project) {
-        throw new NotFoundException(`Project not found for ID or project number '${projectId}'.`);
-      }
-
-      const targetProjectId = project.id;
-
-      // 2. Business Rule: Cannot create GRN without a valid, issued PO
+      // 1. Resolve PO first (using poHeaderId from dto)
       let po = await tx.purchaseOrderHeader.findFirst({
         where: {
           OR: [
@@ -35,13 +19,30 @@ export class GoodsReceiptsService {
             { documentNumber: dto.poHeaderId },
           ]
         },
-        include: { items: true },
+        include: { items: true, project: true },
       });
 
-      if (!po) {
+      // 2. Resolve target project from PO or passed projectId
+      let targetProjectId: string | null = null;
+      const targetProjRef = (projectId && projectId !== 'global' && projectId !== 'null') ? projectId : po?.projectId;
+      if (targetProjRef) {
+        const project = await tx.project.findFirst({
+          where: {
+            OR: [
+              { id: targetProjRef },
+              { projectNumber: targetProjRef }
+            ]
+          }
+        });
+        if (project) {
+          targetProjectId = project.id;
+        }
+      }
+
+      if (!po && targetProjectId) {
         po = await tx.purchaseOrderHeader.findFirst({
           where: { projectId: targetProjectId, status: { in: ['ISSUED', 'PARTIAL_RECEIPT'] } },
-          include: { items: true },
+          include: { items: true, project: true },
           orderBy: { createdAt: 'desc' }
         });
       }
@@ -54,7 +55,7 @@ export class GoodsReceiptsService {
         po = await tx.purchaseOrderHeader.update({
           where: { id: po.id },
           data: { status: 'ISSUED' },
-          include: { items: true },
+          include: { items: true, project: true },
         });
       }
 
@@ -102,8 +103,8 @@ export class GoodsReceiptsService {
       // 4. Create GRN Header
       const grnHeader = await tx.goodsReceiptHeader.create({
         data: {
-          projectId: targetProjectId,
-          poHeaderId: po.id,
+          poHeader: { connect: { id: po.id } },
+          ...(targetProjectId ? { project: { connect: { id: targetProjectId } } } : {}),
           grnNumber: dto.grnNumber,
           supplierChallan: dto.supplierChallan || null,
           documentNumber: dto.grnNumber,
@@ -236,8 +237,8 @@ export class GoodsReceiptsService {
         // Record Inventory Transaction
         await tx.inventoryTransaction.create({
           data: {
-            projectId: targetProjectId,
-            inventoryBatchId: batch.id,
+            inventoryBatch: { connect: { id: batch.id } },
+            ...(targetProjectId ? { project: { connect: { id: targetProjectId } } } : {}),
             movementType: InventoryMovementType.GRN_RECEIPT,
             quantity: item.acceptedQty,
             referenceDocType: 'GRN',
@@ -269,81 +270,78 @@ export class GoodsReceiptsService {
         data: { status: finalPoStatus },
       });
 
-      // 6. Costing Integration: Rollup actual material cost to ProjectCostSummary (actual column ONLY)
-      // NOTE: totalCost is NOT incremented here — it is computed from actual consumption in material issues.
-      // Using upsert to protect against legacy projects without a cost summary record.
-      await tx.projectCostSummary.upsert({
-        where: { projectId: targetProjectId },
-        create: {
-          projectId: targetProjectId,
-          actualMaterialCost: totalGrnValue,
-          estimatedMaterialCost: 0,
-          materialConsumptionCost: 0,
-          machineCost: 0,
-          labourCost: 0,
-          outsideProcessCost: 0,
-          inspectionCost: 0,
-          packingCost: 0,
-          dispatchCost: 0,
-          totalCost: 0,
-          revenue: 0,
-          profitability: 0,
-        },
-        update: {
-          actualMaterialCost: { increment: totalGrnValue },
-          // NOTE: totalCost is NOT incremented here — it is computed from actual consumption in material issues
-        },
-      });
+      // 6. Costing Integration: Rollup actual material cost to ProjectCostSummary (actual column ONLY) if tied to a project
+      if (targetProjectId) {
+        await tx.projectCostSummary.upsert({
+          where: { projectId: targetProjectId },
+          create: {
+            projectId: targetProjectId,
+            actualMaterialCost: totalGrnValue,
+            estimatedMaterialCost: 0,
+            materialConsumptionCost: 0,
+            machineCost: 0,
+            labourCost: 0,
+            outsideProcessCost: 0,
+            inspectionCost: 0,
+            packingCost: 0,
+            dispatchCost: 0,
+            totalCost: 0,
+            revenue: 0,
+            profitability: 0,
+          },
+          update: {
+            actualMaterialCost: { increment: totalGrnValue },
+          },
+        });
 
+        // Record detailed cost audit trail event
+        await tx.projectCostEvent.create({
+          data: {
+            projectId: targetProjectId,
+            costType: 'ACTUAL_MATERIAL',
+            description: `Material received under GRN ${dto.grnNumber}`,
+            amount: totalGrnValue,
+            referenceDocType: 'GRN',
+            referenceDocId: grnHeader.id,
+            createdBy: userId,
+          },
+        });
 
-      // Record detailed cost audit trail event
-      await tx.projectCostEvent.create({
-        data: {
-          projectId: targetProjectId,
-          costType: 'ACTUAL_MATERIAL',
-          description: `Material received under GRN ${dto.grnNumber}`,
-          amount: totalGrnValue,
-          referenceDocType: 'GRN',
-          referenceDocId: grnHeader.id,
-          createdBy: userId,
-        },
-      });
+        // 7. Log project activity (INR symbol)
+        await tx.projectActivity.create({
+          data: {
+            projectId: targetProjectId,
+            action: 'MATERIAL_RECEIVED',
+            description: `GRN ${dto.grnNumber} completed. Actual Material Cost booked: ₹${totalGrnValue.toFixed(2)}`,
+            performedBy: userId || 'SYSTEM',
+          },
+        });
 
-      // 7. Log project activity (INR symbol)
-      await tx.projectActivity.create({
-        data: {
-          projectId: targetProjectId,
-          action: 'MATERIAL_RECEIVED',
-          description: `GRN ${dto.grnNumber} completed. Actual Material Cost booked: ₹${totalGrnValue.toFixed(2)}`,
-          performedBy: userId || 'SYSTEM',
-        },
-      });
+        // 8. Transition to MATERIAL_AVAILABLE
+        await tx.project.update({
+          where: { id: targetProjectId },
+          data: { currentStage: ProjectStatus.MATERIAL_AVAILABLE, updatedBy: userId },
+        });
 
-      // 8. FIX: Transition to MATERIAL_AVAILABLE (not PRODUCTION)
-      // The production stage is triggered separately when material is issued to the shop floor.
-      await tx.project.update({
-        where: { id: targetProjectId },
-        data: { currentStage: ProjectStatus.MATERIAL_AVAILABLE, updatedBy: userId },
-      });
+        await tx.projectTimeline.create({
+          data: {
+            projectId: targetProjectId,
+            fromStage: ProjectStatus.PROCUREMENT,
+            toStage: ProjectStatus.MATERIAL_AVAILABLE,
+            transitionedBy: userId || 'SYSTEM',
+            remarks: `GRN ${dto.grnNumber} completed. Materials are in warehouse and available for issue.`,
+          },
+        });
 
-      await tx.projectTimeline.create({
-        data: {
-          projectId: targetProjectId,
-          fromStage: ProjectStatus.PROCUREMENT,
-          toStage: ProjectStatus.MATERIAL_AVAILABLE,
-          transitionedBy: userId || 'SYSTEM',
-          remarks: `GRN ${dto.grnNumber} completed. Materials are in warehouse and available for issue.`,
-        },
-      });
-
-      await tx.projectActivity.create({
-        data: {
-          projectId: targetProjectId,
-          action: 'STAGE_CHANGED',
-          description: 'Materials received. Project advanced to MATERIAL_AVAILABLE.',
-          performedBy: userId || 'SYSTEM',
-        },
-      });
+        await tx.projectActivity.create({
+          data: {
+            projectId: targetProjectId,
+            action: 'STAGE_CHANGED',
+            description: 'Materials received. Project advanced to MATERIAL_AVAILABLE.',
+            performedBy: userId || 'SYSTEM',
+          },
+        });
+      }
 
       return grnHeader;
     });

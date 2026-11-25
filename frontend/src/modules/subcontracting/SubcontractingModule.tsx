@@ -18,7 +18,9 @@ import {
   ShieldCheck,
   Check,
   Printer,
-  Clock
+  Clock,
+  XCircle,
+  AlertTriangle
 } from "lucide-react";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
@@ -58,6 +60,9 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [selectedPrintOrder, setSelectedPrintOrder] = useState<any>(null);
+  const [cancelModalOrder, setCancelModalOrder] = useState<any>(null);
+  const [deleteModalOrder, setDeleteModalOrder] = useState<any>(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   // Master Data
   const [vendors, setVendors] = useState<any[]>([]);
@@ -271,6 +276,7 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
     try {
       const payload = {
         ...formData,
+        expectedReturnDate: formData.expectedReturnDate?.trim() ? formData.expectedReturnDate : undefined,
         items: formData.items.map((item) => ({
           operationId: item.operationId,
           sentQty: Number(item.sentQty) || 0,
@@ -339,6 +345,52 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
     } catch (err: any) {
       const msg = err.response?.data?.message;
       error("Receipt Failed", Array.isArray(msg) ? msg.join(', ') : (msg || err.message));
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!cancelModalOrder) return;
+    try {
+      setIsActionLoading(true);
+      await api.post(`projects/${projectId}/subcontract-orders/${cancelModalOrder.id}/cancel`);
+      success(
+        "Challan Cancelled",
+        `Subcontract Challan ${cancelModalOrder.challanNumber} cancelled. Issued store material restored to inventory.`
+      );
+      setCancelModalOrder(null);
+      if (selectedPrintOrder?.id === cancelModalOrder.id) {
+        setSelectedPrintOrder(null);
+      }
+      loadData();
+      loadMasterData();
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      error("Cancellation Failed", Array.isArray(msg) ? msg.join(", ") : (msg || err.message));
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!deleteModalOrder) return;
+    try {
+      setIsActionLoading(true);
+      await api.delete(`projects/${projectId}/subcontract-orders/${deleteModalOrder.id}`);
+      success(
+        "Challan Deleted",
+        `Subcontract Challan ${deleteModalOrder.challanNumber} has been permanently deleted.`
+      );
+      setDeleteModalOrder(null);
+      if (selectedPrintOrder?.id === deleteModalOrder.id) {
+        setSelectedPrintOrder(null);
+      }
+      loadData();
+      loadMasterData();
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      error("Deletion Failed", Array.isArray(msg) ? msg.join(", ") : (msg || err.message));
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -422,12 +474,15 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
       render: (val: string) => {
         const isClosed = val === 'CLOSED';
         const isPartial = val === 'PARTIAL_RECEIPT';
+        const isCancelled = val === 'CANCELLED';
         return (
           <span className={`text-small font-semibold px-2.5 py-0.5 rounded border ${
             isClosed 
               ? 'bg-semantic-success-subtle text-semantic-success-dark border-semantic-success/30' 
               : isPartial
               ? 'bg-semantic-warning-subtle text-semantic-warning-dark border-semantic-warning/30'
+              : isCancelled
+              ? 'bg-semantic-danger-subtle text-semantic-danger-dark border-semantic-danger/30'
               : 'bg-canvas text-ink border-border-gray'
           }`}>
             {val || 'OUTSOURCED'}
@@ -438,40 +493,187 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
     {
       key: 'actions',
       label: 'Actions',
-      render: (_: any, row: any) => (
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="white" 
-            size="sm" 
-            onClick={() => setSelectedPrintOrder(row)}
-            className="flex items-center gap-1.5"
-            title="Print Subcontract Job Work PO & Delivery Challan"
-          >
-            <Printer className="w-3.5 h-3.5 text-cool-gray" />
-            <span>Print PO</span>
-          </Button>
+      render: (_: any, row: any) => {
+        const hasReceipts = (row.subcontractReceipts && row.subcontractReceipts.length > 0) || row.status === 'PARTIAL_RECEIPT' || row.status === 'CLOSED';
+        const isCancelled = row.status === 'CANCELLED';
 
-          {!isProjectClosed && row.status !== 'CLOSED' && (
-            <Button variant="white" size="sm" onClick={() => openReceiptModal(row)}>
-              <CheckCircle2 className="w-3.5 h-3.5 text-semantic-success-dark" />
-              <span>Process Return Receipt</span>
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Button 
+              variant="white" 
+              size="sm" 
+              onClick={() => setSelectedPrintOrder(row)}
+              className="flex items-center gap-1.5"
+              title="Print Subcontract Job Work PO & Delivery Challan"
+            >
+              <Printer className="w-3.5 h-3.5 text-cool-gray" />
+              <span>Print PO</span>
             </Button>
-          )}
-        </div>
-      )
+
+            {!isProjectClosed && !hasReceipts && !isCancelled && (
+              <Button 
+                variant="white" 
+                size="sm" 
+                onClick={() => openReceiptModal(row)}
+                className="flex items-center gap-1 text-semantic-success-dark hover:bg-semantic-success-subtle/40"
+                title="Process returned parts from outside vendor"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-semantic-success-dark" />
+                <span>Receive</span>
+              </Button>
+            )}
+
+            {!isProjectClosed && !hasReceipts && !isCancelled && (
+              <Button 
+                variant="white" 
+                size="sm" 
+                onClick={() => setCancelModalOrder(row)}
+                className="flex items-center gap-1 text-semantic-warning-dark hover:bg-semantic-warning-subtle/50"
+                title="Cancel Subcontract Challan & restore deducted store inventory"
+              >
+                <XCircle className="w-3.5 h-3.5 text-semantic-warning-dark" />
+                <span>Cancel</span>
+              </Button>
+            )}
+
+            {!isProjectClosed && !hasReceipts && (
+              <Button 
+                variant="white" 
+                size="sm" 
+                onClick={() => setDeleteModalOrder(row)}
+                className="flex items-center gap-1 text-cool-gray hover:text-semantic-danger hover:bg-semantic-danger-subtle/40"
+                title="Permanently delete this subcontract challan"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-semantic-danger" />
+                <span>Delete</span>
+              </Button>
+            )}
+          </div>
+        );
+      }
     }
   ];
 
   if (selectedPrintOrder) {
     return (
-      <AuthenticSubcontractPoDocument
-        order={selectedPrintOrder}
-        project={project}
-        onBack={() => {
-          setSelectedPrintOrder(null);
-          loadData();
-        }}
-      />
+      <>
+        <AuthenticSubcontractPoDocument
+          order={selectedPrintOrder}
+          project={project}
+          onBack={() => {
+            setSelectedPrintOrder(null);
+            loadData();
+          }}
+          onCancel={
+            !isProjectClosed && 
+            selectedPrintOrder.status !== 'CLOSED' && 
+            selectedPrintOrder.status !== 'CANCELLED' && 
+            (!selectedPrintOrder.subcontractReceipts || selectedPrintOrder.subcontractReceipts.length === 0)
+              ? () => setCancelModalOrder(selectedPrintOrder)
+              : undefined
+          }
+          onDelete={
+            !isProjectClosed && 
+            selectedPrintOrder.status !== 'CLOSED' && 
+            selectedPrintOrder.status !== 'PARTIAL_RECEIPT' &&
+            (!selectedPrintOrder.subcontractReceipts || selectedPrintOrder.subcontractReceipts.length === 0)
+              ? () => setDeleteModalOrder(selectedPrintOrder)
+              : undefined
+          }
+        />
+
+        {/* Cancel Confirmation Modal */}
+        <Modal
+          isOpen={!!cancelModalOrder}
+          onClose={() => setCancelModalOrder(null)}
+          title="Cancel Subcontract Challan"
+          subtitle={`Confirm cancellation of Challan ${cancelModalOrder?.challanNumber || ''}.`}
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <div className="bg-semantic-warning-subtle/40 border border-semantic-warning/30 rounded-[12px] p-4 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-semantic-warning-dark shrink-0 mt-0.5" />
+              <div className="space-y-1 text-caption text-ink">
+                <p className="font-semibold text-semantic-warning-dark">
+                  Are you sure you want to cancel this Subcontract Challan?
+                </p>
+                <p className="text-small text-cool-gray leading-relaxed">
+                  Challan <strong className="font-mono text-ink">{cancelModalOrder?.challanNumber}</strong> for vendor <strong className="text-ink">{cancelModalOrder?.vendor?.vendorName}</strong> will be marked as <strong>CANCELLED</strong>.
+                </p>
+                {cancelModalOrder?.items?.some((it: any) => it.inventoryBatchId) && (
+                  <p className="text-small text-semantic-success-dark font-medium pt-1">
+                    ✓ Any physical raw materials deducted from stores will be automatically restored back to available inventory.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-border-gray">
+              <Button
+                variant="white"
+                onClick={() => setCancelModalOrder(null)}
+                disabled={isActionLoading}
+              >
+                Keep Order
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleCancelOrder}
+                isLoading={isActionLoading}
+                leftIcon={<XCircle className="w-4 h-4" />}
+              >
+                Cancel Subcontract Challan
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={!!deleteModalOrder}
+          onClose={() => setDeleteModalOrder(null)}
+          title="Delete Subcontract Challan"
+          subtitle={`Permanently remove Challan ${deleteModalOrder?.challanNumber || ''}.`}
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <div className="bg-semantic-danger-subtle/40 border border-semantic-danger/30 rounded-[12px] p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-semantic-danger-dark shrink-0 mt-0.5" />
+              <div className="space-y-1 text-caption text-ink">
+                <p className="font-semibold text-semantic-danger-dark">
+                  Are you sure you want to permanently delete this Subcontract Challan?
+                </p>
+                <p className="text-small text-cool-gray leading-relaxed">
+                  Challan <strong className="font-mono text-ink">{deleteModalOrder?.challanNumber}</strong> and all its item specifications will be permanently removed.
+                </p>
+                {deleteModalOrder?.items?.some((it: any) => it.inventoryBatchId) && deleteModalOrder?.status !== 'CANCELLED' && (
+                  <p className="text-small text-semantic-success-dark font-medium pt-1">
+                    ✓ Any physical materials issued from stores will be replenished back into warehouse stock.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-border-gray">
+              <Button
+                variant="white"
+                onClick={() => setDeleteModalOrder(null)}
+                disabled={isActionLoading}
+              >
+                No, Keep
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDeleteOrder}
+                isLoading={isActionLoading}
+                leftIcon={<Trash2 className="w-4 h-4" />}
+              >
+                Delete Permanently
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      </>
     );
   }
 
@@ -1039,6 +1241,98 @@ export function SubcontractingModule({ projectId }: SubcontractingModuleProps) {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Cancel Confirmation Modal */}
+      <Modal
+        isOpen={!!cancelModalOrder}
+        onClose={() => setCancelModalOrder(null)}
+        title="Cancel Subcontract Challan"
+        subtitle={`Confirm cancellation of Challan ${cancelModalOrder?.challanNumber || ''}.`}
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <div className="bg-semantic-warning-subtle/40 border border-semantic-warning/30 rounded-[12px] p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-semantic-warning-dark shrink-0 mt-0.5" />
+            <div className="space-y-1 text-caption text-ink">
+              <p className="font-semibold text-semantic-warning-dark">
+                Are you sure you want to cancel this Subcontract Challan?
+              </p>
+              <p className="text-small text-cool-gray leading-relaxed">
+                Challan <strong className="font-mono text-ink">{cancelModalOrder?.challanNumber}</strong> for vendor <strong className="text-ink">{cancelModalOrder?.vendor?.vendorName}</strong> will be marked as <strong>CANCELLED</strong>.
+              </p>
+              {cancelModalOrder?.items?.some((it: any) => it.inventoryBatchId) && (
+                <p className="text-small text-semantic-success-dark font-medium pt-1">
+                  ✓ Any physical raw materials deducted from stores will be automatically restored back to available inventory.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-border-gray">
+            <Button
+              variant="white"
+              onClick={() => setCancelModalOrder(null)}
+              disabled={isActionLoading}
+            >
+              Keep Order
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleCancelOrder}
+              isLoading={isActionLoading}
+              leftIcon={<XCircle className="w-4 h-4" />}
+            >
+              Cancel Subcontract Challan
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteModalOrder}
+        onClose={() => setDeleteModalOrder(null)}
+        title="Delete Subcontract Challan"
+        subtitle={`Permanently remove Challan ${deleteModalOrder?.challanNumber || ''}.`}
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <div className="bg-semantic-danger-subtle/40 border border-semantic-danger/30 rounded-[12px] p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-semantic-danger-dark shrink-0 mt-0.5" />
+            <div className="space-y-1 text-caption text-ink">
+              <p className="font-semibold text-semantic-danger-dark">
+                Are you sure you want to permanently delete this Subcontract Challan?
+              </p>
+              <p className="text-small text-cool-gray leading-relaxed">
+                Challan <strong className="font-mono text-ink">{deleteModalOrder?.challanNumber}</strong> and all its item specifications will be permanently removed.
+              </p>
+              {deleteModalOrder?.items?.some((it: any) => it.inventoryBatchId) && deleteModalOrder?.status !== 'CANCELLED' && (
+                <p className="text-small text-semantic-success-dark font-medium pt-1">
+                  ✓ Any physical materials issued from stores will be replenished back into warehouse stock.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-border-gray">
+            <Button
+              variant="white"
+              onClick={() => setDeleteModalOrder(null)}
+              disabled={isActionLoading}
+            >
+              No, Keep
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteOrder}
+              isLoading={isActionLoading}
+              leftIcon={<Trash2 className="w-4 h-4" />}
+            >
+              Delete Permanently
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

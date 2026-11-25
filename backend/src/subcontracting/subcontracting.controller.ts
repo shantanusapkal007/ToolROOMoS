@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -75,6 +76,36 @@ export class SubcontractingController {
     return {
       status: 'success',
       message: 'Subcontract Receipt generated successfully.',
+      data,
+    };
+  }
+
+  @Post('subcontract-orders/:orderId/cancel')
+  @Roles('ADMIN', 'PRODUCTION', 'PURCHASE')
+  async cancelOrder(
+    @Param('projectId') projectId: string,
+    @Param('orderId') orderId: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.subcontractingService.cancelOrder(projectId, orderId, user?.id || user?.sub);
+    return {
+      status: 'success',
+      message: 'Subcontract Order cancelled successfully and store materials restored.',
+      data,
+    };
+  }
+
+  @Delete('subcontract-orders/:orderId')
+  @Roles('ADMIN', 'PRODUCTION', 'PURCHASE')
+  async deleteOrder(
+    @Param('projectId') projectId: string,
+    @Param('orderId') orderId: string,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.subcontractingService.deleteOrder(projectId, orderId, user?.id || user?.sub);
+    return {
+      status: 'success',
+      message: 'Subcontract Order deleted successfully.',
       data,
     };
   }

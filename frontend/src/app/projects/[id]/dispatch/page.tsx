@@ -25,7 +25,9 @@ import {
 } from "lucide-react";
 import { SkeletonBox } from "@/components/ui/SkeletonLoader";
 import { Modal } from "@/components/ui/Modal";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatDate } from "@/lib/formatters";
+import { printIsolatedElement } from "@/utils/printDocument";
+import { Button } from "@/components/ui/Button";
 
 type DispatchTab = "CHALLANS" | "INVOICES" | "PRINTABLE_DC";
 
@@ -135,7 +137,10 @@ export default function ProjectDispatchPage() {
   };
 
   const handlePrintChallan = () => {
-    window.print();
+    printIsolatedElement("authentic-dc-sheet", {
+      orientation: "portrait",
+      title: `Delivery_Challan_${project?.projectNumber || 'DC'}`,
+    });
   };
 
   return (
@@ -384,99 +389,280 @@ export default function ProjectDispatchPage() {
 
       {/* Tab 3: Printable Delivery Challan (DC) */}
       {activeTab === "PRINTABLE_DC" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white p-4 rounded-[12px] border border-border-gray shadow-subtle print:hidden">
+        <div className="space-y-6 font-sans">
+          {/* Top Action Bar (Hidden on print) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#151824] p-4 sm:p-5 rounded-[14px] border border-border-gray shadow-subtle hide-on-print">
             <div>
-              <h3 className="text-sm font-semibold text-ink">Official Outward Delivery Challan (DC)</h3>
-              <p className="text-xs text-mute">Printable Gate Pass document for goods dispatch</p>
+              <h2 className="text-body font-bold text-ink flex items-center flex-wrap gap-2.5">
+                <span>Official Outward Delivery Challan &amp; Gate Pass</span>
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success-border uppercase tracking-wider">
+                  Official Factory Document
+                </span>
+              </h2>
+              <p className="text-caption text-cool-gray mt-1">
+                GST Outward Delivery Challan under Rule 55 for project tooling dispatch
+              </p>
             </div>
-            <button
-              onClick={handlePrintChallan}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[12px] bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print / Download Challan</span>
-            </button>
+            <div className="flex items-center gap-2.5">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handlePrintChallan}
+                leftIcon={<Printer className="w-4 h-4" />}
+              >
+                Print DC / Save PDF
+              </Button>
+            </div>
           </div>
 
-          {/* Challan Document Container */}
-          <div className="bg-white p-8 rounded-[12px] border border-border-gray shadow-subtle space-y-6 text-ink font-sans max-w-4xl mx-auto print:border-none print:shadow-none">
-            {/* Challan Header */}
-            <div className="flex items-center justify-between border-b-2 border-border-gray pb-4">
-              <div>
-                <h1 className="text-xl font-semibold tracking-tight text-ink uppercase">ToolRoom OS Manufacturing Inc.</h1>
-                <p className="text-xs text-mute font-medium">Precision Press Tools, Dies & Moulds Manufacturing Unit</p>
+          {/* ========================================================================= */}
+          {/* Printable Paper Sheet Target (A4 Vertical / Portrait)                      */}
+          {/* ========================================================================= */}
+          <div 
+            id="authentic-dc-sheet"
+            data-print-target="true"
+            className="printable-sheet bg-white p-6 sm:p-8 print:p-0 rounded-[12px] shadow-level-4 border border-border-gray text-ink max-w-[210mm] mx-auto print:max-w-none print:w-full print:border-none print:shadow-none font-sans"
+          >
+            {/* Document Header */}
+            <div className="border-2 border-zinc-900 p-3 sm:p-4 print:py-1.5 print:px-2 rounded-t-lg flex items-center justify-between gap-3 sm:gap-4 bg-white break-inside-avoid">
+              <div className="w-24 sm:w-28 print:w-16 shrink-0 flex items-center justify-center p-1.5 sm:p-2 print:p-0.5 border border-border-gray rounded bg-white">
+                <img src="/Krupa_Logo.png" alt="Krupa Logo" className="h-12 sm:h-14 print:h-8 w-auto object-contain" />
               </div>
-              <div className="text-right">
-                <span className="inline-block px-3 py-1 bg-primary-subtle text-primary text-xs font-semibold rounded-[12px] uppercase tracking-wider border border-primary/20">
-                  OUTWARD DELIVERY CHALLAN
-                </span>
-                <p className="text-[11px] font-mono text-mute mt-1">DC #: DC-{project?.projectNumber || "PRJ"}-01</p>
+              
+              <div className="flex-1 text-center pr-2">
+                <h1 className="text-base sm:text-lg md:text-xl print:text-[11px] font-bold uppercase tracking-wider text-[#ee1d36]">
+                  KRUPA TOOLS &amp; STAMPINGS LTD.
+                </h1>
+                <p className="text-[11px] print:text-[7px] font-semibold text-ink mt-0.5 print:mt-0 uppercase tracking-tight print:leading-[1.2]">
+                  GUT NO.23 PLOT NO.45 KAMLAPUR MIDC, WALUJ AURANGABAD - 431136
+                </p>
+                <p className="text-[11px] print:text-[7px] font-semibold text-ink uppercase tracking-tight print:leading-[1.2]">
+                  GST NO : 27AAKCK1751B1ZS | STATE: MAHARASHTRA (27)
+                </p>
+                <p className="text-[9.5px] print:text-[6.5px] font-semibold text-zinc-700 uppercase tracking-tight mt-0.5 print:mt-0 print:leading-[1.2]">
+                  Manufacturers of Press Tools, Jig Fixtures, Moulds, Precision Tooling &amp; Outside Job Work
+                </p>
+                <div className="mt-1 print:mt-0.5 pt-0.5 print:pt-0 border-t border-zinc-900/20">
+                  <span className="font-bold text-xs sm:text-sm print:text-[9px] uppercase tracking-widest text-ink underline">
+                    OUTWARD DELIVERY CHALLAN &amp; GATE PASS
+                  </span>
+                  <span className="text-[9px] print:text-[6.5px] block text-zinc-600 font-semibold tracking-tight mt-0.5 print:mt-0">
+                    (Issued under Rule 55 of CGST Act for Outward Movement of Tooling / Finished Goods / Spares)
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Consignee & Vehicle Details Grid */}
-            <div className="grid grid-cols-2 gap-4 p-4 bg-canvas rounded-[12px] border border-border-gray text-xs">
-              <div>
-                <span className="text-mute text-[10px] uppercase font-semibold">Consignee / Customer</span>
-                <div className="font-semibold text-ink text-sm">{project?.customer?.companyName || "Mahindra & Mahindra Ltd."}</div>
-                <div className="text-mute">Chakan Industrial Area, Pune - 410501</div>
+            <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
+              {/* Consignee (Left Col - 7 Cols) */}
+              <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 space-y-1 print:space-y-0.5">
+                <div className="flex gap-2">
+                  <span className="font-bold w-24 print:w-20 text-zinc-600 uppercase text-[10px] print:text-[7.5px]">CONSIGNEE:</span>
+                  <span className="font-bold text-ink uppercase text-xs sm:text-sm print:text-[9px] truncate">
+                    {project?.customer?.companyName || "Mahindra & Mahindra Ltd."}
+                  </span>
+                </div>
+
+                <div className="flex gap-2 text-[11px] print:text-[7.5px]">
+                  <span className="font-semibold w-24 print:w-20 text-zinc-600 uppercase text-[10px] print:text-[7.5px]">DELIVERY AT:</span>
+                  <span className="text-zinc-800 print:leading-tight">{project?.customer?.address || "Chakan Industrial Area, Phase II, Pune - 410501"}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] print:text-[7.5px] pt-1 print:pt-0.5 border-t border-border-gray">
+                  <div>
+                    <span className="font-semibold text-zinc-600">GSTIN: </span>
+                    <span className="font-mono font-semibold text-ink">{project?.customer?.gstNumber || "27AAACM1234F1Z5"}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-zinc-600">STATE: </span>
+                    <span className="font-semibold text-ink">MAHARASHTRA (27)</span>
+                  </div>
+                </div>
+
+                <div className="pt-0.5 border-t border-border-gray text-[11px] print:text-[7.5px]">
+                  <span className="font-semibold text-zinc-600 uppercase text-[10px] print:text-[7.5px]">PROJECT: </span>
+                  <span className="font-bold text-ink">{project?.projectNumber || "KTD-2026-001"}</span>
+                  <span className="ml-1 text-zinc-500">• {project?.partName || "Precision Tooling Assembly"}</span>
+                </div>
               </div>
-              <div className="space-y-1">
-                <div><span className="text-mute text-[10px] uppercase font-semibold">Vehicle No:</span> <span className="font-semibold font-mono text-ink">{challanForm.vehicleNumber || "N/A"}</span></div>
-                <div><span className="text-mute text-[10px] uppercase font-semibold">Driver Name:</span> <span className="font-semibold text-ink">{challanForm.driverName || "N/A"}</span></div>
-                <div><span className="text-mute text-[10px] uppercase font-semibold">Transporter:</span> <span className="font-semibold text-ink">{challanForm.transporterName || "N/A"}</span></div>
+
+              {/* Logistics & Gate Pass Meta (Right Col - 5 Cols) */}
+              <div className="col-span-5 p-2.5 sm:p-3 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/40">
+                <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
+                  <div>
+                    <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">CHALLAN / DC NO:</span>
+                    <span className="font-mono font-bold text-ink text-xs sm:text-sm print:text-[8.5px]">
+                      {dispatchNotes[0]?.dispatchNumber || `DC-${project?.projectNumber || "PRJ"}-01`}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">DATE:</span>
+                    <span className="font-mono font-semibold text-ink text-xs print:text-[8px]">{new Date().toLocaleDateString('en-GB')}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
+                  <div>
+                    <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">VEHICLE NO:</span>
+                    <span className="font-mono font-bold text-ink text-xs print:text-[8px]">{dispatchNotes[0]?.vehicleNumber || challanForm.vehicleNumber || "MH-20-DE-4412"}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">DRIVER / PHONE:</span>
+                    <span className="font-semibold text-ink text-xs print:text-[8px] truncate">{dispatchNotes[0]?.driverName || challanForm.driverName || "Direct Delivery"}</span>
+                  </div>
+                </div>
+
+                <div className="pt-0.5 print:pt-0">
+                  <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">TRANSPORTER / MODE:</span>
+                  <span className="font-semibold text-ink text-[11px] print:text-[8px] block truncate">
+                    {dispatchNotes[0]?.transporterName || challanForm.transporterName || "Direct Company Vehicle / Hand Delivery"}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Item Table */}
-            <div>
-              <table className="w-full text-left text-xs border border-border-gray divide-y divide-border-gray">
-                <thead className="bg-canvas text-cool-gray font-semibold text-[10px] uppercase">
-                  <tr>
-                    <th className="p-2 border-r border-border-gray">Item Description</th>
-                    <th className="p-2 border-r border-border-gray text-right">Quantity</th>
-                    <th className="p-2 border-r border-border-gray text-right">Gross Weight</th>
-                    <th className="p-2">Remarks / Purpose</th>
+            {/* Purpose Banner */}
+            <div className="border-x-2 border-b-2 border-zinc-900 p-1.5 print:py-0.5 print:px-1 bg-zinc-100 text-center font-bold text-xs print:text-[7.5px] uppercase tracking-wider text-zinc-800 break-inside-avoid">
+              SUPPLY OF FINISHED TOOLING / DIES / SAMPLES UNDER CGST RULE 55 (NOT FOR RESALE)
+            </div>
+
+            {/* Line Items Table */}
+            <div className="border-x-2 border-b-2 border-zinc-900 overflow-hidden break-inside-avoid">
+              <table className="w-full border-collapse text-xs print:text-[8px]">
+                <thead>
+                  <tr className="bg-zinc-100 border-b-2 border-zinc-900 font-bold text-zinc-800 text-[9.5px] print:text-[7.5px] uppercase tracking-wider">
+                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-8">SR.</th>
+                    <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[160px]">ITEM DESCRIPTION &amp; SPECIFICATIONS</th>
+                    <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[120px]">TOOL / PART NUMBER</th>
+                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-16">QUANTITY</th>
+                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-12">UOM</th>
+                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-20">GROSS WT (KG)</th>
+                    <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[120px]">PURPOSE / REMARKS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border-gray">
-                  {dispatchNotes.length > 0 ? dispatchNotes.map((dc: any, idx: number) => (
-                    <tr key={idx}>
-                      <td className="p-2 border-r border-border-gray font-semibold text-ink">{dc.itemDescription || project?.partName || '—'}</td>
-                      <td className="p-2 border-r border-border-gray text-right font-mono font-semibold">{dc.quantity || '—'}</td>
-                      <td className="p-2 border-r border-border-gray text-right font-mono font-semibold">{dc.grossWeight ? `${dc.grossWeight} KG` : '—'}</td>
-                      <td className="p-2 text-cool-gray">{dc.remarks || '—'}</td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={4} className="p-4 text-center text-cool-gray italic">No dispatch records to display</td>
+                <tbody className="divide-y divide-zinc-300 text-[11px] print:text-[8px] font-sans">
+                  {dispatchNotes.length > 0 ? (
+                    dispatchNotes.map((dc: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-zinc-50/50 break-inside-avoid">
+                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">{idx + 1}</td>
+                        <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">
+                          {dc.itemDescription || project?.partName || 'Precision Tooling Assembly'}
+                        </td>
+                        <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-mono font-semibold text-ink">
+                          {project?.projectNumber || 'TOOL-001'}
+                        </td>
+                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                          {dc.quantity || 1}
+                        </td>
+                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-600">
+                          SET
+                        </td>
+                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                          {dc.grossWeight ? `${dc.grossWeight} KG` : '—'}
+                        </td>
+                        <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 text-[10px] print:text-[7.5px] text-zinc-700 italic">
+                          {dc.remarks || 'Tooling tryout & final production handover'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr className="break-inside-avoid">
+                      <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">1</td>
+                      <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">
+                        {challanForm.itemDescription || project?.partName || 'Precision Press Tooling Assembly'}
+                      </td>
+                      <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-mono font-semibold text-ink">
+                        {project?.projectNumber || 'KTD-2026-001'}
+                      </td>
+                      <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                        {challanForm.quantity || 1}
+                      </td>
+                      <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-600">
+                        SET
+                      </td>
+                      <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                        {challanForm.grossWeight ? `${challanForm.grossWeight} KG` : '350 KG'}
+                      </td>
+                      <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 text-[10px] print:text-[7.5px] text-zinc-700 italic">
+                        {challanForm.remarks || 'Outward dispatch for customer tryout approval'}
+                      </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
 
-            {/* Sign-off Stamps */}
-            <div className="pt-8 border-t border-border-gray grid grid-cols-2 gap-8 text-center text-xs">
-              <div className="space-y-10">
-                <div className="h-8 flex items-center justify-center font-serif text-cool-gray italic">
-                  [ Dispatch Officer Signature ]
-                </div>
-                <div className="border-t border-border-gray pt-1 font-semibold text-ink">
-                  ToolRoom OS Stores & Logistics
+            {/* Declaration & Summary Totals */}
+            <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
+              {/* Left: Statutory Declaration (7 Cols) */}
+              <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 flex flex-col justify-between">
+                <div>
+                  <span className="font-bold text-[9px] print:text-[7px] uppercase text-zinc-600">STATUTORY DECLARATION:</span>
+                  <p className="font-medium text-zinc-700 text-[10px] print:text-[7.5px] italic mt-0.5 leading-tight">
+                    We declare that this Delivery Challan shows the actual quantity of goods described and that all particulars are true and correct. The goods described above are being transported under Rule 55 of the CGST Rules for Tooling delivery / Tryout purposes and does not constitute a sale.
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-10">
-                <div className="h-8 flex items-center justify-center font-serif text-cool-gray italic">
-                  [ Security Gate Stamp & Signature ]
+              {/* Right: Totals Box (5 Cols) */}
+              <div className="col-span-5 p-2 sm:p-2.5 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/80">
+                <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
+                  <span className="text-zinc-600">TOTAL DISPATCH ITEMS:</span>
+                  <span className="font-mono font-bold text-ink">{dispatchNotes.length > 0 ? dispatchNotes.length : 1}</span>
                 </div>
-                <div className="border-t border-border-gray pt-1 font-semibold text-ink">
-                  Security Gate Outward Stamp
+
+                <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
+                  <span className="text-zinc-600">TOTAL QUANTITY:</span>
+                  <span className="font-mono font-bold text-ink">{dispatchNotes.length > 0 ? dispatchNotes.reduce((s: number, d: any) => s + (Number(d.quantity) || 1), 0) : 1} SET</span>
+                </div>
+
+                {/* Highlighted Delivery Status Box */}
+                <div className="pt-1 border-t border-primary/20 flex justify-between items-center bg-primary/10 border border-primary/30 text-ink p-1.5 print:py-0.5 print:px-1.5 rounded-[6px] mt-1 print:mt-0.5">
+                  <span className="font-bold uppercase tracking-wider text-[10px] print:text-[7px] text-primary-dark">STATUS:</span>
+                  <span className="font-mono font-bold text-xs sm:text-sm print:text-[9px] text-primary">
+                    READY FOR DISPATCH
+                  </span>
                 </div>
               </div>
             </div>
+
+            {/* 3-Box Signature Block matching physical factory sheet */}
+            <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-3 text-center text-xs print:text-[7.5px] p-2 print:py-1 print:px-1 bg-white rounded-b-lg break-inside-avoid">
+              <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 pr-1">
+                <div>
+                  <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
+                    1. PREPARED BY (STORES &amp; LOGISTICS)
+                  </span>
+                  <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Dispatch Officer</span>
+                </div>
+                <div className="h-6 sm:h-8 print:h-4"></div>
+                <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">OUTWARD DISPATCH SIGN</span>
+              </div>
+
+              <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 px-1">
+                <div>
+                  <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
+                    2. SECURITY GATE OUTWARD STAMP
+                  </span>
+                  <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Gate Pass Clearance</span>
+                </div>
+                <div className="h-6 sm:h-8 print:h-4"></div>
+                <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">GATE OFFICER STAMP &amp; TIME</span>
+              </div>
+
+              <div className="flex flex-col justify-between h-14 sm:h-18 print:h-10 pl-1">
+                <div>
+                  <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
+                    3. CONSIGNEE ACKNOWLEDGEMENT
+                  </span>
+                  <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Customer Receiving Stamp</span>
+                </div>
+                <div className="h-6 sm:h-8 print:h-4"></div>
+                <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">RECEIVED IN GOOD CONDITION</span>
+              </div>
+            </div>
+
           </div>
         </div>
       )}

@@ -236,8 +236,8 @@ export const ProjectLaborTracking: React.FC<ProjectLaborTrackingProps> = ({
           onClick={() => setActiveTab('ALL')}
           className={`px-3 py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'ALL'
-              ? 'bg-zinc-900 text-white shadow-subtle'
-              : 'text-mute hover:text-ink hover:bg-zinc-100'
+              ? 'bg-primary text-white shadow-subtle'
+              : 'text-mute hover:text-ink hover:bg-canvas'
           }`}
         >
           All Daily Cost Trackers

@@ -432,10 +432,10 @@
     background: #ffffff !important;
   }
 
-  /* Page setup: Landscape A4 with standard document margins */
+  /* Page setup: Portrait A4 for standard vertical factory documents */
   @page {
-    size: A4 landscape;
-    margin: 6mm 8mm;
+    size: A4 portrait;
+    margin: 4mm 6mm;
   }
 
   /* Ensure table borders, cells and backgrounds print crisp */

@@ -169,13 +169,8 @@ export class PurchaseOrdersService {
 
 
 
-      // 2. Resolve Primary Project ID for Header (use first item's project or first available project in DB)
-      let primaryProjectId = dto.items.find(i => i.projectId)?.projectId;
-      if (!primaryProjectId) {
-        const firstProj = await tx.project.findFirst();
-        if (!firstProj) throw new BadRequestException('No project found in system.');
-        primaryProjectId = firstProj.id;
-      }
+      // 2. Resolve Primary Project ID for Header (use first item's project, or null for general/multi-project)
+      const primaryProjectId = dto.items.find(i => i.projectId)?.projectId || null;
 
       // 3. Generate PO Number if missing
       let finalPoNumber = dto.poNumber;
@@ -326,14 +321,15 @@ export class PurchaseOrdersService {
 
       // 7. Log activity across involved projects
       const distinctProjectIds = Array.from(new Set(dto.items.map(i => i.projectId).filter(Boolean)));
-      if (distinctProjectIds.length === 0) distinctProjectIds.push(primaryProjectId);
+      if (distinctProjectIds.length === 0 && primaryProjectId) distinctProjectIds.push(primaryProjectId);
 
       for (const pId of distinctProjectIds) {
+        if (!pId) continue;
         await tx.projectActivity.create({
           data: {
             projectId: pId as string,
             action: 'PO_GENERATED',
-            description: `Multi-Project Purchase Order ${finalPoNumber} created for supplier ${dto.vendorName || ''}. Total Value: ₹${grandTotalAmount}`,
+            description: `Purchase Order ${finalPoNumber} created for supplier ${dto.vendorName || ''}. Total Value: ₹${grandTotalAmount}`,
             performedBy: userId || 'SYSTEM',
           },
         });
@@ -347,10 +343,13 @@ export class PurchaseOrdersService {
    * Get all Purchase Orders globally with full relations (PO Register)
    */
   async getAllGlobalPurchaseOrders() {
+    await this.syncOrphanConsumablePos();
+
     return this.prisma.purchaseOrderHeader.findMany({
       include: {
         vendor: true,
         project: true,
+        purchaseRequest: true,
         items: {
           include: {
             material: true,
@@ -373,6 +372,7 @@ export class PurchaseOrdersService {
       include: {
         vendor: true,
         project: true,
+        purchaseRequest: true,
         items: {
           include: {
             material: true,
@@ -853,6 +853,67 @@ export class PurchaseOrdersService {
     }
 
     return getSampleDeadMaterials();
+  }
+
+  /**
+   * Automatically decouple any historical PO that came from a generic consumable PRN (no project)
+   * or has isGeneralStores: true, but was mistakenly attached to a customer tooling project (like KTD-3).
+   */
+  async syncOrphanConsumablePos() {
+    try {
+      const misalignedPos = await this.prisma.purchaseOrderHeader.findMany({
+        where: {
+          purchaseRequest: {
+            projectId: null,
+          },
+          projectId: {
+            not: null,
+          },
+        },
+        include: {
+          purchaseRequest: true,
+          project: true,
+        },
+      });
+
+      if (misalignedPos.length > 0) {
+        for (const po of misalignedPos) {
+          const currentCustom = (po.customFields as any) || {};
+          await this.prisma.purchaseOrderHeader.update({
+            where: { id: po.id },
+            data: {
+              projectId: null,
+              customFields: {
+                ...currentCustom,
+                isGeneralStores: true,
+                isConsumable: true,
+                toolNo: 'GENERAL / CRIB',
+              },
+            },
+          });
+
+          // Also update any line items
+          const items = await this.prisma.purchaseOrderItem.findMany({
+            where: { poHeaderId: po.id },
+          });
+          for (const item of items) {
+            const itemCustom = (item.customFields as any) || {};
+            await this.prisma.purchaseOrderItem.update({
+              where: { id: item.id },
+              data: {
+                customFields: {
+                  ...itemCustom,
+                  toolNo: 'GENERAL / CRIB',
+                  isGeneralStores: true,
+                },
+              },
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Sync orphan consumable POs note:', err);
+    }
   }
 }
 

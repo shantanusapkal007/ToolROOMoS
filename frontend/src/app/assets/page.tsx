@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
@@ -13,7 +14,7 @@ import {
   ShieldCheck, FileText, QrCode, Tag, MapPin, Building, ChevronRight,
   TrendingUp, BarChart3, PieChart, Layers, Download, Check, AlertCircle, X,
   Edit, Eye, Image as ImageIcon, Link as LinkIcon, DollarSign, Archive, History,
-  Sliders, Shield, Boxes
+  Sliders, Shield, Boxes, PackageCheck
 } from 'lucide-react';
 import { 
   useAssetsDashboardStats, useAssets, useAsset, useCreateAsset, 
@@ -320,6 +321,17 @@ export default function GlobalAssetsPage() {
             breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Global Inventory' }]}
             actions={
               <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
+                <Link href="/inventory">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="bg-semantic-success-subtle hover:bg-emerald-100 dark:hover:bg-emerald-950/40 text-semantic-success-dark border-emerald-300 dark:border-emerald-800 font-semibold"
+                    leftIcon={<PackageCheck className="w-3.5 h-3.5 text-semantic-success-dark" />}
+                  >
+                    Stores & GRN Stock
+                  </Button>
+                </Link>
+
                 <Button
                   variant="secondary"
                   size="sm"

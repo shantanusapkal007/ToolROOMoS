@@ -226,7 +226,8 @@ model Machine {
 
   isActive    Boolean      @default(true)
   msdrHeaders MsdrHeader[]
-  maintenanceTickets MaintenanceTicket[]
+  maintenanceTickets   MaintenanceTicket[]
+  materialIssueHeaders MaterialIssueHeader[]
 
   @@map("machines")
 }
@@ -290,6 +291,7 @@ model Employee {
   globalAssetIssues    GlobalAssetIssueTransaction[]
   globalAssetReturns   GlobalAssetReturnTransaction[]
   employeeMonthlySalaries EmployeeMonthlySalary[]
+  materialIssueHeaders    MaterialIssueHeader[]
 
   @@map("employees")
 }
@@ -635,7 +637,7 @@ model PurchaseOrderHeader {
   purchaseRequestId    String?
   purchaseRequest      PurchaseRequestHeader? @relation(fields: [purchaseRequestId], references: [id])
   id                   String               @id @default(uuid())
-  projectId            String
+  projectId            String?
   vendorId             String
   poNumber             String               @unique
   documentNumber       String?
@@ -650,7 +652,7 @@ model PurchaseOrderHeader {
   createdBy            String?
   updatedBy            String?
   goodsReceiptHeaders  GoodsReceiptHeader[]
-  project              Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project              Project?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   vendor               Vendor               @relation(fields: [vendorId], references: [id])
   items                PurchaseOrderItem[]
 
@@ -710,7 +712,7 @@ model PurchaseOrderItem {
 
 model GoodsReceiptHeader {
   id              String              @id @default(uuid())
-  projectId       String
+  projectId       String?
   poHeaderId      String
   grnNumber       String              @unique
   supplierChallan String?
@@ -723,7 +725,7 @@ model GoodsReceiptHeader {
   createdBy      String?
   updatedBy      String?
   poHeader       PurchaseOrderHeader @relation(fields: [poHeaderId], references: [id])
-  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project        Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   items          GoodsReceiptItem[]
 
   vendorInvoiceNumber String?
@@ -782,7 +784,7 @@ model GoodsReceiptItem {
 
 model MaterialIssueHeader {
   id                      String                   @id @default(uuid())
-  projectId               String
+  projectId               String?
   issueNumber             String                   @unique
   documentNumber          String?
   issueDate               DateTime                 @default(now())
@@ -792,15 +794,22 @@ model MaterialIssueHeader {
   jobCardId               String?
   isPartial               Boolean                  @default(false)
   expectedManufactureQty  Int?
+  issueType               String                   @default("PROJECT")
+  issuedToEmployeeId      String?
+  issuedToMachineId       String?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   createdBy               String?
   updatedBy               String?
   jobCard                 JobCard?                 @relation(fields: [jobCardId], references: [id], onDelete: SetNull)
   machineShopDailyReports MachineShopDailyReport[]
-  project                 Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project                 Project?                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issuedToEmployee        Employee?                @relation(fields: [issuedToEmployeeId], references: [id], onDelete: SetNull)
+  issuedToMachine         Machine?                 @relation(fields: [issuedToMachineId], references: [id], onDelete: SetNull)
   items                   MaterialIssueItem[]
 
+  @@index([issuedToEmployeeId])
+  @@index([issuedToMachineId])
   @@map("material_issue_headers")
 }
 

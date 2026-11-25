@@ -10,13 +10,15 @@ import {
   TrendingUp, 
   AlertTriangle, 
   RefreshCw,
-  Trash2
+  Trash2,
+  PackageCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { ProcurementService } from '@/services/procurement.service';
 import { MultiProjectPoWizard } from './MultiProjectPoWizard';
 import { AuthenticPoDocument } from './AuthenticPoDocument';
 import { exportPoToExcel } from './poExcelExporter';
+import { ReceiveGrnModal } from '@/components/purchase/ReceiveGrnModal';
 import { SkeletonBox } from '@/components/ui/SkeletonLoader';
 import { useToast } from '@/components/ui/Toast';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -34,6 +36,7 @@ export function GlobalPoModule() {
   const [isLoadingDead, setIsLoadingDead] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [previewPo, setPreviewPo] = useState<any | null>(null);
+  const [selectedGrnPo, setSelectedGrnPo] = useState<any | null>(null);
 
   useEffect(() => {
     fetchGlobalOrders();
@@ -57,30 +60,47 @@ export function GlobalPoModule() {
 
   const handleExportPo = (po: any) => {
     const custom = (po.customFields as any) || {};
+    const isGeneral =
+      !po.projectId ||
+      custom.isGeneralStores ||
+      custom.isConsumable ||
+      custom.toolNo === 'GENERAL / CRIB' ||
+      (po.purchaseRequest && !po.purchaseRequest.projectId);
+
     exportPoToExcel({
       poNumber: po.poNumber || "PUR/26-27/001",
-      rmSlipNo: custom.rmSlipNo || po.rmSlipNo || po.poNumber,
+      rmSlipNo: custom.rmSlipNo || po.rmSlipNo || po.documentNumber || po.poNumber,
       date: new Date(po.createdAt || Date.now()).toLocaleDateString('en-GB'),
       vendorName: po.vendor?.vendorName || po.vendorName || custom.vendorName || "Standard Vendor",
-      vendorAddress: po.vendor?.address || custom.vendorAddress || "Pune",
+      vendorAddress: po.vendor?.address || custom.vendorAddress || "MIDC Waluj, Aurangabad",
       deliveryTerms: po.deliveryTerms || custom.deliveryTerms || "Immediate",
       termsAndConditions: custom.termsAndConditions || po.termsAndConditions,
-      items: (po.items || []).map((item: any, idx: number) => ({
-        toolNo: item.project?.projectNumber || item.toolNo || 'KTD-GENERAL',
-        detNo: item.detNo || `${idx + 1}`,
-        length: item.length || '-',
-        width: item.width || '-',
-        height: item.height || '-',
-        materialGrade: item.materialGrade || item.material?.materialGrade || 'MS',
-        orderedQty: Number(item.orderedQty || item.quantity || 1),
-        apWt: Number(item.apWt || item.unitWeight || 10),
-        totalWt: Number(item.totalWt || item.weight || 10),
-        agreedRate: Number(item.agreedRate || item.rate || 85),
-        basicValue: Number(item.basicValue || item.amount || 850),
-        gstAmount: Number(item.gstAmount || 153),
-        lineTotal: Number(item.lineTotal || 1003),
-        remarks: item.remarks || '',
-      })),
+      items: (po.items || []).map((item: any, idx: number) => {
+        const itemCustom = (item.customFields as any) || {};
+        return {
+          srNo: idx + 1,
+          toolNo: isGeneral
+            ? 'GENERAL / CRIB'
+            : (item.project?.projectNumber || itemCustom.toolNo || item.toolNo || po.project?.projectNumber || 'KTD-GENERAL'),
+          detNo: itemCustom.detNo || item.detNo || `${idx + 1}`,
+          length: itemCustom.length || item.length || '-',
+          width: itemCustom.width || item.width || '-',
+          height: itemCustom.height || item.height || '-',
+          materialGrade:
+            item.materialGrade ||
+            (itemCustom.materialGrade !== undefined
+              ? (itemCustom.materialGrade || itemCustom.partName || '—')
+              : (item.material?.materialGrade || 'MS')),
+          orderedQty: Number(item.orderedQty || item.quantity || 1),
+          apWt: Number(item.apWt || itemCustom.apWt || 0),
+          totalWt: Number(item.totalWt || itemCustom.totalWt || 0),
+          agreedRate: Number(item.agreedRate || item.rate || 0),
+          basicValue: Number(item.basicValue || item.amount || 0),
+          gstAmount: Number(item.gstAmount || itemCustom.gstAmount || 0),
+          lineTotal: Number(item.lineTotal || 0),
+          remarks: item.remarks || itemCustom.partName || '',
+        };
+      }),
     });
   };
 
@@ -88,9 +108,15 @@ export function GlobalPoModule() {
     setIsLoading(true);
     try {
       const res = await ProcurementService.getAllGlobalPurchaseOrders();
-      setPurchaseOrders(res?.data || []);
+      const list = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.data)
+        ? res.data
+        : (res?.items || []);
+      setPurchaseOrders(list);
     } catch (err) {
       console.warn("Could not fetch global POs:", err);
+      setPurchaseOrders([]);
     } finally {
       setIsLoading(false);
     }
@@ -100,9 +126,15 @@ export function GlobalPoModule() {
     setIsLoadingDead(true);
     try {
       const res = await ProcurementService.getDeadMaterials();
-      setDeadMaterials(res?.data || res || []);
+      const list = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.data)
+        ? res.data
+        : (res?.items || []);
+      setDeadMaterials(list);
     } catch (err) {
       console.warn("Could not fetch dead materials:", err);
+      setDeadMaterials([]);
     } finally {
       setIsLoadingDead(false);
     }
@@ -111,10 +143,21 @@ export function GlobalPoModule() {
   const filteredOrders = purchaseOrders.filter(po => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
+    const custom = (po.customFields as any) || {};
+    const isGeneral =
+      !po.projectId ||
+      custom.isGeneralStores ||
+      custom.isConsumable ||
+      custom.toolNo === 'GENERAL / CRIB' ||
+      (po.purchaseRequest && !po.purchaseRequest.projectId);
+
     return (
       po.poNumber?.toLowerCase().includes(q) ||
       po.vendor?.vendorName?.toLowerCase().includes(q) ||
-      po.project?.projectNumber?.toLowerCase().includes(q)
+      po.project?.projectNumber?.toLowerCase().includes(q) ||
+      custom.toolNo?.toLowerCase().includes(q) ||
+      custom.sourcePrnNumber?.toLowerCase().includes(q) ||
+      (isGeneral && 'general / crib'.includes(q))
     );
   });
 
@@ -219,36 +262,53 @@ export function GlobalPoModule() {
         <AuthenticPoDocument 
           data={{
             poNumber: previewPo.poNumber || "PUR/26-27/001",
-            rmSlipNo: previewPo.rmSlipNo || (previewPo.customFields as any)?.rmSlipNo || "-",
+            rmSlipNo: previewPo.rmSlipNo || (previewPo.customFields as any)?.rmSlipNo || previewPo.documentNumber || "-",
             date: new Date(previewPo.createdAt || Date.now()).toLocaleDateString('en-GB'),
             vendorName: previewPo.vendor?.vendorName || previewPo.vendorName || (previewPo.customFields as any)?.vendorName || "Standard Vendor",
-            vendorAddress: previewPo.vendor?.address || (previewPo.customFields as any)?.vendorAddress || "Pune",
+            vendorAddress: previewPo.vendor?.address || (previewPo.customFields as any)?.vendorAddress || "MIDC Waluj, Aurangabad",
             deliveryTerms: previewPo.deliveryTerms || (previewPo.customFields as any)?.deliveryTerms || "Immediate",
             termsAndConditions: (previewPo.customFields as any)?.termsAndConditions || previewPo.termsAndConditions,
-            items: (previewPo.items || []).map((item: any, idx: number) => ({
-              id: item.id || `item-${idx}`,
-              projectId: item.projectId || '',
-              toolNo: item.project?.projectNumber || item.toolNo || 'KTD-GENERAL',
-              detNo: item.detNo || `${idx + 1}`,
-              length: item.length || '-',
-              width: item.width || '-',
-              height: item.height || '-',
-              materialGrade: item.materialGrade || item.material?.materialGrade || 'MS',
-              orderedQty: Number(item.orderedQty || item.quantity || 1),
-              apWt: Number(item.apWt || item.unitWeight || 10),
-              totalWt: Number(item.totalWt || item.weight || 10),
-              agreedRate: Number(item.agreedRate || item.rate || 85),
-              basicValue: Number(item.basicValue || item.amount || 850),
-              gstPercent: Number(item.gstPercent || 18),
-              gstAmount: Number(item.gstAmount || 153),
-              lineTotal: Number(item.lineTotal || 1003),
-              remarks: item.remarks || '',
-            })),
+            items: (previewPo.items || []).map((item: any, idx: number) => {
+              const itemCustom = (item.customFields as any) || {};
+              const previewCustom = (previewPo.customFields as any) || {};
+              const isPoGeneral =
+                !previewPo.projectId ||
+                previewCustom.isGeneralStores ||
+                previewCustom.isConsumable ||
+                previewCustom.toolNo === 'GENERAL / CRIB' ||
+                (previewPo.purchaseRequest && !previewPo.purchaseRequest.projectId);
+
+              return {
+                id: item.id || `item-${idx}`,
+                projectId: item.projectId || '',
+                toolNo: isPoGeneral
+                  ? 'GENERAL / CRIB'
+                  : (item.project?.projectNumber || itemCustom.toolNo || item.toolNo || previewPo.project?.projectNumber || 'KTD-GENERAL'),
+                detNo: itemCustom.detNo || item.detNo || `${idx + 1}`,
+                length: itemCustom.length || item.length || '-',
+                width: itemCustom.width || item.width || '-',
+                height: itemCustom.height || item.height || '-',
+                materialGrade:
+            item.materialGrade ||
+            (itemCustom.materialGrade !== undefined
+              ? (itemCustom.materialGrade || itemCustom.partName || '—')
+              : (item.material?.materialGrade || 'MS')),
+                orderedQty: Number(item.orderedQty || item.quantity || 1),
+                apWt: Number(item.apWt || itemCustom.apWt || (item.totalWt && item.orderedQty ? Number(item.totalWt) / Number(item.orderedQty) : 0)),
+                totalWt: Number(item.totalWt || itemCustom.totalWt || 0),
+                agreedRate: Number(item.agreedRate || item.rate || 0),
+                basicValue: Number(item.basicValue || item.amount || 0),
+                gstPercent: Number(item.gstPercent || itemCustom.gstPercent || 18),
+                gstAmount: Number(item.gstAmount || itemCustom.gstAmount || 0),
+                lineTotal: Number(item.lineTotal || 0),
+                remarks: item.remarks || itemCustom.partName || '',
+              };
+            }),
           }}
           onBack={() => setPreviewPo(null)} 
         />
       ) : activeTab === 'create' ? (
-        <MultiProjectPoWizard onSuccess={fetchGlobalOrders} />
+        <MultiProjectPoWizard onSuccess={() => { fetchGlobalOrders(); setActiveTab('history'); }} />
       ) : activeTab === 'history' ? (
         <div className="bg-white rounded-[12px] border border-border-gray shadow-subtle overflow-hidden space-y-4 p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -273,6 +333,8 @@ export function GlobalPoModule() {
                 <tr>
                   <th className="py-3 px-4">PO Number</th>
                   <th className="py-3 px-4">Vendor / Supplier</th>
+                  <th className="py-3 px-4">Project / Reference</th>
+                  <th className="py-3 px-4 text-center">Date</th>
                   <th className="py-3 px-4 text-right">Items</th>
                   <th className="py-3 px-4 text-right">Total Amount (₹)</th>
                   <th className="py-3 px-4 text-center">Status</th>
@@ -282,52 +344,91 @@ export function GlobalPoModule() {
               <tbody className="divide-y divide-border-gray">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center"><SkeletonBox className="h-10 w-full" /></td>
+                    <td colSpan={8} className="p-8 text-center"><SkeletonBox className="h-10 w-full" /></td>
                   </tr>
                 ) : filteredOrders.length > 0 ? (
-                  filteredOrders.map((po) => (
-                    <tr key={po.id} className="hover:bg-neutral-50/60 transition-colors">
-                      <td className="py-3 px-4 font-mono font-semibold text-primary">{po.poNumber}</td>
-                      <td className="py-3 px-4 font-semibold text-ink">{po.vendor?.vendorName || po.vendorName || "Standard Vendor"}</td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold">{po.items?.length || 1} items</td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold text-semantic-success-dark">₹{(Number(po.totalAmount) || 0).toLocaleString('en-IN')}</td>
-                      <td className="py-3 px-4 text-center">
-                        <StatusBadge status={po.status || "COMPLETED"} size="sm" />
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            leftIcon={<Eye className="w-3.5 h-3.5" />}
-                            onClick={() => setPreviewPo(po)}
-                          >
-                            View PO
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            leftIcon={<Download className="w-3.5 h-3.5" />}
-                            onClick={() => handleExportPo(po)}
-                          >
-                            Excel
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            leftIcon={<Trash2 className="w-3.5 h-3.5" />}
-                            onClick={() => handleDeletePo(po)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  filteredOrders.map((po) => {
+                    const custom = (po.customFields as any) || {};
+                    const isGeneral =
+                      !po.projectId ||
+                      custom.isGeneralStores ||
+                      custom.isConsumable ||
+                      custom.toolNo === 'GENERAL / CRIB' ||
+                      (po.purchaseRequest && !po.purchaseRequest.projectId);
+
+                    const projRef = isGeneral
+                      ? 'GENERAL / CRIB'
+                      : custom.isMultiProject
+                      ? 'Multi-Project'
+                      : (po.project?.projectNumber || custom.toolNo || 'General');
+
+                    return (
+                      <tr key={po.id} className="hover:bg-neutral-50/60 transition-colors">
+                        <td className="py-3 px-4 font-mono font-semibold text-primary">{po.poNumber}</td>
+                        <td className="py-3 px-4 font-semibold text-ink">{po.vendor?.vendorName || po.vendorName || custom.vendorName || "Standard Vendor"}</td>
+                        <td className="py-3 px-4">
+                          <span className={`font-mono text-xs font-semibold px-2 py-0.5 rounded border ${
+                            isGeneral
+                              ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                              : 'bg-canvas text-ink border-border-gray'
+                          }`}>
+                            {projRef}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center font-mono text-xs text-cool-gray">
+                          {po.createdAt ? new Date(po.createdAt).toLocaleDateString('en-GB') : '-'}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-semibold">{po.items?.length || 1} items</td>
+                        <td className="py-3 px-4 text-right font-mono font-semibold text-semantic-success-dark">₹{(Number(po.totalAmount) || 0).toLocaleString('en-IN')}</td>
+                        <td className="py-3 px-4 text-center">
+                          <StatusBadge status={po.status || "COMPLETED"} size="sm" />
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {(po.status === 'ISSUED' || po.status === 'PARTIAL_RECEIPT') && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="bg-semantic-success-subtle hover:bg-emerald-100 dark:hover:bg-emerald-950/40 text-semantic-success-dark border-emerald-300 dark:border-emerald-800 font-semibold"
+                                leftIcon={<PackageCheck className="w-3.5 h-3.5 text-semantic-success-dark" />}
+                                onClick={() => setSelectedGrnPo(po)}
+                              >
+                                Receive GRN
+                              </Button>
+                            )}
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              leftIcon={<Eye className="w-3.5 h-3.5" />}
+                              onClick={() => setPreviewPo(po)}
+                            >
+                              View PO
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              leftIcon={<Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                              onClick={() => handleExportPo(po)}
+                            >
+                              Excel
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                              onClick={() => handleDeletePo(po)}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-silver-blue italic">
-                      No purchase orders found. Click 'Create PO' to issue a new multi-project order.
+                    <td colSpan={8} className="p-8 text-center text-silver-blue italic">
+                      No purchase orders found. Click '+ Create PO' to issue a new multi-project order or convert an approved PRN.
                     </td>
                   </tr>
                 )}
@@ -405,6 +506,19 @@ export function GlobalPoModule() {
             </table>
           </div>
         </div>
+      )}
+
+      {selectedGrnPo && (
+        <ReceiveGrnModal
+          projectId={selectedGrnPo.projectId || 'global'}
+          po={selectedGrnPo}
+          onClose={() => setSelectedGrnPo(null)}
+          onSuccess={() => {
+            setSelectedGrnPo(null);
+            fetchGlobalOrders();
+            success('GRN Created', `Material received for ${selectedGrnPo.poNumber}. Inventory stock updated.`);
+          }}
+        />
       )}
     </div>
   );

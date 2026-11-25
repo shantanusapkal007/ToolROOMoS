@@ -47,6 +47,14 @@ export const ProductionService = {
     return res.data;
   },
 
+  /**
+   * Issue consumable material to an operator or machine (no project context).
+   */
+  issueConsumableMaterial: async (data: any): Promise<any> => {
+    const res = await api.post(`production/consumable-issues`, data);
+    return res.data;
+  },
+
   returnMaterial: async (projectId: string, data: any): Promise<any> => {
     const res = await api.post(`projects/${projectId}/material-returns`, data);
     return res.data;

@@ -198,11 +198,11 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ isOpen, registry, on
           ].map(s => (
             <div key={s.num} className="flex items-center gap-2">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-micro font-semibold border ${
-                step >= s.num ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-zinc-100 text-zinc-400 border-zinc-200'
+                step >= s.num ? 'bg-primary text-white border-primary' : 'bg-canvas text-mute border-border-gray'
               }`}>
                 {s.num}
               </div>
-              <span className={`text-caption font-semibold ${step >= s.num ? 'text-zinc-900' : 'text-zinc-400'}`}>
+              <span className={`text-caption font-semibold ${step >= s.num ? 'text-ink' : 'text-mute'}`}>
                 {s.label}
               </span>
             </div>

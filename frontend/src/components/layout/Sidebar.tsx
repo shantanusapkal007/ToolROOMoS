@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   FileText,
   Download,
+  PackageCheck,
 } from 'lucide-react';
 import { useSidebarStore } from '../../store/useSidebarStore';
 import { usePwa } from '../../context/PwaContext';
@@ -126,10 +127,17 @@ export function Sidebar() {
             isExpanded={isExpanded}
           />
           <NavItem 
-            href="/assets"
+            href="/inventory" 
+            icon={<PackageCheck className="h-4 w-4" />} 
+            label="Stores & Inventory" 
+            active={pathname.startsWith("/inventory")} 
+            isExpanded={isExpanded}
+          />
+          <NavItem 
+            href="/assets" 
             icon={<Package className="h-4 w-4" />} 
-            label="Inventory & Assets" 
-            active={pathname.startsWith("/assets") || pathname.startsWith("/inventory")} 
+            label="Company Assets" 
+            active={pathname.startsWith("/assets")} 
             isExpanded={isExpanded}
           />
           <NavItem 

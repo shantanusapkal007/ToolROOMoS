@@ -104,8 +104,8 @@ export class CreateMultiPoDto {
   vendorAddress?: string;
 
   @IsString()
-  @IsNotEmpty()
-  poNumber: string;
+  @IsOptional()
+  poNumber?: string;
 
   @IsString()
   @IsOptional()

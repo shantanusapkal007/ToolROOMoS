@@ -10,6 +10,11 @@ export class InventoryService {
     return this.prisma.inventoryBatch.findMany({
       include: {
         material: true,
+        grnItem: {
+          include: {
+            poItem: true,
+          },
+        },
         location: {
           include: {
             warehouse: true,

@@ -14,6 +14,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { PurchaseOrdersService } from './purchase-orders.service';
 import { GoodsReceiptsService } from './goods-receipts.service';
 import { CreateMultiPoDto } from './dto/create-multi-po.dto';
+import { CreateGrnDto } from './dto/create-grn.dto';
 
 @Controller('api/v1/procurement')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -29,6 +30,19 @@ export class GlobalProcurementController {
     return {
       status: 'success',
       message: 'All Goods Receipt Notes retrieved successfully.',
+      data,
+    };
+  }
+
+  @Post('goods-receipts')
+  async createGlobalGrn(
+    @Body() dto: CreateGrnDto,
+    @CurrentUser() user: any,
+  ) {
+    const data = await this.grnService.createGrn(null, dto, user?.userId);
+    return {
+      status: 'success',
+      message: 'Goods Receipt Note created and inventory stock updated.',
       data,
     };
   }

@@ -10,9 +10,9 @@ export interface PrintDocumentOptions {
 
 export function printIsolatedElement(elementId: string, options: PrintDocumentOptions = {}) {
   const {
-    orientation = 'landscape',
+    orientation = 'portrait',
     title = 'Document',
-    margin = '6mm 8mm',
+    margin = '5mm',
   } = options;
 
   if (typeof window === 'undefined') return;
@@ -61,7 +61,13 @@ export function printIsolatedElement(elementId: string, options: PrintDocumentOp
         <style>
           @page {
             size: A4 ${orientation};
-            margin: ${margin};
+            margin: 4mm 6mm !important;
+          }
+          @media print {
+            @page {
+              size: A4 ${orientation};
+              margin: 4mm 6mm !important;
+            }
           }
           * {
             -webkit-print-color-adjust: exact !important;
@@ -75,14 +81,18 @@ export function printIsolatedElement(elementId: string, options: PrintDocumentOp
             padding: 0 !important;
             width: 100% !important;
             height: auto !important;
-            overflow: visible !important;
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+          }
+          body {
+            padding: 0 !important;
+            margin: 0 !important;
           }
           #${elementId}, .printable-sheet {
             width: 100% !important;
             max-width: 100% !important;
+            height: auto !important;
             padding: 0 !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             border: none !important;
             box-shadow: none !important;
             background: #ffffff !important;
@@ -98,12 +108,14 @@ export function printIsolatedElement(elementId: string, options: PrintDocumentOp
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          .break-inside-avoid, tr, .signature-block {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
         </style>
       </head>
       <body>
-        <div style="width: 100%; margin: 0 auto; background: #ffffff;">
-          ${clone.outerHTML}
-        </div>
+        ${clone.outerHTML}
       </body>
     </html>
   `);

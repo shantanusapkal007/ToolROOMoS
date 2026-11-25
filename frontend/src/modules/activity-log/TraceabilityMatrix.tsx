@@ -370,7 +370,7 @@ export function TraceabilityMatrix() {
             </div>
             <button
               onClick={handleGenealogySearch}
-              className="px-5 py-2.5 bg-zinc-900 text-white rounded-[12px] text-sm font-medium shadow-elevation hover:bg-zinc-800 transition-colors"
+              className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-[12px] text-sm font-semibold shadow-subtle transition-colors cursor-pointer"
             >
               Trace Pedigree
             </button>
