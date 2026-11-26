@@ -6,65 +6,25 @@ import {
   Printer, 
   ArrowLeft, 
   CheckCircle2, 
-  Building2, 
   FileText, 
-  Package, 
-  Layers, 
-  Calendar, 
-  User, 
-  ShieldCheck 
 } from 'lucide-react';
 import { exportPrnToExcel } from './prnExcelExporter';
 import { PurchaseRequisition } from '@/services/purchase-requisitions.service';
 import { Button } from '@/components/ui/Button';
 import { printIsolatedElement } from '@/utils/printDocument';
 import { formatDate } from '@/lib/formatters';
+import {
+  OfficialSheetShell,
+  OfficialLetterhead,
+  OfficialInstructionBar,
+  CoinsStackIcon,
+  OfficialSignatureStrip,
+  numberToWordsINR,
+} from '@/components/print/OfficialStationery';
 
 interface AuthenticPrnDocumentProps {
   prn: PurchaseRequisition;
   onBack?: () => void;
-}
-
-// Convert numbers to Indian Rupees words
-function numberToWordsINR(amount: number): string {
-  const rounded = Math.round(amount);
-  if (rounded === 0) return 'Zero Rupees Only';
-
-  const singleDigits = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-  const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-  function convertTwoDigits(num: number): string {
-    if (num < 10) return singleDigits[num];
-    if (num < 20) return teens[num - 10];
-    const unit = num % 10;
-    return tens[Math.floor(num / 10)] + (unit ? ' ' + singleDigits[unit] : '');
-  }
-
-  function convertThreeDigits(num: number): string {
-    const hundred = Math.floor(num / 100);
-    const rest = num % 100;
-    let res = '';
-    if (hundred) res += singleDigits[hundred] + ' Hundred';
-    if (hundred && rest) res += ' and ';
-    if (rest) res += convertTwoDigits(rest);
-    return res;
-  }
-
-  let crore = Math.floor(rounded / 10000000);
-  let remainder = rounded % 10000000;
-  let lakh = Math.floor(remainder / 100000);
-  remainder = remainder % 100000;
-  let thousand = Math.floor(remainder / 1000);
-  remainder = remainder % 1000;
-
-  const parts: string[] = [];
-  if (crore) parts.push(convertThreeDigits(crore) + ' Crore');
-  if (lakh) parts.push(convertThreeDigits(lakh) + ' Lakh');
-  if (thousand) parts.push(convertThreeDigits(thousand) + ' Thousand');
-  if (remainder) parts.push(convertThreeDigits(remainder));
-
-  return 'Rupees ' + parts.join(' ') + ' Only';
 }
 
 export function AuthenticPrnDocument({ prn, onBack }: AuthenticPrnDocumentProps) {
@@ -147,218 +107,217 @@ export function AuthenticPrnDocument({ prn, onBack }: AuthenticPrnDocumentProps)
       </div>
 
       {/* ========================================================================= */}
-      {/* Printable Paper Sheet Target (A4 Vertical / Portrait)                      */}
+      {/* Printable Paper Sheet Target (Corporate Steel-Navy Stationery Theme)      */}
       {/* ========================================================================= */}
-      <div 
-        id="authentic-prn-sheet" 
-        data-print-target="true"
-        className="printable-sheet bg-white p-6 sm:p-8 print:p-0 rounded-[12px] shadow-level-4 border border-border-gray text-ink max-w-[210mm] mx-auto print:max-w-none print:w-full print:border-none print:shadow-none font-sans"
-      >
-        
-        {/* Document Header */}
-        <div className="border-2 border-zinc-900 p-3 sm:p-4 print:py-1.5 print:px-2 rounded-t-lg flex items-center justify-between gap-3 sm:gap-4 bg-white break-inside-avoid">
-          <div className="w-24 sm:w-28 print:w-16 shrink-0 flex items-center justify-center p-1.5 sm:p-2 print:p-0.5 border border-border-gray rounded bg-white">
-            <img src="/Krupa_Logo.png" alt="Krupa Logo" className="h-12 sm:h-14 print:h-8 w-auto object-contain" />
-          </div>
-          
-          <div className="flex-1 text-center pr-2">
-            <h1 className="text-base sm:text-lg md:text-xl print:text-[11px] font-bold uppercase tracking-wider text-[#ee1d36]">
-              KRUPA TOOLS &amp; STAMPINGS LTD.
-            </h1>
-            <p className="text-[11px] print:text-[7px] font-semibold text-ink mt-0.5 print:mt-0 uppercase tracking-tight print:leading-[1.2]">
-              GUT NO.23 PLOT NO.45 KAMLAPUR MIDC, WALUJ AURANGABAD - 431136
-            </p>
-            <p className="text-[11px] print:text-[7px] font-semibold text-ink uppercase tracking-tight print:leading-[1.2]">
-              GST NO : 27AAKCK1751B1ZS | STATE: MAHARASHTRA (27)
-            </p>
-            <p className="text-[9.5px] print:text-[6.5px] font-semibold text-zinc-700 uppercase tracking-tight mt-0.5 print:mt-0 print:leading-[1.2]">
-              Manufacturers of Press Tools, Jig Fixtures, Moulds, Precision Tooling &amp; Outside Job Work
-            </p>
-            <div className="mt-1 print:mt-0.5 pt-0.5 print:pt-0 border-t border-zinc-900/20">
-              <span className="font-bold text-xs sm:text-sm print:text-[9px] uppercase tracking-widest text-ink underline">
-                PURCHASE REQUISITION NOTE (PRN)
-              </span>
-              <span className="text-[9px] print:text-[6.5px] block text-zinc-600 font-semibold tracking-tight mt-0.5 print:mt-0">
-                (Internal Factory Material Indent &amp; Procurement Authorization Voucher)
-              </span>
-            </div>
-          </div>
-        </div>
+      <OfficialSheetShell id="authentic-prn-sheet" itemCount={prn.items?.length || 0}>
+        <OfficialLetterhead
+          documentTitle="PURCHASE REQUISITION NOTE (PRN)"
+          legalSubtitle="(Internal Factory Material Indent & Procurement Authorization Voucher)"
+        />
 
-        {/* Requisition Meta Grid */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-          {/* Left Col (7 Cols): Project, Department, Indentor */}
-          <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 space-y-1 print:space-y-0.5">
-            <div className="flex gap-2">
-              <span className="font-bold w-26 print:w-20 text-zinc-600 uppercase text-[10px] print:text-[7.5px]">PROJECT / TOOL:</span>
-              <span className="font-bold text-ink uppercase text-xs sm:text-sm print:text-[9px] truncate">
+        {/* Requisition Meta Dual Rounded Cards */}
+        <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid shrink-0">
+          {/* Left Card (7 Cols) */}
+          <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 flex flex-col justify-between space-y-2">
+            <div className="flex gap-2 items-baseline">
+              <span className="font-semibold w-24 shrink-0 text-[#475569] uppercase text-[10px] print:text-[8.5px]">PROJECT / TOOL:</span>
+              <span className="font-bold text-[#111827] uppercase text-xs sm:text-sm print:text-[11px] truncate">
                 {prn.project?.projectNumber || 'GENERAL / TOOL CRIB'}
                 {prn.project?.partName ? ` — ${prn.project.partName}` : (prn.project?.customer?.companyName ? ` — ${prn.project.customer.companyName}` : '')}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[11px] print:text-[7.5px] pt-1 print:pt-0.5 border-t border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600">DEPT: </span>
-                <span className="font-semibold text-ink">{prn.department || 'Stores / Tool Crib'}</span>
+            <div className="grid grid-cols-2 gap-3 text-[11px] print:text-[9px] pt-1.5 border-t border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569]">DEPT: </span>
+                <span className="font-bold text-[#111827]">{prn.department || 'Stores / Tool Crib'}</span>
               </div>
               <div>
-                <span className="font-semibold text-zinc-600">CATEGORY: </span>
-                <span className="font-mono font-semibold text-ink">{prn.category || 'RAW_MATERIAL'}</span>
+                <span className="font-semibold text-[#475569]">CATEGORY: </span>
+                <span className="font-mono font-semibold text-[#111827]">{prn.category || 'RAW_MATERIAL'}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[11px] print:text-[7.5px] pt-1 print:pt-0.5 border-t border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600">INDENTOR: </span>
-                <span className="font-semibold text-ink">{prn.requestedBy || 'Supervisor'}</span>
+            <div className="grid grid-cols-2 gap-3 text-[11px] print:text-[9px] pt-1.5 border-t border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569]">INDENTOR: </span>
+                <span className="font-semibold text-[#111827]">{prn.requestedBy || 'Supervisor'}</span>
               </div>
               <div>
-                <span className="font-semibold text-zinc-600">REQ. DATE: </span>
-                <span className="font-mono text-ink">
+                <span className="font-semibold text-[#475569]">REQ. DATE: </span>
+                <span className="font-mono font-semibold text-[#111827]">
                   {prn.requiredDate ? new Date(prn.requiredDate).toLocaleDateString('en-GB') : 'Immediate'}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Right Col (5 Cols): PRN #, Date, Priority, Approval Status */}
-          <div className="col-span-5 p-2.5 sm:p-3 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/40">
-            <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">PRN VOUCHER #:</span>
-                <span className="font-mono font-bold text-ink text-xs sm:text-sm print:text-[8.5px]">{prn.prNumber}</span>
+          {/* Right Card (5 Cols) */}
+          <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 space-y-2 print:space-y-1.5">
+            <div className="grid grid-cols-2 gap-2 pb-1.5 border-b border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">PRN VOUCHER #:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs sm:text-sm print:text-[10.5px]">{prn.prNumber}</span>
               </div>
               <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">DATE:</span>
-                <span className="font-mono font-semibold text-ink text-xs print:text-[8px]">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">DATE:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">
                   {prn.createdAt ? new Date(prn.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">PRIORITY:</span>
-                <span className={`font-mono font-bold text-xs print:text-[8px] uppercase ${
-                  prn.priority === 'CRITICAL' ? 'text-semantic-danger-dark' :
-                  prn.priority === 'URGENT' ? 'text-semantic-warning-dark' :
-                  'text-ink'
-                }`}>
+            <div className="grid grid-cols-2 gap-2 pb-1.5 border-b border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">PRIORITY:</span>
+                <span className="font-mono font-bold text-xs print:text-[9.5px] uppercase text-[#163354]">
                   {prn.priority || 'NORMAL'}
                 </span>
               </div>
               <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">PR STATUS:</span>
-                <span className="font-mono font-bold text-primary text-xs print:text-[8px] uppercase">{prn.status}</span>
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">PR STATUS:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px] uppercase">{prn.status}</span>
               </div>
             </div>
 
-            <div className="pt-0.5 print:pt-0">
-              <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">APPROVAL STATUS:</span>
-              <span className="font-semibold text-ink text-[11px] print:text-[8px] block truncate">
+            <div className="pt-0.5">
+              <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">APPROVAL STATUS:</span>
+              <span className="font-bold text-[#111827] text-[11px] print:text-[9.5px] block truncate">
                 {prn.approvalStatus === 'APPROVED' ? `Approved by ${prn.approvedBy || 'HOD'}` : prn.approvalStatus}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Itemized Requisition Table */}
-        <div className="border-x-2 border-b-2 border-zinc-900 overflow-hidden break-inside-avoid">
-          <table className="w-full border-collapse text-xs print:text-[8px]">
+        {/* Instructions Banner */}
+        <OfficialInstructionBar text="MATERIAL & TOOLING INDENT SCHEDULE FOR PROCUREMENT APPROVAL" />
+
+        {/* Itemized Requisition Table (Expands to fill A4 page body) */}
+        <div className="pro-table-grow border border-[#CBD5E1] rounded-[8px] flex-1 flex flex-col bg-white">
+          <table className="w-full table-fixed border-collapse text-[11px] print:text-[9px]">
             <thead>
-              <tr className="bg-zinc-100 border-b-2 border-zinc-900 font-bold text-zinc-800 text-[9.5px] print:text-[7.5px] uppercase tracking-wider">
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-8">SR.</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-12">DET #</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[140px]">ITEM / PART DESCRIPTION</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-center min-w-[90px]">GRADE / SPEC</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-center min-w-[100px]">DIMENSIONS (L×W×H)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-14">QTY</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-12">UOM</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-20">EST. RATE (₹)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-22">EST. TOTAL (₹)</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[120px]">SUGGESTED VENDOR / REMARKS</th>
+              <tr className="bg-[#E5EDF6] border-b border-[#CBD5E1] font-bold text-[#163354] text-[9px] print:text-[7.5px] uppercase tracking-tight leading-tight">
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center w-[3.5%] rounded-tl-[7px]">SR.</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[5%]">DET #</th>
+                <th className="py-2 px-1.5 print:py-1.5 border-r border-[#CBD5E1] text-left w-[18%]">ITEM / DESCRIPTION</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[11%]">GRADE / SPEC</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[12.5%]">DIMENSIONS</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-right w-[6%]">QTY</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center w-[5.5%]">UOM</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-right w-[10%]">EST. RATE (₹)</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-right w-[11%]">EST. TOTAL (₹)</th>
+                <th className="py-2 px-1.5 print:py-1.5 text-left w-[17.5%] rounded-tr-[7px]">SUGGESTED VENDOR / REMARKS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-300 text-[11px] print:text-[8px] font-sans">
+            <tbody className="divide-y divide-[#CBD5E1] border-b border-[#CBD5E1] text-[10.5px] print:text-[8.5px] font-sans">
               {prn.items?.map((item, index) => {
                 const lineTotal = Number(item.estimatedTotal) || (Number(item.requiredQuantity || 1) * Number(item.estimatedRate || 0));
                 return (
-                  <tr key={item.id || index} className="hover:bg-zinc-50/50 break-inside-avoid">
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">{index + 1}</td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono font-bold text-zinc-800">{item.detNo || '-'}</td>
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">
+                  <tr key={item.id || index} className="hover:bg-[#F8FAFC] break-inside-avoid align-top">
+                    <td className="py-2.5 px-0.5 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">{index + 1}</td>
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono font-bold text-[#111827]">{item.detNo || '-'}</td>
+                    <td className="py-2.5 px-1.5 print:py-2 border-r border-[#CBD5E1] font-bold text-[#111827] break-words">
                       {item.itemName || item.material?.materialGrade || 'Material Component'}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 text-center font-mono text-zinc-800">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#111827] break-words">
                       {item.materialGrade || item.material?.materialGrade || '-'}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 text-center font-mono text-zinc-800">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#111827] break-words">
                       {item.dimensions || item.rawSize || '-'}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827] tabular-nums">
                       {Number(item.requiredQuantity)}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center text-zinc-600 font-mono">
+                    <td className="py-2.5 px-0.5 print:py-2 border-r border-[#CBD5E1] text-center text-[#475569] font-mono">
                       {item.uom || 'PCS'}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-800">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#111827] tabular-nums">
                       ₹{Number(item.estimatedRate || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827] tabular-nums">
                       ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 text-[10.5px] print:text-[7.5px] text-zinc-700">
+                    <td className="py-2.5 px-1.5 print:py-2 text-[10px] print:text-[8px] text-[#475569] break-words">
                       {item.suggestedVendor && (
-                        <span className="font-semibold text-ink block">Rec: {item.suggestedVendor}</span>
+                        <span className="font-semibold text-[#111827] block">Rec: {item.suggestedVendor}</span>
                       )}
-                      {item.remarks && <span className="text-zinc-600">{item.remarks}</span>}
-                      {!item.suggestedVendor && !item.remarks && <span className="text-zinc-400 italic">Standard indent</span>}
+                      {item.remarks && <span className="text-[#475569]">{item.remarks}</span>}
+                      {!item.suggestedVendor && !item.remarks && <span className="text-[#475569] italic">Standard indent</span>}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+
+          {/* Continuous vertical ledger dividers extending to fill full A4 body space */}
+          <div className="pro-table-filler flex-1 flex w-full min-h-[24px] print:min-h-[16px]" aria-hidden="true">
+            <table className="self-stretch w-full flex-1 table-fixed border-collapse">
+              <tbody>
+                <tr className="h-full">
+                  <td className="p-0 w-[3.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[18%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[11%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[12.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[6%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[5.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[10%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[11%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[17.5%]" />
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Amount in Words & Totals Summary Grid */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-          {/* Left: Amount in Words & Purpose / Justification (7 Cols) */}
-          <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 flex flex-col justify-between">
-            <div>
-              <span className="font-bold text-[9px] print:text-[7px] uppercase text-zinc-600">ESTIMATED VALUE IN WORDS:</span>
-              <p className="font-semibold text-ink text-[11px] print:text-[8px] italic mt-0.5 print:mt-0 leading-tight">
-                {numberToWordsINR(totalEstimated)}
-              </p>
+        {/* Bottom-Anchored Official Footer */}
+        <div className="mt-auto shrink-0 space-y-2.5 print:space-y-2">
+        {/* Amount in Words & Totals Summary Dual Cards */}
+        <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid">
+          {/* Left: Amount in Words & Purpose Card (7 Cols) */}
+          <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 flex flex-col justify-between space-y-2">
+            <div className="flex items-start gap-2.5">
+              <CoinsStackIcon className="w-5 h-5 text-[#163354] shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-[9.5px] print:text-[8px] uppercase text-[#111827] tracking-wide">ESTIMATED VALUE IN WORDS:</span>
+                <p className="font-semibold text-[#111827] text-xs print:text-[9.5px] italic mt-0.5 leading-snug">
+                  {numberToWordsINR(totalEstimated)}
+                </p>
+              </div>
             </div>
 
             {prn.purpose && (
-              <div className="mt-1 pt-1 border-t border-border-gray">
-                <span className="font-bold text-[9px] print:text-[6.5px] uppercase text-zinc-500">INDENT PURPOSE / JUSTIFICATION:</span>
-                <p className="text-[10px] print:text-[7px] text-zinc-700 mt-0.5 leading-tight">
-                  {prn.purpose}
-                </p>
+              <div className="pt-2 border-t border-[#CBD5E1] flex items-start gap-2.5">
+                <FileText className="w-5 h-5 text-[#163354] shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-[9.5px] print:text-[8px] uppercase text-[#111827] tracking-wide">INDENT PURPOSE / JUSTIFICATION:</span>
+                  <p className="text-[10.5px] print:text-[8.5px] text-[#475569] mt-0.5 leading-snug">
+                    {prn.purpose}
+                  </p>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Right: Totals Box (5 Cols) */}
-          <div className="col-span-5 p-2 sm:p-2.5 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/80">
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">TOTAL LINE ITEMS:</span>
-              <span className="font-mono font-bold text-ink">{prn.items?.length || 0}</span>
-            </div>
+          {/* Right: Totals Card (5 Cols) */}
+          <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-2.5 sm:p-3 print:p-2 space-y-1.5 print:space-y-1 flex flex-col justify-between">
+            <div className="space-y-1.5 print:space-y-1">
+              <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">TOTAL LINE ITEMS:</span>
+                <span className="font-mono font-bold text-[#111827]">{prn.items?.length || 0}</span>
+              </div>
 
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">TOTAL QUANTITY:</span>
-              <span className="font-mono font-bold text-ink">{totalQuantity}</span>
+              <div className="flex justify-between pb-0.5 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">TOTAL QUANTITY:</span>
+                <span className="font-mono font-bold text-[#111827]">{totalQuantity}</span>
+              </div>
             </div>
 
             {/* Total Estimated Value Highlight Box */}
-            <div className="pt-1 border-t border-primary/20 flex justify-between items-center bg-primary/10 border border-primary/30 text-ink p-1.5 print:py-0.5 print:px-1.5 rounded-[6px] mt-1 print:mt-0.5">
-              <span className="font-bold uppercase tracking-wider text-[10px] print:text-[7px] text-primary-dark">TOTAL ESTIMATED COST:</span>
-              <span className="font-mono font-bold text-xs sm:text-sm print:text-[9px] text-primary">
+            <div className="flex justify-between items-center bg-[#E5EDF6] border border-[#CBD5E1] text-[#163354] p-2 print:py-1.5 print:px-2.5 rounded-[6px]">
+              <span className="font-bold uppercase tracking-wider text-[10px] print:text-[8.5px]">TOTAL ESTIMATED COST:</span>
+              <span className="font-mono font-extrabold text-sm print:text-[11px]">
                 ₹{totalEstimated.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -367,21 +326,21 @@ export function AuthenticPrnDocument({ prn, onBack }: AuthenticPrnDocumentProps)
 
         {/* Linked Generated Purchase Orders (if any) */}
         {prn.purchaseOrders && prn.purchaseOrders.length > 0 && (
-          <div className="border-x-2 border-b-2 border-zinc-900 p-2 sm:p-2.5 print:py-1 print:px-2 bg-canvas/40 break-inside-avoid">
-            <div className="flex items-center gap-1.5 pb-1 border-b border-border-gray text-[10px] print:text-[7px] font-bold uppercase text-primary tracking-wider">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+          <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 print:p-2 break-inside-avoid">
+            <div className="flex items-center gap-1.5 pb-1.5 border-b border-[#CBD5E1] text-[10px] print:text-[8px] font-bold uppercase text-[#163354] tracking-wider">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#163354]" />
               <span>LINKED PURCHASE ORDERS (POS) ISSUED FROM THIS PRN:</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
               {prn.purchaseOrders.map((po) => (
-                <div key={po.id} className="bg-white p-2 rounded-[6px] border border-border-gray flex items-center justify-between text-caption font-mono">
+                <div key={po.id} className="bg-white p-2 rounded-[6px] border border-[#CBD5E1] flex items-center justify-between text-caption font-mono">
                   <div>
-                    <span className="font-bold text-ink">{po.poNumber}</span>
-                    <span className="text-[10px] print:text-[7px] text-cool-gray block">{po.vendor?.vendorName || 'Vendor'}</span>
+                    <span className="font-bold text-[#111827]">{po.poNumber}</span>
+                    <span className="text-[10px] print:text-[8px] text-[#475569] block">{po.vendor?.vendorName || 'Vendor'}</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-bold text-ink">₹{Number(po.totalAmount || 0).toLocaleString('en-IN')}</span>
-                    <span className="text-[9px] print:text-[6.5px] font-semibold text-semantic-success-dark bg-semantic-success-subtle px-1.5 py-0.2 rounded border border-semantic-success/20 block mt-0.5">
+                    <span className="font-bold text-[#111827]">₹{Number(po.totalAmount || 0).toLocaleString('en-IN')}</span>
+                    <span className="text-[9px] print:text-[7.5px] font-semibold text-[#163354] bg-[#E5EDF6] px-1.5 py-0.5 rounded border border-[#CBD5E1] block mt-0.5">
                       {po.status}
                     </span>
                   </div>
@@ -391,47 +350,29 @@ export function AuthenticPrnDocument({ prn, onBack }: AuthenticPrnDocumentProps)
           </div>
         )}
 
-        {/* 3-Box Signature Block */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-3 text-center text-xs print:text-[7.5px] p-2 print:py-1 print:px-1 bg-white rounded-b-lg break-inside-avoid">
-          <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 pr-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                1. INDENTED BY (STORES / DEPT)
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">{prn.requestedBy || 'Storekeeper'}</span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">SIGN &amp; DATE</span>
-          </div>
-
-          <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 px-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                2. VERIFIED &amp; APPROVED (HOD / PLANT)
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">
-                {prn.approvedBy || (prn.status === 'APPROVED' ? 'Plant Manager' : 'Pending Review')}
-              </span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">HOD SIGNATURE</span>
-          </div>
-
-          <div className="flex flex-col justify-between h-14 sm:h-18 print:h-10 pl-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                3. PURCHASE ACTION (COMMERCIAL)
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">
-                {prn.purchaseOrders && prn.purchaseOrders.length > 0 ? `${prn.purchaseOrders.length} PO(s) Generated` : 'Pending PO'}
-              </span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">PURCHASE OFFICER SIGN &amp; STAMP</span>
-          </div>
+        {/* 3-Box Open Corporate Signature Strip */}
+        <OfficialSignatureStrip
+          boxes={[
+            {
+              title: '1. INDENTED BY (STORES / DEPT)',
+              role: prn.requestedBy || 'Storekeeper',
+              caption: 'SIGN & DATE',
+            },
+            {
+              title: '2. VERIFIED & APPROVED (HOD / PLANT)',
+              role: prn.approvedBy || (prn.status === 'APPROVED' ? 'Plant Manager' : 'Pending Review'),
+              caption: 'HOD SIGNATURE',
+            },
+            {
+              title: '3. PURCHASE ACTION (COMMERCIAL)',
+              role: prn.purchaseOrders && prn.purchaseOrders.length > 0 ? `${prn.purchaseOrders.length} PO(s) Generated` : 'Pending PO',
+              caption: 'PURCHASE OFFICER SIGN & STAMP',
+            },
+          ]}
+        />
         </div>
 
-      </div>
+      </OfficialSheetShell>
     </div>
   );
 }

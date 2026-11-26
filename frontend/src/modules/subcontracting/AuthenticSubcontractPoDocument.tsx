@@ -15,65 +15,48 @@ import {
   Plus,
   RotateCcw,
   Check,
-  XCircle
+  XCircle,
+  Truck,
 } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/lib/formatters';
 import { printIsolatedElement } from '@/utils/printDocument';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { Button } from '@/components/ui/Button';
+import {
+  OfficialSheetShell,
+  OfficialLetterhead,
+  OfficialInstructionBar,
+  OfficialSignatureStrip,
+  CoinsStackIcon,
+  numberToWordsINR,
+} from '@/components/print/OfficialStationery';
 
 interface AuthenticSubcontractPoDocumentProps {
   order: any;
+  orders?: any[];
   project?: any;
   onBack: () => void;
+  onSave?: (terms: string[]) => void;
+  isSaving?: boolean;
+  saved?: boolean;
+  saveLabel?: string;
   onCancel?: () => void;
   onDelete?: () => void;
 }
 
-// Convert numbers to Indian Rupees words
-function numberToWordsINR(amount: number): string {
-  const rounded = Math.round(amount);
-  if (rounded === 0) return 'Zero Rupees Only';
-
-  const singleDigits = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-  const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-  function convertTwoDigits(num: number): string {
-    if (num < 10) return singleDigits[num];
-    if (num < 20) return teens[num - 10];
-    const unit = num % 10;
-    return tens[Math.floor(num / 10)] + (unit ? ' ' + singleDigits[unit] : '');
-  }
-
-  function convertThreeDigits(num: number): string {
-    const hundred = Math.floor(num / 100);
-    const rest = num % 100;
-    let res = '';
-    if (hundred) res += singleDigits[hundred] + ' Hundred';
-    if (hundred && rest) res += ' and ';
-    if (rest) res += convertTwoDigits(rest);
-    return res;
-  }
-
-  let crore = Math.floor(rounded / 10000000);
-  let remainder = rounded % 10000000;
-  let lakh = Math.floor(remainder / 100000);
-  remainder = remainder % 100000;
-  let thousand = Math.floor(remainder / 1000);
-  remainder = remainder % 1000;
-
-  const parts: string[] = [];
-  if (crore) parts.push(convertThreeDigits(crore) + ' Crore');
-  if (lakh) parts.push(convertThreeDigits(lakh) + ' Lakh');
-  if (thousand) parts.push(convertThreeDigits(thousand) + ' Thousand');
-  if (remainder) parts.push(convertThreeDigits(remainder));
-
-  return 'Rupees ' + parts.join(' ') + ' Only';
-}
-
-export function AuthenticSubcontractPoDocument({ order, project, onBack, onCancel, onDelete }: AuthenticSubcontractPoDocumentProps) {
+export function AuthenticSubcontractPoDocument({
+  order,
+  orders,
+  project,
+  onBack,
+  onSave,
+  isSaving,
+  saved,
+  saveLabel,
+  onCancel,
+  onDelete,
+}: AuthenticSubcontractPoDocumentProps) {
   const [isEditingTerms, setIsEditingTerms] = useState<boolean>(false);
   const [terms, setTerms] = useState<string[]>([
     "The materials dispatched under this Challan / PO remain the exclusive property of Krupa Tools & Stampings Ltd. and are issued strictly for job work / outside processing under Section 143 of the CGST Act.",
@@ -84,7 +67,42 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
     "Delivery must be completed on or before the specified Expected Return Date.",
   ]);
 
-  const items = order.items || [];
+  // Flatten items when `orders` (multi-project batch) is passed, tagging each item with its project info
+  const sourceOrders = orders && orders.length > 0 ? orders : [order];
+  const items = sourceOrders.flatMap((ord: any) =>
+    (ord?.items || []).map((it: any) => ({
+      ...it,
+      _project: it.project || ord?.project || project,
+      _challanNumber: ord?.challanNumber || order?.challanNumber,
+    }))
+  );
+
+  // Determine unique projects across items
+  const uniqueProjectMap = new Map<string, { number: string; name: string; customer?: string }>();
+  items.forEach((it: any) => {
+    const p = it._project;
+    if (p) {
+      const pNum = p.projectNumber || it.toolNo || 'KTD';
+      if (!uniqueProjectMap.has(pNum)) {
+        uniqueProjectMap.set(pNum, {
+          number: pNum,
+          name: p.partName || p.name || '',
+          customer: p.customer?.companyName || p.customer?.customerName || '',
+        });
+      }
+    }
+  });
+  const uniqueProjects = Array.from(uniqueProjectMap.values());
+  const isMultiProject = uniqueProjects.length > 1 || (orders && orders.length > 1);
+  const primaryProject = uniqueProjects[0] || {
+    number: project?.projectNumber || order?.project?.projectNumber || 'KTD',
+    name: project?.partName || project?.name || order?.project?.partName || 'Tooling Project',
+    customer: project?.customer?.companyName || project?.customer?.customerName || order?.project?.customer?.companyName || '',
+  };
+  const displayChallanNo = isMultiProject
+    ? (order?.documentNumber || sourceOrders.map((o: any) => o.challanNumber).filter(Boolean).join(', '))
+    : (order?.challanNumber || order?.documentNumber || 'CHL-DRAFT');
+  const displayGatePass = order?.documentNumber || order?.challanNumber || 'DRAFT';
   
   // Calculate Totals
   let totalQty = 0;
@@ -160,31 +178,49 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
     sheet.getCell('B7').value = order.vendor?.gstNumber || 'N/A';
 
     sheet.getCell('G5').value = 'CHALLAN NO:';
-    sheet.getCell('H5').value = order.challanNumber;
+    sheet.getCell('H5').value = displayChallanNo;
     sheet.getCell('G6').value = 'DATE:';
-    sheet.getCell('H6').value = formatDate(order.createdAt);
+    sheet.getCell('H6').value = formatDate(order.createdAt || new Date());
     sheet.getCell('G7').value = 'RETURN DATE:';
     sheet.getCell('H7').value = order.expectedReturnDate ? formatDate(order.expectedReturnDate) : '7 Days';
 
     sheet.getCell('G8').value = 'PROJECT:';
-    sheet.getCell('H8').value = `${project?.projectNumber || 'KTD'} - ${project?.name || ''}`;
+    sheet.getCell('H8').value = isMultiProject
+      ? `Multi-Project (${uniqueProjects.map((p) => p.number).join(', ')})`
+      : `${primaryProject.number} - ${primaryProject.name}`;
 
     // Table Header
     const rowStart = 10;
-    const headers = [
-      'SR',
-      'OUTSOURCE OPERATION',
-      'MATERIAL GRADE / SPEC',
-      'BATCH / HEAT NO',
-      'MATERIAL SOURCE',
-      'SENT QTY',
-      'HRS / PC',
-      'TOTAL HRS',
-      'RATE/HR (INR)',
-      'BASIC COST',
-      'GST (18%)',
-      'TOTAL COST',
-    ];
+    const headers = isMultiProject
+      ? [
+          'SR',
+          'PROJECT / TOOL NO',
+          'OUTSOURCE OPERATION',
+          'MATERIAL GRADE / SPEC',
+          'BATCH / HEAT NO',
+          'MATERIAL SOURCE',
+          'SENT QTY',
+          'HRS / PC',
+          'TOTAL HRS',
+          'RATE/HR (INR)',
+          'BASIC COST',
+          'GST (18%)',
+          'TOTAL COST',
+        ]
+      : [
+          'SR',
+          'OUTSOURCE OPERATION',
+          'MATERIAL GRADE / SPEC',
+          'BATCH / HEAT NO',
+          'MATERIAL SOURCE',
+          'SENT QTY',
+          'HRS / PC',
+          'TOTAL HRS',
+          'RATE/HR (INR)',
+          'BASIC COST',
+          'GST (18%)',
+          'TOTAL COST',
+        ];
 
     const hRow = sheet.getRow(rowStart);
     headers.forEach((h, i) => {
@@ -214,21 +250,26 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
       const basic = Number(item.lineEstimatedCost || (totalHrs * rate));
       const gst = basic * 0.18;
       const total = basic + gst;
+      const colOffset = isMultiProject ? 1 : 0;
 
       r.getCell(1).value = idx + 1;
-      r.getCell(2).value = item.operation?.operationName || 'Job Work Operation';
-      r.getCell(3).value = item.inventoryBatch?.material?.materialGrade || item.inventoryBatch?.material?.materialName || 'N/A';
-      r.getCell(4).value = isMat ? `${item.inventoryBatch?.batchNumber || ''} (Heat: ${item.inventoryBatch?.heatNumber || 'N/A'})` : 'N/A';
-      r.getCell(5).value = isMat ? 'Factory Stores Issued' : 'Service Only';
-      r.getCell(6).value = Number(item.sentQty || 0);
-      r.getCell(7).value = hoursPerPc;
-      r.getCell(8).value = totalHrs;
-      r.getCell(9).value = rate;
-      r.getCell(10).value = basic;
-      r.getCell(11).value = gst;
-      r.getCell(12).value = total;
+      if (isMultiProject) {
+        r.getCell(2).value = item._project?.projectNumber || item.toolNo || 'KTD';
+      }
+      r.getCell(2 + colOffset).value = item.operation?.operationName || 'Job Work Operation';
+      r.getCell(3 + colOffset).value = item.inventoryBatch?.material?.materialGrade || item.inventoryBatch?.material?.materialName || 'N/A';
+      r.getCell(4 + colOffset).value = isMat ? `${item.inventoryBatch?.batchNumber || ''} (Heat: ${item.inventoryBatch?.heatNumber || 'N/A'})` : 'N/A';
+      r.getCell(5 + colOffset).value = isMat ? 'Factory Stores Issued' : 'Service Only';
+      r.getCell(6 + colOffset).value = Number(item.sentQty || 0);
+      r.getCell(7 + colOffset).value = hoursPerPc;
+      r.getCell(8 + colOffset).value = totalHrs;
+      r.getCell(9 + colOffset).value = rate;
+      r.getCell(10 + colOffset).value = basic;
+      r.getCell(11 + colOffset).value = gst;
+      r.getCell(12 + colOffset).value = total;
 
-      for (let c = 1; c <= 12; c++) {
+      const totalCols = isMultiProject ? 13 : 12;
+      for (let c = 1; c <= totalCols; c++) {
         r.getCell(c).border = {
           top: { style: 'thin' },
           bottom: { style: 'thin' },
@@ -238,13 +279,14 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
       }
     });
 
+    const colOffset = isMultiProject ? 1 : 0;
     const totRow = sheet.getRow(rowStart + 1 + items.length);
     totRow.getCell(1).value = 'TOTAL';
-    totRow.getCell(6).value = totalQty;
-    totRow.getCell(8).value = totalHours;
-    totRow.getCell(10).value = totalBasic;
-    totRow.getCell(11).value = totalGst;
-    totRow.getCell(12).value = totalCost;
+    totRow.getCell(6 + colOffset).value = totalQty;
+    totRow.getCell(8 + colOffset).value = totalHours;
+    totRow.getCell(10 + colOffset).value = totalBasic;
+    totRow.getCell(11 + colOffset).value = totalGst;
+    totRow.getCell(12 + colOffset).value = totalCost;
     totRow.font = { bold: true };
 
     let termR = rowStart + 3 + items.length;
@@ -280,18 +322,24 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
           <div>
             <h2 className="text-body font-bold text-ink flex items-center flex-wrap gap-2.5">
               <span>Subcontract Job Work PO &amp; Delivery Challan</span>
-              <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
+              <span className={`text-small font-semibold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
                 order.status === 'CANCELLED'
                   ? 'bg-semantic-danger-subtle text-semantic-danger-dark border-semantic-danger/30'
+                  : isMultiProject
+                  ? 'bg-primary-subtle text-primary border-primary/30'
                   : 'bg-semantic-success-subtle text-semantic-success-dark border-semantic-success-border'
               }`}>
-                {order.status === 'CANCELLED' ? 'CANCELLED / VOID' : 'Official Factory Document'}
+                {order.status === 'CANCELLED'
+                  ? 'CANCELLED / VOID'
+                  : isMultiProject
+                  ? `Multi-Project (${uniqueProjects.length} Tools)`
+                  : 'Official Factory Document'}
               </span>
             </h2>
             <div className="flex items-center flex-wrap gap-x-2.5 gap-y-1 text-caption text-cool-gray mt-1">
-              <span>Challan: <strong className="font-mono font-bold text-ink">{order.challanNumber}</strong></span>
+              <span>Challan: <strong className="font-mono font-bold text-ink">{displayChallanNo}</strong></span>
               <span className="text-border-gray">•</span>
-              <span>Vendor: <strong className="font-semibold text-ink">{order.vendor?.vendorName}</strong></span>
+              <span>Vendor: <strong className="font-semibold text-ink">{order.vendor?.vendorName || 'Outsource Vendor'}</strong></span>
               {order.documentNumber && (
                 <>
                   <span className="text-border-gray">•</span>
@@ -303,6 +351,25 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5">
+          {onSave && !saved && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onSave(terms)}
+              isLoading={isSaving}
+              leftIcon={<CheckCircle2 className="w-4 h-4" />}
+            >
+              {saveLabel || 'Confirm & Issue Challan'}
+            </Button>
+          )}
+
+          {saved && (
+            <span className="inline-flex items-center gap-1.5 text-small font-semibold px-3 py-1.5 rounded-[8px] bg-semantic-success-subtle text-semantic-success-dark border border-semantic-success/30">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Challan Saved</span>
+            </span>
+          )}
+
           {onCancel && order.status !== 'CANCELLED' && (
             <Button
               variant="secondary"
@@ -360,134 +427,122 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
       </div>
 
       {/* ========================================================================= */}
-      {/* Printable Paper Sheet Target (A4 Vertical / Portrait)                      */}
+      {/* Printable Paper Sheet Target (Corporate Steel-Navy Stationery Theme)      */}
       {/* ========================================================================= */}
-      <div
-        id="authentic-subcontract-po-sheet"
-        data-print-target="true"
-        className="printable-sheet bg-white p-6 sm:p-8 print:p-0 rounded-[12px] shadow-level-4 border border-border-gray text-ink max-w-[210mm] mx-auto print:max-w-none print:w-full print:border-none print:shadow-none font-sans"
-      >
+      <OfficialSheetShell id="authentic-subcontract-po-sheet" itemCount={items.length} extraClassName="subcontract-sheet-flex">
         {order.status === 'CANCELLED' && (
-          <div className="bg-red-50 border-2 border-red-500 text-red-700 font-bold text-center py-1.5 uppercase tracking-widest text-xs mb-3 rounded break-inside-avoid">
+          <div className="bg-red-50 border-2 border-red-500 text-red-700 font-bold text-center py-2 uppercase tracking-widest text-xs rounded-[6px] break-inside-avoid shrink-0">
             ⚠️ THIS SUBCONTRACT CHALLAN IS CANCELLED &amp; VOID — DO NOT DISPATCH GOODS
           </div>
         )}
-        {/* Document Header */}
-        <div className="border-2 border-zinc-900 p-3 sm:p-4 print:py-1.5 print:px-2 rounded-t-lg flex items-center justify-between gap-3 sm:gap-4 bg-white break-inside-avoid">
-          <div className="w-24 sm:w-28 print:w-16 shrink-0 flex items-center justify-center p-1.5 sm:p-2 print:p-0.5 border border-border-gray rounded bg-white">
-            <img src="/Krupa_Logo.png" alt="Krupa Logo" className="h-12 sm:h-14 print:h-8 w-auto object-contain" />
-          </div>
-          
-          <div className="flex-1 text-center pr-2">
-            <h1 className="text-base sm:text-lg md:text-xl print:text-[11px] font-bold uppercase tracking-wider text-[#ee1d36]">
-              KRUPA TOOLS &amp; STAMPINGS LTD.
-            </h1>
-            <p className="text-[11px] print:text-[7px] font-semibold text-ink mt-0.5 print:mt-0 uppercase tracking-tight print:leading-[1.2]">
-              GUT NO.23 PLOT NO.45 KAMLAPUR MIDC, WALUJ AURANGABAD - 431136
-            </p>
-            <p className="text-[11px] print:text-[7px] font-semibold text-ink uppercase tracking-tight print:leading-[1.2]">
-              GST NO : 27AAKCK1751B1ZS | STATE: MAHARASHTRA (27)
-            </p>
-            <p className="text-[9.5px] print:text-[6.5px] font-semibold text-zinc-700 uppercase tracking-tight mt-0.5 print:mt-0 print:leading-[1.2]">
-              Manufacturers of Press Tools, Jig Fixtures, Moulds, Precision Tooling &amp; Outside Job Work
-            </p>
-            <div className="mt-1 print:mt-0.5 pt-0.5 print:pt-0 border-t border-zinc-900/20">
-              <span className="font-bold text-xs sm:text-sm print:text-[9px] uppercase tracking-widest text-ink underline">
-                SUBCONTRACT JOB WORK PURCHASE ORDER &amp; DELIVERY CHALLAN
-              </span>
-              <span className="text-[9px] print:text-[6.5px] block text-zinc-600 font-semibold tracking-tight mt-0.5 print:mt-0">
-                (Issued under Rule 55 / Section 143 of CGST Act for Outside Job Work Processing)
-              </span>
-            </div>
-          </div>
-        </div>
 
-        {/* Vendor & Challan Meta Grid */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8.5px] break-inside-avoid">
-          {/* Vendor Details (Left Col) */}
-          <div className="col-span-7 p-2.5 sm:p-3 print:py-1.5 print:px-2 border-r-2 border-zinc-900 space-y-1 print:space-y-0.5">
-            <div className="flex gap-2">
-              <span className="font-bold w-22 print:w-18 text-zinc-600 uppercase text-[10px] print:text-[8px]">JOB WORK VENDOR:</span>
-              <span className="font-bold text-ink uppercase text-xs sm:text-sm print:text-[9.5px]">{order.vendor?.vendorName || "OUTSOURCE VENDOR"}</span>
+        <OfficialLetterhead
+          documentTitle="SUBCONTRACT JOB WORK PO & DELIVERY CHALLAN"
+          legalSubtitle="(Issued under Rule 55 / Section 143 of CGST Act for Outside Job Work Processing)"
+        />
+
+        {/* Vendor & Challan Meta Dual Rounded Cards */}
+        <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid shrink-0">
+          {/* Vendor Details (Left Card - 7 Cols) */}
+          <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] flex flex-col justify-between">
+            <div className="p-3 sm:p-3.5 print:p-2.5 space-y-1.5">
+              <div className="flex gap-2 items-baseline">
+                <span className="font-semibold w-24 shrink-0 text-[#475569] uppercase text-[10px] print:text-[8.5px]">JOB WORK VENDOR:</span>
+                <span className="font-bold text-[#111827] uppercase text-xs sm:text-sm print:text-[11px]">{order.vendor?.vendorName || "OUTSOURCE VENDOR"}</span>
+              </div>
+
+              <div className="flex gap-2 text-[11px] print:text-[9.5px]">
+                <span className="font-semibold w-24 shrink-0 text-[#475569] uppercase text-[10px] print:text-[8.5px]">ADDRESS:</span>
+                <span className="text-[#111827] leading-snug">{order.vendor?.address || "MIDC Waluj Industrial Area, Chhatrapati Sambhajinagar - 431136"}</span>
+              </div>
             </div>
 
-            <div className="flex gap-2 text-[11px] print:text-[8px]">
-              <span className="font-semibold w-22 print:w-18 text-zinc-600 uppercase text-[10px] print:text-[8px]">ADDRESS:</span>
-              <span className="text-zinc-800 print:leading-tight">{order.vendor?.address || "MIDC Waluj Industrial Area, Chhatrapati Sambhajinagar - 431136"}</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-[11px] print:text-[8px] pt-1 print:pt-0.5 border-t border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600">GSTIN: </span>
-                <span className="font-mono font-semibold text-ink">{order.vendor?.gstNumber || "UNREGISTERED"}</span>
+            <div className="grid grid-cols-2 gap-3 text-[11px] print:text-[9px] px-3 sm:px-3.5 py-2 print:px-2.5 print:py-1.5 border-t border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569]">GSTIN: </span>
+                <span className="font-mono font-bold text-[#111827]">{order.vendor?.gstNumber || "UNREGISTERED"}</span>
               </div>
               <div>
-                <span className="font-semibold text-zinc-600">CONTACT: </span>
-                <span className="font-mono text-ink">{order.vendor?.contactPhone || order.vendor?.contactEmail || "N/A"}</span>
+                <span className="font-semibold text-[#475569]">CONTACT: </span>
+                <span className="font-mono font-semibold text-[#111827]">{order.vendor?.contactPhone || order.vendor?.contactEmail || "N/A"}</span>
               </div>
             </div>
           </div>
 
-          {/* Challan & Project Details (Right Col) */}
-          <div className="col-span-5 p-2.5 sm:p-3 print:py-1.5 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/40">
-            <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7.5px] uppercase">CHALLAN / PO NO:</span>
-                <span className="font-mono font-bold text-ink text-xs sm:text-sm print:text-[9px]">{order.challanNumber}</span>
+          {/* Challan & Project Details (Right Card - 5 Cols) */}
+          <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] flex flex-col justify-between">
+            <div className="grid grid-cols-2 border-b border-[#CBD5E1]">
+              <div className="p-2.5 print:p-2 border-r border-[#CBD5E1]">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">CHALLAN / PO NO:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs sm:text-sm print:text-[10.5px] break-all">{displayChallanNo}</span>
               </div>
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7.5px] uppercase">DATE:</span>
-                <span className="font-mono font-semibold text-ink text-xs print:text-[8.5px]">{formatDate(order.createdAt)}</span>
+              <div className="p-2.5 print:p-2">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">DATE:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">{formatDate(order.createdAt || new Date())}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7.5px] uppercase">REF / GATE PASS:</span>
-                <span className="font-mono font-semibold text-ink text-xs print:text-[8.5px]">{order.documentNumber || order.challanNumber}</span>
+            <div className="grid grid-cols-2 border-b border-[#CBD5E1]">
+              <div className="p-2.5 print:p-2 border-r border-[#CBD5E1]">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">REF / GATE PASS:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">{displayGatePass}</span>
               </div>
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7.5px] uppercase">EXPECTED RETURN:</span>
-                <span className="font-mono font-semibold text-amber-700 text-xs print:text-[8.5px]">
+              <div className="p-2.5 print:p-2">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">EXPECTED RETURN:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">
                   {order.expectedReturnDate ? formatDate(order.expectedReturnDate) : "Within 7 Days"}
                 </span>
               </div>
             </div>
 
-            <div className="pt-0.5 print:pt-0">
-              <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7.5px] uppercase">PROJECT / TOOLING:</span>
-              <span className="font-semibold text-ink text-[11px] print:text-[8.5px] truncate block">
-                {project?.projectNumber || 'KTD-2'} — {project?.name || 'Tooling Project'}
-              </span>
-              {project?.customer?.customerName && (
-                <span className="text-micro text-cool-gray block print:hidden">
-                  Customer: {project.customer.customerName}
+            <div className="p-2.5 print:p-2">
+              <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">PROJECT / TOOLING:</span>
+              {isMultiProject ? (
+                <span className="font-bold text-[#111827] text-[11px] print:text-[9.5px] block leading-snug">
+                  Multi-Project ({uniqueProjects.map((p) => p.number).join(', ')})
                 </span>
+              ) : (
+                <>
+                  <span className="font-bold text-[#111827] text-[11px] print:text-[9.5px] truncate block">
+                    {primaryProject.number} — {primaryProject.name || 'Tooling Project'}
+                  </span>
+                  {primaryProject.customer && (
+                    <span className="text-[10px] print:text-[8.5px] text-[#475569] block">
+                      Customer: {primaryProject.customer}
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
         </div>
 
+        {/* Instructions Banner */}
+        <OfficialInstructionBar text="KINDLY PROCESS & RETURN THE FOLLOWING ITEMS STRICTLY AS PER DRAWING TOLERANCES, METALLURGICAL SPECS & TERMS BELOW." />
+
         {/* ========================================================================= */}
-        {/* Table of Job Work Operations & Material                                   */}
+        {/* Table of Job Work Operations & Material (Expands to fill A4 page body)   */}
         {/* ========================================================================= */}
-        <div className="border-x-2 border-b-2 border-zinc-900 overflow-hidden break-inside-avoid">
-          <table className="w-full border-collapse text-xs print:text-[8px]">
+        <div className="subcontract-table-grow pro-table-grow border border-[#CBD5E1] rounded-[8px] flex-1 flex flex-col bg-white">
+          <table className="w-full table-fixed border-collapse text-[11px] print:text-[9px]">
             <thead>
-              <tr className="bg-zinc-100 border-b-2 border-zinc-900 font-bold text-zinc-800 text-[9.5px] print:text-[7.5px] uppercase tracking-wider">
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-7">SR.</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[120px]">OUTSOURCE OPERATION &amp; SPECS</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[130px]">MATERIAL GRADE &amp; STORES BATCH</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-12">QTY</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-12">HRS/PC</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-14">TOTAL HRS</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-18">RATE/HR (₹)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-18">BASIC (₹)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-16">GST (18%)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-20">TOTAL (₹)</th>
+              <tr className="bg-[#E5EDF6] border-b border-[#CBD5E1] font-bold text-[#163354] text-[9px] print:text-[7.5px] uppercase tracking-tight leading-tight">
+                <th className="py-2 px-1 print:py-1.5 print:px-0.5 border-r border-[#CBD5E1] text-center w-[3.5%] rounded-tl-[7px]">SR.</th>
+                {isMultiProject && (
+                  <th className="py-2 px-1.5 print:py-1.5 print:px-1 border-r border-[#CBD5E1] text-left w-[11%]">TOOL / PROJ</th>
+                )}
+                <th className={`py-2 px-1.5 print:py-1.5 print:px-1 border-r border-[#CBD5E1] text-left ${isMultiProject ? 'w-[15%]' : 'w-[22%]'}`}>OPERATION &amp; SPECS</th>
+                <th className={`py-2 px-1.5 print:py-1.5 print:px-1 border-r border-[#CBD5E1] text-left ${isMultiProject ? 'w-[18.5%]' : 'w-[22.5%]'}`}>MATERIAL &amp; BATCH</th>
+                <th className="py-2 px-1 print:py-1.5 print:px-0.5 border-r border-[#CBD5E1] text-right w-[6%]">QTY</th>
+                <th className="py-2 px-1 print:py-1.5 print:px-0.5 border-r border-[#CBD5E1] text-right w-[5.5%]">HRS/PC</th>
+                <th className="py-2 px-1 print:py-1.5 print:px-0.5 border-r border-[#CBD5E1] text-right w-[6.5%]">TOT HRS</th>
+                <th className="py-2 px-1 print:py-1.5 print:px-0.5 border-r border-[#CBD5E1] text-right w-[8%]">RATE (₹)</th>
+                <th className="py-2 px-1 print:py-1.5 print:px-0.5 border-r border-[#CBD5E1] text-right w-[9%]">BASIC (₹)</th>
+                <th className="py-2 px-1 print:py-1.5 print:px-0.5 border-r border-[#CBD5E1] text-right w-[7.5%]">GST 18%</th>
+                <th className="py-2 px-1 print:py-1.5 print:px-0.5 text-right w-[9.5%] rounded-tr-[7px]">TOTAL (₹)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-300 text-[11px] print:text-[8px] font-sans">
+            <tbody className="divide-y divide-[#CBD5E1] border-b border-[#CBD5E1] text-[10.5px] print:text-[8.5px] font-sans">
               {items.map((item: any, idx: number) => {
                 const isMaterial = !!item.inventoryBatch;
                 const qty = Number(item.sentQty || 0);
@@ -499,80 +554,94 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
                 const total = basic + gst;
 
                 return (
-                  <tr key={idx} className="hover:bg-zinc-50/50 break-inside-avoid">
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">{idx + 1}</td>
+                  <tr key={idx} className="hover:bg-[#F8FAFC] break-inside-avoid align-top">
+                    <td className="py-2.5 px-1 print:py-2 print:px-0.5 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">{idx + 1}</td>
+
+                    {isMultiProject && (
+                      <td className="py-2.5 px-1.5 print:py-2 print:px-1 border-r border-[#CBD5E1] break-words">
+                        <div className="font-mono font-bold text-[#111827] text-[10.5px] print:text-[8.5px]">
+                          {item._project?.projectNumber || item.toolNo || 'KTD'}
+                        </div>
+                        {(item._project?.partName || item._project?.name) && (
+                          <div className="text-[9.5px] print:text-[7.5px] text-[#475569] leading-tight line-clamp-2 mt-0.5">
+                            {item._project?.partName || item._project?.name}
+                          </div>
+                        )}
+                      </td>
+                    )}
                     
                     {/* Operation & Specs */}
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300">
-                      <div className="font-bold text-ink text-[11.5px] print:text-[8.5px]">
+                    <td className="py-2.5 px-1.5 print:py-2 print:px-1 border-r border-[#CBD5E1] break-words">
+                      <div className="font-bold text-[#111827] text-[10.5px] print:text-[8.5px] leading-tight">
                         {item.operation?.operationName || 'Subcontract Operation'}
                       </div>
-                      <div className="text-[10px] print:text-[7.5px] font-normal text-zinc-600 mt-0.5 print:leading-tight">
+                      <div className="text-[9.5px] print:text-[7.5px] font-normal text-[#475569] mt-0.5 leading-tight">
                         {item.remarks || order.remarks || 'Standard job work specs'}
                       </div>
                     </td>
 
                     {/* Material Grade & Stores Batch */}
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-mono">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-ink text-[11px] print:text-[8px]">
+                    <td className="py-2.5 px-1.5 print:py-2 print:px-1 border-r border-[#CBD5E1] font-mono break-words">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <span className="font-bold text-[#111827] text-[10px] print:text-[8.5px]">
                           {item.inventoryBatch?.material?.materialGrade || 
                            item.inventoryBatch?.material?.materialName || 
                            (isMaterial ? 'Factory Raw Material' : 'N/A')}
                         </span>
                         {isMaterial ? (
-                          <span className="inline-flex items-center text-[9px] print:text-[6.5px] font-semibold text-emerald-800 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
+                          <span className="inline-flex items-center text-[8.5px] print:text-[7px] font-semibold text-[#163354] bg-[#E5EDF6] px-1 rounded border border-[#CBD5E1]">
                             Factory Stock
                           </span>
                         ) : (
-                          <span className="inline-flex items-center text-[9px] print:text-[6.5px] font-semibold text-zinc-600 bg-zinc-100 px-1 py-0.2 rounded border border-zinc-200">
+                          <span className="inline-flex items-center text-[8.5px] print:text-[7px] font-semibold text-[#475569] bg-[#F8FAFC] px-1 rounded border border-[#CBD5E1]">
                             Service Only
                           </span>
                         )}
                       </div>
                       {isMaterial ? (
-                        <div className="text-[9.5px] print:text-[7px] text-zinc-600 mt-0.5">
-                          <span>Batch: <strong className="font-semibold text-ink">{item.inventoryBatch?.batchNumber?.length > 18 ? `${item.inventoryBatch.batchNumber.slice(0, 10)}...${item.inventoryBatch.batchNumber.slice(-5)}` : item.inventoryBatch?.batchNumber}</strong></span>
-                          <span className="ml-1 text-zinc-400">•</span>
+                        <div className="text-[9px] print:text-[7.5px] text-[#475569] mt-0.5 leading-tight">
+                          <span>Batch: <strong className="font-semibold text-[#111827]">{item.inventoryBatch?.batchNumber?.length > 16 ? `${item.inventoryBatch.batchNumber.slice(0, 8)}..${item.inventoryBatch.batchNumber.slice(-4)}` : item.inventoryBatch?.batchNumber}</strong></span>
+                          <span className="ml-1 text-[#94A3B8]">•</span>
                           <span className="ml-1">Heat: {item.inventoryBatch?.heatNumber || 'N/A'}</span>
                         </div>
                       ) : (
-                        <div className="text-[9.5px] print:text-[7px] text-zinc-400 italic mt-0.5">No Store Stock Issued</div>
+                        <div className="text-[9px] print:text-[7.5px] text-[#475569] italic mt-0.5">No Store Stock Issued</div>
                       )}
                     </td>
 
                     {/* Quantity */}
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
-                      {qty} {item.inventoryBatch?.material?.uom || 'NOS'}
+                    <td className="py-2.5 px-1 print:py-2 print:px-0.5 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827] tabular-nums">
+                      <div>{qty}</div>
+                      <div className="text-[8.5px] print:text-[7px] font-normal text-[#475569]">{item.inventoryBatch?.material?.uom || 'NOS'}</div>
                     </td>
 
                     {/* Hours/Pc */}
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-800">
+                    <td className="py-2.5 px-1 print:py-2 print:px-0.5 border-r border-[#CBD5E1] text-right font-mono text-[#111827] tabular-nums">
                       {hoursPerPc}
                     </td>
 
                     {/* Total Hours */}
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                    <td className="py-2.5 px-1 print:py-2 print:px-0.5 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827] tabular-nums">
                       {lineHours.toFixed(1)}
                     </td>
 
                     {/* Rate / Hour */}
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-800">
+                    <td className="py-2.5 px-1 print:py-2 print:px-0.5 border-r border-[#CBD5E1] text-right font-mono text-[#475569] tabular-nums">
                       ₹{rate.toFixed(2)}
                     </td>
 
                     {/* Basic */}
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-semibold text-ink">
+                    <td className="py-2.5 px-1 print:py-2 print:px-0.5 border-r border-[#CBD5E1] text-right font-mono font-semibold text-[#111827] tabular-nums">
                       ₹{basic.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
 
                     {/* GST */}
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">
+                    <td className="py-2.5 px-1 print:py-2 print:px-0.5 border-r border-[#CBD5E1] text-right font-mono text-[#475569] tabular-nums">
                       ₹{gst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
 
                     {/* Total */}
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                    <td className="py-2.5 px-1 print:py-2 print:px-0.5 text-right font-mono font-bold text-[#111827] tabular-nums">
                       ₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
@@ -580,70 +649,102 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
               })}
             </tbody>
           </table>
+
+          {/* Continuous vertical ledger dividers extending to fill full A4 body space */}
+          <div className="subcontract-table-filler pro-table-filler flex-1 flex w-full min-h-[24px] print:min-h-[16px]" aria-hidden="true">
+            <table className="self-stretch w-full flex-1 table-fixed border-collapse">
+              <tbody>
+                <tr className="h-full">
+                  <td className="p-0 w-[3.5%] border-r border-[#CBD5E1]" />
+                  {isMultiProject && <td className="p-0 w-[11%] border-r border-[#CBD5E1]" />}
+                  <td className={`p-0 ${isMultiProject ? 'w-[15%]' : 'w-[22%]'} border-r border-[#CBD5E1]`} />
+                  <td className={`p-0 ${isMultiProject ? 'w-[18.5%]' : 'w-[22.5%]'} border-r border-[#CBD5E1]`} />
+                  <td className="p-0 w-[6%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[5.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[6.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[8%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[9%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[7.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[9.5%]" />
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Amount in Words & Totals Summary Grid */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-          {/* Left: Amount in Words & Instructions (7 Cols) */}
-          <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 flex flex-col justify-between">
-            <div>
-              <span className="font-bold text-[9px] print:text-[7px] uppercase text-zinc-600">AMOUNT IN WORDS:</span>
-              <p className="font-semibold text-ink text-[11px] print:text-[8px] italic mt-0.5 print:mt-0 leading-tight">
-                {numberToWordsINR(totalCost)}
-              </p>
+        {/* ========================================================================= */}
+        {/* Bottom-Anchored Official Footer (Totals, Terms & 4 Signatures)            */}
+        {/* ========================================================================= */}
+        <div className="mt-auto shrink-0 space-y-2.5 print:space-y-2 break-inside-avoid">
+        {/* Amount in Words & Totals Summary Dual Cards */}
+        <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid">
+          {/* Left: Amount in Words & Instructions Card (7 Cols) */}
+          <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] flex flex-col justify-between">
+            <div className="p-3 sm:p-3.5 print:p-2.5 flex items-start gap-2.5">
+              <CoinsStackIcon className="w-5 h-5 text-[#163354] shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-[9.5px] print:text-[8px] uppercase text-[#111827] tracking-wide">AMOUNT IN WORDS:</span>
+                <p className="font-semibold text-[#111827] text-xs print:text-[9.5px] italic mt-0.5 leading-snug">
+                  {numberToWordsINR(totalCost)}
+                </p>
+              </div>
             </div>
 
-            {(order.remarks || order.documentNumber) && (
-              <div className="mt-1 pt-1 border-t border-border-gray">
-                <span className="font-bold text-[9px] print:text-[6.5px] uppercase text-zinc-500">GATE PASS NOTES / INSTRUCTIONS:</span>
-                <p className="text-[10px] print:text-[7px] text-zinc-700 mt-0.5 leading-tight">
+            <div className="p-3 sm:p-3.5 print:p-2.5 border-t border-[#CBD5E1] flex items-start gap-2.5">
+              <Truck className="w-5 h-5 text-[#163354] shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-[9.5px] print:text-[8px] uppercase text-[#111827] tracking-wide">GATE PASS NOTES / INSTRUCTIONS:</span>
+                <p className="text-[10.5px] print:text-[8.5px] text-[#475569] mt-0.5 leading-snug">
                   {order.remarks || 'Job work issued strictly per drawing tolerances and metallurgical specification.'}
                 </p>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Right: Totals Box (5 Cols) */}
-          <div className="col-span-5 p-2 sm:p-2.5 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/80">
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">TOTAL PIECES SENT:</span>
-              <span className="font-mono font-bold text-ink">{totalQty} NOS</span>
-            </div>
+          {/* Right: Totals Card (5 Cols) */}
+          <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-2.5 sm:p-3 print:p-2 space-y-1.5 print:space-y-1 flex flex-col justify-between">
+            <div className="space-y-1.5 print:space-y-1">
+              <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">TOTAL PIECES SENT:</span>
+                <span className="font-mono font-bold text-[#111827]">{totalQty} NOS</span>
+              </div>
 
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">TOTAL MACHINING:</span>
-              <span className="font-mono font-bold text-ink">{totalHours.toFixed(1)} HRS</span>
-            </div>
+              <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">TOTAL MACHINING:</span>
+                <span className="font-mono font-bold text-[#111827]">{totalHours.toFixed(1)} HRS</span>
+              </div>
 
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">BASIC JOB WORK:</span>
-              <span className="font-mono font-semibold text-ink">
-                ₹{totalBasic.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
+              <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">BASIC JOB WORK:</span>
+                <span className="font-mono font-semibold text-[#111827]">
+                  ₹{totalBasic.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
 
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">EST. GST (18%):</span>
-              <span className="font-mono font-semibold text-zinc-800">
-                ₹{totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </span>
+              <div className="flex justify-between pb-0.5 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">EST. GST (18%):</span>
+                <span className="font-mono font-semibold text-[#475569]">
+                  ₹{totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
             </div>
 
             {/* Total Subcontract PO Value */}
-            <div className="pt-1 border-t border-primary/20 flex justify-between items-center bg-primary/10 border border-primary/30 text-ink p-1.5 print:py-0.5 print:px-1.5 rounded-[6px] mt-1 print:mt-0.5">
-              <span className="font-bold uppercase tracking-wider text-[10px] print:text-[7px] text-primary-dark">EST. OUTSOURCE VALUE:</span>
-              <span className="font-mono font-bold text-xs sm:text-sm print:text-[9px] text-primary">
+            <div className="flex justify-between items-center bg-[#E5EDF6] border border-[#CBD5E1] text-[#163354] p-2 print:py-1.5 print:px-2.5 rounded-[6px]">
+              <span className="font-bold uppercase tracking-wider text-[10px] print:text-[8.5px]">EST. OUTSOURCE VALUE:</span>
+              <span className="font-mono font-extrabold text-sm print:text-[11px]">
                 ₹{totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Full-Width Terms & Conditions for Job Work */}
-        <div className="border-x-2 border-b-2 border-zinc-900 p-2 sm:p-2.5 print:py-1 print:px-2 bg-white break-inside-avoid">
-          <div className="flex items-center justify-between pb-0.5 border-b border-border-gray mb-1 print:mb-0.5">
-            <span className="font-bold text-[9px] print:text-[7px] uppercase tracking-wider text-zinc-700">
-              TERMS &amp; CONDITIONS FOR JOB WORK:
+        {/* Full-Width Terms & Conditions Card */}
+        <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 break-inside-avoid">
+          <div className="flex items-center justify-between pb-1.5 border-b border-[#CBD5E1] mb-2">
+            <span className="font-bold text-[10px] print:text-[8.5px] uppercase tracking-wider text-[#163354] flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-[#163354]" />
+              <span>TERMS &amp; CONDITIONS FOR JOB WORK ({terms.length}):</span>
             </span>
             <button
               type="button"
@@ -666,7 +767,7 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
           </div>
 
           {isEditingTerms && (
-            <div className="space-y-1.5 hide-on-print bg-canvas p-2.5 rounded-[8px] border border-border-gray my-1.5 shadow-subtle">
+            <div className="space-y-1.5 hide-on-print bg-white p-2.5 rounded-[8px] border border-[#C5D3E2] my-1.5 shadow-subtle">
               {terms.map((term, idx) => (
                 <div key={idx} className="flex items-center gap-1.5">
                   <span className="text-[10px] font-mono font-semibold text-cool-gray w-4 text-right shrink-0">{idx + 1}.</span>
@@ -726,48 +827,28 @@ export function AuthenticSubcontractPoDocument({ order, project, onBack, onCance
             </div>
           )}
 
-          {/* Numbered terms list — 2 Columns in print for compact vertical fit */}
+          {/* Numbered terms list — 2 Columns in print for balanced full-width official presentation */}
           <div className={isEditingTerms ? 'hidden print:block' : ''}>
-            <ol className="grid grid-cols-1 print:grid-cols-2 gap-x-4 gap-y-0.5 text-[9px] print:text-[6.5px] text-zinc-700 leading-tight list-decimal list-inside">
+            <ol className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-5 gap-y-1 text-[10px] print:text-[8px] text-[#334155] leading-snug list-decimal list-inside">
               {terms.map((t, i) => (
-                <li key={i} className="leading-tight">{t}</li>
+                <li key={i} className="leading-snug">{t}</li>
               ))}
             </ol>
           </div>
         </div>
 
-        {/* 4-Box Signature Block */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-4 text-center text-xs print:text-[7.5px] p-2 print:py-1 print:px-1 bg-white rounded-b-lg break-inside-avoid">
-          <div className="border-r border-border-gray flex flex-col justify-between h-12 sm:h-16 print:h-9 pr-1">
-            <div className="h-6 sm:h-9 print:h-4"></div>
-            <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider">
-              PREPARED BY (STORES)
-            </span>
-          </div>
-
-          <div className="border-r border-border-gray flex flex-col justify-between h-12 sm:h-16 print:h-9 px-1">
-            <div className="h-6 sm:h-9 print:h-4"></div>
-            <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider">
-              CHECKED BY (QC / ENG)
-            </span>
-          </div>
-
-          <div className="border-r border-border-gray flex flex-col justify-between h-12 sm:h-16 print:h-9 px-1">
-            <div className="h-6 sm:h-9 print:h-4"></div>
-            <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider">
-              FOR KRUPA TOOLS &amp; STAMPINGS
-            </span>
-          </div>
-
-          <div className="flex flex-col justify-between h-12 sm:h-16 print:h-9 pl-1">
-            <div className="h-6 sm:h-9 print:h-4"></div>
-            <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider">
-              VENDOR SIGN &amp; STAMP
-            </span>
-          </div>
+        {/* 4-Box Open Corporate Signature Strip */}
+        <OfficialSignatureStrip
+          boxes={[
+            { title: 'PREPARED BY (STORES)', caption: 'SIGN & DATE' },
+            { title: 'CHECKED BY (QC / ENG)', caption: 'CHECKED BY' },
+            { title: 'FOR KRUPA TOOLS & STAMPINGS', caption: 'AUTHORIZED SIGNATORY' },
+            { title: 'VENDOR SIGN & STAMP', caption: 'ACKNOWLEDGED BY' },
+          ]}
+        />
         </div>
 
-      </div>
+      </OfficialSheetShell>
     </div>
   );
 }

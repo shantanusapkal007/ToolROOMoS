@@ -1,12 +1,20 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Download, Printer, ArrowLeft, CheckCircle, Edit2, Plus, Trash2, Check, RotateCcw } from 'lucide-react';
+import { Download, Printer, ArrowLeft, CheckCircle, Edit2, Plus, Trash2, Check, RotateCcw, Truck, FileText } from 'lucide-react';
 import { exportPoToExcel, PoExportData } from './poExcelExporter';
 import { parseLwh } from './MultiProjectPoWizard';
 import { normalizePoTerms } from './poTermsPresets';
 import { printIsolatedElement } from '@/utils/printDocument';
 import { Button } from '@/components/ui/Button';
+import {
+  OfficialSheetShell,
+  OfficialLetterhead,
+  OfficialInstructionBar,
+  OfficialSignatureStrip,
+  CoinsStackIcon,
+  numberToWordsINR,
+} from '@/components/print/OfficialStationery';
 
 interface AuthenticPoDocumentProps {
   data: PoExportData;
@@ -14,48 +22,6 @@ interface AuthenticPoDocumentProps {
   onSave?: (updatedTerms?: string[]) => void;
   isSaving?: boolean;
   saved?: boolean;
-}
-
-// Convert numbers to Indian Rupees words
-function numberToWordsINR(amount: number): string {
-  const rounded = Math.round(amount);
-  if (rounded === 0) return 'Zero Rupees Only';
-
-  const singleDigits = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-  const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-  function convertTwoDigits(num: number): string {
-    if (num < 10) return singleDigits[num];
-    if (num < 20) return teens[num - 10];
-    const unit = num % 10;
-    return tens[Math.floor(num / 10)] + (unit ? ' ' + singleDigits[unit] : '');
-  }
-
-  function convertThreeDigits(num: number): string {
-    const hundred = Math.floor(num / 100);
-    const rest = num % 100;
-    let res = '';
-    if (hundred) res += singleDigits[hundred] + ' Hundred';
-    if (hundred && rest) res += ' and ';
-    if (rest) res += convertTwoDigits(rest);
-    return res;
-  }
-
-  let crore = Math.floor(rounded / 10000000);
-  let remainder = rounded % 10000000;
-  let lakh = Math.floor(remainder / 100000);
-  remainder = remainder % 100000;
-  let thousand = Math.floor(remainder / 1000);
-  remainder = remainder % 1000;
-
-  const parts: string[] = [];
-  if (crore) parts.push(convertThreeDigits(crore) + ' Crore');
-  if (lakh) parts.push(convertThreeDigits(lakh) + ' Lakh');
-  if (thousand) parts.push(convertThreeDigits(thousand) + ' Thousand');
-  if (remainder) parts.push(convertThreeDigits(remainder));
-
-  return 'Rupees ' + parts.join(' ') + ' Only';
 }
 
 export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: AuthenticPoDocumentProps) {
@@ -240,99 +206,71 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
       </div>
 
       {/* ========================================================================= */}
-      {/* Physical Paper Document Sheet (Print Target - A4 Portrait)                */}
+      {/* Physical Paper Document Sheet (Print Target - Corporate Steel-Navy Theme) */}
       {/* ========================================================================= */}
-      <div 
-        id="authentic-po-sheet"
-        data-print-target="true"
-        className="printable-sheet bg-white p-6 sm:p-8 print:p-0 rounded-[12px] shadow-level-4 border border-border-gray text-ink max-w-[210mm] mx-auto print:max-w-none print:w-full print:border-none print:shadow-none font-sans"
-      >
-        
-        {/* Document Header */}
-        <div className="border-2 border-zinc-900 p-3 sm:p-4 print:py-1.5 print:px-2 rounded-t-lg flex items-center justify-between gap-3 sm:gap-4 bg-white break-inside-avoid">
-          <div className="w-24 sm:w-28 print:w-16 shrink-0 flex items-center justify-center p-1.5 sm:p-2 print:p-0.5 border border-border-gray rounded bg-white">
-            <img src="/Krupa_Logo.png" alt="Krupa Logo" className="h-12 sm:h-14 print:h-8 w-auto object-contain" />
-          </div>
-          
-          <div className="flex-1 text-center pr-2">
-            <h1 className="text-base sm:text-lg md:text-xl print:text-[11px] font-bold uppercase tracking-wider text-[#ee1d36]">
-              KRUPA TOOLS &amp; STAMPINGS LTD.
-            </h1>
-            <p className="text-[11px] print:text-[7px] font-semibold text-ink mt-0.5 print:mt-0 uppercase tracking-tight print:leading-[1.2]">
-              GUT NO.23 PLOT NO.45 KAMLAPUR MIDC, WALUJ AURANGABAD - 431136
-            </p>
-            <p className="text-[11px] print:text-[7px] font-semibold text-ink uppercase tracking-tight print:leading-[1.2]">
-              GST NO : 27AAKCK1751B1ZS | STATE: MAHARASHTRA (27)
-            </p>
-            <p className="text-[9.5px] print:text-[6.5px] font-semibold text-zinc-700 uppercase tracking-tight mt-0.5 print:mt-0 print:leading-[1.2]">
-              Manufacturers of Press Tools, Jig Fixtures, Moulds, Precision Tooling &amp; Outside Job Work
-            </p>
-            <div className="mt-1 print:mt-0.5 pt-0.5 print:pt-0 border-t border-zinc-900/20">
-              <span className="font-bold text-xs sm:text-sm print:text-[9px] uppercase tracking-widest text-ink underline">
-                PURCHASE ORDER (PO)
-              </span>
-              <span className="text-[9px] print:text-[6.5px] block text-zinc-600 font-semibold tracking-tight mt-0.5 print:mt-0">
-                (Issued under Section 31 of CGST Act for Procurement of Raw Materials &amp; Tooling Components)
-              </span>
-            </div>
-          </div>
-        </div>
+      <OfficialSheetShell id="authentic-po-sheet" itemCount={data.items.length + Object.keys(grouped).length}>
+        <OfficialLetterhead
+          documentTitle="PURCHASE ORDER (PO)"
+          legalSubtitle="(Issued under Section 31 of CGST Act for Procurement of Raw Materials & Tooling Components)"
+        />
 
-        {/* Vendor & PO Meta Grid */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-          {/* Vendor Details (Left Col - 7 Cols) */}
-          <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 space-y-1 print:space-y-0.5">
-            <div className="flex gap-2">
-              <span className="font-bold w-22 print:w-18 text-zinc-600 uppercase text-[10px] print:text-[7.5px]">VENDOR:</span>
-              <span className="font-bold text-ink uppercase text-xs sm:text-sm print:text-[9px] truncate">
-                {data.vendorName || "RAJDHANI PROFILE"}
-              </span>
+        {/* Vendor & PO Meta Dual Rounded Cards */}
+        <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid shrink-0">
+          {/* Vendor Details (Left Card - 7 Cols) */}
+          <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] flex flex-col justify-between">
+            <div className="p-3 sm:p-3.5 print:p-2.5 space-y-1.5">
+              <div className="flex gap-2 items-baseline">
+                <span className="font-semibold w-20 shrink-0 text-[#475569] uppercase text-[10px] print:text-[8.5px]">VENDOR:</span>
+                <span className="font-bold text-[#111827] uppercase text-xs sm:text-sm print:text-[11px] truncate">
+                  {data.vendorName || "RAJDHANI PROFILE"}
+                </span>
+              </div>
+
+              <div className="flex gap-2 text-[11px] print:text-[9.5px]">
+                <span className="font-semibold w-20 shrink-0 text-[#475569] uppercase text-[10px] print:text-[8.5px]">ADDRESS:</span>
+                <span className="text-[#111827] leading-snug">{data.vendorAddress || "MIDC Waluj, Chhatrapati Sambhajinagar"}</span>
+              </div>
             </div>
 
-            <div className="flex gap-2 text-[11px] print:text-[7.5px]">
-              <span className="font-semibold w-22 print:w-18 text-zinc-600 uppercase text-[10px] print:text-[7.5px]">ADDRESS:</span>
-              <span className="text-zinc-800 print:leading-tight">{data.vendorAddress || "MIDC Waluj, Chhatrapati Sambhajinagar"}</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-[11px] print:text-[7.5px] pt-1 print:pt-0.5 border-t border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600">GSTIN: </span>
-                <span className="font-mono font-semibold text-ink">{(data as any).vendorGstin || "UNREGISTERED"}</span>
+            <div className="grid grid-cols-2 gap-3 text-[11px] print:text-[9px] px-3 sm:px-3.5 py-2 print:px-2.5 print:py-1.5 border-t border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569]">GSTIN: </span>
+                <span className="font-mono font-bold text-[#111827]">{(data as any).vendorGstin || "UNREGISTERED"}</span>
               </div>
               <div>
-                <span className="font-semibold text-zinc-600">CONTACT: </span>
-                <span className="font-mono text-ink">{(data as any).vendorPhone || (data as any).vendorEmail || "N/A"}</span>
+                <span className="font-semibold text-[#475569]">CONTACT: </span>
+                <span className="font-mono font-semibold text-[#111827]">{(data as any).vendorPhone || (data as any).vendorEmail || "N/A"}</span>
               </div>
             </div>
           </div>
 
-          {/* PO Metadata (Right Col - 5 Cols) */}
-          <div className="col-span-5 p-2.5 sm:p-3 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/40">
-            <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">PO NUMBER:</span>
-                <span className="font-mono font-bold text-ink text-xs sm:text-sm print:text-[8.5px]">{data.poNumber || "PO-2026-0001"}</span>
+          {/* PO Metadata (Right Card - 5 Cols) */}
+          <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] flex flex-col justify-between">
+            <div className="grid grid-cols-2 border-b border-[#CBD5E1]">
+              <div className="p-2.5 print:p-2 border-r border-[#CBD5E1]">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">PO NUMBER:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs sm:text-sm print:text-[10.5px]">{data.poNumber || "PO-2026-0001"}</span>
               </div>
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">DATE:</span>
-                <span className="font-mono font-semibold text-ink text-xs print:text-[8px]">{data.date || new Date().toLocaleDateString('en-GB')}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">RM SLIP NO:</span>
-                <span className="font-mono font-semibold text-ink text-xs print:text-[8px]">{data.rmSlipNo || "PUR/26-27/0033"}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">PAYMENT TERMS:</span>
-                <span className="font-mono font-semibold text-ink text-xs print:text-[8px]">{(data as any).paymentTerms || "30 Days PDC"}</span>
+              <div className="p-2.5 print:p-2">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">DATE:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">{data.date || new Date().toLocaleDateString('en-GB')}</span>
               </div>
             </div>
 
-            <div className="pt-0.5 print:pt-0">
-              <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">DELIVERY TIMELINE:</span>
-              <span className="font-semibold text-amber-700 text-[11px] print:text-[8px] block truncate">
+            <div className="grid grid-cols-2 border-b border-[#CBD5E1]">
+              <div className="p-2.5 print:p-2 border-r border-[#CBD5E1]">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">RM SLIP NO:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">{data.rmSlipNo || "PUR/26-27/0033"}</span>
+              </div>
+              <div className="p-2.5 print:p-2">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">PAYMENT TERMS:</span>
+                <span className="font-bold text-[#111827] text-xs print:text-[9.5px]">{(data as any).paymentTerms || "30 Days PDC"}</span>
+              </div>
+            </div>
+
+            <div className="p-2.5 print:p-2">
+              <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">DELIVERY TIMELINE:</span>
+              <span className="font-bold text-[#111827] text-[11px] print:text-[9.5px] block truncate">
                 {data.deliveryTerms || "Within 7 Days of Order"}
               </span>
             </div>
@@ -340,33 +278,31 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
         </div>
 
         {/* Instructions Banner */}
-        <div className="border-x-2 border-b-2 border-zinc-900 p-1.5 print:py-0.5 print:px-1 bg-zinc-100 text-center font-bold text-xs print:text-[7.5px] uppercase tracking-wider text-zinc-800 break-inside-avoid">
-          KINDLY SUPPLY THE FOLLOWING ITEMS AS PER SPECIFICATIONS, QUALITY STANDARDS &amp; TERMS MENTIONED BELOW.
-        </div>
+        <OfficialInstructionBar text="KINDLY SUPPLY THE FOLLOWING ITEMS AS PER SPECIFICATIONS, QUALITY STANDARDS & TERMS MENTIONED BELOW." />
 
-        {/* Main Line Items Table */}
-        <div className="border-x-2 border-b-2 border-zinc-900 overflow-hidden break-inside-avoid">
-          <table className="w-full border-collapse text-xs print:text-[8px]">
+        {/* Main Line Items Table (Expands to fill A4 page body) */}
+        <div className="pro-table-grow border border-[#CBD5E1] rounded-[8px] flex-1 flex flex-col bg-white">
+          <table className="w-full table-fixed border-collapse text-[10.5px] print:text-[8.5px]">
             <thead>
-              <tr className="bg-zinc-100 border-b-2 border-zinc-900 font-bold text-zinc-800 text-[9.5px] print:text-[7.5px] uppercase tracking-wider">
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-8">SR.</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-left w-20">TOOL NO</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-10">DET #</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-12">L</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-12">W</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-12">H</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[90px]">MATERIAL</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-12">QTY</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-16">AP WT (KG)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-16">TOT WT (KG)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-16">RATE (₹)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-20">BASIC (₹)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-16">GST (₹)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-20">TOTAL (₹)</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[100px]">REMARKS</th>
+              <tr className="bg-[#E5EDF6] border-b border-[#CBD5E1] font-bold text-[#163354] text-[8.5px] print:text-[7px] uppercase tracking-tight leading-tight">
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center w-[3%] rounded-tl-[7px]">SR.</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-left w-[8.5%]">TOOL NO</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center w-[4%]">DET #</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center w-[4%]">L</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center w-[4%]">W</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center w-[4%]">H</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-left w-[13%]">MATERIAL</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right w-[4.5%]">QTY</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right w-[6%]">AP WT</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right w-[6.5%]">TOT WT</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right w-[6%]">RATE (₹)</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right w-[9.5%]">BASIC (₹)</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right w-[8%]">GST (₹)</th>
+                <th className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right w-[10%]">TOTAL (₹)</th>
+                <th className="py-2 px-1 print:py-1.5 text-left w-[9%] rounded-tr-[7px]">REMARKS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-300 text-[11px] print:text-[8px] font-sans">
+            <tbody className="divide-y divide-[#CBD5E1] border-b border-[#CBD5E1] text-[10px] print:text-[8px] font-sans">
               {Object.entries(grouped).map(([toolNo, items], groupIdx) => {
                 let groupQty = 0;
                 let groupApWtSum = 0;
@@ -428,36 +364,36 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
                       groupTotalSum += total;
 
                       return (
-                        <tr key={`${toolNo}-${itemIdx}`} className="hover:bg-zinc-50/50 break-inside-avoid">
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">
+                        <tr key={`${toolNo}-${itemIdx}`} className="hover:bg-[#F8FAFC] break-inside-avoid">
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">
                             {itemIdx === 0 ? groupIdx + 1 : ""}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 font-bold text-ink">
+                          <td className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] font-bold text-[#111827] break-words">
                             {itemIdx === 0 ? toolNo : ""}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center">
-                            <span className="inline-flex items-center justify-center font-bold text-zinc-800 text-[10px] print:text-[8px]">
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center">
+                            <span className="inline-flex items-center justify-center font-bold text-[#111827] text-[10px] print:text-[8px]">
                               {formatCircledNum(item.detNo || itemIdx + 1)}
                             </span>
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-800">{lVal}</td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-800">{wVal}</td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-800">{hVal}</td>
-                          <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">{item.materialGrade || "—"}</td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">{qty}</td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">{apWt > 0 ? apWt.toFixed(2) : "-"}</td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">{totalWt > 0 ? totalWt.toFixed(2) : "-"}</td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-800">{rate > 0 ? `₹${rate.toFixed(0)}` : "-"}</td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-semibold text-ink">
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center font-mono text-[#111827]">{lVal}</td>
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center font-mono text-[#111827]">{wVal}</td>
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-center font-mono text-[#111827]">{hVal}</td>
+                          <td className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] font-bold text-[#111827] break-words">{item.materialGrade || "—"}</td>
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827] tabular-nums">{qty}</td>
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right font-mono text-[#475569] tabular-nums">{apWt > 0 ? apWt.toFixed(2) : "-"}</td>
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827] tabular-nums">{totalWt > 0 ? totalWt.toFixed(2) : "-"}</td>
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right font-mono text-[#475569] tabular-nums">{rate > 0 ? `₹${rate.toFixed(0)}` : "-"}</td>
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right font-mono font-semibold text-[#111827] tabular-nums">
                             {basicCost > 0 ? `₹${basicCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : "-"}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right font-mono text-[#475569] tabular-nums">
                             {gst > 0 ? `₹${gst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : "-"}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">
+                          <td className="py-2 px-0.5 print:py-1.5 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827] tabular-nums">
                             {total > 0 ? `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : "-"}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 text-zinc-600 text-[10px] print:text-[7.5px] italic leading-tight">
+                          <td className="py-2 px-1 print:py-1.5 text-[#475569] text-[9.5px] print:text-[7.5px] italic leading-tight break-words">
                             {item.remarks || ""}
                           </td>
                         </tr>
@@ -465,17 +401,17 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
                     })}
 
                     {/* Subtotal row for this Tool No */}
-                    <tr className="bg-zinc-100/80 font-bold border-y-2 border-zinc-400 text-xs print:text-[8px] break-inside-avoid">
-                      <td colSpan={7} className="p-1.5 print:py-0.5 print:px-1 border-r border-zinc-300 text-right uppercase tracking-wider text-[10px] print:text-[7.5px] text-zinc-700">
-                        {toolNo} Subtotal ({items.length} Items):
+                    <tr className="bg-[#E5EDF6] font-bold border-y border-[#CBD5E1] text-[10px] print:text-[8px] break-inside-avoid text-[#163354]">
+                      <td colSpan={7} className="py-1.5 px-1.5 border-r border-[#CBD5E1] text-right uppercase tracking-wider text-[9.5px] print:text-[7.5px]">
+                        {toolNo} SUBTOTAL ({items.length} ITEMS):
                       </td>
-                      <td className="p-1.5 print:py-0.5 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">{groupQty}</td>
-                      <td className="p-1.5 print:py-0.5 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">{groupApWtSum.toFixed(2)}</td>
-                      <td className="p-1.5 print:py-0.5 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">{groupTotalWtSum.toFixed(2)}</td>
-                      <td className="p-1.5 print:py-0.5 print:px-1 border-r border-zinc-300"></td>
-                      <td className="p-1.5 print:py-0.5 print:px-1 border-r border-zinc-300 text-right font-mono font-semibold text-ink">₹{groupBasicSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                      <td className="p-1.5 print:py-0.5 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">₹{groupGstSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                      <td className="p-1.5 print:py-0.5 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-ink">₹{groupTotalSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="py-1.5 px-0.5 border-r border-[#CBD5E1] text-right font-mono font-bold tabular-nums">{groupQty}</td>
+                      <td className="py-1.5 px-0.5 border-r border-[#CBD5E1] text-right font-mono tabular-nums">{groupApWtSum.toFixed(2)}</td>
+                      <td className="py-1.5 px-0.5 border-r border-[#CBD5E1] text-right font-mono font-bold tabular-nums">{groupTotalWtSum.toFixed(2)}</td>
+                      <td className="py-1.5 px-0.5 border-r border-[#CBD5E1]"></td>
+                      <td className="py-1.5 px-0.5 border-r border-[#CBD5E1] text-right font-mono font-bold tabular-nums">₹{groupBasicSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="py-1.5 px-0.5 border-r border-[#CBD5E1] text-right font-mono tabular-nums">₹{groupGstSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="py-1.5 px-0.5 border-r border-[#CBD5E1] text-right font-mono font-bold tabular-nums">₹{groupTotalSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                       <td></td>
                     </tr>
                   </React.Fragment>
@@ -483,64 +419,102 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
               })}
             </tbody>
           </table>
+
+          {/* Continuous vertical ledger dividers extending to fill full A4 body space */}
+          <div className="pro-table-filler flex-1 flex w-full min-h-[24px] print:min-h-[16px]" aria-hidden="true">
+            <table className="self-stretch w-full flex-1 table-fixed border-collapse">
+              <tbody>
+                <tr className="h-full">
+                  <td className="p-0 w-[3%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[8.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[4%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[4%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[4%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[4%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[13%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[4.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[6%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[6.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[6%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[9.5%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[8%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[10%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[9%]" />
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Amount in Words & Totals Summary Grid */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-          {/* Left: Amount in Words & Delivery / Instructions (7 Cols) */}
-          <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 flex flex-col justify-between">
-            <div>
-              <span className="font-bold text-[9px] print:text-[7px] uppercase text-zinc-600">AMOUNT IN WORDS:</span>
-              <p className="font-semibold text-ink text-[11px] print:text-[8px] italic mt-0.5 print:mt-0 leading-tight">
-                {numberToWordsINR(grandTotalValue)}
-              </p>
+        {/* ========================================================================= */}
+        {/* Bottom-Anchored Official Footer (Words, Totals, Terms & 3 Signatures)     */}
+        {/* ========================================================================= */}
+        <div className="mt-auto shrink-0 space-y-2.5 print:space-y-2 break-inside-avoid">
+        {/* Amount in Words & Totals Summary Dual Cards */}
+        <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid">
+          {/* Left: Amount in Words & Delivery Instructions Card (7 Cols) */}
+          <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] flex flex-col justify-between">
+            <div className="p-3 sm:p-3.5 print:p-2.5 flex items-start gap-2.5">
+              <CoinsStackIcon className="w-5 h-5 text-[#163354] shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-[9.5px] print:text-[8px] uppercase text-[#111827] tracking-wide">AMOUNT IN WORDS:</span>
+                <p className="font-semibold text-[#111827] text-xs print:text-[9.5px] italic mt-0.5 leading-snug">
+                  {numberToWordsINR(grandTotalValue)}
+                </p>
+              </div>
             </div>
 
-            <div className="mt-1 pt-1 border-t border-border-gray">
-              <span className="font-bold text-[9px] print:text-[6.5px] uppercase text-zinc-500">DELIVERY &amp; SUPPLY INSTRUCTIONS:</span>
-              <p className="text-[10px] print:text-[7px] text-zinc-700 mt-0.5 leading-tight">
-                Delivery required to Krupa Stores, Waluj Aurangabad. Mill Test Certificate (MTC) and Heat Numbers are strictly mandatory upon supply.
-              </p>
+            <div className="p-3 sm:p-3.5 print:p-2.5 border-t border-[#CBD5E1] flex items-start gap-2.5">
+              <Truck className="w-5 h-5 text-[#163354] shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-[9.5px] print:text-[8px] uppercase text-[#111827] tracking-wide">DELIVERY &amp; SUPPLY INSTRUCTIONS:</span>
+                <p className="text-[10.5px] print:text-[8.5px] text-[#475569] mt-0.5 leading-snug">
+                  Delivery required to Krupa Stores, Waluj Aurangabad. Mill Test Certificate (MTC) and Heat Numbers are strictly mandatory upon supply.
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Right: Totals Box (5 Cols) */}
-          <div className="col-span-5 p-2 sm:p-2.5 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/80">
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">TOTAL QUANTITY:</span>
-              <span className="font-mono font-bold text-ink">{grandTotalQty} NOS</span>
-            </div>
+          {/* Right: Totals Card (5 Cols) */}
+          <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-2.5 sm:p-3 print:p-2 space-y-1.5 print:space-y-1 flex flex-col justify-between">
+            <div className="space-y-1.5 print:space-y-1">
+              <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">TOTAL QUANTITY:</span>
+                <span className="font-mono font-bold text-[#111827]">{grandTotalQty} NOS</span>
+              </div>
 
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">TOTAL ORDER WEIGHT:</span>
-              <span className="font-mono font-bold text-ink">{grandTotalWt.toFixed(2)} KG</span>
-            </div>
+              <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">TOTAL ORDER WEIGHT:</span>
+                <span className="font-mono font-bold text-[#111827]">{grandTotalWt.toFixed(2)} KG</span>
+              </div>
 
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">BASIC TAXABLE VALUE:</span>
-              <span className="font-mono font-semibold text-ink">₹{grandBasicCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-            </div>
+              <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">BASIC TAXABLE VALUE:</span>
+                <span className="font-mono font-semibold text-[#111827]">₹{grandBasicCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
 
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">EST. GST TAX:</span>
-              <span className="font-mono font-semibold text-zinc-800">₹{grandGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              <div className="flex justify-between pb-0.5 font-semibold text-xs print:text-[9px]">
+                <span className="text-[#475569]">EST. GST TAX:</span>
+                <span className="font-mono font-semibold text-[#475569]">₹{grandGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
             </div>
             
             {/* Grand Total Value Highlight Box */}
-            <div className="pt-1 border-t border-primary/20 flex justify-between items-center bg-primary/10 border border-primary/30 text-ink p-1.5 print:py-0.5 print:px-1.5 rounded-[6px] mt-1 print:mt-0.5">
-              <span className="font-bold uppercase tracking-wider text-[10px] print:text-[7px] text-primary-dark">PURCHASE ORDER VALUE:</span>
-              <span className="font-mono font-bold text-xs sm:text-sm print:text-[9px] text-primary">
+            <div className="flex justify-between items-center bg-[#E5EDF6] border border-[#CBD5E1] text-[#163354] p-2 print:py-1.5 print:px-2.5 rounded-[6px]">
+              <span className="font-bold uppercase tracking-wider text-[10px] print:text-[8.5px]">PURCHASE ORDER VALUE:</span>
+              <span className="font-mono font-extrabold text-sm print:text-[11px]">
                 ₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Terms & Conditions for Purchase Order */}
-        <div className="border-x-2 border-b-2 border-zinc-900 p-2 sm:p-2.5 print:py-1 print:px-2 bg-white break-inside-avoid">
-          <div className="flex items-center justify-between pb-0.5 border-b border-border-gray mb-1 print:mb-0.5">
-            <span className="font-bold text-[9px] print:text-[7px] uppercase tracking-wider text-zinc-700">
-              TERMS &amp; CONDITIONS OF PURCHASE ({currentTerms.length}):
+        {/* Terms & Conditions Card */}
+        <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 break-inside-avoid">
+          <div className="flex items-center justify-between pb-1.5 border-b border-[#CBD5E1] mb-2">
+            <span className="font-bold text-[10px] print:text-[8.5px] uppercase tracking-wider text-[#163354] flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-[#163354]" />
+              <span>TERMS &amp; CONDITIONS OF PURCHASE ({currentTerms.length}):</span>
             </span>
             <button
               type="button"
@@ -618,51 +592,37 @@ export function AuthenticPoDocument({ data, onBack, onSave, isSaving, saved }: A
 
           {/* Numbered terms list — 2 Columns in print for compact vertical fit */}
           <div className={isEditingTerms ? 'hidden print:block' : ''}>
-            <ol className="grid grid-cols-1 print:grid-cols-2 gap-x-4 gap-y-0.5 text-[9px] print:text-[6.5px] text-zinc-700 leading-tight list-decimal list-inside">
+            <ol className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-5 gap-y-1 text-[10px] print:text-[8px] text-[#334155] leading-snug list-decimal list-inside">
               {currentTerms.map((t, i) => (
-                <li key={i} className="leading-tight">{t}</li>
+                <li key={i} className="leading-snug">{t}</li>
               ))}
             </ol>
           </div>
         </div>
 
-        {/* 3-Box Signature Block matching physical factory sheet */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-3 text-center text-xs print:text-[7.5px] p-2 print:py-1 print:px-1 bg-white rounded-b-lg break-inside-avoid">
-          <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 pr-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                1. PREPARED BY (PURCHASE)
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Purchase Officer</span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">SIGN &amp; DATE</span>
-          </div>
-
-          <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 px-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                2. CHECKED BY (ACCOUNTS / QC)
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Commercial Review</span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">CHECKED BY</span>
-          </div>
-
-          <div className="flex flex-col justify-between h-14 sm:h-18 print:h-10 pl-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                3. AUTHORIZED SIGNATORY
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">FOR KRUPA TOOLS &amp; STAMPINGS</span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">AUTHORIZED STAMP &amp; SIGN</span>
-          </div>
+        {/* 3-Box Open Corporate Signature Strip */}
+        <OfficialSignatureStrip
+          boxes={[
+            {
+              title: '1. PREPARED BY (PURCHASE)',
+              role: 'Purchase Officer',
+              caption: 'SIGN & DATE',
+            },
+            {
+              title: '2. CHECKED BY (ACCOUNTS / QC)',
+              role: 'Commercial Review',
+              caption: 'CHECKED BY',
+            },
+            {
+              title: '3. AUTHORIZED SIGNATORY',
+              role: 'FOR KRUPA TOOLS & STAMPINGS',
+              caption: 'AUTHORIZED STAMP & SIGN',
+            },
+          ]}
+        />
         </div>
 
-      </div>
+      </OfficialSheetShell>
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
   FileText,
   Download,
   PackageCheck,
+  Truck,
 } from 'lucide-react';
 import { useSidebarStore } from '../../store/useSidebarStore';
 import { usePwa } from '../../context/PwaContext';
@@ -152,6 +153,13 @@ export function Sidebar() {
             icon={<ShoppingCart className="h-4 w-4" />} 
             label="Purchase Orders" 
             active={pathname.startsWith("/purchase-orders")} 
+            isExpanded={isExpanded}
+          />
+          <NavItem 
+            href="/outsource-orders"
+            icon={<Truck className="h-4 w-4" />} 
+            label="Outsource Challans" 
+            active={pathname.startsWith("/outsource-orders")} 
             isExpanded={isExpanded}
           />
           <NavItem 

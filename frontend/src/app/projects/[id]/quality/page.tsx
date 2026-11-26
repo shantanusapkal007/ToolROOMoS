@@ -26,6 +26,12 @@ import { ReworkPartModal } from "@/components/modals/ReworkPartModal";
 import { PartReworkList } from "@/components/rework/PartReworkList";
 import { printIsolatedElement } from "@/utils/printDocument";
 import { Button } from "@/components/ui/Button";
+import {
+  OfficialSheetShell,
+  OfficialLetterhead,
+  OfficialInstructionBar,
+  OfficialSignatureStrip,
+} from "@/components/print/OfficialStationery";
 
 type QualityTab = "REGISTERS" | "CMM_DIMENSIONS" | "NCR_REWORK" | "QC_CERTIFICATE";
 
@@ -527,105 +533,83 @@ export default function ProjectQualityPage() {
           </div>
 
           {/* ========================================================================= */}
-          {/* Printable Paper Sheet Target (A4 Vertical / Portrait)                      */}
+          {/* Printable Paper Sheet Target (Corporate Steel-Navy Stationery Theme)      */}
           {/* ========================================================================= */}
-          <div 
+          <OfficialSheetShell
             id="authentic-qc-certificate-sheet"
-            data-print-target="true"
-            className="printable-sheet bg-white p-6 sm:p-8 print:p-0 rounded-[12px] shadow-level-4 border border-border-gray text-ink max-w-[210mm] mx-auto print:max-w-none print:w-full print:border-none print:shadow-none font-sans"
+            itemCount={allMeasurements.length > 0 ? allMeasurements.length : 4}
           >
-            {/* Document Header */}
-            <div className="border-2 border-zinc-900 p-3 sm:p-4 print:py-1.5 print:px-2 rounded-t-lg flex items-center justify-between gap-3 sm:gap-4 bg-white break-inside-avoid">
-              <div className="w-24 sm:w-28 print:w-16 shrink-0 flex items-center justify-center p-1.5 sm:p-2 print:p-0.5 border border-border-gray rounded bg-white">
-                <img src="/Krupa_Logo.png" alt="Krupa Logo" className="h-12 sm:h-14 print:h-8 w-auto object-contain" />
-              </div>
-              
-              <div className="flex-1 text-center pr-2">
-                <h1 className="text-base sm:text-lg md:text-xl print:text-[11px] font-bold uppercase tracking-wider text-[#ee1d36]">
-                  KRUPA TOOLS &amp; STAMPINGS LTD.
-                </h1>
-                <p className="text-[11px] print:text-[7px] font-semibold text-ink mt-0.5 print:mt-0 uppercase tracking-tight print:leading-[1.2]">
-                  GUT NO.23 PLOT NO.45 KAMLAPUR MIDC, WALUJ AURANGABAD - 431136
-                </p>
-                <p className="text-[11px] print:text-[7px] font-semibold text-ink uppercase tracking-tight print:leading-[1.2]">
-                  GST NO : 27AAKCK1751B1ZS | STATE: MAHARASHTRA (27)
-                </p>
-                <p className="text-[9.5px] print:text-[6.5px] font-semibold text-zinc-700 uppercase tracking-tight mt-0.5 print:mt-0 print:leading-[1.2]">
-                  Manufacturers of Press Tools, Jig Fixtures, Moulds, Precision Tooling &amp; Outside Job Work
-                </p>
-                <div className="mt-1 print:mt-0.5 pt-0.5 print:pt-0 border-t border-zinc-900/20">
-                  <span className="font-bold text-xs sm:text-sm print:text-[9px] uppercase tracking-widest text-ink underline">
-                    TOOLING QUALITY &amp; PDI INSPECTION CERTIFICATE
-                  </span>
-                  <span className="text-[9px] print:text-[6.5px] block text-zinc-600 font-semibold tracking-tight mt-0.5 print:mt-0">
-                    (Dimensional Inspection, CMM Verification &amp; Pre-Dispatch Clearance Certificate)
-                  </span>
-                </div>
-              </div>
-            </div>
+            <OfficialLetterhead
+              documentTitle="TOOLING QUALITY & PDI INSPECTION CERTIFICATE"
+              legalSubtitle="(Dimensional Inspection, CMM Verification & Pre-Dispatch Clearance Certificate)"
+            />
 
-            {/* Quality Inspection Meta Grid */}
-            <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-              {/* Left Col (7 Cols): Customer & Tooling Details */}
-              <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 space-y-1 print:space-y-0.5">
-                <div className="flex gap-2">
-                  <span className="font-bold w-26 print:w-20 text-zinc-600 uppercase text-[10px] print:text-[7.5px]">CUSTOMER:</span>
-                  <span className="font-bold text-ink uppercase text-xs sm:text-sm print:text-[9px] truncate">
-                    {project?.customer?.companyName || "Mahindra & Mahindra Ltd."}
-                  </span>
-                </div>
-
-                <div className="flex gap-2 text-[11px] print:text-[7.5px]">
-                  <span className="font-semibold w-26 print:w-20 text-zinc-600 uppercase text-[10px] print:text-[7.5px]">TOOL / PART:</span>
-                  <span className="font-bold text-ink print:leading-tight">{project?.partName || "Main Press Tooling Assembly"}</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[11px] print:text-[7.5px] pt-1 print:pt-0.5 border-t border-border-gray">
-                  <div>
-                    <span className="font-semibold text-zinc-600">PROJECT NO: </span>
-                    <span className="font-mono font-bold text-ink">{project?.projectNumber || "KTD-2026-001"}</span>
+            {/* Quality Inspection Meta Dual Rounded Cards */}
+            <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid shrink-0">
+              {/* Left Card (7 Cols): Customer & Tooling Details */}
+              <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 flex flex-col justify-between space-y-2">
+                <div className="space-y-1">
+                  <div className="flex gap-2 items-baseline">
+                    <span className="font-semibold w-24 shrink-0 text-[#475569] uppercase text-[10px] print:text-[8.5px]">CUSTOMER:</span>
+                    <span className="font-bold text-[#111827] uppercase text-xs sm:text-sm print:text-[11px] truncate">
+                      {project?.customer?.companyName || "Mahindra & Mahindra Ltd."}
+                    </span>
                   </div>
-                  <div>
-                    <span className="font-semibold text-zinc-600">DRAWING REV: </span>
-                    <span className="font-mono font-semibold text-ink">REV-02 (APPROVED)</span>
+
+                  <div className="flex gap-2 text-[11px] print:text-[9.5px]">
+                    <span className="font-semibold w-24 shrink-0 text-[#475569] uppercase text-[10px] print:text-[8.5px]">TOOL / PART:</span>
+                    <span className="font-bold text-[#111827] leading-snug">{project?.partName || "Main Press Tooling Assembly"}</span>
                   </div>
                 </div>
 
-                <div className="pt-0.5 border-t border-border-gray text-[11px] print:text-[7.5px]">
-                  <span className="font-semibold text-zinc-600 uppercase text-[10px] print:text-[7.5px]">FACILITY / PLANT: </span>
-                  <span className="text-zinc-800">Krupa Tools Plant 01 — Tool Room Precision Quality Lab</span>
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-3 text-[11px] print:text-[9px] pt-1.5 border-t border-[#CBD5E1]">
+                    <div className="border-r border-[#CBD5E1] pr-2">
+                      <span className="font-semibold text-[#475569]">PROJECT NO: </span>
+                      <span className="font-mono font-bold text-[#111827]">{project?.projectNumber || "KTD-2026-001"}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[#475569]">DRAWING REV: </span>
+                      <span className="font-mono font-semibold text-[#111827]">REV-02 (APPROVED)</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 border-t border-[#CBD5E1] text-[11px] print:text-[9px]">
+                    <span className="font-semibold text-[#475569] uppercase text-[10px] print:text-[8.5px]">FACILITY / PLANT: </span>
+                    <span className="text-[#475569]">Krupa Tools Plant 01 — Tool Room Precision Quality Lab</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Right Col (5 Cols): QC Cert Meta */}
-              <div className="col-span-5 p-2.5 sm:p-3 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/40">
-                <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-                  <div>
-                    <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">CERTIFICATE NO:</span>
-                    <span className="font-mono font-bold text-ink text-xs sm:text-sm print:text-[8.5px]">
+              {/* Right Card (5 Cols): QC Cert Meta */}
+              <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 space-y-2 print:space-y-1.5">
+                <div className="grid grid-cols-2 gap-2 pb-1.5 border-b border-[#CBD5E1]">
+                  <div className="border-r border-[#CBD5E1] pr-2">
+                    <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">CERTIFICATE NO:</span>
+                    <span className="font-mono font-bold text-[#111827] text-xs sm:text-sm print:text-[10.5px]">
                       QC-{project?.projectNumber || "KTD"}-2026
                     </span>
                   </div>
                   <div>
-                    <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">DATE:</span>
-                    <span className="font-mono font-semibold text-ink text-xs print:text-[8px]">{new Date().toLocaleDateString('en-GB')}</span>
+                    <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">DATE:</span>
+                    <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">{new Date().toLocaleDateString('en-GB')}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-                  <div>
-                    <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">INSPECTION STAGE:</span>
-                    <span className="font-mono font-bold text-ink text-xs print:text-[8px]">FINAL PDI / TRYOUT</span>
+                <div className="grid grid-cols-2 gap-2 pb-1.5 border-b border-[#CBD5E1]">
+                  <div className="border-r border-[#CBD5E1] pr-2">
+                    <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">INSPECTION STAGE:</span>
+                    <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">FINAL PDI / TRYOUT</span>
                   </div>
                   <div>
-                    <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">QC VERDICT:</span>
-                    <span className="font-mono font-bold text-semantic-success-dark text-xs print:text-[8px]">PASSED &amp; CLEARED</span>
+                    <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">QC VERDICT:</span>
+                    <span className="font-mono font-bold text-[#163354] text-xs print:text-[9.5px]">PASSED &amp; CLEARED</span>
                   </div>
                 </div>
 
-                <div className="pt-0.5 print:pt-0">
-                  <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">INSPECTION STANDARD:</span>
-                  <span className="font-semibold text-ink text-[11px] print:text-[8px] block truncate">
+                <div className="pt-0.5">
+                  <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">INSPECTION STANDARD:</span>
+                  <span className="font-bold text-[#111827] text-[11px] print:text-[9.5px] block truncate">
                     IS 2102 (Part 1) Medium / Drawing Tolerances
                   </span>
                 </div>
@@ -633,49 +617,47 @@ export default function ProjectQualityPage() {
             </div>
 
             {/* Purpose Banner */}
-            <div className="border-x-2 border-b-2 border-zinc-900 p-1.5 print:py-0.5 print:px-1 bg-zinc-100 text-center font-bold text-xs print:text-[7.5px] uppercase tracking-wider text-zinc-800 break-inside-avoid">
-              FINAL PRE-DISPATCH DIMENSIONAL &amp; CMM TRYOUT VERIFICATION REPORT
-            </div>
+            <OfficialInstructionBar text="FINAL PRE-DISPATCH DIMENSIONAL & CMM TRYOUT VERIFICATION REPORT" />
 
-            {/* Verification Table */}
-            <div className="border-x-2 border-b-2 border-zinc-900 overflow-hidden break-inside-avoid">
-              <table className="w-full border-collapse text-xs print:text-[8px]">
+            {/* Verification Table (Expands to fill A4 page body) */}
+            <div className="pro-table-grow border border-[#CBD5E1] rounded-[8px] flex-1 flex flex-col bg-white">
+              <table className="w-full table-fixed border-collapse text-[11px] print:text-[9px]">
                 <thead>
-                  <tr className="bg-zinc-100 border-b-2 border-zinc-900 font-bold text-zinc-800 text-[9.5px] print:text-[7.5px] uppercase tracking-wider">
-                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-8">SR.</th>
-                    <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[160px]">INSPECTION PARAMETER / CHARACTERISTIC</th>
-                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-24">NOMINAL (MM)</th>
-                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-24">TOLERANCE (MM)</th>
-                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-24">MEASURED (MM)</th>
-                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-20">DEVIATION</th>
-                    <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-18">VERDICT</th>
+                  <tr className="bg-[#E5EDF6] border-b border-[#CBD5E1] font-bold text-[#163354] text-[9px] print:text-[7.5px] uppercase tracking-tight leading-tight">
+                    <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[5%] rounded-tl-[7px]">SR.</th>
+                    <th className="py-2 px-1.5 print:py-1.5 border-r border-[#CBD5E1] text-left w-[31%]">INSPECTION PARAMETER / CHARACTERISTIC</th>
+                    <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-right w-[13%]">NOMINAL (MM)</th>
+                    <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-right w-[14%]">TOLERANCE (MM)</th>
+                    <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-right w-[13%]">MEASURED (MM)</th>
+                    <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-right w-[12%]">DEVIATION</th>
+                    <th className="py-2 px-1 print:py-1.5 text-center w-[12%] rounded-tr-[7px]">VERDICT</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-300 text-[11px] print:text-[8px] font-sans">
+                <tbody className="divide-y divide-[#CBD5E1] border-b border-[#CBD5E1] text-[10.5px] print:text-[8.5px] font-sans">
                   {allMeasurements.length > 0 ? (
                     allMeasurements.map((m: any, idx: number) => {
                       const nominal = Number(m.nominalValue) || 0;
                       const actual = Number(m.actualValue) || 0;
                       const dev = (actual - nominal).toFixed(3);
                       return (
-                        <tr key={idx} className="hover:bg-zinc-50/50 break-inside-avoid">
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">{idx + 1}</td>
-                          <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">
+                        <tr key={idx} className="hover:bg-[#F8FAFC] break-inside-avoid align-top">
+                          <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">{idx + 1}</td>
+                          <td className="py-2.5 px-1.5 print:py-2 border-r border-[#CBD5E1] font-bold text-[#111827] break-words">
                             {m.inspectionStandardId || `Measurement Parameter #${idx + 1}`}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-ink">
+                          <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#111827] tabular-nums">
                             {nominal.toFixed(2)}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">
+                          <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569] tabular-nums">
                             +{m.upperTolerance} / -{m.lowerTolerance}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-primary">
+                          <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827] tabular-nums">
                             {actual.toFixed(2)}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">
+                          <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569] tabular-nums">
                             {Number(dev) > 0 ? `+${dev}` : dev}
                           </td>
-                          <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-bold text-semantic-success-dark">
+                          <td className="py-2.5 px-1 print:py-2 text-center font-bold text-[#163354]">
                             {m.result || "PASS"}
                           </td>
                         </tr>
@@ -683,119 +665,127 @@ export default function ProjectQualityPage() {
                     })
                   ) : (
                     <>
-                      <tr className="hover:bg-zinc-50/50 break-inside-avoid">
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">1</td>
-                        <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">Die Shut Height Lock &amp; Parallelism</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-ink">320.00</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">±0.05</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-primary">320.02</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">+0.020</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-bold text-semantic-success-dark">PASS</td>
+                      <tr className="hover:bg-[#F8FAFC] break-inside-avoid">
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">1</td>
+                        <td className="py-2.5 px-1.5 print:py-2 border-r border-[#CBD5E1] font-bold text-[#111827]">Die Shut Height Lock &amp; Parallelism</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#111827]">320.00</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569]">±0.05</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827]">320.02</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569]">+0.020</td>
+                        <td className="py-2.5 px-1 print:py-2 text-center font-bold text-[#163354]">PASS</td>
                       </tr>
-                      <tr className="hover:bg-zinc-50/50 break-inside-avoid">
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">2</td>
-                        <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">Punch &amp; Die Cutting Clearance (Per Side)</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-ink">0.08</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">±0.01</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-primary">0.08</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">0.000</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-bold text-semantic-success-dark">PASS</td>
+                      <tr className="hover:bg-[#F8FAFC] break-inside-avoid">
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">2</td>
+                        <td className="py-2.5 px-1.5 print:py-2 border-r border-[#CBD5E1] font-bold text-[#111827]">Punch &amp; Die Cutting Clearance (Per Side)</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#111827]">0.08</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569]">±0.01</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827]">0.08</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569]">0.000</td>
+                        <td className="py-2.5 px-1 print:py-2 text-center font-bold text-[#163354]">PASS</td>
                       </tr>
-                      <tr className="hover:bg-zinc-50/50 break-inside-avoid">
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">3</td>
-                        <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">Guide Pillar &amp; Bush Running Fit Alignment</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-ink">45.00</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">±0.008</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-primary">45.004</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">+0.004</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-bold text-semantic-success-dark">PASS</td>
+                      <tr className="hover:bg-[#F8FAFC] break-inside-avoid">
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">3</td>
+                        <td className="py-2.5 px-1.5 print:py-2 border-r border-[#CBD5E1] font-bold text-[#111827]">Guide Pillar &amp; Bush Running Fit Alignment</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#111827]">45.00</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569]">±0.008</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827]">45.004</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569]">+0.004</td>
+                        <td className="py-2.5 px-1 print:py-2 text-center font-bold text-[#163354]">PASS</td>
                       </tr>
-                      <tr className="hover:bg-zinc-50/50 break-inside-avoid">
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">4</td>
-                        <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">Heat Treatment Hardness (D2 Punch &amp; Die Insert)</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-ink">60.00</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">±2 HRC</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono font-bold text-primary">61.00</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-mono text-zinc-700">+1.0 HRC</td>
-                        <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-bold text-semantic-success-dark">PASS</td>
+                      <tr className="hover:bg-[#F8FAFC] break-inside-avoid">
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">4</td>
+                        <td className="py-2.5 px-1.5 print:py-2 border-r border-[#CBD5E1] font-bold text-[#111827]">Heat Treatment Hardness (D2 Punch &amp; Die Insert)</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#111827]">60.00</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569]">±2 HRC</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono font-bold text-[#111827]">61.00</td>
+                        <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-mono text-[#475569]">+1.0 HRC</td>
+                        <td className="py-2.5 px-1 print:py-2 text-center font-bold text-[#163354]">PASS</td>
                       </tr>
                     </>
                   )}
                 </tbody>
               </table>
+
+              {/* Continuous vertical ledger dividers extending to fill full A4 body space */}
+              <div className="pro-table-filler flex-1 flex w-full min-h-[24px] print:min-h-[16px]" aria-hidden="true">
+                <table className="self-stretch w-full flex-1 table-fixed border-collapse">
+                  <tbody>
+                    <tr className="h-full">
+                      <td className="p-0 w-[5%] border-r border-[#CBD5E1]" />
+                      <td className="p-0 w-[31%] border-r border-[#CBD5E1]" />
+                      <td className="p-0 w-[13%] border-r border-[#CBD5E1]" />
+                      <td className="p-0 w-[14%] border-r border-[#CBD5E1]" />
+                      <td className="p-0 w-[13%] border-r border-[#CBD5E1]" />
+                      <td className="p-0 w-[12%] border-r border-[#CBD5E1]" />
+                      <td className="p-0 w-[12%]" />
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {/* Quality Declaration & Summary Totals */}
-            <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-              {/* Left: Quality Certification Declaration (7 Cols) */}
-              <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 flex flex-col justify-between">
+            {/* Bottom-Anchored Official Footer */}
+            <div className="mt-auto shrink-0 space-y-2.5 print:space-y-2">
+            {/* Quality Declaration & Summary Dual Cards */}
+            <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid">
+              {/* Left: Quality Certification Declaration Card (7 Cols) */}
+              <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 flex items-start gap-2.5">
+                <ShieldCheck className="w-5 h-5 text-[#163354] shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold text-[9px] print:text-[7px] uppercase text-zinc-600">QUALITY CONFORMANCE DECLARATION:</span>
-                  <p className="font-medium text-zinc-700 text-[10px] print:text-[7.5px] italic mt-0.5 leading-tight">
+                  <span className="font-bold text-[9.5px] print:text-[8px] uppercase text-[#111827] tracking-wide">QUALITY CONFORMANCE DECLARATION:</span>
+                  <p className="font-medium text-[#475569] text-[10.5px] print:text-[8.5px] italic mt-0.5 leading-snug">
                     We hereby certify that the tooling, assemblies, and components listed above have been inspected using calibrated CMM, height master, and hardness testing equipment against approved 2D/3D CAD drawings. All critical dimensions and functionality conform to agreed specifications and are cleared for tryout/dispatch.
                   </p>
                 </div>
               </div>
 
-              {/* Right: Totals Box (5 Cols) */}
-              <div className="col-span-5 p-2 sm:p-2.5 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/80">
-                <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-                  <span className="text-zinc-600">PARAMETERS INSPECTED:</span>
-                  <span className="font-mono font-bold text-ink">{allMeasurements.length > 0 ? allMeasurements.length : 4}</span>
-                </div>
+              {/* Right: Totals Card (5 Cols) */}
+              <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-2.5 sm:p-3 print:p-2 space-y-1.5 print:space-y-1 flex flex-col justify-between">
+                <div className="space-y-1.5 print:space-y-1">
+                  <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+                    <span className="text-[#475569]">PARAMETERS INSPECTED:</span>
+                    <span className="font-mono font-bold text-[#111827]">{allMeasurements.length > 0 ? allMeasurements.length : 4}</span>
+                  </div>
 
-                <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-                  <span className="text-zinc-600">INSPECTION YIELD:</span>
-                  <span className="font-mono font-bold text-semantic-success-dark">100% PASSED</span>
+                  <div className="flex justify-between pb-0.5 font-semibold text-xs print:text-[9px]">
+                    <span className="text-[#475569]">INSPECTION YIELD:</span>
+                    <span className="font-mono font-bold text-[#163354]">100% PASSED</span>
+                  </div>
                 </div>
 
                 {/* Highlighted Status Box */}
-                <div className="pt-1 border-t border-primary/20 flex justify-between items-center bg-primary/10 border border-primary/30 text-ink p-1.5 print:py-0.5 print:px-1.5 rounded-[6px] mt-1 print:mt-0.5">
-                  <span className="font-bold uppercase tracking-wider text-[10px] print:text-[7px] text-primary-dark">QC STATUS:</span>
-                  <span className="font-mono font-bold text-xs sm:text-sm print:text-[9px] text-primary">
+                <div className="flex justify-between items-center bg-[#E5EDF6] border border-[#CBD5E1] text-[#163354] p-2 print:py-1.5 print:px-2.5 rounded-[6px]">
+                  <span className="font-bold uppercase tracking-wider text-[10px] print:text-[8.5px]">QC STATUS:</span>
+                  <span className="font-mono font-extrabold text-xs sm:text-sm print:text-[10.5px]">
                     CLEARED FOR DISPATCH
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* 3-Box Signature Block matching physical factory sheet */}
-            <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-3 text-center text-xs print:text-[7.5px] p-2 print:py-1 print:px-1 bg-white rounded-b-lg break-inside-avoid">
-              <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 pr-1">
-                <div>
-                  <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                    1. INSPECTED BY (QC ENGINEER)
-                  </span>
-                  <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Quality Inspector</span>
-                </div>
-                <div className="h-6 sm:h-8 print:h-4"></div>
-                <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">DIMENSIONAL CHECK SIGN</span>
-              </div>
-
-              <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 px-1">
-                <div>
-                  <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                    2. VERIFIED &amp; APPROVED (QC HEAD)
-                  </span>
-                  <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Chief Quality Manager</span>
-                </div>
-                <div className="h-6 sm:h-8 print:h-4"></div>
-                <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">QA CLEARANCE STAMP</span>
-              </div>
-
-              <div className="flex flex-col justify-between h-14 sm:h-18 print:h-10 pl-1">
-                <div>
-                  <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                    3. CUSTOMER / WITNESS SIGN
-                  </span>
-                  <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Customer Representative</span>
-                </div>
-                <div className="h-6 sm:h-8 print:h-4"></div>
-                <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">TRYOUT ACCEPTANCE SIGN</span>
-              </div>
+            {/* 3-Box Open Corporate Signature Strip */}
+            <OfficialSignatureStrip
+              boxes={[
+                {
+                  title: '1. INSPECTED BY (QC ENGINEER)',
+                  role: 'Quality Inspector',
+                  caption: 'DIMENSIONAL CHECK SIGN',
+                },
+                {
+                  title: '2. VERIFIED & APPROVED (QC HEAD)',
+                  role: 'Chief Quality Manager',
+                  caption: 'QA CLEARANCE STAMP',
+                },
+                {
+                  title: '3. CUSTOMER / WITNESS SIGN',
+                  role: 'Customer Representative',
+                  caption: 'TRYOUT ACCEPTANCE SIGN',
+                },
+              ]}
+            />
             </div>
 
-          </div>
+          </OfficialSheetShell>
         </div>
       )}
 

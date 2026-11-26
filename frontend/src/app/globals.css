@@ -432,10 +432,65 @@
     background: #ffffff !important;
   }
 
+  /* Full-page flex sheet support for all official Pro Printable documents */
+  #authentic-po-sheet.pro-print-sheet,
+  #authentic-subcontract-po-sheet.subcontract-sheet-flex,
+  .printable-sheet.pro-print-sheet,
+  [data-print-target="true"].pro-print-sheet {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 280mm !important;
+  }
+
+  .pro-print-sheet.pro-print-multipage,
+  .subcontract-sheet-flex.pro-print-multipage {
+    display: block !important;
+    min-height: auto !important;
+  }
+
+  .pro-table-grow,
+  .subcontract-table-grow {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .pro-print-multipage .pro-table-grow,
+  .pro-print-multipage .subcontract-table-grow {
+    display: block !important;
+  }
+
+  .pro-print-multipage .pro-table-filler,
+  .pro-print-multipage .subcontract-table-filler {
+    display: none !important;
+  }
+
+  .pro-table-filler,
+  .subcontract-table-filler {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+  }
+
+  /* Multi-page table header repetition and row split prevention */
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
   /* Page setup: Portrait A4 for standard vertical factory documents */
   @page {
     size: A4 portrait;
-    margin: 4mm 6mm;
+    margin: 5mm 6mm;
   }
 
   /* Ensure table borders, cells and backgrounds print crisp */

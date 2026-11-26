@@ -44,6 +44,16 @@ This document dictates the single source of truth for core reusable systems in T
 * **Purpose**: Overlay dialogs and slide-out panels for detail inspection and editing.
 * **Status**: 🔒 LOCKED
 
+### Official Print & Stationery System
+* **Owner**: `src/components/print/OfficialStationery.tsx`, `src/utils/printDocument.ts`, `src/app/globals.css`
+* **Purpose**: Unified `#163354` / `#E5EDF6` A4 stationery shell (`OfficialSheetShell`, `OfficialLetterhead`, `OfficialInstructionBar`, `OfficialSignatureStrip`), isolated iframe printing (`printIsolatedElement`), single-page `table-fixed` column extenders, and multi-page pagination (`.pro-print-multipage` for `itemCount > 14`) used across PO, Subcontract PO, PRN, Material Issue Slip, Quality PDI Certificate, and Outward Delivery Challan.
+* **Status**: 🔒 LOCKED
+
+### Global Multi-Project Procurement & Outsource Wizards
+* **Owner**: `src/modules/procurement/MultiProjectPoWizard.tsx` (`/purchase-orders`), `src/modules/subcontracting/MultiProjectSubcontractWizard.tsx` (`/outsource-orders`)
+* **Purpose**: 3-step multi-project PO and Outsource Job Work Challan creation workflows with per-line project linking, batch traceability, and combined batch document printing.
+* **Status**: 🔒 LOCKED
+
 ---
 
 ## 3. Data Flow & Contract Standards

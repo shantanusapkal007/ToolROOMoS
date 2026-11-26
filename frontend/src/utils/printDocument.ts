@@ -61,12 +61,12 @@ export function printIsolatedElement(elementId: string, options: PrintDocumentOp
         <style>
           @page {
             size: A4 ${orientation};
-            margin: 4mm 6mm !important;
+            margin: 5mm 6mm !important;
           }
           @media print {
             @page {
               size: A4 ${orientation};
-              margin: 4mm 6mm !important;
+              margin: 5mm 6mm !important;
             }
           }
           * {
@@ -100,9 +100,48 @@ export function printIsolatedElement(elementId: string, options: PrintDocumentOp
           .hide-on-print, [data-no-print="true"] {
             display: none !important;
           }
+          #${elementId}.pro-print-sheet,
+          #${elementId}.subcontract-sheet-flex,
+          .printable-sheet.pro-print-sheet {
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 280mm !important;
+          }
+          #${elementId}.pro-print-multipage,
+          .pro-print-multipage {
+            display: block !important;
+            min-height: auto !important;
+          }
+          .pro-table-grow,
+          .subcontract-table-grow {
+            flex: 1 1 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .pro-print-multipage .pro-table-grow,
+          .pro-print-multipage .subcontract-table-grow {
+            display: block !important;
+          }
+          .pro-print-multipage .pro-table-filler,
+          .pro-print-multipage .subcontract-table-filler {
+            display: none !important;
+          }
+          .pro-table-filler,
+          .subcontract-table-filler {
+            flex: 1 1 auto !important;
+            display: flex !important;
+            flex-direction: row !important;
+            width: 100% !important;
+          }
           table {
             border-collapse: collapse !important;
             width: 100% !important;
+          }
+          thead {
+            display: table-header-group !important;
+          }
+          tfoot {
+            display: table-footer-group !important;
           }
           th, td {
             -webkit-print-color-adjust: exact !important;

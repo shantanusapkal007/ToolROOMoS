@@ -134,8 +134,11 @@ CLOSED ◄── PAYMENT_PENDING ◄── INVOICED ◄── DISPATCHED ◄─�
      * `Factory Stores Material`: Issues physical raw stock from stores, atomically decrements `InventoryBatch` (`availableQty` & `currentQty`) and `InventoryStock`, and creates an immutable `InventoryTransaction` (`MATERIAL_ISSUE`, reference: `SUBCONTRACT_CHALLAN`).
      * `Service Only / Vendor Material`: Vendor provides stock or performs labor only. No factory inventory is deducted.
      * When return receipt is posted, accepted material replenishes stores (`InventoryBatch` created with `-S-` suffix, `InventoryStock` incremented, `InventoryTransaction` logged with `MATERIAL_RETURN`, reference: `SUBCONTRACT_RECEIPT`). Added unit cost per pc = $\text{Hours per Pc} \times \text{Actual Rate}$.
+   - **Multi-Project Global Outsource Module (`/outsource-orders`)**:
+     * Backend endpoints in `GlobalSubcontractingController`: `GET /api/v1/subcontracting/orders`, `GET /api/v1/subcontracting/inventory-batches`, and `POST /api/v1/subcontracting/multi-orders` (`CreateMultiSubcontractOrderDto` + `SubcontractingService.createMultiProjectOrders`), creating per-project `SubcontractOrder` rows atomically inside a single transaction under a shared Gate Pass / Challan number.
+     * Frontend 3-step wizard (`GlobalSubcontractModule.tsx`, `MultiProjectSubcontractWizard.tsx`, `subcontracting.service.ts`) supporting per-line project assignment, Factory Stock vs Service-Only material selection, hourly costing preview, and combined multi-project **Batch PO** printing.
    - **Official Factory PO & Challan Generation (`AuthenticSubcontractPoDocument.tsx`)**:
-     * Generates statutory print-ready PO & Delivery Challan under Rule 55 / Section 143 of CGST Act.
+     * Generates statutory print-ready PO & Delivery Challan under Rule 55 / Section 143 of CGST Act (supporting single `order` or combined multi-project `orders[]`).
      * Features live interactive **Terms & Conditions editing**, 4 signature authority boxes, PDF print, and multi-sheet formatted Excel workbook export (`exceljs`).
 9. **Quality Gate & Inspection (`INSPECTION` -> `DISPATCH_READY`)**:
    - Final QC inspector measures critical dimensions against drawing tolerances (`InspectionHeader`, `InspectionMeasurement`).
@@ -279,9 +282,10 @@ export interface StandardApiResponse<T> {
 * **`SmartTable` (`src/components/ui/SmartTable.tsx`)**: Reusable data grid supporting sorting, multi-column filtering, pagination, CSV exports, and virtualized row rendering.
 * **`SmartForm` (`src/components/ui/SmartForm.tsx`)**: Dynamic schema-driven forms with Zod validation.
 * **`PremiumDrawer` & `Modal`**: Consistent slide-out detail inspectors and modal dialogs.
-* **Authentic Document Exporters**:
-  * `poExcelExporter.ts`, `prnExcelExporter.ts`, `grnExcelExporter.ts` (generate professional multi-sheet Excel workbooks with borders, company headers, and calculation formulas using `exceljs`).
-  * `AuthenticPoDocument.tsx`, `AuthenticPrnDocument.tsx`, `AuthenticSubcontractPoDocument.tsx` (pixel-perfect print/PDF templates matching real Indian factory documents with customizable terms).
+* **Authentic Stationery & Document Exporters**:
+  * **Corporate Stationery System (`src/components/print/OfficialStationery.tsx`, `src/utils/printDocument.ts`, `src/app/globals.css`)**: Shared A4 printable shell (`OfficialSheetShell`, `OfficialLetterhead`, `OfficialInstructionBar`, `CoinsStackIcon`, `OfficialSignatureStrip`) using the corporate `#163354` Navy / `#E5EDF6` Ice-Blue / `#CBD5E1` border / `#F8FAFC` card / `#C41E2E` header theme, isolated iframe printing (`printIsolatedElement`), nested `table-fixed` `.pro-table-filler` column extenders for single-page sheets, and automatic `.pro-print-multipage` (`itemCount > 14`) with repeating `<thead>` headers.
+  * **6 Standardized Print Templates**: `AuthenticPoDocument.tsx` (PO), `AuthenticSubcontractPoDocument.tsx` (Subcontract PO / Multi-Project Batch Challan), `AuthenticPrnDocument.tsx` (PRN), `AuthenticMaterialIssueDocument.tsx` (Material Issue Slip), `projects/[id]/quality/page.tsx` (Quality & PDI Certificate), and `projects/[id]/dispatch/page.tsx` (Outward Delivery Challan).
+  * **Excel Exporters**: `poExcelExporter.ts`, `prnExcelExporter.ts`, `grnExcelExporter.ts` (generate multi-sheet formatted Excel workbooks with company headers and formulas using `exceljs`).
 
 ---
 

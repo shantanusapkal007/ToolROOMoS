@@ -1,11 +1,17 @@
 "use client";
 
 import React from 'react';
-import { Printer, ArrowLeft } from 'lucide-react';
+import { Printer, ArrowLeft, ShieldCheck, Package } from 'lucide-react';
 import { parseLwh } from '../procurement/MultiProjectPoWizard';
 import { printIsolatedElement } from '@/utils/printDocument';
 import { Button } from '@/components/ui/Button';
 import { formatDate } from '@/lib/formatters';
+import {
+  OfficialSheetShell,
+  OfficialLetterhead,
+  OfficialInstructionBar,
+  OfficialSignatureStrip,
+} from '@/components/print/OfficialStationery';
 
 interface AuthenticMaterialIssueDocumentProps {
   data: any;
@@ -69,99 +75,69 @@ export function AuthenticMaterialIssueDocument({ data, onBack }: AuthenticMateri
       </div>
 
       {/* ========================================================================= */}
-      {/* Printable Paper Sheet Target (A4 Vertical / Portrait)                      */}
+      {/* Printable Paper Sheet Target (Corporate Steel-Navy Stationery Theme)      */}
       {/* ========================================================================= */}
-      <div 
-        id="authentic-material-issue-sheet"
-        data-print-target="true"
-        className="printable-sheet bg-white p-6 sm:p-8 print:p-0 rounded-[12px] shadow-level-4 border border-border-gray text-ink max-w-[210mm] mx-auto print:max-w-none print:w-full print:border-none print:shadow-none font-sans"
-      >
-        
-        {/* Document Header */}
-        <div className="border-2 border-zinc-900 p-3 sm:p-4 print:py-1.5 print:px-2 rounded-t-lg flex items-center justify-between gap-3 sm:gap-4 bg-white break-inside-avoid">
-          <div className="w-24 sm:w-28 print:w-16 shrink-0 flex items-center justify-center p-1.5 sm:p-2 print:p-0.5 border border-border-gray rounded bg-white">
-            <img src="/Krupa_Logo.png" alt="Krupa Logo" className="h-12 sm:h-14 print:h-8 w-auto object-contain" />
-          </div>
-          
-          <div className="flex-1 text-center pr-2">
-            <h1 className="text-base sm:text-lg md:text-xl print:text-[11px] font-bold uppercase tracking-wider text-[#ee1d36]">
-              KRUPA TOOLS &amp; STAMPINGS LTD.
-            </h1>
-            <p className="text-[11px] print:text-[7px] font-semibold text-ink mt-0.5 print:mt-0 uppercase tracking-tight print:leading-[1.2]">
-              GUT NO.23 PLOT NO.45 KAMLAPUR MIDC, WALUJ AURANGABAD - 431136
-            </p>
-            <p className="text-[11px] print:text-[7px] font-semibold text-ink uppercase tracking-tight print:leading-[1.2]">
-              GST NO : 27AAKCK1751B1ZS | STATE: MAHARASHTRA (27)
-            </p>
-            <p className="text-[9.5px] print:text-[6.5px] font-semibold text-zinc-700 uppercase tracking-tight mt-0.5 print:mt-0 print:leading-[1.2]">
-              Manufacturers of Press Tools, Jig Fixtures, Moulds, Precision Tooling &amp; Outside Job Work
-            </p>
-            <div className="mt-1 print:mt-0.5 pt-0.5 print:pt-0 border-t border-zinc-900/20">
-              <span className="font-bold text-xs sm:text-sm print:text-[9px] uppercase tracking-widest text-ink underline">
-                MATERIAL ISSUE SLIP &amp; SHOPFLOOR DISPATCH PASS
-              </span>
-              <span className="text-[9px] print:text-[6.5px] block text-zinc-600 font-semibold tracking-tight mt-0.5 print:mt-0">
-                (Internal Stores Material Movement &amp; Work-In-Progress Transfer Voucher)
-              </span>
-            </div>
-          </div>
-        </div>
+      <OfficialSheetShell id="authentic-material-issue-sheet" itemCount={items.length}>
+        <OfficialLetterhead
+          documentTitle="MATERIAL ISSUE SLIP & SHOPFLOOR PASS"
+          legalSubtitle="(Internal Stores Material Movement & Work-In-Progress Transfer Voucher)"
+        />
 
-        {/* Issue Details Header */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-          {/* Main Details (Left Col - 7 Cols) */}
-          <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 space-y-1 print:space-y-0.5">
-            <div className="flex gap-2">
-              <span className="font-bold w-24 print:w-18 text-zinc-600 uppercase text-[10px] print:text-[7.5px]">SECTION:</span>
-              <span className="font-bold text-ink uppercase text-xs sm:text-sm print:text-[9px] truncate">
-                {data.productionSection || "GENERAL STORES / MACHINE SHOP"}
+        {/* Issue Details Dual Rounded Cards */}
+        <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid shrink-0">
+          {/* Main Details (Left Card - 7 Cols) */}
+          <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 flex flex-col justify-between space-y-2">
+            <div className="flex gap-2 items-baseline">
+              <span className="font-semibold w-24 shrink-0 text-[#475569] uppercase text-[10px] print:text-[8.5px]">SECTION:</span>
+              <span className="font-bold text-[#111827] uppercase text-xs sm:text-sm print:text-[11px] truncate">
+                {data.productionSection || data.operationName || "GENERAL STORES / MACHINE SHOP"}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[11px] print:text-[7.5px] pt-1 print:pt-0.5 border-t border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600">PROJECT / TOOL: </span>
-                <span className="font-bold text-ink">{data.project?.projectNumber || data.projectNumber || "GENERAL"}</span>
+            <div className="grid grid-cols-2 gap-3 text-[11px] print:text-[9px] pt-1.5 border-t border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569]">PROJECT / TOOL: </span>
+                <span className="font-bold text-[#111827]">{data.project?.projectNumber || data.projectNumber || data.jobCardNumber || "GENERAL"}</span>
               </div>
               <div>
-                <span className="font-semibold text-zinc-600">ISSUED TO: </span>
-                <span className="font-semibold text-ink">{data.issuedTo || data.operatorName || "Shopfloor Operator"}</span>
+                <span className="font-semibold text-[#475569]">ISSUED TO: </span>
+                <span className="font-semibold text-[#111827]">{data.issuedTo || data.operatorName || "Shopfloor Operator"}</span>
               </div>
             </div>
 
-            <div className="pt-1 print:pt-0.5 border-t border-border-gray text-[11px] print:text-[7.5px]">
-              <span className="font-semibold text-zinc-600 uppercase text-[10px] print:text-[7.5px]">REMARKS / PURPOSE: </span>
-              <span className="text-zinc-800">{data.remarks || "Raw stock issued for active machining operations."}</span>
+            <div className="pt-1.5 border-t border-[#CBD5E1] text-[11px] print:text-[9px]">
+              <span className="font-semibold text-[#475569] uppercase text-[10px] print:text-[8.5px]">REMARKS / PURPOSE: </span>
+              <span className="text-[#475569]">{data.remarks || "Raw stock issued for active machining operations."}</span>
             </div>
           </div>
 
-          {/* Metadata (Right Col - 5 Cols) */}
-          <div className="col-span-5 p-2.5 sm:p-3 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/40">
-            <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">ISSUE SLIP NO:</span>
-                <span className="font-mono font-bold text-ink text-xs sm:text-sm print:text-[8.5px]">{data.slipNo || data.issueNumber || "MIS-2026-0001"}</span>
+          {/* Metadata (Right Card - 5 Cols) */}
+          <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 space-y-2 print:space-y-1.5">
+            <div className="grid grid-cols-2 gap-2 pb-1.5 border-b border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">ISSUE SLIP NO:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs sm:text-sm print:text-[10.5px]">{data.slipNo || data.issueNumber || "MIS-2026-0001"}</span>
               </div>
               <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">DATE:</span>
-                <span className="font-mono font-semibold text-ink text-xs print:text-[8px]">{formatDate(data.createdAt || Date.now())}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pb-0.5 print:pb-0 border-b border-border-gray">
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">GATE PASS / REF:</span>
-                <span className="font-mono font-semibold text-ink text-xs print:text-[8px]">{data.referenceNumber || "INTERNAL-ISSUE"}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">STATUS:</span>
-                <span className="font-mono font-bold text-semantic-success-dark text-xs print:text-[8px] uppercase">APPROVED &amp; ISSUED</span>
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">DATE:</span>
+                <span className="font-mono font-bold text-[#111827] text-xs print:text-[9.5px]">{data.date || formatDate(data.createdAt || Date.now())}</span>
               </div>
             </div>
 
-            <div className="pt-0.5 print:pt-0">
-              <span className="font-semibold text-zinc-600 block text-[9px] print:text-[7px] uppercase">ISSUING STORE:</span>
-              <span className="font-semibold text-ink text-[11px] print:text-[8px] block truncate">
+            <div className="grid grid-cols-2 gap-2 pb-1.5 border-b border-[#CBD5E1]">
+              <div className="border-r border-[#CBD5E1] pr-2">
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">GATE PASS / REF:</span>
+                <span className="font-mono font-semibold text-[#111827] text-xs print:text-[9.5px]">{data.referenceNumber || "INTERNAL-ISSUE"}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">STATUS:</span>
+                <span className="font-mono font-bold text-[#163354] text-xs print:text-[9.5px] uppercase">APPROVED &amp; ISSUED</span>
+              </div>
+            </div>
+
+            <div className="pt-0.5">
+              <span className="font-semibold text-[#475569] block text-[9px] print:text-[7.5px] uppercase">ISSUING STORE:</span>
+              <span className="font-bold text-[#111827] text-[11px] print:text-[9.5px] block truncate">
                 Central Raw Material &amp; Tooling Crib
               </span>
             </div>
@@ -169,66 +145,73 @@ export function AuthenticMaterialIssueDocument({ data, onBack }: AuthenticMateri
         </div>
 
         {/* Instructions Banner */}
-        <div className="border-x-2 border-b-2 border-zinc-900 p-1.5 print:py-0.5 print:px-1 bg-zinc-100 text-center font-bold text-xs print:text-[7.5px] uppercase tracking-wider text-zinc-800 break-inside-avoid">
-          PHYSICAL RAW MATERIAL ISSUED FROM CENTRAL STORES FOR PRODUCTION EXECUTION
-        </div>
+        <OfficialInstructionBar text="PHYSICAL RAW MATERIAL ISSUED FROM CENTRAL STORES FOR PRODUCTION EXECUTION" />
 
-        {/* Main Line Items Table */}
-        <div className="border-x-2 border-b-2 border-zinc-900 overflow-hidden break-inside-avoid">
-          <table className="w-full border-collapse text-xs print:text-[8px]">
+        {/* Main Line Items Table (Expands to fill A4 page body) */}
+        <div className="pro-table-grow border border-[#CBD5E1] rounded-[8px] flex-1 flex flex-col bg-white">
+          <table className="w-full table-fixed border-collapse text-[11px] print:text-[9px]">
             <thead>
-              <tr className="bg-zinc-100 border-b-2 border-zinc-900 font-bold text-zinc-800 text-[9.5px] print:text-[7.5px] uppercase tracking-wider">
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-8">SR.</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[140px]">MATERIAL GRADE &amp; DESCRIPTION</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-14">L (MM)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-14">W (MM)</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-14">H (MM)</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[120px]">STORES BATCH &amp; HEAT NO</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-right w-16">ISSUED QTY</th>
-                <th className="p-2 print:py-1 print:px-1 border-r border-zinc-400 text-center w-12">UOM</th>
-                <th className="p-2 print:py-1 print:px-1.5 border-r border-zinc-400 text-left min-w-[100px]">REMARKS</th>
+              <tr className="bg-[#E5EDF6] border-b border-[#CBD5E1] font-bold text-[#163354] text-[9px] print:text-[7.5px] uppercase tracking-tight leading-tight">
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[4%] rounded-tl-[7px]">SR.</th>
+                <th className="py-2 px-1.5 print:py-1.5 border-r border-[#CBD5E1] text-left w-[22%]">MATERIAL GRADE &amp; DESCRIPTION</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[7%]">L (MM)</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[7%]">W (MM)</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[7%]">H (MM)</th>
+                <th className="py-2 px-1.5 print:py-1.5 border-r border-[#CBD5E1] text-left w-[21%]">STORES BATCH &amp; HEAT NO</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-right w-[9%]">ISSUED QTY</th>
+                <th className="py-2 px-1 print:py-1.5 border-r border-[#CBD5E1] text-center w-[6%]">UOM</th>
+                <th className="py-2 px-1.5 print:py-1.5 text-left w-[17%] rounded-tr-[7px]">REMARKS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-300 text-[11px] print:text-[8px] font-sans">
+            <tbody className="divide-y divide-[#CBD5E1] border-b border-[#CBD5E1] text-[10.5px] print:text-[8.5px] font-sans">
               {items.map((item: any, idx: number) => {
                 const batch = item.inventoryBatch || {};
                 const mat = batch.material || {};
-                
+                const displayMaterialName = mat.materialName || mat.materialGrade || item.materialName || 'Raw Material Component';
+                const displayBatchNumber = batch.batchNumber || item.batchNumber || '-';
+                const displayHeatNumber = batch.heatNumber || item.heatNumber;
+                const displayUom = mat.uom || mat.defaultUom || item.uom || 'NOS';
+                const dimSource =
+                  item.dimensions ||
+                  mat.dimensions ||
+                  mat.rawSize ||
+                  (/\d+\s*[x×*]\s*\d+/i.test(displayMaterialName) ? displayMaterialName : "");
+
                 const { lVal, wVal, hVal } = parseLwh(
-                  mat.materialName || "", 
-                  item.length || "", 
-                  item.width || "", 
+                  dimSource,
+                  item.length || "",
+                  item.width || "",
                   item.height || ""
                 );
 
                 return (
-                  <tr key={item.id || idx} className="hover:bg-zinc-50/50 break-inside-avoid">
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-500">
+                  <tr key={item.id || idx} className="hover:bg-[#F8FAFC] break-inside-avoid align-top">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">
                       {idx + 1}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-bold text-ink">
-                      {mat.materialName || mat.materialGrade || 'Raw Material Component'}
+                    <td className="py-2.5 px-1.5 print:py-2 border-r border-[#CBD5E1] font-bold text-[#111827] break-words">
+                      {displayMaterialName}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-800">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#111827]">
                       {lVal}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-800">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#111827]">
                       {wVal}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-800">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#111827]">
                       {hVal}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 font-mono text-[10px] print:text-[7.5px]">
-                      <span className="font-semibold text-ink">{batch.batchNumber || '-'}</span>
-                      {batch.heatNumber && <span className="text-cool-gray block text-[9px] print:text-[6.5px]">Heat: {batch.heatNumber}</span>}
+                    <td className="py-2.5 px-1.5 print:py-2 border-r border-[#CBD5E1] font-mono text-[10px] print:text-[8px] break-words">
+                      <span className="font-semibold text-[#111827]">{displayBatchNumber}</span>
+                      {displayHeatNumber && <span className="text-[#475569] block text-[9px] print:text-[7.5px]">Heat: {displayHeatNumber}</span>}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-right font-bold text-ink font-mono">
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-right font-bold text-[#111827] font-mono tabular-nums">
                       {Number(item.issuedQty)}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1 border-r border-zinc-300 text-center font-mono text-zinc-600">
-                      {mat.uom || 'NOS'}
+                    <td className="py-2.5 px-1 print:py-2 border-r border-[#CBD5E1] text-center font-mono text-[#475569]">
+                      {displayUom}
                     </td>
-                    <td className="p-2 print:py-1 print:px-1.5 border-r border-zinc-300 text-zinc-700 text-[10px] print:text-[7.5px] italic">
+                    <td className="py-2.5 px-1.5 print:py-2 text-[#475569] text-[10px] print:text-[8px] italic break-words">
                       {item.remarks || 'Issued per BOM'}
                     </td>
                   </tr>
@@ -236,74 +219,82 @@ export function AuthenticMaterialIssueDocument({ data, onBack }: AuthenticMateri
               })}
             </tbody>
           </table>
+
+          {/* Continuous vertical ledger dividers extending to fill full A4 body space */}
+          <div className="pro-table-filler flex-1 flex w-full min-h-[24px] print:min-h-[16px]" aria-hidden="true">
+            <table className="self-stretch w-full flex-1 table-fixed border-collapse">
+              <tbody>
+                <tr className="h-full">
+                  <td className="p-0 w-[4%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[22%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[7%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[7%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[7%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[21%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[9%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[6%] border-r border-[#CBD5E1]" />
+                  <td className="p-0 w-[17%]" />
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Totals & Notes Summary Grid */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-12 text-xs print:text-[8px] break-inside-avoid">
-          {/* Left: Material Handling Policy (7 Cols) */}
-          <div className="col-span-7 p-2.5 sm:p-3 print:py-1 print:px-2 border-r-2 border-zinc-900 flex flex-col justify-between">
+        {/* Bottom-Anchored Official Footer */}
+        <div className="mt-auto shrink-0 space-y-2.5 print:space-y-2">
+        {/* Totals & Notes Summary Dual Cards */}
+        <div className="grid grid-cols-12 gap-3 text-xs print:text-[9.5px] break-inside-avoid">
+          {/* Left: Material Handling Policy Card (7 Cols) */}
+          <div className="col-span-7 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-3 sm:p-3.5 print:p-2.5 flex items-start gap-2.5">
+            <ShieldCheck className="w-5 h-5 text-[#163354] shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold text-[9px] print:text-[7px] uppercase text-zinc-600">STORE ISSUANCE POLICY:</span>
-              <p className="font-medium text-zinc-700 text-[10px] print:text-[7.5px] italic mt-0.5 leading-tight">
+              <span className="font-bold text-[9.5px] print:text-[8px] uppercase text-[#111827] tracking-wide">STORE ISSUANCE POLICY:</span>
+              <p className="font-medium text-[#475569] text-[10.5px] print:text-[8.5px] italic mt-0.5 leading-snug">
                 Material issued to the shopfloor must be utilized exclusively for the designated project/section under strict FIFO inventory control. Any scrap, rejected pieces, or unused remnants must be returned to Stores with remnant weight logged via a Material Return Slip.
               </p>
             </div>
           </div>
 
-          {/* Right: Totals Box (5 Cols) */}
-          <div className="col-span-5 p-2 sm:p-2.5 print:py-1 print:px-2 space-y-1 print:space-y-0.5 bg-canvas/80">
-            <div className="flex justify-between border-b border-border-gray pb-0.5 print:pb-0 font-semibold text-xs print:text-[7.5px]">
-              <span className="text-zinc-600">TOTAL LINE ITEMS:</span>
-              <span className="font-mono font-bold text-ink">{items.length}</span>
+          {/* Right: Totals Card (5 Cols) */}
+          <div className="col-span-5 bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-2.5 sm:p-3 print:p-2 space-y-1.5 print:space-y-1 flex flex-col justify-between">
+            <div className="flex justify-between border-b border-[#CBD5E1] pb-1 font-semibold text-xs print:text-[9px]">
+              <span className="text-[#475569]">TOTAL LINE ITEMS:</span>
+              <span className="font-mono font-bold text-[#111827]">{items.length}</span>
             </div>
 
             {/* Total Issued Quantity Highlight Box */}
-            <div className="pt-1 border-t border-primary/20 flex justify-between items-center bg-primary/10 border border-primary/30 text-ink p-1.5 print:py-0.5 print:px-1.5 rounded-[6px] mt-1 print:mt-0.5">
-              <span className="font-bold uppercase tracking-wider text-[10px] print:text-[7px] text-primary-dark">TOTAL PIECES ISSUED:</span>
-              <span className="font-mono font-bold text-xs sm:text-sm print:text-[9px] text-primary">
+            <div className="flex justify-between items-center bg-[#E5EDF6] border border-[#CBD5E1] text-[#163354] p-2 print:py-1.5 print:px-2.5 rounded-[6px]">
+              <span className="font-bold uppercase tracking-wider text-[10px] print:text-[8.5px]">TOTAL PIECES ISSUED:</span>
+              <span className="font-mono font-extrabold text-sm print:text-[11px]">
                 {totalIssuedQty} NOS
               </span>
             </div>
           </div>
         </div>
 
-        {/* 3-Box Signature Block matching physical factory sheet */}
-        <div className="border-x-2 border-b-2 border-zinc-900 grid grid-cols-3 text-center text-xs print:text-[7.5px] p-2 print:py-1 print:px-1 bg-white rounded-b-lg break-inside-avoid">
-          <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 pr-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                1. ISSUED BY (STORES / CRIB)
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Storekeeper Sign</span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">DISPATCH SIGN &amp; DATE</span>
-          </div>
-
-          <div className="border-r border-border-gray flex flex-col justify-between h-14 sm:h-18 print:h-10 px-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                2. RECEIVED BY (OPERATOR)
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Production Sign</span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">ACKNOWLEDGEMENT SIGN</span>
-          </div>
-
-          <div className="flex flex-col justify-between h-14 sm:h-18 print:h-10 pl-1">
-            <div>
-              <span className="font-bold text-zinc-800 uppercase text-[8.5px] print:text-[6.5px] tracking-wider block">
-                3. AUTHORIZED BY (WORKS MANAGER)
-              </span>
-              <span className="text-[10px] print:text-[7px] text-zinc-600 mt-0.5 block font-medium">Plant Supervisor</span>
-            </div>
-            <div className="h-6 sm:h-8 print:h-4"></div>
-            <span className="text-[8px] print:text-[6px] text-zinc-500 uppercase tracking-tight">HOD APPROVAL STAMP</span>
-          </div>
+        {/* 3-Box Open Corporate Signature Strip */}
+        <OfficialSignatureStrip
+          boxes={[
+            {
+              title: '1. ISSUED BY (STORES / CRIB)',
+              role: 'Storekeeper Sign',
+              caption: 'DISPATCH SIGN & DATE',
+            },
+            {
+              title: '2. RECEIVED BY (OPERATOR)',
+              role: 'Production Sign',
+              caption: 'ACKNOWLEDGEMENT SIGN',
+            },
+            {
+              title: '3. AUTHORIZED BY (WORKS MANAGER)',
+              role: 'Plant Supervisor',
+              caption: 'HOD APPROVAL STAMP',
+            },
+          ]}
+        />
         </div>
 
-      </div>
+      </OfficialSheetShell>
     </div>
   );
 }

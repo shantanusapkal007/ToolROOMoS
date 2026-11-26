@@ -51,3 +51,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
   * Stat values and totals: `text-feature-title` or `text-heading-xl` (22px - 28px).
 - Always format batch dropdown options cleanly with `formatBatchOption` (`SS 304 [BAT-473141 • Heat: N/A] — 5 NOS Available`) rather than dumping raw 36-character database UUIDs.
 
+### 9. Corporate Print Stationery System Exception (`OfficialStationery`)
+- **Print-Safe Stationery Tokens**: All 6 official printable documents (`AuthenticPoDocument.tsx`, `AuthenticSubcontractPoDocument.tsx`, `AuthenticPrnDocument.tsx`, `AuthenticMaterialIssueDocument.tsx`, QC Certificate in `projects/[id]/quality/page.tsx`, Outward DC in `projects/[id]/dispatch/page.tsx`) MUST wrap content in `OfficialSheetShell` (`src/components/print/OfficialStationery.tsx`) and use the fixed light-paper corporate stationery palette (`#163354` Navy, `#E5EDF6` Ice-Blue fill, `#111827` primary text, `#475569` secondary text, `#CBD5E1` border, `#F8FAFC` card fill, `#C41E2E` company header, `#B91C1C` divider) rather than app dark-mode tokens.
+- **Print Layout & Table Alignment Rules**:
+  * Never put `overflow-*` classes on `.pro-print-sheet` or `.pro-table-grow` (`globals.css` `@media print` forces `div[class*="overflow-"]` to `display: block !important;`, breaking flex footer anchoring).
+  * Pass `itemCount` to `OfficialSheetShell` (`itemCount > 14` enables `.pro-print-multipage` so `thead` repeats cleanly across A4 pages without clipping).
+  * Keep vertical column extenders inside `.pro-table-filler` as a nested single-row `<table className="self-stretch w-full flex-1 table-fixed border-collapse">` matching the exact `%` widths (`sum = 100%`) of the main table above—never bare flex `<div>` columns, which drift from `table-fixed border-collapse` dividers.
+  * Never place `space-y-*` on containers holding `position: absolute` corner SVGs (`Tailwind v4` applies `margin-block-end` to `:not(:last-child)`, shifting bottom-anchored SVGs upward).
+
